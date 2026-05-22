@@ -26,20 +26,50 @@ const attendanceRecordSchema = new mongoose.Schema({
         required: true
     },
 
+    classGroup: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ClassGroup",
+        required: true
+    },
+
     classroom: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Classroom",
         required: true
     },
 
+    status: {
+        type: String,
+        enum: ["PRESENT", "ABSENT", "LATE", "EXCUSED"],
+        default: "PRESENT"
+    },
+
     latitude: {
-        type: Number,
-        required: true
+        type: Number
     },
 
     longitude: {
-        type: Number,
-        required: true
+        type: Number
+    },
+
+    distanceFromClassroom: {
+        type: Number
+    },
+
+    verificationMethod: {
+        type: String,
+        enum: ["GEOLOCATION", "MANUAL"],
+        default: "GEOLOCATION"
+    },
+
+    deviceInfo: {
+        userAgent: {
+            type: String
+        },
+
+        ip: {
+            type: String
+        }
     },
 
     markedAt: {
@@ -51,6 +81,21 @@ const attendanceRecordSchema = new mongoose.Schema({
     timestamps: true
 });
 
-const AttendanceRecord = mongoose.model("AttendanceRecord", attendanceRecordSchema);
+attendanceRecordSchema.index(
+    { student: 1, attendanceSession: 1 },
+    { unique: true }
+);
+
+attendanceRecordSchema.index({
+    college: 1,
+    classGroup: 1,
+    subject: 1,
+    markedAt: 1
+});
+
+const AttendanceRecord = mongoose.model(
+    "AttendanceRecord",
+    attendanceRecordSchema
+);
 
 module.exports = AttendanceRecord;

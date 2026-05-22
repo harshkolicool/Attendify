@@ -1,0 +1,38 @@
+<aside class="admin-sidebar">
+    <a href="/admin/dashboard" class="admin-brand">
+        <i class="fa-solid fa-shield-halved"></i>
+        College Admin
+    </a>
+
+    <p class="admin-college">College Admin Panel</p>
+
+    <nav class="admin-nav">
+        <a href="/admin/dashboard" class="<%= activePage === 'dashboard' ? 'active' : '' %>">
+            <i class="fa-solid fa-chart-pie"></i> Dashboard
+        </a>
+        <a href="/admin/class-groups" class="<%= activePage === 'class-groups' ? 'active' : '' %>">
+            <i class="fa-solid fa-users-rectangle"></i> Class Groups
+        </a>
+        <a href="/admin/classrooms" class="<%= activePage === 'classrooms' ? 'active' : '' %>">
+            <i class="fa-solid fa-location-dot"></i> Classrooms
+        </a>
+        <a href="/admin/subjects" class="<%= activePage === 'subjects' ? 'active' : '' %>">
+            <i class="fa-solid fa-book"></i> Subjects
+        </a>
+        <a href="/admin/teachers" class="<%= activePage === 'teachers' ? 'active' : '' %>">
+            <i class="fa-solid fa-chalkboard-user"></i> Teachers
+        </a>
+        <a href="/admin/students" class="<%= activePage === 'students' ? 'active' : '' %>">
+            <i class="fa-solid fa-user-graduate"></i> Students
+        </a>
+        <a href="/admin/schedules" class="<%= activePage === 'schedules' ? 'active' : '' %>">
+            <i class="fa-solid fa-calendar-days"></i> Schedules
+        </a>
+    </nav>
+
+    <form action="/logout" method="POST">
+        <button type="submit" class="admin-logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+        </button>
+    </form>
+</aside>

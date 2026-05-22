@@ -25,7 +25,6 @@ const studentSchema = new mongoose.Schema({
     enrollmentNumber: {
         type: String,
         required: true,
-        unique: true,
         uppercase: true,
         trim: true
     },
@@ -33,7 +32,8 @@ const studentSchema = new mongoose.Schema({
     department: {
         type: String,
         required: true,
-        uppercase: true
+        uppercase: true,
+        trim: true
     },
 
     semester: {
@@ -47,9 +47,9 @@ const studentSchema = new mongoose.Schema({
         required: true
     },
 
-    classroom: {
+    classGroup: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Classroom",
+        ref: "ClassGroup",
         required: true
     },
 
@@ -63,14 +63,21 @@ const studentSchema = new mongoose.Schema({
     isBlocked: {
         type: Boolean,
         default: false
+    },
+
+    lastLogin: {
+        type: Date
     }
 
 }, {
     timestamps: true
 });
 
+studentSchema.index(
+    { college: 1, enrollmentNumber: 1 },
+    { unique: true }
+);
 
-// 🔐 FIXED PASSWORD HASHING (NO next(), NO ERROR)
 studentSchema.pre("save", async function () {
 
     if (!this.isModified("password")) return;
@@ -79,10 +86,10 @@ studentSchema.pre("save", async function () {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-
-// 🔐 PASSWORD COMPARISON
 studentSchema.methods.comparePassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model("Student", studentSchema);
+const Student = mongoose.model("Student", studentSchema);
+
+module.exports = Student;

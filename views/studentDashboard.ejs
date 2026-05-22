@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | Attendify</title>
+    <link rel="stylesheet" href="/css/style.css">
+
+    <!-- Font Awesome Icons -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+</head>
+<body>
+
+<%
+    const scheduleList = schedules || [];
+    const activeList = activeSessions || [];
+    const markedList = markedSessionIds || [];
+
+    let presentCount = markedList.length;
+    let totalClasses = scheduleList.length;
+    let absentCount = 0;
+    let unmarkedCount = totalClasses - presentCount;
+
+    if (unmarkedCount < 0) {
+        unmarkedCount = 0;
+    }
+
+    let percentage = 0;
+
+    if (totalClasses > 0) {
+        percentage = Math.round((presentCount / totalClasses) * 100);
+    }
+%>
+
+<div class="student-shell">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="student-menu">
+
+        <div class="student-greeting">
+            <div class="wave">
+                <i class="fa-solid fa-hand"></i>
+            </div>
+            <h2>Hi <%= student.fullName.split(" ")[0] %>!</h2>
+        </div>
+
+        <nav class="student-nav">
+            <a href="/student/dashboard" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                Home
+            </a>
+
+            <a href="/student/schedule" class="nav-item">
+                <i class="fa-solid fa-calendar-days"></i>
+                Schedule
+            </a>
+
+            <a class="nav-item">
+                <i class="fa-solid fa-users"></i>
+                Community
+            </a>
+
+            <a class="nav-item active">
+                <i class="fa-solid fa-chart-simple"></i>
+                My Attendance
+            </a>
+
+            <a class="nav-item">
+                <i class="fa-solid fa-credit-card"></i>
+                Fee Payment
+                <b></b>
+            </a>
+
+            <a class="nav-item">
+                <i class="fa-solid fa-book-open"></i>
+                My Courses
+            </a>
+        </nav>
+
+        <div class="student-nav gap-top">
+            <a class="nav-item">
+                <i class="fa-solid fa-circle-play"></i>
+                Mirai Academy
+            </a>
+        </div>
+
+        <p class="settings-label">Settings</p>
+
+        <form action="/logout" method="POST">
+            <button class="nav-item logout-item" type="submit">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                Log Out
+            </button>
+        </form>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="student-main">
+
+        <header class="student-topbar">
+            <div class="back-title">
+                <a href="/student/dashboard" class="icon-btn" aria-label="Back"><i class="fa-solid fa-arrow-left"></i></a>
+                <div>
+                    <span class="page-eyebrow">Overview</span>
+                    <h1>My Attendance</h1>
+                </div>
+            </div>
+            <div class="topbar-actions">
+                <span class="date-chip"><i class="fa-regular fa-calendar"></i> <%= today %></span>
+            </div>
+        </header>
+
+        <div class="student-tabs">
+            <button class="tab-btn active">Logs</button>
+            <button class="tab-btn">Subjects</button>
+            <button class="tab-btn">Issues</button>
+        </div>
+
+        <section class="attendance-summary">
+            <div class="summary-header">
+                <h2><i class="fa-solid fa-chart-pie"></i> Today's Summary</h2>
+                <button class="filter-chip">
+                    <i class="fa-solid fa-filter"></i> Class
+                    <i class="fa-solid fa-angle-down"></i>
+                </button>
+            </div>
+
+            <div class="summary-body">
+                <div class="summary-stats-grid">
+                    <div class="summary-stat-card green">
+                        <span class="stat-label"><span class="dot green"></span> Present</span>
+                        <strong><%= presentCount %></strong>
+                    </div>
+                    <div class="summary-stat-card red">
+                        <span class="stat-label"><span class="dot red"></span> Absent</span>
+                        <strong><%= absentCount %></strong>
+                    </div>
+                    <div class="summary-stat-card orange">
+                        <span class="stat-label"><span class="dot orange"></span> Unmarked</span>
+                        <strong><%= unmarkedCount %></strong>
+                    </div>
+                    <div class="summary-stat-card neutral">
+                        <span class="stat-label">Total Classes</span>
+                        <strong><%= totalClasses %></strong>
+                    </div>
+                </div>
+
+                <div class="summary-circle">
+                    <div class="donut" style="--percent:<%= percentage %>">
+                        <div>
+                            <strong><%= percentage %>%</strong>
+                            <span>attendance</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="filter-menu">
+            <button>
+                <i class="fa-solid fa-sliders"></i>
+            </button>
+
+            <button>
+                <i class="fa-solid fa-user-check"></i>
+                Status
+            </button>
+
+            <button>
+                <i class="fa-solid fa-book"></i>
+                Subjects
+            </button>
+
+            <button>
+                Reset
+            </button>
+        </div>
+
+        <div id="messageBox"></div>
+
+        <section class="schedule-feed">
+
+            <div class="date-heading">
+                <h2>Today - <%= today %></h2>
+                <span><%= scheduleList.length %> Events</span>
+            </div>
+
+            <% if (scheduleList.length === 0) { %>
+                <div class="empty-feed">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                    <h3>No classes today</h3>
+                    <p>You do not have any scheduled classes today.</p>
+                </div>
+            <% } %>
+
+            <% scheduleList.forEach(function(item) { %>
+
+                <%
+                    let activeSession = null;
+
+                    activeList.forEach(function(session) {
+                        if (
+                            session.schedule &&
+                            session.schedule._id &&
+                            session.schedule._id.toString() === item._id.toString()
+                        ) {
+                            activeSession = session;
+                        } else if (
+                            !session.schedule &&
+                            session.subject &&
+                            item.subject &&
+                            session.classGroup &&
+                            item.classGroup &&
+                            session.subject._id.toString() === item.subject._id.toString() &&
+                            session.classGroup._id.toString() === item.classGroup._id.toString()
+                        ) {
+                            activeSession = session;
+                        }
+                    });
+
+                    let isMarked = false;
+
+                    if (activeSession) {
+                        isMarked = markedList.includes(activeSession._id.toString());
+                    }
+                %>
+
+                <div class="feed-card">
+
+                    <div class="feed-card-top">
+                        <span class="course-pill">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            Class
+                        </span>
+
+                        <p>
+                            <%= item.startTime %> - <%= item.endTime %>
+                        </p>
+                    </div>
+
+                    <% if (item.subject) { %>
+                        <h3><%= item.subject.subjectName %></h3>
+                    <% } else { %>
+                        <h3>Subject Missing</h3>
+                    <% } %>
+
+                    <div class="feed-meta">
+                        <span>Core</span>
+                        <span>•</span>
+
+                        <% if (item.classroom) { %>
+                            <span>
+                                <i class="fa-solid fa-location-dot"></i>
+                                <%= item.classroom.classroomName %>
+                            </span>
+                        <% } else { %>
+                            <span>Room Missing</span>
+                        <% } %>
+
+                        <span>•</span>
+
+                        <% if (item.teacher) { %>
+                            <span>
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                                By <%= item.teacher.fullName %>
+                            </span>
+                        <% } else { %>
+                            <span>Teacher Missing</span>
+                        <% } %>
+                    </div>
+
+                    <div class="feed-action">
+
+                        <% if (!activeSession) { %>
+
+                            <span class="status-text muted">
+                                <i class="fa-regular fa-clock"></i>
+                                Not Started
+                            </span>
+
+                            <button class="details-btn" disabled>
+                                View Details
+                            </button>
+
+                        <% } else if (isMarked) { %>
+
+                            <span class="status-text present">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Present
+                            </span>
+
+                            <button class="details-btn marked" disabled>
+                                Marked
+                            </button>
+
+                        <% } else { %>
+
+                            <span class="status-text live">
+                                <i class="fa-solid fa-circle-dot"></i>
+                                Live Now
+                            </span>
+
+                            <button
+                                class="details-btn primary"
+                                onclick="markAttendance('<%= activeSession._id %>', this)">
+                                Mark Attendance
+                            </button>
+
+                        <% } %>
+
+                    </div>
+
+                </div>
+
+            <% }) %>
+
+        </section>
+
+    </main>
+
+    <!-- RIGHT PROFILE -->
+    <aside class="student-profile-panel">
+
+        <div class="profile-card">
+            <div class="profile-avatar">
+                <%= student.fullName.charAt(0).toUpperCase() %>
+            </div>
+
+            <div>
+                <h3><%= student.fullName %></h3>
+                <a href="#">Open Profile</a>
+            </div>
+        </div>
+
+        <div class="mini-info-card">
+            <div class="mini-icon blue"><i class="fa-solid fa-users-rectangle"></i></div>
+            <div>
+                <h4>Class Group</h4>
+                <% if (student.classGroup && student.classGroup.name) { %>
+                    <p><%= student.classGroup.name %></p>
+                <% } else { %>
+                    <p>N/A</p>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="mini-info-card">
+            <div class="mini-icon purple"><i class="fa-solid fa-book-open"></i></div>
+            <div>
+                <h4>Subjects</h4>
+                <% if (student.subjects) { %>
+                    <p><%= student.subjects.length %> enrolled</p>
+                <% } else { %>
+                    <p>0 enrolled</p>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="mini-info-card">
+            <div class="mini-icon green"><i class="fa-solid fa-broadcast-tower"></i></div>
+            <div>
+                <h4>Live Sessions</h4>
+                <p><%= activeList.length %> active now</p>
+            </div>
+        </div>
+
+    </aside>
+
+</div>
+
+<script src="/js/studentLocation.js"></script>
+
+</body>
+</html>

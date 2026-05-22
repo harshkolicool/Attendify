@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Groups | Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Class Groups</h1>
+        </header>
+
+        <% if (message) { %><div class="alert success"><%= message %></div><% } %>
+
+        <section class="panel">
+            <h2>Add Class Group</h2>
+            <form action="/admin/class-groups/create" method="POST" class="admin-form row-form">
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" name="name" placeholder="CSE 4A" required>
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <input type="text" name="department" placeholder="CSE" required>
+                </div>
+                <div class="form-group">
+                    <label>Semester</label>
+                    <input type="number" name="semester" min="1" max="8" required>
+                </div>
+                <div class="form-group">
+                    <label>Section</label>
+                    <input type="text" name="section" placeholder="A" required>
+                </div>
+                <button type="submit" class="btn-primary">Add Class Group</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>All Class Groups</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>Section</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (classGroups.length === 0) { %>
+                        <tr><td colspan="5">No class groups yet</td></tr>
+                    <% } %>
+                    <% classGroups.forEach(function(item) { %>
+                        <tr>
+                            <td><%= item.name %></td>
+                            <td><%= item.department %></td>
+                            <td><%= item.semester %></td>
+                            <td><%= item.section %></td>
+                            <td>
+                                <form action="/admin/class-groups/<%= item._id %>/delete" method="POST" onsubmit="return confirm('Delete this class group?')">
+                                    <button type="submit" class="btn-danger-small">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classrooms | Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Classrooms</h1>
+            <p>Set GPS coordinates and attendance radius (meters)</p>
+        </header>
+
+        <% if (message) { %><div class="alert success"><%= message %></div><% } %>
+
+        <section class="panel">
+            <h2>Add Classroom</h2>
+            <form action="/admin/classrooms/create" method="POST" class="admin-form row-form">
+                <div class="form-group">
+                    <label>Room Name</label>
+                    <input type="text" name="classroomName" placeholder="Room 101" required>
+                </div>
+                <div class="form-group">
+                    <label>Building</label>
+                    <input type="text" name="buildingName" placeholder="Block A" required>
+                </div>
+                <div class="form-group">
+                    <label>Floor</label>
+                    <input type="number" name="floorNumber" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Latitude</label>
+                    <input type="number" step="any" name="latitude" placeholder="28.6139" required>
+                </div>
+                <div class="form-group">
+                    <label>Longitude</label>
+                    <input type="number" step="any" name="longitude" placeholder="77.2090" required>
+                </div>
+                <div class="form-group">
+                    <label>Radius (m)</label>
+                    <input type="number" name="radius" value="100" required>
+                </div>
+                <button type="submit" class="btn-primary">Add Classroom</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>All Classrooms</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Room</th>
+                        <th>Building</th>
+                        <th>Floor</th>
+                        <th>Lat / Lng</th>
+                        <th>Radius</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (classrooms.length === 0) { %>
+                        <tr><td colspan="6">No classrooms yet</td></tr>
+                    <% } %>
+                    <% classrooms.forEach(function(item) { %>
+                        <tr>
+                            <td><%= item.classroomName %></td>
+                            <td><%= item.buildingName %></td>
+                            <td><%= item.floorNumber %></td>
+                            <td><%= item.latitude %>, <%= item.longitude %></td>
+                            <td><%= item.radius %> m</td>
+                            <td>
+                                <form action="/admin/classrooms/<%= item._id %>/delete" method="POST" onsubmit="return confirm('Delete this classroom?')">
+                                    <button type="submit" class="btn-danger-small">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+</body>
+</html>

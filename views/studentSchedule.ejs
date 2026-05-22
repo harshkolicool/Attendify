@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule | Attendify</title>
+    <link rel="stylesheet" href="/css/studentSchedule.css">
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+</head>
+<body>
+
+<%
+    const scheduleList = schedules || [];
+    const activeList = activeSessions || [];
+    const markedList = markedSessionIds || [];
+
+    const now = new Date();
+    const currentDate = now.getDate();
+    const currentMonth = now.toLocaleString("default", { month: "long" });
+
+    const firstName = student.fullName.split(" ")[0];
+%>
+
+<div class="schedule-layout">
+
+    <aside class="schedule-sidebar">
+        <div class="student-welcome">
+            <div class="welcome-icon">
+                <i class="fa-solid fa-hand"></i>
+            </div>
+            <h2>Hi <%= firstName %>!</h2>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="/student/dashboard" class="menu-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+
+            <a href="/student/schedule" class="menu-item active">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Schedule</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <i class="fa-solid fa-users"></i>
+                <span>Community</span>
+            </a>
+
+            <a href="/student/dashboard" class="menu-item">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span>My Attendance</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <i class="fa-solid fa-credit-card"></i>
+                <span>Fee Payment</span>
+                <b></b>
+            </a>
+
+            <a href="#" class="menu-item">
+                <i class="fa-solid fa-book-open"></i>
+                <span>My Courses</span>
+            </a>
+        </nav>
+
+        <div class="academy-link">
+            <a href="#" class="menu-item">
+                <i class="fa-solid fa-circle-play"></i>
+                <span>Mirai Academy</span>
+            </a>
+        </div>
+
+        <p class="settings-title">Settings</p>
+
+        <form action="/logout" method="POST">
+            <button class="menu-item logout-btn" type="submit">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>Log Out</span>
+            </button>
+        </form>
+    </aside>
+
+    <main class="schedule-main">
+
+        <header class="schedule-header">
+            <div class="header-left">
+                <a href="/student/dashboard" class="back-btn">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+
+                <div>
+                    <h1><%= currentMonth %></h1>
+                    <p>Your class schedule for <%= today %></p>
+                </div>
+
+                <button class="month-arrow" type="button">
+                    <i class="fa-solid fa-angle-down"></i>
+                </button>
+            </div>
+
+            <div class="header-right">
+                <button class="refresh-btn" type="button" onclick="window.location.reload()">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+
+                <div class="date-box"><%= currentDate %></div>
+            </div>
+        </header>
+
+        <section class="calendar-strip">
+            <div class="calendar-line"></div>
+
+            <div class="date-marker">
+                <strong><%= currentDate %></strong>
+                <span><%= today.slice(0, 3) %></span>
+            </div>
+
+            <div class="event-count">
+                <span><%= scheduleList.length %> Events</span>
+            </div>
+        </section>
+
+        <div id="messageBox" class="schedule-message"></div>
+
+        <section class="schedule-feed">
+
+            <% if (scheduleList.length === 0) { %>
+                <div class="empty-schedule">
+                    <div>
+                        <i class="fa-solid fa-calendar-xmark"></i>
+                    </div>
+                    <h3>No scheduled classes today</h3>
+                    <p>You do not have any class events for <%= today %>.</p>
+                </div>
+            <% } %>
+
+            <% scheduleList.forEach(function(item) { %>
+
+                <%
+                    let activeSession = null;
+
+                    activeList.forEach(function(session) {
+                        if (
+                            session.schedule &&
+                            session.schedule._id &&
+                            session.schedule._id.toString() === item._id.toString()
+                        ) {
+                            activeSession = session;
+                        } else if (
+                            !session.schedule &&
+                            session.subject &&
+                            item.subject &&
+                            session.classGroup &&
+                            item.classGroup &&
+                            session.subject._id.toString() === item.subject._id.toString() &&
+                            session.classGroup._id.toString() === item.classGroup._id.toString()
+                        ) {
+                            activeSession = session;
+                        }
+                    });
+
+                    let isMarked = false;
+
+                    if (activeSession) {
+                        isMarked = markedList.includes(activeSession._id.toString());
+                    }
+                %>
+
+                <article class="class-card">
+
+                    <div class="class-card-top">
+                        <span class="subject-pill">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            Class
+                        </span>
+
+                        <span class="class-time">
+                            <%= item.startTime %> - <%= item.endTime %>
+                        </span>
+                    </div>
+
+                    <div class="class-body">
+                        <div>
+                            <% if (item.subject) { %>
+                                <h3><%= item.subject.subjectName %></h3>
+                            <% } else { %>
+                                <h3>Subject Missing</h3>
+                            <% } %>
+
+                            <div class="class-meta">
+                                <span>
+                                    <i class="fa-solid fa-layer-group"></i>
+                                    Core
+                                </span>
+
+                                <% if (item.classroom) { %>
+                                    <span>
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        <%= item.classroom.classroomName %>
+                                    </span>
+                                <% } else { %>
+                                    <span>
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        Room Missing
+                                    </span>
+                                <% } %>
+
+                                <% if (item.teacher) { %>
+                                    <span>
+                                        <i class="fa-solid fa-chalkboard-user"></i>
+                                        <%= item.teacher.fullName %>
+                                    </span>
+                                <% } else { %>
+                                    <span>
+                                        <i class="fa-solid fa-chalkboard-user"></i>
+                                        Teacher Missing
+                                    </span>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <button class="clip-btn" type="button">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </button>
+                    </div>
+
+                    <div class="class-action">
+
+                        <% if (!activeSession) { %>
+                            <button class="view-btn" type="button" disabled>
+                                View Details
+                            </button>
+
+                            <span class="status-badge waiting">
+                                <i class="fa-regular fa-clock"></i>
+                                Not Started
+                            </span>
+
+                        <% } else if (isMarked) { %>
+                            <button class="view-btn marked" type="button" disabled>
+                                Attendance Marked
+                            </button>
+
+                            <span class="status-badge present">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Present
+                            </span>
+
+                        <% } else { %>
+                            <button
+                                class="view-btn live"
+                                type="button"
+                                onclick="markAttendance('<%= activeSession._id %>', this)">
+                                Mark Attendance
+                            </button>
+
+                            <span class="status-badge live">
+                                <i class="fa-solid fa-circle-dot"></i>
+                                Live Now
+                            </span>
+                        <% } %>
+
+                    </div>
+
+                </article>
+
+            <% }) %>
+
+        </section>
+    </main>
+
+    <aside class="profile-panel">
+        <div class="profile-card">
+            <div class="avatar-circle">
+                <%= student.fullName.charAt(0).toUpperCase() %>
+            </div>
+
+            <div>
+                <h3><%= student.fullName %></h3>
+                <a href="#">Open Profile</a>
+            </div>
+        </div>
+
+        <div class="side-card">
+            <div class="side-card-icon blue">
+                <i class="fa-solid fa-users-rectangle"></i>
+            </div>
+            <div>
+                <h4>Class Group</h4>
+                <% if (student.classGroup && student.classGroup.name) { %>
+                    <p><%= student.classGroup.name %></p>
+                <% } else { %>
+                    <p>N/A</p>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="side-card">
+            <div class="side-card-icon purple">
+                <i class="fa-solid fa-book-open"></i>
+            </div>
+            <div>
+                <h4>Subjects</h4>
+                <% if (student.subjects) { %>
+                    <p><%= student.subjects.length %> Subjects</p>
+                <% } else { %>
+                    <p>0 Subjects</p>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="side-card">
+            <div class="side-card-icon green">
+                <i class="fa-solid fa-broadcast-tower"></i>
+            </div>
+            <div>
+                <h4>Live Sessions</h4>
+                <p><%= activeList.length %> Active</p>
+            </div>
+        </div>
+    </aside>
+
+</div>
+
+<script src="/js/studentLocation.js"></script>
+</body>
+</html>

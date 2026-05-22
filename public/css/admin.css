@@ -1,0 +1,379 @@
+/* College Admin Panel */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button, input, select {
+    font-family: inherit;
+}
+
+/* Login */
+.admin-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e3a8a, #4338ca);
+}
+
+.admin-login-card {
+    width: 100%;
+    max-width: 400px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.admin-login-head {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.admin-login-head i {
+    font-size: 40px;
+    color: #4338ca;
+    margin-bottom: 12px;
+}
+
+.admin-login-head h1 {
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.admin-login-head p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.login-links {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.login-links a {
+    color: #4338ca;
+    font-weight: bold;
+}
+
+/* Layout */
+.admin-layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 250px 1fr;
+}
+
+.admin-sidebar {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.admin-brand i {
+    color: #818cf8;
+}
+
+.admin-college {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 24px;
+}
+
+.admin-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.admin-nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #cbd5e1;
+}
+
+.admin-nav a:hover,
+.admin-nav a.active {
+    background: #334155;
+    color: #ffffff;
+}
+
+.admin-logout {
+    width: 100%;
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    background: transparent;
+    color: #f1f5f9;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.admin-logout:hover {
+    background: #7f1d1d;
+    border-color: #b91c1c;
+}
+
+.admin-main {
+    padding: 24px 28px 40px;
+    overflow-x: auto;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.admin-header h1 {
+    font-size: 26px;
+    margin-bottom: 4px;
+}
+
+.admin-header p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.admin-user {
+    font-size: 14px;
+    color: #475569;
+    font-weight: bold;
+}
+
+/* Alerts */
+.alert {
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.alert.success {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.alert.error {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+/* Stats */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px;
+}
+
+.stat-card span {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.stat-card h3 {
+    font-size: 32px;
+    margin: 8px 0;
+    color: #4338ca;
+}
+
+.stat-card a {
+    font-size: 13px;
+    color: #4338ca;
+    font-weight: bold;
+}
+
+.info-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.info-panel h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+.info-panel ol {
+    margin-left: 20px;
+    color: #475569;
+    line-height: 1.8;
+}
+
+/* Panels & forms */
+.panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.panel h2 {
+    font-size: 17px;
+    margin-bottom: 16px;
+}
+
+.admin-form .form-group {
+    margin-bottom: 14px;
+}
+
+.admin-form label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #374151;
+}
+
+.admin-form input,
+.admin-form select {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+}
+
+.row-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    align-items: end;
+}
+
+.btn-primary {
+    background: #4338ca;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: #3730a3;
+}
+
+.btn-danger-small {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.checkbox-list {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+.hint {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* Table */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table th,
+.data-table td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table th {
+    background: #f8fafc;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.data-table tr:hover {
+    background: #f8fafc;
+}
+
+@media (max-width: 900px) {
+    .admin-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-sidebar {
+        display: none;
+    }
+
+    .stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
+}

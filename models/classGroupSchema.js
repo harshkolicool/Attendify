@@ -1,15 +1,7 @@
 const mongoose = require("mongoose");
+const classGroupSchema = new mongoose.Schema({
 
-const subjectSchema = new mongoose.Schema({
-
-    subjectName: {
-        type: String,
-        required: true,
-        trim: true,
-        uppercase: true
-    },
-
-    subjectCode: {
+    name: {
         type: String,
         required: true,
         uppercase: true,
@@ -28,24 +20,18 @@ const subjectSchema = new mongoose.Schema({
         required: true
     },
 
+    section: {
+        type: String,
+        required: true,
+        uppercase: true,
+        trim: true
+    },
+
     college: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "College",
         required: true
     },
-
-    classGroup: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "ClassGroup",
-        required: true
-    },
-
-    teachers: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Teacher"
-        }
-    ],
 
     students: [
         {
@@ -54,10 +40,10 @@ const subjectSchema = new mongoose.Schema({
         }
     ],
 
-    attendanceSessions: [
+    subjects: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "AttendanceSession"
+            ref: "Subject"
         }
     ],
 
@@ -70,11 +56,8 @@ const subjectSchema = new mongoose.Schema({
     timestamps: true
 });
 
-subjectSchema.index(
-    { college: 1, classGroup: 1, subjectCode: 1 },
-    { unique: true }
-);
+classGroupSchema.index( { college: 1, department: 1, semester: 1, section: 1 }, { unique: true });
 
-const Subject = mongoose.model("Subject", subjectSchema);
+const ClassGroup = mongoose.model("ClassGroup", classGroupSchema);
 
-module.exports = Subject;
+module.exports = ClassGroup;

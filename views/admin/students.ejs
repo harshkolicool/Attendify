@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students | Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Students</h1>
+            <p>Students are auto-linked to all subjects in their class group</p>
+        </header>
+
+        <% if (message) { %><div class="alert success"><%= message %></div><% } %>
+
+        <section class="panel">
+            <h2>Add Student</h2>
+            <form action="/admin/students/create" method="POST" class="admin-form row-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label>Enrollment No.</label>
+                    <input type="text" name="enrollmentNumber" required>
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <input type="text" name="department" required>
+                </div>
+                <div class="form-group">
+                    <label>Semester</label>
+                    <input type="number" name="semester" min="1" max="8" required>
+                </div>
+                <div class="form-group">
+                    <label>Class Group</label>
+                    <select name="classGroupId" required>
+                        <option value="">Select class group</option>
+                        <% classGroups.forEach(function(g) { %>
+                            <option value="<%= g._id %>"><%= g.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Add Student</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>All Students</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Enrollment</th>
+                        <th>Class Group</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (students.length === 0) { %>
+                        <tr><td colspan="5">No students yet</td></tr>
+                    <% } %>
+                    <% students.forEach(function(item) { %>
+                        <tr>
+                            <td><%= item.fullName %></td>
+                            <td><%= item.email %></td>
+                            <td><%= item.enrollmentNumber %></td>
+                            <td><%= item.classGroup ? item.classGroup.name : "N/A" %></td>
+                            <td>
+                                <form action="/admin/students/<%= item._id %>/delete" method="POST" onsubmit="return confirm('Delete this student?')">
+                                    <button type="submit" class="btn-danger-small">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+</body>
+</html>

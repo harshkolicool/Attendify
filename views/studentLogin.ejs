@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login | Attendify</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+<div class="auth-page">
+    <div class="auth-split">
+
+        <aside class="auth-brand-panel student">
+            <a href="/" class="brand-logo light">
+                <span><i class="fa-solid fa-clipboard-check"></i></span>
+                Attendify
+            </a>
+            <h2>Welcome back, student</h2>
+            <p>View your schedule, track attendance, and mark check-ins when class is live.</p>
+            <ul class="auth-perks">
+                <li><i class="fa-solid fa-check"></i> Real-time session alerts</li>
+                <li><i class="fa-solid fa-check"></i> GPS-verified marking</li>
+                <li><i class="fa-solid fa-check"></i> Attendance insights</li>
+            </ul>
+        </aside>
+
+        <div class="auth-card">
+            <div class="auth-header student compact">
+                <div class="auth-icon"><i class="fa-solid fa-user-graduate"></i></div>
+                <h2>Student Login</h2>
+                <p>Enter your college credentials</p>
+            </div>
+
+            <% if (error) { %>
+                <div class="error-box auth-alert">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <form action="/student/login" method="POST" class="auth-form">
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" name="email" placeholder="student@college.com" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" name="password" placeholder="Enter password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    Login as Student
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <a href="/"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+                <span>·</span>
+                <a href="/teacher/login">Teacher login</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Attendify</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <div>
+                <h1>Dashboard</h1>
+                <% if (college) { %>
+                    <p><%= college.collegeName %> (<%= college.collegeCode %>)</p>
+                <% } %>
+            </div>
+            <p class="admin-user">Hi <%= admin.fullName %></p>
+        </header>
+
+        <% if (message) { %>
+            <div class="alert success"><%= message %></div>
+        <% } %>
+
+        <section class="stat-grid">
+            <div class="stat-card">
+                <span>Class Groups</span>
+                <h3><%= counts.classGroups %></h3>
+                <a href="/admin/class-groups">Manage</a>
+            </div>
+            <div class="stat-card">
+                <span>Classrooms</span>
+                <h3><%= counts.classrooms %></h3>
+                <a href="/admin/classrooms">Manage</a>
+            </div>
+            <div class="stat-card">
+                <span>Subjects</span>
+                <h3><%= counts.subjects %></h3>
+                <a href="/admin/subjects">Manage</a>
+            </div>
+            <div class="stat-card">
+                <span>Teachers</span>
+                <h3><%= counts.teachers %></h3>
+                <a href="/admin/teachers">Manage</a>
+            </div>
+            <div class="stat-card">
+                <span>Students</span>
+                <h3><%= counts.students %></h3>
+                <a href="/admin/students">Manage</a>
+            </div>
+            <div class="stat-card">
+                <span>Schedules</span>
+                <h3><%= counts.schedules %></h3>
+                <a href="/admin/schedules">Manage</a>
+            </div>
+        </section>
+
+        <section class="info-panel">
+            <h2>Setup order for a new college</h2>
+            <ol>
+                <li>Create <strong>Class Groups</strong></li>
+                <li>Add <strong>Classrooms</strong> with GPS and radius</li>
+                <li>Add <strong>Subjects</strong> and assign teachers</li>
+                <li>Add <strong>Teachers</strong> and <strong>Students</strong></li>
+                <li>Create weekly <strong>Schedules</strong></li>
+            </ol>
+        </section>
+    </main>
+</div>
+
+</body>
+</html>

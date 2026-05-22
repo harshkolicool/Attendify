@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subjects | Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Subjects</h1>
+        </header>
+
+        <% if (message) { %><div class="alert success"><%= message %></div><% } %>
+
+        <section class="panel">
+            <h2>Add Subject</h2>
+            <form action="/admin/subjects/create" method="POST" class="admin-form">
+                <div class="row-form">
+                    <div class="form-group">
+                        <label>Subject Name</label>
+                        <input type="text" name="subjectName" placeholder="DATABASE MANAGEMENT" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject Code</label>
+                        <input type="text" name="subjectCode" placeholder="CS401" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
+                        <input type="text" name="department" placeholder="CSE" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <input type="number" name="semester" min="1" max="8" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Class Group</label>
+                        <select name="classGroupId" required>
+                            <option value="">Select class group</option>
+                            <% classGroups.forEach(function(g) { %>
+                                <option value="<%= g._id %>"><%= g.name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Assign Teachers (optional)</label>
+                    <div class="checkbox-list">
+                        <% if (teachers.length === 0) { %>
+                            <p class="hint">Add teachers first</p>
+                        <% } %>
+                        <% teachers.forEach(function(t) { %>
+                            <label class="check-item">
+                                <input type="checkbox" name="teacherIds" value="<%= t._id %>">
+                                <%= t.fullName %> (<%= t.email %>)
+                            </label>
+                        <% }) %>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Add Subject</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>All Subjects</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Class Group</th>
+                        <th>Teachers</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (subjects.length === 0) { %>
+                        <tr><td colspan="5">No subjects yet</td></tr>
+                    <% } %>
+                    <% subjects.forEach(function(item) { %>
+                        <tr>
+                            <td><%= item.subjectCode %></td>
+                            <td><%= item.subjectName %></td>
+                            <td><%= item.classGroup ? item.classGroup.name : "N/A" %></td>
+                            <td>
+                                <% if (item.teachers && item.teachers.length > 0) { %>
+                                    <% item.teachers.forEach(function(t, i) { %>
+                                        <%= t.fullName %><% if (i < item.teachers.length - 1) { %>, <% } %>
+                                    <% }) %>
+                                <% } else { %>
+                                    None
+                                <% } %>
+                            </td>
+                            <td>
+                                <form action="/admin/subjects/<%= item._id %>/delete" method="POST" onsubmit="return confirm('Delete this subject?')">
+                                    <button type="submit" class="btn-danger-small">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+</body>
+</html>

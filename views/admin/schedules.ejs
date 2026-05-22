@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedules | Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Schedules</h1>
+            <p>Weekly timetable for teachers and students</p>
+        </header>
+        
+        <% if (message) { %>
+            <div class="alert <%= message.includes('successfully') ? 'success' : 'error' %>">
+                <%= message %>
+            </div>
+        <% } %>
+
+        <section class="panel">
+            <h2>Add Schedule</h2>
+            <form action="/admin/schedules/create" method="POST" class="admin-form">
+                <div class="row-form">
+                    <div class="form-group">
+                        <label>Day</label>
+                        <select name="day" required>
+                            <% days.forEach(function(d) { %>
+                                <option value="<%= d %>"><%= d %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="text" name="startTime" placeholder="09:00 AM" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="text" name="endTime" placeholder="10:00 AM" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Class Group</label>
+                        <select name="classGroupId" required>
+                            <option value="">Select</option>
+                            <% classGroups.forEach(function(g) { %>
+                                <option value="<%= g._id %>"><%= g.name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select name="subjectId" required>
+                            <option value="">Select</option>
+                            <% subjects.forEach(function(s) { %>
+                                <option value="<%= s._id %>">
+                                    <%= s.subjectCode %> - <%= s.subjectName %>
+                                    (<%= s.classGroup ? s.classGroup.name : "" %>)
+                                </option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Teacher</label>
+                        <select name="teacherId" required>
+                            <option value="">Select</option>
+                            <% teachers.forEach(function(t) { %>
+                                <option value="<%= t._id %>"><%= t.fullName %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Classroom</label>
+                        <select name="classroomId" required>
+                            <option value="">Select</option>
+                            <% classrooms.forEach(function(c) { %>
+                                <option value="<%= c._id %>"><%= c.classroomName %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Add Schedule</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>All Schedules</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Time</th>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Class</th>
+                        <th>Room</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (schedules.length === 0) { %>
+                        <tr><td colspan="7">No schedules yet</td></tr>
+                    <% } %>
+                    <% schedules.forEach(function(item) { %>
+                        <tr>
+                            <td><%= item.day %></td>
+                            <td><%= item.startTime %> - <%= item.endTime %></td>
+                            <td><%= item.subject ? item.subject.subjectName : "N/A" %></td>
+                            <td><%= item.teacher ? item.teacher.fullName : "N/A" %></td>
+                            <td><%= item.classGroup ? item.classGroup.name : "N/A" %></td>
+                            <td><%= item.classroom ? item.classroom.classroomName : "N/A" %></td>
+                            <td>
+                                <form action="/admin/schedules/<%= item._id %>/delete" method="POST" onsubmit="return confirm('Delete this schedule?')">
+                                    <button type="submit" class="btn-danger-small">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+</body>
+</html>
