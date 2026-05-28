@@ -433,6 +433,37 @@ document.addEventListener("DOMContentLoaded", function () {
         postLocation(payload);
     }
 
+    function sendOfflineUpdate() {
+        if (!activeSessionId) return;
+        
+        const payload = {
+            sessionId: activeSessionId,
+            deviceId: deviceId,
+            deviceLabel: getDeviceLabel(),
+            online: false,
+            updatedAt: new Date()
+        };
+        
+        if (isSocketMode && socket && socket.connected) {
+            socket.emit("student:location:update", payload);
+        } else if (!isSocketMode && navigator.sendBeacon) {
+            const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+            navigator.sendBeacon("/student/live-location", blob);
+        }
+    }
+
+    window.addEventListener("visibilitychange", function() {
+        if (document.visibilityState === "hidden") {
+            sendOfflineUpdate();
+        } else if (document.visibilityState === "visible" && activeSessionId) {
+            refreshFromDom();
+        }
+    });
+
+    window.addEventListener("pagehide", function() {
+        sendOfflineUpdate();
+    });
+
     function startWatch(sessionId) {
         if (!sessionId || !canUseGeolocation()) {
             return;
@@ -455,36 +486,55 @@ document.addEventListener("DOMContentLoaded", function () {
 
         stopWatch();
 
-        const initialOptions = {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 20000
-        };
+        function startContinuousWatch() {
+            if (watchId !== null) return;
+            const watchOptions = {
+                enableHighAccuracy: true,
+                maximumAge: 2500,
+                timeout: 20000
+            };
 
-        const watchOptions = {
-            enableHighAccuracy: true,
-            maximumAge: 2500,
-            timeout: 20000
-        };
+            try {
+                watchId = navigator.geolocation.watchPosition(
+                    sendLocation,
+                    function (error) {
+                        if (error && error.code === 1) {
+                            stopWatch();
+                        }
+                    },
+                    watchOptions
+                );
+            } catch (e) {
+                stopWatch();
+            }
+        }
 
         try {
-            navigator.geolocation.getCurrentPosition(
-                sendLocation,
-                function () {
-                    // keep trying via watch
-                },
-                initialOptions
-            );
-
-            watchId = navigator.geolocation.watchPosition(
-                sendLocation,
-                function (error) {
-                    if (error && error.code === 1) {
-                        stopWatch();
-                    }
-                },
-                watchOptions
-            );
+            if (window.AttendifyGeo && typeof window.AttendifyGeo.getBestPosition === "function") {
+                window.AttendifyGeo.getBestPosition(
+                    function (acc, best) {
+                        if (best) sendLocation(best);
+                    },
+                    { minCollectionMs: 6000, maxWaitMs: 15000 }
+                ).then(function (best) {
+                    sendLocation(best);
+                    startContinuousWatch();
+                }).catch(function () {
+                    startContinuousWatch();
+                });
+            } else {
+                const initialOptions = {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 20000
+                };
+                navigator.geolocation.getCurrentPosition(
+                    sendLocation,
+                    function () {},
+                    initialOptions
+                );
+                startContinuousWatch();
+            }
         } catch (e) {
             stopWatch();
         }
