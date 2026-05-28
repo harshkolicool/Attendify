@@ -287,18 +287,6 @@ function findScheduleForSession(schedules, session) {
         if (session.schedule && sameId(session.schedule, schedule._id)) {
             return schedule;
         }
-
-        if (
-            !session.schedule &&
-            session.subject &&
-            schedule.subject &&
-            session.classGroup &&
-            schedule.classGroup &&
-            sameId(session.subject, schedule.subject) &&
-            sameId(session.classGroup, schedule.classGroup)
-        ) {
-            return schedule;
-        }
     }
 
     return null;
