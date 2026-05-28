@@ -19,7 +19,7 @@
 
 <div class="student-layout">
 
-    <%- include("student/partials/sidebar", { activePage, student }) %>
+    <%- include("student/partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "", student: typeof student !== "undefined" ? student : null }) %>
 
     <main class="student-main">
         <header class="student-header">
@@ -32,21 +32,21 @@
 
         <div id="messageBox" class="schedule-message"></div>
 
-        <% if (message === "deleted") { %>
+        <% if (typeof message !== "undefined" && message === "deleted") { %>
             <div class="success-box">Passkey deleted successfully.</div>
-        <% } else if (message === "device_deleted") { %>
+        <% } else if (typeof message !== "undefined" && message === "device_deleted") { %>
             <div class="success-box">Trusted browser removed successfully.</div>
-        <% } else if (message === "request_sent") { %>
+        <% } else if (typeof message !== "undefined" && message === "request_sent") { %>
             <div class="success-box">Passkey setup request sent to admin successfully.</div>
-        <% } else if (message === "request_pending") { %>
+        <% } else if (typeof message !== "undefined" && message === "request_pending") { %>
             <div class="error-box">Your passkey setup request is already pending admin approval.</div>
-        <% } else if (message === "setup_already_open") { %>
+        <% } else if (typeof message !== "undefined" && message === "setup_already_open") { %>
             <div class="success-box">Passkey setup is already allowed right now. You can register immediately.</div>
-        <% } else if (message === "request_error") { %>
+        <% } else if (typeof message !== "undefined" && message === "request_error") { %>
             <div class="error-box">Could not send passkey setup request. Please try again.</div>
-        <% } else if (message === "error") { %>
+        <% } else if (typeof message !== "undefined" && message === "error") { %>
             <div class="error-box">Something went wrong. Please try again.</div>
-        <% } else if (message === "invalid") { %>
+        <% } else if (typeof message !== "undefined" && message === "invalid") { %>
             <div class="error-box">Invalid passkey selected.</div>
         <% } %>
 
@@ -60,26 +60,28 @@
                 </p>
             </div>
 
-            <button
-                class="view-btn live"
-                type="button"
-                id="registerPasskeyBtn"
-                <%= isPasskeySetupOpen ? "" : "disabled" %>
-            >
-                <i class="fa-solid fa-fingerprint"></i>
-                <%= isPasskeySetupOpen ? "Add New Passkey" : "Setup Not Allowed Yet" %>
-            </button>
-
-            <form action="/student/passkeys/request-setup" method="POST">
+            <div class="student-passkey-actions">
                 <button
-                    class="view-btn"
-                    type="submit"
-                    <%= pendingPasskeyRequest ? "disabled" : "" %>
+                    class="view-btn live"
+                    type="button"
+                    id="registerPasskeyBtn"
+                    <%= isPasskeySetupOpen ? "" : "disabled" %>
                 >
-                    <i class="fa-solid fa-paper-plane"></i>
-                    <%= pendingPasskeyRequest ? "Request Pending" : "Request New Passkey" %>
+                    <i class="fa-solid fa-fingerprint"></i>
+                    <%= isPasskeySetupOpen ? "Add New Passkey" : "Setup Not Allowed Yet" %>
                 </button>
-            </form>
+
+                <form action="/student/passkeys/request-setup" method="POST">
+                    <button
+                        class="view-btn"
+                        type="submit"
+                        <%= pendingPasskeyRequest ? "disabled" : "" %>
+                    >
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <%= pendingPasskeyRequest ? "Request Pending" : "Request New Passkey" %>
+                    </button>
+                </form>
+            </div>
         </section>
 
         <% if (pendingPasskeyRequest) { %>

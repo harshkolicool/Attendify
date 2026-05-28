@@ -18,18 +18,18 @@
 <body>
 
 <%
-    const scheduleList = schedules || [];
-    const activeList = activeSessions || [];
-    const todaySessionList = todaySessions || [];
+    const scheduleList = typeof schedules !== "undefined" ? schedules : [];
+    const activeList = typeof activeSessions !== "undefined" ? activeSessions : [];
+    const todaySessionList = typeof todaySessions !== "undefined" ? todaySessions : [];
     const studentLiveBootstrap = activeList.map(function (session) {
         return {
             sessionId: session._id.toString(),
             radius: Number(session.radius || (session.classroom ? session.classroom.radius : 0) || 100)
         };
     });
-    const markedList = markedSessionIds || [];
-    const statusMap = attendanceStatusBySchedule || {};
-    const subjectSummary = dashboardSubjectSummary || [];
+    const markedList = typeof markedSessionIds !== "undefined" ? markedSessionIds : [];
+    const statusMap = typeof attendanceStatusBySchedule !== "undefined" ? attendanceStatusBySchedule : {};
+    const subjectSummary = typeof dashboardSubjectSummary !== "undefined" ? dashboardSubjectSummary : [];
     let presentCountView = typeof presentCount !== "undefined" ? presentCount : 0;
     let absentCountView = typeof absentCount !== "undefined" ? absentCount : 0;
     let percentageView = typeof attendancePercentage !== "undefined" ? attendancePercentage : 0;
@@ -89,7 +89,7 @@
 
 <div class="schedule-layout">
 
-    <%- include("student/partials/sidebar", { activePage, student }) %>
+    <%- include("student/partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "", student: typeof student !== "undefined" ? student : null }) %>
 
     <main class="schedule-main">
         <header class="dashboard-header">
@@ -112,7 +112,7 @@
                 </div>
                 <div>
                     <span>Class Group</span>
-                    <h2><%= student.classGroup && student.classGroup.name ? student.classGroup.name : "N/A" %></h2>
+                    <h2><%= typeof student !== "undefined" && student.classGroup && student.classGroup.name ? student.classGroup.name : "N/A" %></h2>
                 </div>
             </div>
 
@@ -122,7 +122,7 @@
                 </div>
                 <div>
                     <span>Subjects</span>
-                    <h2><%= student.subjects ? student.subjects.length : 0 %></h2>
+                    <h2><%= typeof student !== "undefined" && student.subjects ? student.subjects.length : 0 %></h2>
                 </div>
             </div>
 
@@ -223,7 +223,7 @@
             <div class="dashboard-panel-head">
                 <div>
                     <h3>Today's Schedule</h3>
-                    <p>Your classes for <%= today %></p>
+                    <p>Your classes for <%= typeof today !== "undefined" ? today : "" %></p>
                 </div>
 
                 <span class="panel-count"><%= scheduleList.length %> Events</span>
@@ -231,7 +231,7 @@
 
             <div id="messageBox" class="schedule-message"></div>
 
-            <% if (!hasPasskey && !hasUsableTrustedDevice) { %>
+            <% if (typeof hasPasskey !== "undefined" && !hasPasskey && typeof hasUsableTrustedDevice !== "undefined" && !hasUsableTrustedDevice) { %>
                 <section class="passkey-security-card">
                     <div>
                         <h3>
@@ -466,11 +466,11 @@
     <aside class="profile-panel">
         <div class="profile-card">
             <div class="profile-avatar">
-                <%= student.fullName ? student.fullName.charAt(0).toUpperCase() : "S" %>
+                <%= typeof student !== "undefined" && student.fullName ? student.fullName.charAt(0).toUpperCase() : "S" %>
             </div>
 
             <div>
-                <h3><%= student.fullName %></h3>
+                <h3><%= typeof student !== "undefined" && student.fullName %></h3>
                 <a href="/student/dashboard">Open Profile</a>
             </div>
         </div>
@@ -481,7 +481,7 @@
             </div>
             <div>
                 <span>Class Group</span>
-                <strong><%= student.classGroup ? student.classGroup.name : "-" %></strong>
+                <strong><%= typeof student !== "undefined" && student.classGroup ? student.classGroup.name : "-" %></strong>
             </div>
         </div>
 
@@ -491,7 +491,7 @@
             </div>
             <div>
                 <span>Subjects</span>
-                <strong><%= student.subjects ? student.subjects.length : 0 %> Subjects</strong>
+                <strong><%= typeof student !== "undefined" && student.subjects ? student.subjects.length : 0 %> Subjects</strong>
             </div>
         </div>
 

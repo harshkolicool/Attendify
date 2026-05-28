@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-
+const realtimeConfig = require("../utils/realtimeConfig");
 const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
 
 function createToken() {
@@ -87,6 +87,29 @@ function injectMetaTag(html, escapedToken) {
     return metaTag + html;
 }
 
+
+function injectRealtimeConfig(html) {
+    if (html.includes("window.AttendifyRealtimeConfig")) {
+        return html;
+    }
+
+    const mode = JSON.stringify(realtimeConfig.getRealtimeMode());
+    const pollIntervalMs = Number(realtimeConfig.getPollIntervalMs()) || 5000;
+
+    const scriptTag =
+        "\n<script>\n" +
+        "window.AttendifyRealtimeConfig = {\n" +
+        "    mode: " + mode + ",\n" +
+        "    pollIntervalMs: " + pollIntervalMs + "\n" +
+        "};\n" +
+        "</script>\n";
+
+    if (html.includes("</head>")) {
+        return html.replace("</head>", scriptTag + "</head>");
+    }
+
+    return scriptTag + html;
+}
 
 function injectGlobalAssets(html) {
     let output = html;
@@ -222,6 +245,7 @@ function injectCsrfIntoHtml(html, token) {
     let output = html;
 
     output = injectMetaTag(output, escapedToken);
+    output = injectRealtimeConfig(output);
     output = injectHiddenInputIntoPostForms(output, escapedToken);
     output = injectGlobalAssets(output);
 

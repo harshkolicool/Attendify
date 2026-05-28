@@ -19,7 +19,7 @@
 
 <div class="teacher-page">
 
-    <%- include("teacher/partials/sidebar", { activePage: activePage || "reports", teacher }) %>
+    <%- include("teacher/partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "reports", teacher: typeof teacher !== "undefined" ? teacher : null }) %>
 
     <main class="teacher-main teacher-reports-page">
 

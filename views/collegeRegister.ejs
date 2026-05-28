@@ -67,9 +67,9 @@
                 </p>
             </div>
 
-            <% if (message) { %>
-                <div class="register-alert <%= message.includes('submitted') ? 'success' : 'error' %>">
-                    <%= message %>
+            <% if (typeof message !== "undefined" && message) { %>
+                <div class="register-alert <%= message && message && message.includes('submitted') ? 'success' : 'error' %>">
+                    <%= typeof message !== "undefined" ? message : "" %>
                 </div>
             <% } %>
 

@@ -3,18 +3,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (config.mode !== "socket") {
         // In polling mode, listen to the data from uiShell.js and update cards if needed
-        window.addEventListener("attendify:poll-data", function(e) {
+        window.addEventListener("attendify:poll-data", function (e) {
             const data = e.detail;
             if (!data || !data.attendanceStates) return;
-            
+
             let changed = false;
-            
+
             // In a real deep implementation we could compare the state of each schedule card
             // But uiShell.js will just refresh if there are new sessions anyway.
             // For now we just sync the ongoing cards by clock to keep UI fresh
             syncOngoingCardsByClock();
         });
-        
+
         syncOngoingCardsByClock();
         setInterval(syncOngoingCardsByClock, 30000);
         return;
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     socket.on("connect_error", function () {
-        showRealtimeMessage("Realtime connection issue. Trying to reconnect...", "error");
+        showRealtimeMessage("Realtime temporarily unavailable. The page will keep updating automatically.", "error");
     });
 
     function getScheduleCard(scheduleId) {

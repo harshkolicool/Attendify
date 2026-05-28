@@ -25,9 +25,9 @@
         <h1>Platform Admin</h1>
         <p>Login to approve college registration requests.</p>
 
-        <% if (message) { %>
+        <% if (typeof message !== "undefined" && message) { %>
             <div class="platform-alert error">
-                <%= message %>
+                <%= typeof message !== "undefined" ? message : "" %>
             </div>
         <% } %>
 

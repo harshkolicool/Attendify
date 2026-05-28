@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,169 +11,191 @@
     <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
+
 <body>
 
-<div class="platform-layout">
+    <div class="platform-layout">
 
-    <%- include("partials/sidebar", { activePage }) %>
+        <%- include("partials/sidebar", { activePage: typeof activePage !=="undefined" ? activePage : "" }) %>
 
-    <main class="platform-main">
+            <main class="platform-main">
 
-        <header class="platform-header">
-            <div>
-                <span class="platform-kicker">Platform Admin</span>
-                <h1>Dashboard</h1>
-                <p>Review college registration activity.</p>
-            </div>
-
-            <a href="/platform-admin/requests?status=PENDING" class="platform-primary-link">
-                <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
-                Pending Requests
-            </a>
-        </header>
-
-        <% if (flash) { %>
-            <div class="platform-alert <%= flash.type %>">
-                <strong><%= flash.title %></strong>
-                <p><%= flash.message %></p>
-            </div>
-        <% } %>
-
-        <% if (resetAdminPasswordResult) { %>
-            <section class="platform-admin-temp-password-card">
-                <div>
-                    <h3>
-                        <i class="fa-solid fa-key"></i>
-                        College Admin Password Reset
-                    </h3>
-
-                    <p>
-                        New temporary password generated for
-                        <strong><%= resetAdminPasswordResult.adminName %></strong>
-                        at
-                        <strong><%= resetAdminPasswordResult.collegeName %></strong>.
-                    </p>
-
-                    <p>
-                        Admin Email:
-                        <strong><%= resetAdminPasswordResult.adminEmail %></strong>
-                    </p>
-
-                    <div class="platform-admin-password-box">
-                        <span id="temporaryAdminPassword">
-                            <%= resetAdminPasswordResult.temporaryPassword %>
-                        </span>
-
-                        <button
-                            type="button"
-                            onclick="navigator.clipboard.writeText(document.getElementById('temporaryAdminPassword').innerText.trim())"
-                        >
-                            <i class="fa-solid fa-copy"></i>
-                            Copy
-                        </button>
+                <header class="platform-header">
+                    <div>
+                        <span class="platform-kicker">Platform Admin</span>
+                        <h1>Dashboard</h1>
+                        <p>Review college registration activity.</p>
                     </div>
 
-                    <small>
-                        Show this password to the college admin only once. Ask them to login and change it from Admin Panel → Change Password.
-                    </small>
-                </div>
-            </section>
-        <% } %>
+                    <a href="/platform-admin/requests?status=PENDING" class="platform-primary-link">
+                        <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+                        Pending Requests
+                    </a>
+                </header>
 
-        <section class="platform-stats-grid">
+                <% if (typeof flash !=="undefined" && flash) { %>
+                    <div class="platform-alert <%= flash.type %>">
+                        <strong>
+                            <%= flash.title %>
+                        </strong>
+                        <p>
+                            <%= flash.message %>
+                        </p>
+                    </div>
+                    <% } %>
 
-            <div class="platform-stat-card">
-                <i class="fa-solid fa-hourglass-half"></i>
-                <h3><%= pendingRequestsCount %></h3>
-                <p>Pending Requests</p>
-            </div>
-
-            <div class="platform-stat-card">
-                <i class="fa-solid fa-circle-check"></i>
-                <h3><%= approvedRequestsCount %></h3>
-                <p>Approved Requests</p>
-            </div>
-
-            <div class="platform-stat-card">
-                <i class="fa-solid fa-circle-xmark"></i>
-                <h3><%= rejectedRequestsCount %></h3>
-                <p>Rejected Requests</p>
-            </div>
-
-            <div class="platform-stat-card">
-                <i class="fa-solid fa-building-columns"></i>
-                <h3><%= collegesCount %></h3>
-                <p>Total Colleges</p>
-            </div>
-
-        </section>
-
-        <section class="platform-card">
-
-            <div class="platform-card-head">
-                <div>
-                    <h2>Recent Requests</h2>
-                    <p>Latest college registration requests.</p>
-                </div>
-
-                <a href="/platform-admin/requests" class="platform-small-link">
-                    View All
-                </a>
-            </div>
-
-            <% if (!recentRequests || recentRequests.length === 0) { %>
-                <div class="platform-empty">
-                    No registration requests found.
-                </div>
-            <% } %>
-
-            <div class="platform-request-list">
-                <% recentRequests.forEach(function(request) { %>
-
-                    <article class="platform-request-item">
-                        <div>
-                            <h3><%= request.collegeName %></h3>
-                            <p>
-                                <%= request.city %>, <%= request.state %>
-                                · Admin: <%= request.adminEmail %>
-                            </p>
-                        </div>
-
-                        <div class="platform-request-actions">
-                            <span class="platform-status <%= request.status.toLowerCase() %>">
-                                <%= request.status %>
-                            </span>
-
-                            <% if (request.status && request.status.toUpperCase() === "APPROVED") { %>
-                                <form
-                                    action="/platform-admin/requests/<%= request._id %>/reset-admin-password"
-                                    method="POST"
-                                    onsubmit="return confirm('Reset college admin password for <%= request.collegeName %>? A new temporary password will be generated.')"
-                                >
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                    <button class="platform-admin-warning-btn" type="submit">
+                        <% if (resetAdminPasswordResult) { %>
+                            <section class="platform-admin-temp-password-card">
+                                <div>
+                                    <h3>
                                         <i class="fa-solid fa-key"></i>
-                                        Reset Admin Password
-                                    </button>
-                                </form>
+                                        College Admin Password Reset
+                                    </h3>
+
+                                    <p>
+                                        New temporary password generated for
+                                        <strong>
+                                            <%= resetAdminPasswordResult.adminName %>
+                                        </strong>
+                                        at
+                                        <strong>
+                                            <%= resetAdminPasswordResult.collegeName %>
+                                        </strong>.
+                                    </p>
+
+                                    <p>
+                                        Admin Email:
+                                        <strong>
+                                            <%= resetAdminPasswordResult.adminEmail %>
+                                        </strong>
+                                    </p>
+
+                                    <div class="platform-admin-password-box">
+                                        <span id="temporaryAdminPassword">
+                                            <%= resetAdminPasswordResult.temporaryPassword %>
+                                        </span>
+
+                                        <button type="button"
+                                            onclick="navigator.clipboard.writeText(document.getElementById('temporaryAdminPassword').innerText.trim())">
+                                            <i class="fa-solid fa-copy"></i>
+                                            Copy
+                                        </button>
+                                    </div>
+
+                                    <small>
+                                        Show this password to the college admin only once. Ask them to login and change
+                                        it from Admin Panel → Change Password.
+                                    </small>
+                                </div>
+                            </section>
                             <% } %>
-                        </div>
-                    </article>
 
-                <% }) %>
-            </div>
+                                <section class="platform-stats-grid">
 
-        </section>
+                                    <div class="platform-stat-card">
+                                        <i class="fa-solid fa-hourglass-half"></i>
+                                        <h3>
+                                            <%= typeof pendingRequestsCount !=="undefined" ? pendingRequestsCount : 0 %>
+                                        </h3>
+                                        <p>Pending Requests</p>
+                                    </div>
 
-    </main>
+                                    <div class="platform-stat-card">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                        <h3>
+                                            <%= approvedRequestsCount %>
+                                        </h3>
+                                        <p>Approved Requests</p>
+                                    </div>
 
-</div>
+                                    <div class="platform-stat-card">
+                                        <i class="fa-solid fa-circle-xmark"></i>
+                                        <h3>
+                                            <%= rejectedRequestsCount %>
+                                        </h3>
+                                        <p>Rejected Requests</p>
+                                    </div>
 
-<script src="/js/uiShell.js"></script>
+                                    <div class="platform-stat-card">
+                                        <i class="fa-solid fa-building-columns"></i>
+                                        <h3>
+                                            <%= collegesCount %>
+                                        </h3>
+                                        <p>Total Colleges</p>
+                                    </div>
+
+                                </section>
+
+                                <section class="platform-card">
+
+                                    <div class="platform-card-head">
+                                        <div>
+                                            <h2>Recent Requests</h2>
+                                            <p>Latest college registration requests.</p>
+                                        </div>
+
+                                        <a href="/platform-admin/requests" class="platform-small-link">
+                                            View All
+                                        </a>
+                                    </div>
+
+                                    <% if (!recentRequests || recentRequests.length===0) { %>
+                                        <div class="platform-empty">
+                                            No registration requests found.
+                                        </div>
+                                        <% } %>
+
+                                            <div class="platform-request-list">
+                                                <% recentRequests.forEach(function(request) { %>
+
+                                                    <article class="platform-request-item">
+                                                        <div>
+                                                            <h3>
+                                                                <%= request.collegeName %>
+                                                            </h3>
+                                                            <p>
+                                                                <%= request.city %>, <%= request.state %>
+                                                                        · Admin: <%= request.adminEmail %>
+                                                            </p>
+                                                        </div>
+
+                                                        <div class="platform-request-actions">
+                                                            <span
+                                                                class="platform-status <%= request.status.toLowerCase() %>">
+                                                                <%= request.status %>
+                                                            </span>
+
+                                                            <% if (request.status &&
+                                                                request.status.toUpperCase()==="APPROVED" ) { %>
+                                                                <form
+                                                                    action="/platform-admin/requests/<%= request._id %>/reset-admin-password"
+                                                                    method="POST"
+                                                                    data-confirm="Reset college admin password for <%= request.collegeName || 'this college' %>? A new temporary password will be generated."
+                                                                    onsubmit="return confirm(this.dataset.confirm)">
+                                                                    <input type="hidden" name="_csrf"
+                                                                        value="<%= csrfToken %>">
+                                                                    <button class="platform-admin-warning-btn"
+                                                                        type="submit">
+                                                                        <i class="fa-solid fa-key"></i>
+                                                                        Reset Admin Password
+                                                                    </button>
+                                                                </form>
+                                                                <% } %>
+                                                        </div>
+                                                    </article>
+
+                                                    <% }) %>
+                                            </div>
+
+                                </section>
+
+            </main>
+
+    </div>
+
+    <script src="/js/uiShell.js"></script>
 </body>
+
 </html>

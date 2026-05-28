@@ -510,7 +510,7 @@
         }
 
         let reloadPending = false;
-        
+
         function queueReload(message) {
             if (reloadPending || !shouldAutoReloadForUpdate(role)) {
                 return;
@@ -526,7 +526,7 @@
 
         if (config.mode === "polling") {
             console.log("Realtime using polling fallback.");
-            
+
             // Do initial unread count fetch immediately
             const unreadCountApi = getUnreadCountApiPath(role);
             if (unreadCountApi) {
@@ -537,16 +537,16 @@
                             updateNotificationBadges(data.unreadCount || 0);
                         }
                     })
-                    .catch(() => {});
+                    .catch(() => { });
             }
 
             // Polling loop for core state changes
-            setInterval(function() {
+            setInterval(function () {
                 if (reloadPending) return;
-                
-                const pollApi = role === "student" ? "/student/realtime/poll" : 
-                               role === "teacher" ? "/teacher/realtime/poll" : null;
-                               
+
+                const pollApi = role === "student" ? "/student/realtime/poll" :
+                    role === "teacher" ? "/teacher/realtime/poll" : null;
+
                 if (!pollApi) return;
 
                 fetch(pollApi, { method: "GET", credentials: "same-origin" })
@@ -557,7 +557,7 @@
                         if (typeof data.unreadNotificationCount !== "undefined") {
                             updateNotificationBadges(data.unreadNotificationCount);
                         }
-                        
+
                         // Let specific role JS files handle the specific state updates if they want,
                         // or we can trigger simple reloads here based on flags.
                         // For uiShell, we just want to know if there's a reason to auto-reload
@@ -565,9 +565,9 @@
                         // Role-specific JS will listen to a custom event.
                         window.dispatchEvent(new CustomEvent("attendify:poll-data", { detail: data }));
                     })
-                    .catch(() => {});
+                    .catch(() => { });
             }, config.pollIntervalMs || 5000);
-            
+
             return;
         }
 
@@ -789,14 +789,14 @@
             }
             const wrapper = document.createElement('div');
             wrapper.className = 'select-shell';
-            
+
             const icon = document.createElement('i');
             const defaultIcon = select.getAttribute('data-select-icon') || 'fa-solid fa-list-ul';
             icon.className = defaultIcon + ' select-shell-icon';
-            
+
             const chevron = document.createElement('i');
             chevron.className = 'fa-solid fa-chevron-down select-shell-chevron';
-            
+
             select.parentNode.insertBefore(wrapper, select);
             wrapper.appendChild(icon);
             wrapper.appendChild(select);

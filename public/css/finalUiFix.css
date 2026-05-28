@@ -135,7 +135,7 @@ textarea {
 }
 
 .notification-action-btn,
-.notification-meta > form > button {
+.notification-meta>form>button {
     flex: 0 0 auto;
 }
 
@@ -313,11 +313,13 @@ textarea {
         transform: scale(0.85);
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
     }
+
     70% {
         opacity: 1;
         transform: scale(1);
         box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
     }
+
     100% {
         opacity: 0.95;
         transform: scale(0.85);
@@ -460,7 +462,7 @@ textarea {
     transform: rotate(180deg);
 }
 
-.admin-schedules-page .admin-schedule-group-summary > .admin-count-pill {
+.admin-schedules-page .admin-schedule-group-summary>.admin-count-pill {
     margin-left: auto;
 }
 
@@ -536,6 +538,7 @@ textarea {
 }
 
 @media (max-width: 1024px) {
+
     .admin-main,
     .student-main,
     .teacher-main,
@@ -642,12 +645,13 @@ textarea {
         border-radius: 14px;
     }
 
-    .admin-schedules-page .admin-schedule-group-summary > .admin-count-pill {
+    .admin-schedules-page .admin-schedule-group-summary>.admin-count-pill {
         margin-left: 0;
     }
 }
 
 @media (max-width: 520px) {
+
     .teacher-card,
     .admin-card,
     .admin-item-card,
@@ -798,6 +802,7 @@ svg {
 }
 
 @media (max-width: 900px) {
+
     .student-history-table,
     .teacher-report-table,
     .admin-table,
@@ -807,13 +812,14 @@ svg {
 
     .notification-open-link,
     .notification-action-btn,
-    .notification-meta > form > button {
+    .notification-meta>form>button {
         min-width: 0 !important;
         max-width: 100% !important;
     }
 }
 
 @media (max-width: 640px) {
+
     .teacher-primary-btn,
     .teacher-secondary-btn,
     .admin-primary-btn,
@@ -863,6 +869,7 @@ svg {
 }
 
 @media (max-width: 460px) {
+
     .student-history-table,
     .teacher-report-table,
     .admin-table,
@@ -1009,6 +1016,7 @@ svg {
    Global input/select touch targets for mobile
 ========================= */
 @media (max-width: 600px) {
+
     input[type="text"],
     input[type="email"],
     input[type="password"],
@@ -1019,7 +1027,8 @@ svg {
     textarea,
     select {
         min-height: 46px;
-        font-size: 16px !important; /* prevents iOS zoom */
+        font-size: 16px !important;
+        /* prevents iOS zoom */
     }
 
     .admin-form-grid {
@@ -1157,6 +1166,7 @@ svg {
 }
 
 @media (max-width: 1180px) {
+
     .schedule-layout,
     .teacher-layout {
         grid-template-columns: var(--shell-sidebar-width) minmax(0, 1fr) !important;
@@ -1217,6 +1227,7 @@ svg {
 }
 
 @media (max-width: 640px) {
+
     .admin-main,
     .student-main,
     .teacher-main,
@@ -1269,9 +1280,187 @@ svg {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     .teacher-dashboard-page .live-dot,
     .ui-sidebar * {
         animation: none !important;
         transition: none !important;
+    }
+}
+
+
+/* =====================================================
+   STUDENT PASSKEY PAGE RESPONSIVE UI FIX
+   Fixes: oversized buttons, overlap, bad desktop/mobile layout
+===================================================== */
+
+.student-passkey-hero {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 24px !important;
+    padding: clamp(20px, 2.4vw, 32px) !important;
+    border-radius: 26px !important;
+    background: #ffffff !important;
+    border: 1px solid #dbe5f1 !important;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08) !important;
+    overflow: hidden !important;
+}
+
+.student-passkey-hero>div:first-child {
+    min-width: 0 !important;
+}
+
+.student-passkey-hero h3 {
+    margin: 0 !important;
+    color: #0f172a !important;
+    font-size: clamp(22px, 2.2vw, 34px) !important;
+    line-height: 1.15 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.04em !important;
+}
+
+.student-passkey-hero p {
+    max-width: 760px !important;
+    margin-top: 14px !important;
+    color: #64748b !important;
+    font-size: clamp(14px, 1.2vw, 17px) !important;
+    line-height: 1.75 !important;
+    font-weight: 800 !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+}
+
+.student-support-hint {
+    display: block !important;
+    margin-top: 16px !important;
+    font-size: clamp(14px, 1.1vw, 16px) !important;
+    line-height: 1.45 !important;
+    font-weight: 900 !important;
+}
+
+.student-support-hint.supported {
+    color: #15803d !important;
+}
+
+.student-support-hint.unsupported {
+    color: #c2410c !important;
+}
+
+.student-passkey-actions {
+    width: auto !important;
+    max-width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 14px !important;
+    flex-wrap: wrap !important;
+    flex-shrink: 0 !important;
+}
+
+.student-passkey-actions form {
+    width: auto !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    display: flex !important;
+}
+
+.student-passkey-actions .view-btn {
+    width: auto !important;
+    min-width: 230px !important;
+    max-width: 100% !important;
+    min-height: 54px !important;
+    height: auto !important;
+    padding: 14px 22px !important;
+    border-radius: 18px !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+    font-size: clamp(14px, 1vw, 16px) !important;
+    font-weight: 950 !important;
+    text-align: center !important;
+}
+
+.student-passkey-actions .view-btn i {
+    flex-shrink: 0 !important;
+    font-size: 17px !important;
+}
+
+.student-passkey-actions .view-btn.live {
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #3b82f6 !important;
+}
+
+.student-passkey-actions .view-btn:not(.live) {
+    background: #ffffff !important;
+    color: #2563eb !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.student-passkey-actions .view-btn:hover:not(:disabled) {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.14) !important;
+}
+
+.student-passkey-actions .view-btn:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.78 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Tablet fix */
+@media (max-width: 1100px) {
+    .student-passkey-hero {
+        grid-template-columns: 1fr !important;
+        align-items: stretch !important;
+    }
+
+    .student-passkey-actions {
+        justify-content: flex-start !important;
+    }
+}
+
+/* Mobile fix */
+@media (max-width: 640px) {
+    .student-passkey-hero {
+        padding: 20px !important;
+        border-radius: 22px !important;
+        gap: 20px !important;
+    }
+
+    .student-passkey-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .student-passkey-actions form {
+        width: 100% !important;
+    }
+
+    .student-passkey-actions .view-btn {
+        width: 100% !important;
+        min-width: 0 !important;
+        white-space: normal !important;
+        padding: 14px 16px !important;
+    }
+}
+
+/* Very small phone fix */
+@media (max-width: 420px) {
+    .student-passkey-hero h3 {
+        font-size: 22px !important;
+    }
+
+    .student-passkey-hero p {
+        font-size: 14px !important;
+        line-height: 1.65 !important;
+    }
+
+    .student-passkey-actions .view-btn {
+        font-size: 14px !important;
     }
 }

@@ -18,7 +18,7 @@
 
 <div class="teacher-page teacher-notifications-layout">
 
-    <%- include("teacher/partials/sidebar", { activePage: activePage || "notifications", teacher }) %>
+    <%- include("teacher/partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "notifications", teacher: typeof teacher !== "undefined" ? teacher : null }) %>
 
     <main class="teacher-main teacher-notifications-main">
 

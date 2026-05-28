@@ -1,423 +1,526 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedule | Attendify</title>
 
     <link rel="stylesheet" href="/css/studentSchedule.css">
-
     <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
+
 <body>
+    <%
+        const groups = typeof weeklyScheduleGroups !== "undefined" ? weeklyScheduleGroups : [];
+        const activeMap = typeof activeSessionsBySchedule !== "undefined" ? activeSessionsBySchedule : {};
+        const todaySessionMap = typeof todaySessionsBySchedule !== "undefined" ? todaySessionsBySchedule : {};
+        const statusMap = typeof attendanceStatusBySchedule !== "undefined" ? attendanceStatusBySchedule : {};
+        const currentRealtimeMode = typeof realtimeMode !== "undefined" ? realtimeMode : "auto";
+        const currentPollIntervalMs = typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000;
 
-<%
-    const groups = weeklyScheduleGroups || [];
-    const activeMap = activeSessionsBySchedule || {};
-    const todaySessionMap = todaySessionsBySchedule || {};
-    const studentLiveBootstrap = [];
+        const studentLiveBootstrap = [];
 
-    for (const scheduleKey in activeMap) {
-        if (activeMap[scheduleKey] && activeMap[scheduleKey]._id) {
-            studentLiveBootstrap.push({
-                sessionId: activeMap[scheduleKey]._id.toString()
-            });
-        }
-    }
-    const statusMap = attendanceStatusBySchedule || {};
-    const scheduleNow = new Date();
-    const scheduleNowMinutes = (scheduleNow.getHours() * 60) + scheduleNow.getMinutes();
-
-    function scheduleTimeToMinutes(timeText) {
-        if (!timeText || typeof timeText !== "string") {
-            return -1;
+        for (const scheduleKey in activeMap) {
+            if (activeMap[scheduleKey] && activeMap[scheduleKey]._id) {
+                studentLiveBootstrap.push({
+                    sessionId: activeMap[scheduleKey]._id.toString()
+                });
+            }
         }
 
-        const text = timeText.trim().toUpperCase();
-        const match = text.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+        const scheduleNow = new Date();
+        const scheduleNowMinutes = (scheduleNow.getHours() * 60) + scheduleNow.getMinutes();
 
-        if (!match) {
-            return -1;
+        function scheduleTimeToMinutes(timeText) {
+            if (!timeText || typeof timeText !== "string") {
+                return -1;
+            }
+
+            const text = timeText.trim().toUpperCase();
+            const match = text.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+
+            if (!match) {
+                return -1;
+            }
+
+            let hours = Number(match[1]);
+            const minutes = Number(match[2]);
+            const meridian = match[3];
+
+            if (meridian === "PM" && hours !== 12) {
+                hours += 12;
+            }
+
+            if (meridian === "AM" && hours === 12) {
+                hours = 0;
+            }
+
+            return (hours * 60) + minutes;
         }
 
-        let hours = Number(match[1]);
-        const minutes = Number(match[2]);
-        const meridian = match[3];
+        function scheduleIsLiveWindow(startTime, endTime) {
+            const startMinutes = scheduleTimeToMinutes(startTime);
+            const endMinutes = scheduleTimeToMinutes(endTime);
 
-        if (meridian === "PM" && hours !== 12) {
-            hours += 12;
+            if (startMinutes < 0 || endMinutes < 0) {
+                return false;
+            }
+
+            return scheduleNowMinutes >= startMinutes && scheduleNowMinutes <= endMinutes;
         }
 
-        if (meridian === "AM" && hours === 12) {
-            hours = 0;
+        function getScheduleCardState(group, item) {
+            const scheduleId = item._id.toString();
+            const activeSession = activeMap[scheduleId];
+            const todaySession = todaySessionMap[scheduleId];
+            const attendanceInfo = statusMap[scheduleId];
+            const isToday = group.offset === 0;
+            const isLiveWindow = isToday && scheduleIsLiveWindow(item.startTime, item.endTime);
+            const endMinutes = scheduleTimeToMinutes(item.endTime);
+
+            const isEndedWithoutAttendance =
+                isToday &&
+                endMinutes >= 0 &&
+                scheduleNowMinutes > endMinutes &&
+                !activeSession &&
+                !attendanceInfo;
+
+            let cardState = "waiting";
+            let cardSessionId = "";
+            let actionResult = null;
+
+            if (isToday && typeof attendanceWindow !== "undefined" && attendanceWindow && typeof attendanceWindow.getStudentAttendanceAction === "function") {
+                actionResult = attendanceWindow.getStudentAttendanceAction({
+                    record: attendanceInfo ? attendanceInfo.record : null,
+                    session: activeSession || todaySession,
+                    schedule: item
+                });
+            }
+
+            if (actionResult) {
+                if (actionResult.action === "PRESENT" || actionResult.action === "LATE") {
+                    cardState = "present";
+                } else if (actionResult.canMark) {
+                    cardState = "live";
+                    cardSessionId = activeSession
+                        ? activeSession._id.toString()
+                        : todaySession
+                            ? todaySession._id.toString()
+                            : "";
+                } else if (actionResult.action === "AUTO_ABSENT_LOCKED" || actionResult.action === "MANUAL_ABSENT") {
+                    cardState = "absent";
+                } else if (todaySession) {
+                    cardState = "pending";
+                    cardSessionId = todaySession._id.toString();
+                } else if (isLiveWindow) {
+                    cardState = "ongoing";
+                } else if (isEndedWithoutAttendance) {
+                    cardState = "unmarked";
+                }
+            } else {
+                if (attendanceInfo && (attendanceInfo.status === "PRESENT" || attendanceInfo.status === "LATE")) {
+                    cardState = "present";
+                } else if (attendanceInfo && attendanceInfo.status === "ABSENT") {
+                    // If session is active, absent students can mark again
+                    if (isToday && activeSession) {
+                        cardState = "live";
+                        cardSessionId = activeSession._id.toString();
+                    } else {
+                        cardState = "absent";
+                    }
+                } else if (isToday && activeSession) {
+                    cardState = "live";
+                    cardSessionId = activeSession._id.toString();
+                } else if (isToday && todaySession) {
+                    cardState = "pending";
+                    cardSessionId = todaySession._id.toString();
+                } else if (isLiveWindow) {
+                    cardState = "ongoing";
+                } else if (isEndedWithoutAttendance) {
+                    cardState = "unmarked";
+                } else if (!isToday) {
+                    cardState = "upcoming";
+                }
+            }
+
+            return {
+                scheduleId,
+                activeSession,
+                todaySession,
+                attendanceInfo,
+                isToday,
+                isLiveWindow,
+                cardState,
+                cardSessionId,
+                actionResult
+            };
         }
 
-        return (hours * 60) + minutes;
-    }
+        function getStatusBadge(cardState) {
+            if (cardState === "live" || cardState === "ongoing") {
+                return {
+                    className: "status-badge live",
+                    icon: "fa-solid fa-circle-dot",
+                    label: "Live Class"
+                };
+            }
 
-    function scheduleIsLiveWindow(startTime, endTime) {
-        const startMinutes = scheduleTimeToMinutes(startTime);
-        const endMinutes = scheduleTimeToMinutes(endTime);
+            if (cardState === "present") {
+                return {
+                    className: "status-badge present",
+                    icon: "fa-solid fa-circle-check",
+                    label: "Present"
+                };
+            }
 
-        if (startMinutes < 0 || endMinutes < 0) {
-            return false;
+            if (cardState === "absent") {
+                return {
+                    className: "status-badge absent",
+                    icon: "fa-solid fa-circle-xmark",
+                    label: "Absent"
+                };
+            }
+
+            if (cardState === "unmarked") {
+                return {
+                    className: "status-badge unmarked",
+                    icon: "fa-solid fa-triangle-exclamation",
+                    label: "Unmarked"
+                };
+            }
+
+            if (cardState === "pending") {
+                return {
+                    className: "status-badge pending",
+                    icon: "fa-solid fa-hourglass-half",
+                    label: "Pending"
+                };
+            }
+
+            if (cardState === "upcoming") {
+                return {
+                    className: "status-badge waiting",
+                    icon: "fa-solid fa-calendar-day",
+                    label: "Upcoming"
+                };
+            }
+
+            return {
+                className: "status-badge waiting",
+                icon: "fa-solid fa-clock",
+                label: "Waiting"
+            };
         }
 
-        return scheduleNowMinutes >= startMinutes && scheduleNowMinutes <= endMinutes;
-    }
-%>
+        function getTeacherName(item) {
+            if (!item || !item.teacher) {
+                return "Teacher Missing";
+            }
 
-<div class="schedule-layout">
+            return item.teacher.fullName || item.teacher.name || "Teacher Missing";
+        }
 
-    <%- include("student/partials/sidebar", { activePage, student }) %>
+        function getClassroomName(item) {
+            if (!item || !item.classroom) {
+                return "Room Missing";
+            }
 
-    <main class="schedule-main">
-        <header class="dashboard-header">
-            <div>
-                <span class="dashboard-kicker">Student Panel</span>
-                <h1>Weekly Schedule</h1>
-                <p>View today and upcoming classes for the next 7 days.</p>
-            </div>
+            return item.classroom.classroomName || item.classroom.name || "Room Missing";
+        }
 
-            <a href="/student/dashboard" class="dashboard-action-btn">
-                <i class="fa-solid fa-house"></i>
-                Dashboard
-            </a>
-        </header>
+        function getSubjectName(item) {
+            if (!item || !item.subject) {
+                return "Subject";
+            }
 
-        <div id="messageBox" class="schedule-message"></div>
+            return item.subject.subjectName || item.subject.name || "Subject";
+        }
 
-        <% if (!groups || groups.length === 0) { %>
-            <section class="dashboard-panel">
-                <div class="empty-state">
-                    <i class="fa-solid fa-calendar-xmark"></i>
-                    <h3>No schedule found</h3>
-                    <p>Your class schedule has not been assigned yet.</p>
+        function getSubjectCode(item) {
+            if (!item || !item.subject) {
+                return "Subject";
+            }
+
+            return item.subject.subjectCode || item.subject.subjectName || item.subject.name || "Subject";
+        }
+    %>
+
+    <div class="schedule-layout">
+        <%- include("student/partials/sidebar", {
+            activePage: typeof activePage !== "undefined" ? activePage : "",
+            student: typeof student !== "undefined" ? student : null
+        }) %>
+
+        <main class="schedule-main">
+            <header class="dashboard-header">
+                <div>
+                    <span class="dashboard-kicker">Student Panel</span>
+                    <h1>Weekly Schedule</h1>
+                    <p>View today and upcoming classes for the next 7 days.</p>
                 </div>
-            </section>
-        <% } %>
 
-        <% groups.forEach(function(group) { %>
-            <section
-                class="dashboard-panel weekly-day-panel"
-                data-day-offset="<%= group.offset %>"
-            >
-                <div class="dashboard-panel-head">
-                    <div>
-                        <h3>
-                            <%= group.label %>
-                            <span style="color:#64748b; font-size:15px; font-weight:800;">
-                                · <%= group.day %>
-                            </span>
-                        </h3>
-                        <p>
-                            <%= new Date(group.date).toLocaleDateString("en-IN", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric"
-                            }) %>
-                        </p>
+                <a href="/student/dashboard" class="dashboard-action-btn">
+                    <i class="fa-solid fa-house"></i>
+                    Dashboard
+                </a>
+            </header>
+
+            <div id="messageBox" class="schedule-message"></div>
+
+            <% if (!groups || groups.length === 0) { %>
+                <section class="dashboard-panel">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-calendar-xmark"></i>
+                        <h3>No schedule found</h3>
+                        <p>Your class schedule has not been assigned yet.</p>
+                    </div>
+                </section>
+            <% } %>
+
+            <% groups.forEach(function(group) { %>
+                <section class="dashboard-panel weekly-day-panel" data-day-offset="<%= group.offset %>">
+                    <div class="dashboard-panel-head">
+                        <div>
+                            <h3>
+                                <%= group.label %>
+                                <span style="color:#64748b; font-size:15px; font-weight:800;">
+                                    · <%= group.day %>
+                                </span>
+                            </h3>
+
+                            <p>
+                                <%= new Date(group.date).toLocaleDateString("en-IN", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric"
+                                }) %>
+                            </p>
+                        </div>
+
+                        <span class="panel-count">
+                            <%= group.schedules ? group.schedules.length : 0 %> Classes
+                        </span>
                     </div>
 
-                    <span class="panel-count">
-                        <%= group.schedules ? group.schedules.length : 0 %> Classes
-                    </span>
-                </div>
+                    <% if (!group.schedules || group.schedules.length === 0) { %>
+                        <div class="student-history-empty">
+                            No classes scheduled.
+                        </div>
+                    <% } else { %>
+                        <% if (group.offset === 0) { %>
+                            <div
+                                class="gps-help-banner"
+                                style="margin-bottom:15px; padding:12px; background:rgba(59,130,246,0.1); border-left:4px solid #3b82f6; border-radius:4px; font-size:0.9rem;"
+                            >
+                                <i class="fa-solid fa-circle-info" style="color:#3b82f6; margin-right:6px;"></i>
+                                <strong>GPS Tip:</strong>
+                                For best accuracy, use mobile Chrome, enable precise location, turn off battery saver, and wait 5–10 seconds.
+                            </div>
+                        <% } %>
 
-                <% if (!group.schedules || group.schedules.length === 0) { %>
-                    <div class="student-history-empty">
-                        No classes scheduled.
-                    </div>
-                <% } else { %>
-                    <% if (group.offset === 0) { %>
-                        <div class="gps-help-banner" style="margin-bottom: 15px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; font-size: 0.9rem;">
-                            <i class="fa-solid fa-circle-info" style="color: #3b82f6; margin-right: 6px;"></i>
-                            <strong>GPS Tip:</strong> For best accuracy, use mobile Chrome, enable precise location, turn off battery saver, and wait 5–10 seconds.
+                        <div class="schedule-list">
+                            <% group.schedules.forEach(function(item) { %>
+                                <%
+                                    const state = getScheduleCardState(group, item);
+                                    const badge = getStatusBadge(state.cardState);
+                                %>
+
+                                <article
+                                    class="class-card"
+                                    data-schedule-id="<%= state.scheduleId %>"
+                                    data-session-id="<%= state.cardSessionId %>"
+                                    data-attendance-state="<%= state.cardState %>"
+                                    data-start-time="<%= item.startTime %>"
+                                    data-end-time="<%= item.endTime %>"
+                                    data-day-offset="<%= group.offset %>"
+                                >
+                                    <div class="class-card-top">
+                                        <span class="subject-pill">
+                                            <%= getSubjectCode(item) %>
+                                        </span>
+
+                                        <span class="<%= badge.className %>">
+                                            <i class="<%= badge.icon %>"></i>
+                                            <%= badge.label %>
+                                        </span>
+                                    </div>
+
+                                    <div class="class-content">
+                                        <div class="class-time">
+                                            <strong><%= item.startTime %></strong>
+                                            <span><%= item.endTime %></span>
+                                        </div>
+
+                                        <div class="class-info">
+                                            <h4><%= getSubjectName(item) %></h4>
+
+                                            <p>
+                                                <i class="fa-solid fa-user-tie"></i>
+                                                <%= getTeacherName(item) %>
+                                                ·
+                                                <i class="fa-solid fa-door-open"></i>
+                                                <%= getClassroomName(item) %>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="js-schedule-action class-action">
+                                        <% if (state.actionResult) { %>
+                                            <% if (state.actionResult.canMark) { %>
+                                                <button
+                                                    class="view-btn live js-mark-attendance-btn"
+                                                    type="button"
+                                                    data-session-id="<%= state.cardSessionId %>"
+                                                >
+                                                    <%= state.actionResult.label %>
+                                                </button>
+                                            <% } else { %>
+                                                <%
+                                                    let btnClass = "view-btn";
+
+                                                    if (state.cardState === "present" || state.cardState === "absent") {
+                                                        btnClass += " marked " + state.cardState;
+                                                    } else if (state.cardState === "unmarked") {
+                                                        btnClass += " unmarked";
+                                                    } else if (state.cardState === "pending") {
+                                                        btnClass += " pending";
+                                                    }
+                                                %>
+
+                                                <button class="<%= btnClass %>" type="button" disabled>
+                                                    <%= state.actionResult.label %>
+                                                </button>
+                                            <% } %>
+                                        <% } else { %>
+                                            <% if (state.cardState === "live") { %>
+                                                <button
+                                                    class="view-btn live js-mark-attendance-btn"
+                                                    type="button"
+                                                    data-session-id="<%= state.cardSessionId %>"
+                                                >
+                                                    Mark Attendance
+                                                </button>
+                                            <% } else if (state.cardState === "ongoing") { %>
+                                                <button class="view-btn" type="button" disabled>
+                                                    Teacher Not Started
+                                                </button>
+                                            <% } else if (state.cardState === "present") { %>
+                                                <button class="view-btn marked present" type="button" disabled>
+                                                    Attendance Marked
+                                                </button>
+                                            <% } else if (state.cardState === "absent") { %>
+                                                <button class="view-btn marked absent" type="button" disabled>
+                                                    Marked Absent
+                                                </button>
+                                            <% } else if (state.cardState === "unmarked") { %>
+                                                <button class="view-btn unmarked" type="button" disabled>
+                                                    Unmarked
+                                                </button>
+                                            <% } else if (state.cardState === "pending") { %>
+                                                <button class="view-btn pending" type="button" disabled>
+                                                    Pending
+                                                </button>
+                                            <% } else if (state.cardState === "upcoming") { %>
+                                                <button class="view-btn" type="button" disabled>
+                                                    Upcoming
+                                                </button>
+                                            <% } else { %>
+                                                <button class="view-btn" type="button" disabled>
+                                                    Not Started
+                                                </button>
+                                            <% } %>
+                                        <% } %>
+                                    </div>
+                                </article>
+                            <% }) %>
                         </div>
                     <% } %>
-                    <div class="schedule-list">
-                        <% group.schedules.forEach(function(item) { %>
-                            <%
-                                const scheduleId = item._id.toString();
-                                const activeSession = activeMap[scheduleId];
-                                const todaySession = todaySessionMap[scheduleId];
-                                const attendanceInfo = statusMap[scheduleId];
-                                const isToday = group.offset === 0;
-                                const isLiveWindow = isToday && scheduleIsLiveWindow(item.startTime, item.endTime);
-                                const endMinutes = scheduleTimeToMinutes(item.endTime);
-                                const isEndedWithoutAttendance = isToday
-                                    && endMinutes >= 0
-                                    && scheduleNowMinutes > endMinutes
-                                    && !activeSession
-                                    && !attendanceInfo;
+                </section>
+            <% }) %>
+        </main>
 
-                                let cardState = "waiting";
-                                let cardSessionId = "";
+        <aside class="profile-panel">
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    <%= typeof student !== "undefined" && student.fullName ? student.fullName.charAt(0).toUpperCase() : "S" %>
+                </div>
 
-                                let actionResult = null;
-                                if (isToday && typeof attendanceWindow !== "undefined") {
-                                    actionResult = attendanceWindow.getStudentAttendanceAction({
-                                        record: attendanceInfo ? attendanceInfo.record : null,
-                                        session: activeSession || todaySession,
-                                        schedule: item
-                                    });
-                                }
-
-                                if (actionResult) {
-                                    if (actionResult.action === "PRESENT" || actionResult.action === "LATE") {
-                                        cardState = "present";
-                                    } else if (actionResult.canMark) {
-                                        cardState = "live";
-                                        cardSessionId = activeSession ? activeSession._id.toString() : (todaySession ? todaySession._id.toString() : "");
-                                    } else if (actionResult.action === "AUTO_ABSENT_LOCKED" || actionResult.action === "MANUAL_ABSENT") {
-                                        cardState = "absent";
-                                    } else if (todaySession) {
-                                        cardState = "pending";
-                                        cardSessionId = todaySession._id.toString();
-                                    } else if (isLiveWindow) {
-                                        cardState = "ongoing";
-                                    } else if (isEndedWithoutAttendance) {
-                                        cardState = "unmarked";
-                                    }
-                                } else {
-                                    // Fallback or not today
-                                    if (attendanceInfo && (attendanceInfo.status === "PRESENT" || attendanceInfo.status === "LATE")) {
-                                        cardState = "present";
-                                    } else if (attendanceInfo && attendanceInfo.status === "ABSENT") {
-                                        // If session is active, absent students can mark again
-                                        if (isToday && activeSession) {
-                                            cardState = "live";
-                                            cardSessionId = activeSession._id.toString();
-                                        } else {
-                                            cardState = "absent";
-                                        }
-                                    } else if (isToday && activeSession) {
-                                        cardState = "live";
-                                        cardSessionId = activeSession._id.toString();
-                                    } else if (isToday && todaySession) {
-                                        cardState = "pending";
-                                        cardSessionId = todaySession._id.toString();
-                                    } else if (isLiveWindow) {
-                                        cardState = "ongoing";
-                                    } else if (isEndedWithoutAttendance) {
-                                        cardState = "unmarked";
-                                    } else if (!isToday) {
-                                        cardState = "upcoming";
-                                    }
-                                }
-                            %>
-
-                            <article
-                                class="class-card"
-                                data-schedule-id="<%= scheduleId %>"
-                                data-session-id="<%= cardSessionId %>"
-                                data-attendance-state="<%= cardState %>"
-                                data-start-time="<%= item.startTime %>"
-                                data-end-time="<%= item.endTime %>"
-                                data-day-offset="<%= group.offset %>"
-                            >
-                                <div class="class-card-top">
-                                    <span class="subject-pill">
-                                        <%= item.subject ? item.subject.subjectCode || item.subject.subjectName : "Subject" %>
-                                    </span>
-
-                                    <% if (cardState === "live" || cardState === "ongoing") { %>
-                                        <span class="status-badge live">
-                                            <i class="fa-solid fa-circle-dot"></i>
-                                            Live Class
-                                        </span>
-                                    <% } else if (cardState === "present") { %>
-                                        <span class="status-badge present">
-                                            <i class="fa-solid fa-circle-check"></i>
-                                            Present
-                                        </span>
-                                    <% } else if (cardState === "absent") { %>
-                                        <span class="status-badge absent">
-                                            <i class="fa-solid fa-circle-xmark"></i>
-                                            Absent
-                                        </span>
-                                    <% } else if (cardState === "unmarked") { %>
-                                        <span class="status-badge unmarked">
-                                            <i class="fa-solid fa-triangle-exclamation"></i>
-                                            Unmarked
-                                        </span>
-                                    <% } else if (cardState === "pending") { %>
-                                        <span class="status-badge pending">
-                                            <i class="fa-solid fa-hourglass-half"></i>
-                                            Pending
-                                        </span>
-                                    <% } else if (cardState === "upcoming") { %>
-                                        <span class="status-badge waiting">
-                                            <i class="fa-solid fa-calendar-day"></i>
-                                            Upcoming
-                                        </span>
-                                    <% } else { %>
-                                        <span class="status-badge waiting">
-                                            <i class="fa-solid fa-clock"></i>
-                                            Waiting
-                                        </span>
-                                    <% } %>
-                                </div>
-
-                                <div class="class-content">
-                                    <div class="class-time">
-                                        <strong><%= item.startTime %></strong>
-                                        <span><%= item.endTime %></span>
-                                    </div>
-
-                                    <div class="class-info">
-                                        <h4><%= item.subject ? item.subject.subjectName : "Subject Missing" %></h4>
-                                        <p>
-                                            <i class="fa-solid fa-user-tie"></i>
-                                            <%= item.teacher ? item.teacher.fullName : "Teacher Missing" %>
-                                            ·
-                                            <i class="fa-solid fa-door-open"></i>
-                                            <%= item.classroom ? item.classroom.classroomName : "Room Missing" %>
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div class="js-schedule-action class-action">
-                                    <% if (actionResult) { %>
-                                        <% if (actionResult.canMark) { %>
-                                            <button
-                                                class="view-btn live js-mark-attendance-btn"
-                                                type="button"
-                                                data-session-id="<%= cardSessionId %>"
-                                            >
-                                                <%= actionResult.label %>
-                                            </button>
-                                        <% } else { %>
-                                            <% 
-                                                let btnClass = "view-btn";
-                                                if (cardState === "present" || cardState === "absent") btnClass += " marked " + cardState;
-                                                else if (cardState === "unmarked") btnClass += " unmarked";
-                                                else if (cardState === "pending") btnClass += " pending";
-                                            %>
-                                            <button class="<%= btnClass %>" type="button" disabled>
-                                                <%= actionResult.label %>
-                                            </button>
-                                        <% } %>
-                                    <% } else { %>
-                                        <% if (cardState === "live") { %>
-                                            <button
-                                                class="view-btn live js-mark-attendance-btn"
-                                                type="button"
-                                                data-session-id="<%= cardSessionId %>"
-                                            >
-                                                Mark Attendance
-                                            </button>
-                                        <% } else if (cardState === "ongoing") { %>
-                                            <button class="view-btn" type="button" disabled>
-                                                Teacher Not Started
-                                            </button>
-                                        <% } else if (cardState === "present") { %>
-                                            <button class="view-btn marked" type="button" disabled>
-                                                Attendance Marked
-                                            </button>
-                                        <% } else if (cardState === "absent") { %>
-                                            <button class="view-btn marked absent" type="button" disabled>
-                                                Marked Absent
-                                            </button>
-                                    <% } else if (cardState === "unmarked") { %>
-                                        <button class="view-btn unmarked" type="button" disabled>
-                                            Unmarked
-                                        </button>
-                                    <% } else if (cardState === "pending") { %>
-                                        <button class="view-btn pending" type="button" disabled>
-                                            Pending
-                                        </button>
-                                    <% } else if (cardState === "upcoming") { %>
-                                        <button class="view-btn" type="button" disabled>
-                                            Upcoming
-                                        </button>
-                                    <% } else { %>
-                                        <button class="view-btn" type="button" disabled>
-                                            Not Started
-                                        </button>
-                                    <% } %>
-                                </div>
-                            </article>
-                        <% }) %>
-                    </div>
-                <% } %>
-            </section>
-        <% }) %>
-    </main>
-
-    <aside class="profile-panel">
-        <div class="profile-card">
-            <div class="profile-avatar">
-                <%= student.fullName ? student.fullName.charAt(0).toUpperCase() : "S" %>
+                <div>
+                    <h3>
+                        <%= typeof student !== "undefined" && student.fullName ? student.fullName : "Student" %>
+                    </h3>
+                    <a href="/student/dashboard">Open Profile</a>
+                </div>
             </div>
 
-            <div>
-                <h3><%= student.fullName %></h3>
-                <a href="/student/dashboard">Open Profile</a>
-            </div>
-        </div>
+            <div class="side-stat">
+                <div class="side-stat-icon blue">
+                    <i class="fa-solid fa-users-rectangle"></i>
+                </div>
 
-        <div class="side-stat">
-            <div class="side-stat-icon blue">
-                <i class="fa-solid fa-users-rectangle"></i>
-            </div>
-
-            <div>
-                <span>Class Group</span>
-                <strong><%= student.classGroup ? student.classGroup.name : "-" %></strong>
-            </div>
-        </div>
-
-        <div class="side-stat">
-            <div class="side-stat-icon purple">
-                <i class="fa-solid fa-book-open"></i>
+                <div>
+                    <span>Class Group</span>
+                    <strong>
+                        <%= typeof student !== "undefined" && student.classGroup ? student.classGroup.name : "-" %>
+                    </strong>
+                </div>
             </div>
 
-            <div>
-                <span>Subjects</span>
-                <strong><%= student.subjects ? student.subjects.length : 0 %> Subjects</strong>
+            <div class="side-stat">
+                <div class="side-stat-icon purple">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+
+                <div>
+                    <span>Subjects</span>
+                    <strong>
+                        <%= typeof student !== "undefined" && student.subjects ? student.subjects.length : 0 %> Subjects
+                    </strong>
+                </div>
             </div>
-        </div>
 
-        <div class="side-stat">
-            <div class="side-stat-icon green">
-                <i class="fa-solid fa-fingerprint"></i>
+            <div class="side-stat">
+                <div class="side-stat-icon green">
+                    <i class="fa-solid fa-fingerprint"></i>
+                </div>
+
+                <div>
+                    <span>Security</span>
+                    <strong>
+                        <%= typeof passkeyCount !== "undefined" ? passkeyCount : 0 %> Passkey ·
+                        <%= typeof trustedDeviceCount !== "undefined" ? trustedDeviceCount : 0 %> Browser
+                    </strong>
+                </div>
             </div>
+        </aside>
+    </div>
 
-            <div>
-                <span>Security</span>
-                <strong><%= passkeyCount || 0 %> Passkey · <%= trustedDeviceCount || 0 %> Browser</strong>
-            </div>
-        </div>
-    </aside>
-</div>
+    <script type="application/json" id="studentLiveSessionBootstrap"><%- JSON.stringify(studentLiveBootstrap).replace(/</g, "\\u003c") %></script>
 
-<script type="application/json" id="studentLiveSessionBootstrap"><%- JSON.stringify(studentLiveBootstrap).replace(/</g, "\\u003c") %></script>
+    <script>
+        window.AttendifyRealtimeConfig = {
+            mode: "<%= currentRealtimeMode %>",
+            pollIntervalMs: <%= currentPollIntervalMs %>
+        };
+    </script>
 
-<script>
-    window.AttendifyRealtimeConfig = {
-        mode: "<%= typeof realtimeMode !== 'undefined' ? realtimeMode : 'auto' %>",
-        pollIntervalMs: <%= typeof realtimePollIntervalMs !== 'undefined' ? realtimePollIntervalMs : 5000 %>
-    };
-</script>
+    <% if (currentRealtimeMode === "socket") { %>
+        <script src="/socket.io/socket.io.js"></script>
+    <% } %>
 
-<% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>
-<script src="/socket.io/socket.io.js"></script>
-<% } %>
-<script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
-<script src="/js/studentPasskey.js"></script>
-<script src="/js/locationStabilizer.js"></script>
-<script src="/js/geoAccuracy.js"></script>
-<script src="/js/studentLocation.js"></script>
-<script src="/js/studentRealtime.js"></script>
-<script src="/js/studentLiveLocation.js"></script>
-<script src="/js/studentScheduleFocusToday.js"></script>
-<script src="/js/uiShell.js"></script>
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+    <script src="/js/studentPasskey.js"></script>
+    <script src="/js/locationStabilizer.js"></script>
+    <script src="/js/geoAccuracy.js"></script>
+    <script src="/js/studentLocation.js"></script>
+    <script src="/js/studentRealtime.js"></script>
+    <script src="/js/studentLiveLocation.js"></script>
+    <script src="/js/studentScheduleFocusToday.js"></script>
+    <script src="/js/uiShell.js"></script>
 </body>
+
 </html>

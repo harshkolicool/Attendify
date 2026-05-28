@@ -19,7 +19,7 @@
 
 <div class="admin-layout">
 
-    <%- include("partials/sidebar", { activePage: activePage }) %>
+    <%- include("partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "" }) %>
 
     <main class="admin-main">
 
@@ -161,7 +161,7 @@
                                 value="<%= student._id %>"
                                 <%= filters.studentId === student._id.toString() ? "selected" : "" %>
                             >
-                                <%= student.fullName %>
+                                <%= typeof student !== "undefined" && student.fullName %>
                                 <% if (student.enrollmentNumber) { %>
                                     - <%= student.enrollmentNumber %>
                                 <% } %>

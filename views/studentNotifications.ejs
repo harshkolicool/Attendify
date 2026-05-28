@@ -17,7 +17,7 @@
 <body>
 
 <div class="student-layout">
-    <%- include("student/partials/sidebar", { activePage, student }) %>
+    <%- include("student/partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "", student: typeof student !== "undefined" ? student : null }) %>
 
     <main class="student-main">
         <header class="student-header">
@@ -37,7 +37,7 @@
 
                 <div class="notification-head-actions">
                     <span class="student-count-pill">
-                        <%= unreadCount %> Unread
+                        <%= typeof unreadCount !== "undefined" ? unreadCount : 0 %> Unread
                     </span>
 
                     <form action="/student/notifications/mark-all-read" method="POST">

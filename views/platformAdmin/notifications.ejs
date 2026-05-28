@@ -17,7 +17,7 @@
 <body>
 
 <div class="platform-layout">
-    <%- include("partials/sidebar", { activePage }) %>
+    <%- include("partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "" }) %>
 
     <main class="platform-main">
         <header class="platform-header">
@@ -38,7 +38,7 @@
                 <div class="notification-head-actions">
                     <span class="platform-chip">
                         <i class="fa-solid fa-bell"></i>
-                        <%= unreadCount %> Unread
+                        <%= typeof unreadCount !== "undefined" ? unreadCount : 0 %> Unread
                     </span>
 
                     <form action="/platform-admin/notifications/mark-all-read" method="POST">

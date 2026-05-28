@@ -6,6 +6,7 @@ const { URL } = require("url");
 const { Server } = require("socket.io");
 
 const app = require("./app");
+const connectDB = require("./config/db");
 const socketManager = require("./utils/socketManager");
 const realtimeConfig = require("./utils/realtimeConfig");
 
@@ -21,7 +22,10 @@ try {
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === "production";
 
-const originRules = (process.env.APP_ORIGIN || "http://localhost:3000,http://127.0.0.1:3000,http://localhost,http://127.0.0.1")
+const originRules = (
+    process.env.APP_ORIGIN ||
+    "http://localhost:3000,http://127.0.0.1:3000,http://localhost,http://127.0.0.1"
+)
     .split(",")
     .map(function (origin) {
         return origin.trim().replace(/\/+$/, "");
@@ -76,9 +80,7 @@ function compileOriginRule(rule) {
     };
 }
 
-const compiledOriginRules = originRules
-    .map(compileOriginRule)
-    .filter(Boolean);
+const compiledOriginRules = originRules.map(compileOriginRule).filter(Boolean);
 
 function isLocalHostName(hostname) {
     if (!hostname) {
@@ -101,9 +103,11 @@ function isPrivateIPv4Host(hostname) {
         return Number(part);
     });
 
-    if (numbers.some(function (value) {
-        return !Number.isInteger(value) || value < 0 || value > 255;
-    })) {
+    if (
+        numbers.some(function (value) {
+            return !Number.isInteger(value) || value < 0 || value > 255;
+        })
+    ) {
         return false;
     }
 
@@ -155,10 +159,6 @@ function isOriginAllowed(origin) {
         return true;
     }
 
-    /*
-        In development we allow loopback and ngrok preview origins even if
-        APP_ORIGIN is not updated yet, so local and shared testing works.
-    */
     if (!isProduction) {
         try {
             const parsed = new URL(normalizedOrigin);
@@ -179,53 +179,81 @@ function isOriginAllowed(origin) {
     return false;
 }
 
-const server = http.createServer(app);
+async function startServer() {
+    try {
+        await connectDB();
 
-if (realtimeConfig.isSocketMode()) {
-    const io = new Server(server, {
-        cors: {
-            origin: function (origin, callback) {
-                if (isOriginAllowed(origin)) {
-                    return callback(null, true);
+        const server = http.createServer(app);
+
+        if (realtimeConfig.isSocketMode()) {
+            const io = new Server(server, {
+                cors: {
+                    origin: function (origin, callback) {
+                        if (isOriginAllowed(origin)) {
+                            return callback(null, true);
+                        }
+
+                        return callback(new Error("Socket origin not allowed by CORS"));
+                    },
+                    credentials: true
                 }
+            });
 
-                return callback(new Error("Socket origin not allowed by CORS"));
-            },
-            credentials: true
+            const sessionMiddleware = app.get("sessionMiddleware");
+
+            if (sessionMiddleware) {
+                io.engine.use(sessionMiddleware);
+            }
+
+            socketManager.initializeSocket(io);
+        } else {
+            console.log(
+                "Realtime mode: " +
+                    realtimeConfig.getRealtimeMode() +
+                    " — Socket.IO is disabled."
+            );
         }
-    });
 
-    const sessionMiddleware = app.get("sessionMiddleware");
+        /*
+            Important fix:
+            Start this job only after MongoDB connection is ready.
+        */
+        if (typeof startAttendanceExpiryJob === "function") {
+            startAttendanceExpiryJob();
+        }
 
-    if (sessionMiddleware) {
-        io.engine.use(sessionMiddleware);
-    }
+        server.on("error", function (err) {
+            if (err && err.code === "EADDRINUSE") {
+                console.error(
+                    "Port " +
+                        PORT +
+                        " is already in use. Stop the existing server or choose another PORT."
+                );
+                process.exit(1);
+            }
 
-    socketManager.initializeSocket(io);
-} else {
-    console.log("Realtime mode: " + realtimeConfig.getRealtimeMode() + " — Socket.IO is disabled.");
-}
+            if (err && err.code === "EPERM") {
+                console.error(
+                    "Server cannot bind to port " +
+                        PORT +
+                        ". Check local permissions or sandbox restrictions."
+                );
+                process.exit(1);
+            }
 
-if (typeof startAttendanceExpiryJob === "function") {
-    startAttendanceExpiryJob();
-}
+            console.error("SERVER START ERROR:");
+            console.error(err);
+            process.exit(1);
+        });
 
-server.on("error", function (err) {
-    if (err && err.code === "EADDRINUSE") {
-        console.error("Port " + PORT + " is already in use. Stop the existing server or choose another PORT.");
+        server.listen(PORT, function () {
+            console.log("Server running on http://localhost:" + PORT);
+        });
+    } catch (err) {
+        console.error("SERVER STARTUP FAILED:");
+        console.error(err.message);
         process.exit(1);
     }
+}
 
-    if (err && err.code === "EPERM") {
-        console.error("Server cannot bind to port " + PORT + ". Check local permissions or sandbox restrictions.");
-        process.exit(1);
-    }
-
-    console.error("SERVER START ERROR:");
-    console.error(err);
-    process.exit(1);
-});
-
-server.listen(PORT, function () {
-    console.log("Server running on http://localhost:" + PORT);
-});
+startServer();

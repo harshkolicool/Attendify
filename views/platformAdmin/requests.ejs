@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,206 +11,238 @@
     <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
+
 <body>
 
-<div class="platform-layout">
+    <div class="platform-layout">
 
-    <%- include("partials/sidebar", { activePage }) %>
+        <%- include("partials/sidebar", { activePage: typeof activePage !=="undefined" ? activePage : "" }) %>
 
-    <main class="platform-main">
+            <main class="platform-main">
 
-        <header class="platform-header">
-            <div>
-                <span class="platform-kicker">Platform Admin</span>
-                <h1>College Requests</h1>
-                <p>Approve, reject, or reset college admin passwords.</p>
-            </div>
-
-            <a href="/college/register" class="platform-primary-link" target="_blank" rel="noopener noreferrer">
-                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
-                Public Register Page
-            </a>
-        </header>
-
-        <% if (flash) { %>
-            <div class="platform-alert <%= flash.type %>">
-                <strong><%= flash.title %></strong>
-                <p><%= flash.message %></p>
-
-                <% if (flash.extra) { %>
-                    <div class="platform-generated-box">
-                        <p><b>College:</b> <%= flash.extra.collegeName %></p>
-                        <p><b>College Code:</b> <%= flash.extra.collegeCode %></p>
-                        <p><b>Admin Email:</b> <%= flash.extra.adminEmail %></p>
-                        <p><b>Admin Employee ID:</b> <%= flash.extra.adminEmployeeId %></p>
-                        <p><b>Temporary Password:</b> <code><%= flash.extra.temporaryPassword %></code></p>
-                    </div>
-                <% } %>
-            </div>
-        <% } %>
-
-        <div class="platform-filter-tabs">
-            <a class="<%= selectedStatus === 'ALL' ? 'active' : '' %>" href="/platform-admin/requests">
-                All
-            </a>
-
-            <a class="<%= selectedStatus === 'PENDING' ? 'active' : '' %>" href="/platform-admin/requests?status=PENDING">
-                Pending
-            </a>
-
-            <a class="<%= selectedStatus === 'APPROVED' ? 'active' : '' %>" href="/platform-admin/requests?status=APPROVED">
-                Approved
-            </a>
-
-            <a class="<%= selectedStatus === 'REJECTED' ? 'active' : '' %>" href="/platform-admin/requests?status=REJECTED">
-                Rejected
-            </a>
-        </div>
-
-        <% if (!requests || requests.length === 0) { %>
-            <div class="platform-empty">
-                No requests found.
-            </div>
-        <% } %>
-
-        <div class="platform-request-grid">
-
-            <% requests.forEach(function(request) { %>
-
-                <article class="platform-request-card">
-
-                    <div class="platform-request-top">
-                        <div>
-                            <h2><%= request.collegeName %></h2>
-                            <p><%= request.city %>, <%= request.state %></p>
-                        </div>
-
-                        <span class="platform-status <%= request.status.toLowerCase() %>">
-                            <%= request.status %>
-                        </span>
+                <header class="platform-header">
+                    <div>
+                        <span class="platform-kicker">Platform Admin</span>
+                        <h1>College Requests</h1>
+                        <p>Approve, reject, or reset college admin passwords.</p>
                     </div>
 
-                    <div class="platform-detail-grid">
-                        <div>
-                            <span>Address</span>
-                            <p><%= request.address %></p>
-                        </div>
+                    <a href="/college/register" class="platform-primary-link" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                        Public Register Page
+                    </a>
+                </header>
 
-                        <div>
-                            <span>Admin Name</span>
-                            <p><%= request.adminFullName %></p>
-                        </div>
+                <% if (typeof flash !=="undefined" && flash) { %>
+                    <div class="platform-alert <%= flash.type %>">
+                        <strong>
+                            <%= flash.title %>
+                        </strong>
+                        <p>
+                            <%= flash.message %>
+                        </p>
 
-                        <div>
-                            <span>Admin Email</span>
-                            <p><%= request.adminEmail %></p>
-                        </div>
-
-                        <div>
-                            <span>Admin Phone</span>
-                            <p><%= request.adminPhone %></p>
-                        </div>
-
-                        <div>
-                            <span>Requested At</span>
-                            <p><%= request.createdAt ? request.createdAt.toLocaleString() : "N/A" %></p>
-                        </div>
-
-                        <% if (request.status === "APPROVED") { %>
-                            <div>
-                                <span>Generated College Code</span>
-                                <p><%= request.generatedCollegeCode || "N/A" %></p>
+                        <% if (flash.extra) { %>
+                            <div class="platform-generated-box">
+                                <p><b>College:</b>
+                                    <%= flash.extra.collegeName %>
+                                </p>
+                                <p><b>College Code:</b>
+                                    <%= flash.extra.collegeCode %>
+                                </p>
+                                <p><b>Admin Email:</b>
+                                    <%= flash.extra.adminEmail %>
+                                </p>
+                                <p><b>Admin Employee ID:</b>
+                                    <%= flash.extra.adminEmployeeId %>
+                                </p>
+                                <p><b>Temporary Password:</b> <code><%= flash.extra.temporaryPassword %></code></p>
                             </div>
-
-                            <div>
-                                <span>Generated Admin Employee ID</span>
-                                <p><%= request.generatedAdminEmployeeId || "N/A" %></p>
-                            </div>
-                        <% } %>
-
-                        <% if (request.status === "REJECTED") { %>
-                            <div>
-                                <span>Rejection Reason</span>
-                                <p><%= request.rejectionReason || "N/A" %></p>
-                            </div>
-                        <% } %>
+                            <% } %>
                     </div>
-
-                    <% if (request.status === "PENDING") { %>
-
-                        <div class="platform-action-row">
-
-                            <form
-                                action="/platform-admin/requests/<%= request._id %>/approve"
-                                method="POST"
-                                onsubmit="return confirm('Approve this college request?')"
-                            >
-                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                <button class="platform-approve-btn" type="submit">
-                                    <i class="fa-solid fa-check"></i>
-                                    Approve
-                                </button>
-                            </form>
-
-                            <details class="platform-reject-box">
-                                <summary>
-                                    Reject
-                                </summary>
-
-                                <form
-                                    action="/platform-admin/requests/<%= request._id %>/reject"
-                                    method="POST"
-                                    onsubmit="return confirm('Reject this college request?')"
-                                >
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                    <textarea
-                                        name="rejectionReason"
-                                        placeholder="Reason for rejection"
-                                    ></textarea>
-
-                                    <button class="platform-reject-btn" type="submit">
-                                        Confirm Reject
-                                    </button>
-                                </form>
-                            </details>
-
-                        </div>
-
                     <% } %>
 
-                    <% if (request.status === "APPROVED") { %>
+                        <div class="platform-filter-tabs">
+                            <a class="<%= selectedStatus === 'ALL' ? 'active' : '' %>" href="/platform-admin/requests">
+                                All
+                            </a>
 
-                        <div class="platform-action-row">
-                            <form
-                                action="/platform-admin/requests/<%= request._id %>/reset-admin-password"
-                                method="POST"
-                                onsubmit="return confirm('Reset college admin password for <%= request.collegeName %>? A new temporary password will be generated and shown once on dashboard.')"
-                            >
-                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                <button class="platform-admin-warning-btn" type="submit">
-                                    <i class="fa-solid fa-key"></i>
-                                    Reset Admin Password
-                                </button>
-                            </form>
+                            <a class="<%= selectedStatus === 'PENDING' ? 'active' : '' %>"
+                                href="/platform-admin/requests?status=PENDING">
+                                Pending
+                            </a>
+
+                            <a class="<%= selectedStatus === 'APPROVED' ? 'active' : '' %>"
+                                href="/platform-admin/requests?status=APPROVED">
+                                Approved
+                            </a>
+
+                            <a class="<%= selectedStatus === 'REJECTED' ? 'active' : '' %>"
+                                href="/platform-admin/requests?status=REJECTED">
+                                Rejected
+                            </a>
                         </div>
 
-                    <% } %>
+                        <% if (!requests || requests.length===0) { %>
+                            <div class="platform-empty">
+                                No requests found.
+                            </div>
+                            <% } %>
 
-                </article>
+                                <div class="platform-request-grid">
 
-            <% }) %>
+                                    <% requests.forEach(function(request) { %>
 
-        </div>
+                                        <article class="platform-request-card">
 
-    </main>
+                                            <div class="platform-request-top">
+                                                <div>
+                                                    <h2>
+                                                        <%= request.collegeName %>
+                                                    </h2>
+                                                    <p>
+                                                        <%= request.city %>, <%= request.state %>
+                                                    </p>
+                                                </div>
 
-</div>
+                                                <span class="platform-status <%= request.status.toLowerCase() %>">
+                                                    <%= request.status %>
+                                                </span>
+                                            </div>
 
-<script src="/js/uiShell.js"></script>
+                                            <div class="platform-detail-grid">
+                                                <div>
+                                                    <span>Address</span>
+                                                    <p>
+                                                        <%= request.address %>
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <span>Admin Name</span>
+                                                    <p>
+                                                        <%= request.adminFullName %>
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <span>Admin Email</span>
+                                                    <p>
+                                                        <%= request.adminEmail %>
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <span>Admin Phone</span>
+                                                    <p>
+                                                        <%= request.adminPhone %>
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <span>Requested At</span>
+                                                    <p>
+                                                        <%= request.createdAt ? request.createdAt.toLocaleString()
+                                                            : "N/A" %>
+                                                    </p>
+                                                </div>
+
+                                                <% if (request.status==="APPROVED" ) { %>
+                                                    <div>
+                                                        <span>Generated College Code</span>
+                                                        <p>
+                                                            <%= request.generatedCollegeCode || "N/A" %>
+                                                        </p>
+                                                    </div>
+
+                                                    <div>
+                                                        <span>Generated Admin Employee ID</span>
+                                                        <p>
+                                                            <%= request.generatedAdminEmployeeId || "N/A" %>
+                                                        </p>
+                                                    </div>
+                                                    <% } %>
+
+                                                        <% if (request.status==="REJECTED" ) { %>
+                                                            <div>
+                                                                <span>Rejection Reason</span>
+                                                                <p>
+                                                                    <%= request.rejectionReason || "N/A" %>
+                                                                </p>
+                                                            </div>
+                                                            <% } %>
+                                            </div>
+
+                                            <% if (request.status==="PENDING" ) { %>
+
+                                                <div class="platform-action-row">
+
+                                                    <form action="/platform-admin/requests/<%= request._id %>/approve"
+                                                        method="POST"
+                                                        onsubmit="return confirm('Approve this college request?')">
+                                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                        <button class="platform-approve-btn" type="submit">
+                                                            <i class="fa-solid fa-check"></i>
+                                                            Approve
+                                                        </button>
+                                                    </form>
+
+                                                    <details class="platform-reject-box">
+                                                        <summary>
+                                                            Reject
+                                                        </summary>
+
+                                                        <form
+                                                            action="/platform-admin/requests/<%= request._id %>/reject"
+                                                            method="POST"
+                                                            onsubmit="return confirm('Reject this college request?')">
+                                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                            <textarea name="rejectionReason"
+                                                                placeholder="Reason for rejection"></textarea>
+
+                                                            <button class="platform-reject-btn" type="submit">
+                                                                Confirm Reject
+                                                            </button>
+                                                        </form>
+                                                    </details>
+
+                                                </div>
+
+                                                <% } %>
+
+                                                    <% if (request.status==="APPROVED" ) { %>
+
+                                                        <div class="platform-action-row">
+                                                            <form
+                                                                action="/platform-admin/requests/<%= request._id %>/reset-admin-password"
+                                                                method="POST"
+                                                                data-confirm="Reset college admin password for <%= request.collegeName || 'this college' %>? A new temporary password will be generated and shown once on dashboard."
+                                                                onsubmit="return confirm(this.dataset.confirm)">
+                                                                <input type="hidden" name="_csrf"
+                                                                    value="<%= csrfToken %>">
+                                                                <button class="platform-admin-warning-btn"
+                                                                    type="submit">
+                                                                    <i class="fa-solid fa-key"></i>
+                                                                    Reset Admin Password
+                                                                </button>
+                                                            </form>
+                                                        </div>
+
+                                                        <% } %>
+
+                                        </article>
+
+                                        <% }) %>
+
+                                </div>
+
+            </main>
+
+    </div>
+
+    <script src="/js/uiShell.js"></script>
 </body>
+
 </html>

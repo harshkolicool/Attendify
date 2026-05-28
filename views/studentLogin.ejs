@@ -33,10 +33,10 @@
                 <p>Enter your college credentials</p>
             </div>
 
-            <% if (error) { %>
+            <% if (typeof error !== "undefined" && error) { %>
                 <div class="error-box auth-alert">
                     <i class="fa-solid fa-circle-exclamation"></i>
-                    <%= error %>
+                    <%= typeof error !== "undefined" ? error : "" %>
                 </div>
             <% } %>
 

@@ -19,7 +19,7 @@
 
 <div class="student-layout">
 
-    <%- include("student/partials/sidebar", { activePage, student }) %>
+    <%- include("student/partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "", student: typeof student !== "undefined" ? student : null }) %>
 
     <main class="student-main">
 
@@ -61,11 +61,11 @@
 
         <section class="student-history-profile-card">
             <div>
-                <h3><%= student.fullName %></h3>
+                <h3><%= typeof student !== "undefined" && student.fullName %></h3>
                 <p>
                     <%= student.enrollmentNumber %>
                     ·
-                    <%= student.classGroup ? student.classGroup.name : "Class Missing" %>
+                    <%= typeof student !== "undefined" && student.classGroup ? student.classGroup.name : "Class Missing" %>
                 </p>
             </div>
 

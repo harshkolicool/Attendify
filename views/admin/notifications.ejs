@@ -17,7 +17,7 @@
 <body>
 
 <div class="admin-layout">
-    <%- include("partials/sidebar", { activePage }) %>
+    <%- include("partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "" }) %>
 
     <main class="admin-main">
         <header class="admin-header">
@@ -28,10 +28,10 @@
             </div>
         </header>
 
-        <% if (message) { %>
+        <% if (typeof message !== "undefined" && message) { %>
             <% const adminNotificationFlash = String(message || "").toLowerCase(); %>
             <div class="admin-alert <%= adminNotificationFlash.includes('success') || adminNotificationFlash.includes('approved') || adminNotificationFlash.includes('rejected') || adminNotificationFlash.includes('read') || adminNotificationFlash.includes('deleted') || adminNotificationFlash.includes('cleared') ? 'success' : 'error' %>">
-                <%= message %>
+                <%= typeof message !== "undefined" ? message : "" %>
             </div>
         <% } %>
 
@@ -103,7 +103,7 @@
                 </div>
 
                 <div class="notification-head-actions">
-                    <span class="admin-count-pill"><%= unreadCount %> Unread</span>
+                    <span class="admin-count-pill"><%= typeof unreadCount !== "undefined" ? unreadCount : 0 %> Unread</span>
 
                     <form action="/admin/notifications/mark-all-read" method="POST">
                         <button class="admin-secondary-btn" type="submit">

@@ -232,7 +232,7 @@
 
 <div class="teacher-layout">
 
-    <%- include("teacher/partials/sidebar", { activePage: activePage || "dashboard", teacher }) %>
+    <%- include("teacher/partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "dashboard", teacher: typeof teacher !== "undefined" ? teacher : null }) %>
 
     <main class="teacher-main teacher-dashboard-page">
 
@@ -251,17 +251,17 @@
             </div>
         </header>
 
-        <% if (error) { %>
+        <% if (typeof error !== "undefined" && error) { %>
             <div class="alert-box error">
                 <i class="fa-solid fa-circle-exclamation"></i>
-                <%= error %>
+                <%= typeof error !== "undefined" ? error : "" %>
             </div>
         <% } %>
 
-        <% if (message) { %>
+        <% if (typeof message !== "undefined" && message) { %>
             <div class="alert-box success">
                 <i class="fa-solid fa-circle-check"></i>
-                <%= message %>
+                <%= typeof message !== "undefined" ? message : "" %>
             </div>
         <% } %>
 

@@ -218,7 +218,7 @@
 
 <div class="admin-layout">
 
-    <%- include("partials/sidebar", { activePage: activePage }) %>
+    <%- include("partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "" }) %>
 
     <main class="admin-main admin-schedules-page">
 
@@ -230,9 +230,9 @@
             </div>
         </header>
 
-        <% if (message) { %>
-            <div class="admin-alert <%= message.includes('successfully') || message.includes('created') || message.includes('updated') ? 'success' : 'error' %>">
-                <%= message %>
+        <% if (typeof message !== "undefined" && message) { %>
+            <div class="admin-alert <%= message && message && message.includes('successfully') || message && message && message.includes('created') || message && message && message.includes('updated') ? 'success' : 'error' %>">
+                <%= typeof message !== "undefined" ? message : "" %>
             </div>
         <% } %>
 

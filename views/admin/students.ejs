@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,672 +11,641 @@
     <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
+
 <body>
 
-<%
-    const classroomsMap = classroomsByClassGroup || {};
-    const studentGroupMap = {};
-
-    (students || []).forEach(function(student) {
-        let groupId = "missing";
-        let groupName = "Class Group Missing";
-        let groupMeta = "Students without linked class group";
-        let groupSort = "zzz-missing";
-        let groupDepartment = "UNASSIGNED";
-        let groupSemester = "";
-        let groupSection = "";
-        let groupClassrooms = [];
-
-        if (student.classGroup && student.classGroup._id) {
-            const classGroup = student.classGroup;
-
-            groupId = classGroup._id.toString();
-            groupName = classGroup.name || "Unnamed Class Group";
-
-            const department = classGroup.department || student.department || "";
-            const semester = classGroup.semester || student.semester || "";
-            const section = classGroup.section || "";
-
-            groupDepartment = (department || "UNASSIGNED").toString().toUpperCase();
-            groupSemester = semester ? String(semester) : "";
-            groupSection = (section || "").toString().toUpperCase();
-            groupClassrooms = classroomsMap[groupId] || [];
-
-            const semesterLabel = semester ? "Sem " + semester : "";
-            const sectionLabel = section ? "Section " + section : "";
-
-            groupMeta = [department, semesterLabel, sectionLabel].filter(Boolean).join(" · ");
+    <% const classroomsMap=classroomsByClassGroup || {}; const studentGroupMap={}; (students ||
+        []).forEach(function(student) { let groupId="missing" ; let groupName="Class Group Missing" ; let
+        groupMeta="Students without linked class group" ; let groupSort="zzz-missing" ; let groupDepartment="UNASSIGNED"
+        ; let groupSemester="" ; let groupSection="" ; let groupClassrooms=[]; if (student.classGroup &&
+        student.classGroup._id) { const classGroup=student.classGroup; groupId=classGroup._id.toString();
+        groupName=classGroup.name || "Unnamed Class Group" ; const department=classGroup.department ||
+        student.department || "" ; const semester=classGroup.semester || student.semester || "" ; const
+        section=classGroup.section || "" ; groupDepartment=(department || "UNASSIGNED" ).toString().toUpperCase();
+        groupSemester=semester ? String(semester) : "" ; groupSection=(section || "" ).toString().toUpperCase();
+        groupClassrooms=classroomsMap[groupId] || []; const semesterLabel=semester ? "Sem " + semester : "" ; const
+        sectionLabel=section ? "Section " + section : "" ; groupMeta=[department, semesterLabel,
+        sectionLabel].filter(Boolean).join(" · ");
             if (!groupMeta) {
-                groupMeta = "Class metadata not set";
-            }
+                groupMeta = " Class metadata not set"; } groupSort=[ department || "zzz" , String(semester ||
+        99).padStart(2, "0" ), classGroup.section || "ZZ" , groupName ].join("-"); } if (!studentGroupMap[groupId]) {
+        studentGroupMap[groupId]={ id: groupId, name: groupName, meta: groupMeta, sortKey: groupSort, department:
+        groupDepartment, semester: groupSemester, section: groupSection, classrooms: groupClassrooms, students: [] }; }
+        studentGroupMap[groupId].students.push(student); }); const
+        groupedStudents=Object.values(studentGroupMap).sort(function(a, b) { return a.sortKey.localeCompare(b.sortKey);
+        }); groupedStudents.forEach(function(group) { group.students.sort(function(first, second) { return
+        (first.fullName || "" ).localeCompare(second.fullName || "" ); }); }); const departmentOptions=groupedStudents
+        .map(function(group) { return group.department; }) .filter(function(value) { return value && value
+        !=="UNASSIGNED" ; }) .filter(function(value, index, array) { return array.indexOf(value)===index; }) .sort();
+        const semesterOptions=groupedStudents .map(function(group) { return group.semester; }) .filter(function(value) {
+        return value !=="" ; }) .filter(function(value, index, array) { return array.indexOf(value)===index; })
+        .sort(function(first, second) { return Number(first) - Number(second); }); const totalStudentsCount=(students ||
+        []).length; const mappedGroupsCount=groupedStudents.filter(function(group) { return group.id !=="missing" ;
+        }).length; const unassignedStudentsCount=studentGroupMap.missing && studentGroupMap.missing.students ?
+        studentGroupMap.missing.students.length : 0; const mappedClassroomNames=[];
+        groupedStudents.forEach(function(group) { (group.classrooms || []).forEach(function(roomName) { if
+        (mappedClassroomNames.indexOf(roomName)===-1) { mappedClassroomNames.push(roomName); } }); }); %>
 
-            groupSort = [
-                department || "zzz",
-                String(semester || 99).padStart(2, "0"),
-                classGroup.section || "ZZ",
-                groupName
-            ].join("-");
-        }
+        <div class="admin-layout">
 
-        if (!studentGroupMap[groupId]) {
-            studentGroupMap[groupId] = {
-                id: groupId,
-                name: groupName,
-                meta: groupMeta,
-                sortKey: groupSort,
-                department: groupDepartment,
-                semester: groupSemester,
-                section: groupSection,
-                classrooms: groupClassrooms,
-                students: []
-            };
-        }
+            <%- include("partials/sidebar", { activePage: typeof activePage !=="undefined" ? activePage : "" }) %>
 
-        studentGroupMap[groupId].students.push(student);
-    });
+                <main class="admin-main admin-students-page">
 
-    const groupedStudents = Object.values(studentGroupMap).sort(function(a, b) {
-        return a.sortKey.localeCompare(b.sortKey);
-    });
-
-    groupedStudents.forEach(function(group) {
-        group.students.sort(function(first, second) {
-            return (first.fullName || "").localeCompare(second.fullName || "");
-        });
-    });
-
-    const departmentOptions = groupedStudents
-        .map(function(group) { return group.department; })
-        .filter(function(value) { return value && value !== "UNASSIGNED"; })
-        .filter(function(value, index, array) { return array.indexOf(value) === index; })
-        .sort();
-
-    const semesterOptions = groupedStudents
-        .map(function(group) { return group.semester; })
-        .filter(function(value) { return value !== ""; })
-        .filter(function(value, index, array) { return array.indexOf(value) === index; })
-        .sort(function(first, second) { return Number(first) - Number(second); });
-
-    const totalStudentsCount = (students || []).length;
-    const mappedGroupsCount = groupedStudents.filter(function(group) {
-        return group.id !== "missing";
-    }).length;
-    const unassignedStudentsCount =
-        studentGroupMap.missing && studentGroupMap.missing.students
-            ? studentGroupMap.missing.students.length
-            : 0;
-    const mappedClassroomNames = [];
-
-    groupedStudents.forEach(function(group) {
-        (group.classrooms || []).forEach(function(roomName) {
-            if (mappedClassroomNames.indexOf(roomName) === -1) {
-                mappedClassroomNames.push(roomName);
-            }
-        });
-    });
-%>
-
-<div class="admin-layout">
-
-    <%- include("partials/sidebar", { activePage: activePage }) %>
-
-    <main class="admin-main admin-students-page">
-
-        <header class="admin-header">
-            <div>
-                <span class="admin-kicker">Admin Panel</span>
-                <h1>Students</h1>
-                <p>Create, search, edit and manage student accounts.</p>
-            </div>
-        </header>
-
-        <% if (message) { %>
-            <div class="admin-alert <%= message.includes('successfully') ? 'success' : 'error' %>">
-                <%= message %>
-            </div>
-        <% } %>
-
-        <section class="admin-students-overview-row">
-            <article class="admin-students-overview-pill">
-                <span>Total Students</span>
-                <strong><%= totalStudentsCount %></strong>
-            </article>
-
-            <article class="admin-students-overview-pill">
-                <span>Class Groups</span>
-                <strong><%= mappedGroupsCount %></strong>
-            </article>
-
-            <article class="admin-students-overview-pill">
-                <span>Mapped Classrooms</span>
-                <strong><%= mappedClassroomNames.length %></strong>
-            </article>
-
-            <article class="admin-students-overview-pill warning">
-                <span>Unassigned Students</span>
-                <strong><%= unassignedStudentsCount %></strong>
-            </article>
-        </section>
-
-        <div class="admin-students-control-grid">
-            <section class="admin-card admin-csv-card">
-                <div class="admin-card-head">
-                    <div>
-                        <h3>Import / Export Students</h3>
-                        <p>Upload students using CSV or export existing students.</p>
-                    </div>
-                </div>
-
-                <% if (csvImportResult) { %>
-                    <div class="admin-csv-result <%= csvImportResult.type %>">
-                        <strong><%= csvImportResult.title %></strong>
-                        <p><%= csvImportResult.message %></p>
-
-                        <% if (csvImportResult.errors && csvImportResult.errors.length > 0) { %>
-                            <ul>
-                                <% csvImportResult.errors.forEach(function(error) { %>
-                                    <li><%= error %></li>
-                                <% }) %>
-                            </ul>
-                        <% } %>
-                    </div>
-                <% } %>
-
-                <div class="admin-csv-actions">
-
-                    <form
-                        action="/admin/students/import"
-                        method="POST"
-                        enctype="multipart/form-data"
-                        class="admin-csv-import-form"
-                    >
-                        <div class="admin-file-upload">
-                            <input
-                                type="file"
-                                id="studentsCsvInput"
-                                name="studentsCsv"
-                                accept=".csv,text/csv"
-                                required
-                            >
-
-                            <label for="studentsCsvInput" class="admin-file-drop">
-                                <span class="admin-file-icon">
-                                    <i class="fa-solid fa-file-csv"></i>
-                                </span>
-
-                                <span class="admin-file-text">
-                                    <strong id="studentsCsvFileName">Choose CSV file</strong>
-                                    <small>Only .csv file, max 2MB</small>
-                                </span>
-
-                                <span class="admin-file-browse">
-                                    Browse
-                                </span>
-                            </label>
+                    <header class="admin-header">
+                        <div>
+                            <span class="admin-kicker">Admin Panel</span>
+                            <h1>Students</h1>
+                            <p>Create, search, edit and manage student accounts.</p>
                         </div>
+                    </header>
 
-                        <button class="admin-primary-btn admin-import-btn" type="submit">
-                            <i class="fa-solid fa-file-import"></i>
-                            Import Students
-                        </button>
-                    </form>
+                    <% if (typeof message !=="undefined" && message) { %>
+                        <div
+                            class="admin-alert <%= message && message && message.includes('successfully') ? 'success' : 'error' %>">
+                            <%= typeof message !=="undefined" ? message : "" %>
+                        </div>
+                        <% } %>
 
-                    <div class="admin-csv-buttons">
-                        <a href="/admin/students/import-template" class="admin-secondary-btn">
-                            <i class="fa-solid fa-download"></i>
-                            Download CSV Format
-                        </a>
-
-                        <a href="/admin/students/export" class="admin-secondary-btn">
-                            <i class="fa-solid fa-file-export"></i>
-                            Export Students
-                        </a>
-                    </div>
-
-                </div>
-
-                <div class="admin-csv-help">
-                    <div class="admin-csv-help-title">
-                        <i class="fa-solid fa-circle-info"></i>
-                        <strong>CSV Format</strong>
-                    </div>
-
-                    <code>fullName,email,password,enrollmentNumber,department,semester,section</code>
-
-                    <p>
-                        Department, semester and section must match an existing class group.
-                        Password is imported for first login and is stored hashed.
-                    </p>
-                </div>
-            </section>
-
-            <section class="admin-card admin-student-create-card">
-                <div class="admin-card-head">
-                    <div>
-                        <h3>Add Student</h3>
-                        <p>Students are automatically assigned subjects from their class group.</p>
-                    </div>
-                </div>
-
-                <form action="/admin/students/create" method="POST" class="admin-form-grid">
-
-                    <div class="admin-field">
-                        <label>Full Name</label>
-                        <input type="text" name="fullName" placeholder="Harsh Koli" required>
-                    </div>
-
-                    <div class="admin-field">
-                        <label>Email</label>
-                        <input type="email" name="email" placeholder="student@gmail.com" required>
-                    </div>
-
-                    <div class="admin-field">
-                        <label>Password</label>
-                        <input type="password" name="password" placeholder="Minimum 6 characters" required>
-                    </div>
-
-                    <div class="admin-field">
-                        <label>Enrollment Number</label>
-                        <input type="text" name="enrollmentNumber" placeholder="22BCS101" required>
-                    </div>
-
-                    <div class="admin-field">
-                        <label>Department</label>
-                        <input type="text" name="department" placeholder="CSE" required>
-                    </div>
-
-                    <div class="admin-field">
-                        <label>Semester</label>
-                        <input type="number" name="semester" placeholder="4" min="1" max="12" required>
-                    </div>
-
-                    <div class="admin-field">
-                        <label>Class Group</label>
-                        <select name="classGroupId" required>
-                            <option value="">Select Class Group</option>
-
-                            <% classGroups.forEach(function(group) { %>
-                                <option
-                                    value="<%= group._id %>"
-                                    data-department="<%= group.department %>"
-                                    data-semester="<%= group.semester %>"
-                                >
-                                    <%= group.name %> - Sem <%= group.semester %> <%= group.section %>
-                                </option>
-                            <% }) %>
-                        </select>
-                    </div>
-
-                    <div class="admin-field admin-button-field">
-                        <label>&nbsp;</label>
-                        <button class="admin-primary-btn" type="submit">
-                            <i class="fa-solid fa-plus"></i>
-                            Add Student
-                        </button>
-                    </div>
-                </form>
-            </section>
-        </div>
-
-        <section class="admin-card admin-student-directory-card">
-            <div class="admin-card-head">
-                <div>
-                    <h3>Students Directory</h3>
-                    <p>Browse students grouped by class group with smart filters.</p>
-                </div>
-            </div>
-
-            <div class="admin-toolbar">
-                <div class="admin-search-box">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input
-                        type="text"
-                        data-admin-search="students"
-                        placeholder="Search student by name, email, enrollment number, class group or department..."
-                    >
-                </div>
-
-                <form
-                    action="/admin/students/delete-all"
-                    method="POST"
-                    class="admin-toolbar-action"
-                    onsubmit="return confirmAdminDelete('Delete all students? Students with attendance history will be archived safely.')"
-                >
-                    <button class="admin-secondary-btn danger" type="submit">
-                        <i class="fa-solid fa-trash"></i>
-                        Delete All
-                    </button>
-                </form>
-
-                <span class="admin-count-pill">
-                    <%= students.length %> Students
-                </span>
-            </div>
-
-            <% if (!students || students.length === 0) { %>
-                <div class="admin-empty">
-                    No students found.
-                </div>
-            <% } %>
-
-            <% if (groupedStudents.length > 0) { %>
-                <div class="admin-student-org-toolbar">
-                    <div class="admin-student-filter-field">
-                        <label for="studentsDepartmentFilter">Department</label>
-                        <select id="studentsDepartmentFilter" data-student-filter="department">
-                            <option value="">All Departments</option>
-
-                            <% departmentOptions.forEach(function(departmentName) { %>
-                                <option value="<%= departmentName %>"><%= departmentName %></option>
-                            <% }) %>
-                        </select>
-                    </div>
-
-                    <div class="admin-student-filter-field">
-                        <label for="studentsSemesterFilter">Semester</label>
-                        <select id="studentsSemesterFilter" data-student-filter="semester">
-                            <option value="">All Semesters</option>
-
-                            <% semesterOptions.forEach(function(semesterValue) { %>
-                                <option value="<%= semesterValue %>">Sem <%= semesterValue %></option>
-                            <% }) %>
-                        </select>
-                    </div>
-
-                    <div class="admin-student-filter-field">
-                        <label for="studentsClassGroupFilter">Class Group</label>
-                        <select id="studentsClassGroupFilter" data-student-filter="group">
-                            <option value="">All Class Groups</option>
-
-                            <% groupedStudents.forEach(function(group) { %>
-                                <option value="<%= group.id %>"><%= group.name %></option>
-                            <% }) %>
-                        </select>
-                    </div>
-
-                    <div class="admin-student-filter-field admin-student-filter-action">
-                        <label>&nbsp;</label>
-                        <button type="button" class="admin-secondary-btn" data-student-filter-reset>
-                            <i class="fa-solid fa-rotate-left"></i>
-                            Clear Filters
-                        </button>
-                    </div>
-                </div>
-            <% } %>
-
-            <div class="admin-student-groups">
-                <% groupedStudents.forEach(function(group, groupIndex) { %>
-                    <details
-                        class="admin-student-group-panel"
-                        data-search-container="students"
-                        data-filter-department="<%= group.department %>"
-                        data-filter-semester="<%= group.semester %>"
-                        data-filter-group="<%= group.id %>"
-                        <%= groupIndex === 0 ? "open" : "" %>
-                    >
-                        <summary class="admin-student-group-summary">
-                            <div class="admin-student-group-summary-copy">
-                                <h3><%= group.name %></h3>
-                                <p><%= group.meta %></p>
-
-                                <div class="admin-student-group-rooms">
-                                    <% if (group.classrooms && group.classrooms.length > 0) { %>
-                                        <% group.classrooms.forEach(function(roomName) { %>
-                                            <span class="admin-room-badge">
-                                                <i class="fa-solid fa-location-dot"></i>
-                                                <%= roomName %>
-                                            </span>
-                                        <% }) %>
-                                    <% } else { %>
-                                        <span class="admin-room-badge muted">
-                                            <i class="fa-regular fa-circle-question"></i>
-                                            No mapped classroom
-                                        </span>
-                                    <% } %>
-                                </div>
-                            </div>
-                            <span class="admin-count-pill" data-student-visible-count>
-                                <%= group.students.length %> Students
-                            </span>
-                        </summary>
-
-                        <div class="admin-grid admin-student-group-grid">
-                            <% group.students.forEach(function(student) { %>
-
-                                <article class="admin-item-card admin-student-card" data-search-group="students">
-
-                                    <div class="admin-item-top">
-                                        <div class="admin-item-icon">
-                                            <i class="fa-solid fa-user-graduate"></i>
-                                        </div>
-
-                                        <form
-                                            action="/admin/students/<%= student._id %>/delete"
-                                            method="POST"
-                                            class="admin-delete-form"
-                                            onsubmit="return confirmAdminDelete('Delete this student?')"
-                                        >
-                                            <button class="admin-delete-btn admin-delete-btn-icon" type="submit" title="Delete student" aria-label="Delete student">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-
-                                    <div class="admin-student-body">
-                                        <h4><%= student.fullName %></h4>
-                                        <p><%= student.email %></p>
-
-                                        <div class="admin-meta admin-student-meta">
-                                            <span class="admin-badge">
-                                                <%= student.enrollmentNumber %>
-                                            </span>
-
-                                            <span class="admin-badge">
-                                                <%= student.department %>
-                                            </span>
-
-                                            <span class="admin-badge">
-                                                Sem <%= student.semester %>
-                                            </span>
-
-                                            <% if (student.classGroup) { %>
-                                                <span class="admin-badge">
-                                                    <%= student.classGroup.name %>
-                                                </span>
-                                            <% } else { %>
-                                                <span class="admin-badge">
-                                                    Class Missing
-                                                </span>
-                                            <% } %>
-
-                                            <span class="admin-badge <%= student.passkeys && student.passkeys.length > 0 ? 'success' : 'danger' %>">
-                                                <i class="fa-solid fa-fingerprint"></i>
-                                                <% if (student.passkeys && student.passkeys.length > 0) { %>
-                                                    <%= student.passkeys.length %> Passkey(s)
-                                                <% } else { %>
-                                                    No Passkey
-                                                <% } %>
-                                            </span>
-                                        </div>
-
-                                        <% if (student.passkeySetupAllowedUntil && new Date(student.passkeySetupAllowedUntil).getTime() > Date.now()) { %>
-                                            <div class="admin-passkey-status">
-                                                <span class="admin-badge success">
-                                                    Passkey setup open until
-                                                    <%= new Date(student.passkeySetupAllowedUntil).toLocaleTimeString() %>
-                                                </span>
-                                            </div>
-                                        <% } %>
-                                    </div>
-
-                                    <div class="admin-student-actions">
-                                        <form
-                                            action="/admin/students/<%= student._id %>/allow-passkey-setup"
-                                            method="POST"
-                                            onsubmit="return confirm('Allow passkey setup for <%= student.fullName %> for 30 minutes?')"
-                                        >
-                                            <button class="admin-secondary-btn" type="submit">
-                                                <i class="fa-solid fa-user-shield"></i>
-                                                Allow Passkey Setup
-                                            </button>
-                                        </form>
-
-                                        <form
-                                            action="/admin/students/<%= student._id %>/allow-trusted-device-setup"
-                                            method="POST"
-                                            onsubmit="return confirm('Allow trusted browser fallback for <%= student.fullName %> for 30 minutes? Use this only if passkeys are not supported.')"
-                                        >
-                                            <button class="admin-secondary-btn" type="submit">
-                                                <i class="fa-solid fa-laptop-file"></i>
-                                                Allow Browser Fallback
-                                            </button>
-                                        </form>
-
-                                        <% if (student.trustedDeviceSetupAllowedUntil && new Date(student.trustedDeviceSetupAllowedUntil).getTime() > Date.now()) { %>
-                                            <div class="admin-passkey-status">
-                                                <span class="admin-badge success">
-                                                    Browser fallback open until
-                                                    <%= new Date(student.trustedDeviceSetupAllowedUntil).toLocaleTimeString() %>
-                                                </span>
-                                            </div>
-                                        <% } %>
-
-                                        <form
-                                            action="/admin/students/<%= student._id %>/reset-passkeys"
-                                            method="POST"
-                                            onsubmit="return confirm('Reset all passkeys for <%= student.fullName %>? Student will need to register a new passkey.')"
-                                        >
-                                            <button class="admin-warning-btn" type="submit">
-                                                <i class="fa-solid fa-fingerprint"></i>
-                                                Reset Passkeys
-                                            </button>
-                                        </form>
-                                    </div>
-
-                                    <details class="admin-edit-box admin-student-edit">
-                                        <summary>
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                            Edit Student
-                                        </summary>
-
-                                        <form
-                                            action="/admin/students/<%= student._id %>/update"
-                                            method="POST"
-                                            class="admin-edit-form"
-                                        >
-                                            <div class="admin-field">
-                                                <label>Full Name</label>
-                                                <input
-                                                    type="text"
-                                                    name="fullName"
-                                                    value="<%= student.fullName %>"
-                                                    required
-                                                >
-                                            </div>
-
-                                            <div class="admin-field">
-                                                <label>Email</label>
-                                                <input
-                                                    type="email"
-                                                    name="email"
-                                                    value="<%= student.email %>"
-                                                    required
-                                                >
-                                            </div>
-
-                                            <div class="admin-field">
-                                                <label>New Password</label>
-                                                <input
-                                                    type="password"
-                                                    name="password"
-                                                    placeholder="Leave blank to keep old password"
-                                                >
-                                            </div>
-
-                                            <div class="admin-field">
-                                                <label>Enrollment Number</label>
-                                                <input
-                                                    type="text"
-                                                    name="enrollmentNumber"
-                                                    value="<%= student.enrollmentNumber %>"
-                                                    required
-                                                >
-                                            </div>
-
-                                            <div class="admin-field">
-                                                <label>Department</label>
-                                                <input
-                                                    type="text"
-                                                    name="department"
-                                                    value="<%= student.department %>"
-                                                    required
-                                                >
-                                            </div>
-
-                                            <div class="admin-field">
-                                                <label>Semester</label>
-                                                <input
-                                                    type="number"
-                                                    name="semester"
-                                                    value="<%= student.semester %>"
-                                                    min="1"
-                                                    max="12"
-                                                    required
-                                                >
-                                            </div>
-
-                                            <div class="admin-field">
-                                                <label>Class Group</label>
-                                                <select name="classGroupId" required>
-                                                    <option value="">Select Class Group</option>
-
-                                                    <% classGroups.forEach(function(group) { %>
-                                                        <option
-                                                            value="<%= group._id %>"
-                                                            data-department="<%= group.department %>"
-                                                            data-semester="<%= group.semester %>"
-                                                            <%= student.classGroup && student.classGroup._id.toString() === group._id.toString() ? "selected" : "" %>
-                                                        >
-                                                            <%= group.name %> - Sem <%= group.semester %> <%= group.section %>
-                                                        </option>
-                                                    <% }) %>
-                                                </select>
-                                            </div>
-
-                                            <button class="admin-primary-btn" type="submit">
-                                                Save Changes
-                                            </button>
-                                        </form>
-                                    </details>
-
+                            <section class="admin-students-overview-row">
+                                <article class="admin-students-overview-pill">
+                                    <span>Total Students</span>
+                                    <strong>
+                                        <%= totalStudentsCount %>
+                                    </strong>
                                 </article>
 
-                            <% }) %>
-                        </div>
-                    </details>
-                <% }) %>
-            </div>
+                                <article class="admin-students-overview-pill">
+                                    <span>Class Groups</span>
+                                    <strong>
+                                        <%= mappedGroupsCount %>
+                                    </strong>
+                                </article>
 
-            <% if (groupedStudents.length > 0) { %>
-                <div class="admin-empty hidden-by-search" data-search-empty="students">
-                    No students match your search and selected filters.
-                </div>
-            <% } %>
+                                <article class="admin-students-overview-pill">
+                                    <span>Mapped Classrooms</span>
+                                    <strong>
+                                        <%= mappedClassroomNames.length %>
+                                    </strong>
+                                </article>
 
-        </section>
+                                <article class="admin-students-overview-pill warning">
+                                    <span>Unassigned Students</span>
+                                    <strong>
+                                        <%= unassignedStudentsCount %>
+                                    </strong>
+                                </article>
+                            </section>
 
-    </main>
+                            <div class="admin-students-control-grid">
+                                <section class="admin-card admin-csv-card">
+                                    <div class="admin-card-head">
+                                        <div>
+                                            <h3>Import / Export Students</h3>
+                                            <p>Upload students using CSV or export existing students.</p>
+                                        </div>
+                                    </div>
 
-</div>
+                                    <% if (csvImportResult) { %>
+                                        <div class="admin-csv-result <%= csvImportResult.type %>">
+                                            <strong>
+                                                <%= csvImportResult.title %>
+                                            </strong>
+                                            <p>
+                                                <%= csvImportResult.message %>
+                                            </p>
 
-<script src="/js/adminSearch.js"></script>
-<script src="/js/adminValidation.js"></script>
-<script src="/js/adminDynamicForms.js"></script>
-<script src="/js/uiShell.js"></script>
+                                            <% if (csvImportResult.errors && csvImportResult.errors.length> 0) { %>
+                                                <ul>
+                                                    <% csvImportResult.errors.forEach(function(error) { %>
+                                                        <li>
+                                                            <%= typeof error !=="undefined" ? error : "" %>
+                                                        </li>
+                                                        <% }) %>
+                                                </ul>
+                                                <% } %>
+                                        </div>
+                                        <% } %>
+
+                                            <div class="admin-csv-actions">
+
+                                                <form action="/admin/students/import" method="POST"
+                                                    enctype="multipart/form-data" class="admin-csv-import-form">
+                                                    <div class="admin-file-upload">
+                                                        <input type="file" id="studentsCsvInput" name="studentsCsv"
+                                                            accept=".csv,text/csv" required>
+
+                                                        <label for="studentsCsvInput" class="admin-file-drop">
+                                                            <span class="admin-file-icon">
+                                                                <i class="fa-solid fa-file-csv"></i>
+                                                            </span>
+
+                                                            <span class="admin-file-text">
+                                                                <strong id="studentsCsvFileName">Choose CSV
+                                                                    file</strong>
+                                                                <small>Only .csv file, max 2MB</small>
+                                                            </span>
+
+                                                            <span class="admin-file-browse">
+                                                                Browse
+                                                            </span>
+                                                        </label>
+                                                    </div>
+
+                                                    <button class="admin-primary-btn admin-import-btn" type="submit">
+                                                        <i class="fa-solid fa-file-import"></i>
+                                                        Import Students
+                                                    </button>
+                                                </form>
+
+                                                <div class="admin-csv-buttons">
+                                                    <a href="/admin/students/import-template"
+                                                        class="admin-secondary-btn">
+                                                        <i class="fa-solid fa-download"></i>
+                                                        Download CSV Format
+                                                    </a>
+
+                                                    <a href="/admin/students/export" class="admin-secondary-btn">
+                                                        <i class="fa-solid fa-file-export"></i>
+                                                        Export Students
+                                                    </a>
+                                                </div>
+
+                                            </div>
+
+                                            <div class="admin-csv-help">
+                                                <div class="admin-csv-help-title">
+                                                    <i class="fa-solid fa-circle-info"></i>
+                                                    <strong>CSV Format</strong>
+                                                </div>
+
+                                                <code>fullName,email,password,enrollmentNumber,department,semester,section</code>
+
+                                                <p>
+                                                    Department, semester and section must match an existing class group.
+                                                    Password is imported for first login and is stored hashed.
+                                                </p>
+                                            </div>
+                                </section>
+
+                                <section class="admin-card admin-student-create-card">
+                                    <div class="admin-card-head">
+                                        <div>
+                                            <h3>Add Student</h3>
+                                            <p>Students are automatically assigned subjects from their class group.</p>
+                                        </div>
+                                    </div>
+
+                                    <form action="/admin/students/create" method="POST" class="admin-form-grid">
+
+                                        <div class="admin-field">
+                                            <label>Full Name</label>
+                                            <input type="text" name="fullName" placeholder="Harsh Koli" required>
+                                        </div>
+
+                                        <div class="admin-field">
+                                            <label>Email</label>
+                                            <input type="email" name="email" placeholder="student@gmail.com" required>
+                                        </div>
+
+                                        <div class="admin-field">
+                                            <label>Password</label>
+                                            <input type="password" name="password" placeholder="Minimum 6 characters"
+                                                required>
+                                        </div>
+
+                                        <div class="admin-field">
+                                            <label>Enrollment Number</label>
+                                            <input type="text" name="enrollmentNumber" placeholder="22BCS101" required>
+                                        </div>
+
+                                        <div class="admin-field">
+                                            <label>Department</label>
+                                            <input type="text" name="department" placeholder="CSE" required>
+                                        </div>
+
+                                        <div class="admin-field">
+                                            <label>Semester</label>
+                                            <input type="number" name="semester" placeholder="4" min="1" max="12"
+                                                required>
+                                        </div>
+
+                                        <div class="admin-field">
+                                            <label>Class Group</label>
+                                            <select name="classGroupId" required>
+                                                <option value="">Select Class Group</option>
+
+                                                <% classGroups.forEach(function(group) { %>
+                                                    <option value="<%= group._id %>"
+                                                        data-department="<%= group.department %>"
+                                                        data-semester="<%= group.semester %>">
+                                                        <%= group.name %> - Sem <%= group.semester %>
+                                                                <%= group.section %>
+                                                    </option>
+                                                    <% }) %>
+                                            </select>
+                                        </div>
+
+                                        <div class="admin-field admin-button-field">
+                                            <label>&nbsp;</label>
+                                            <button class="admin-primary-btn" type="submit">
+                                                <i class="fa-solid fa-plus"></i>
+                                                Add Student
+                                            </button>
+                                        </div>
+                                    </form>
+                                </section>
+                            </div>
+
+                            <section class="admin-card admin-student-directory-card">
+                                <div class="admin-card-head">
+                                    <div>
+                                        <h3>Students Directory</h3>
+                                        <p>Browse students grouped by class group with smart filters.</p>
+                                    </div>
+                                </div>
+
+                                <div class="admin-toolbar">
+                                    <div class="admin-search-box">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                        <input type="text" data-admin-search="students"
+                                            placeholder="Search student by name, email, enrollment number, class group or department...">
+                                    </div>
+
+                                    <form action="/admin/students/delete-all" method="POST" class="admin-toolbar-action"
+                                        onsubmit="return confirmAdminDelete('Delete all students? Students with attendance history will be archived safely.')">
+                                        <button class="admin-secondary-btn danger" type="submit">
+                                            <i class="fa-solid fa-trash"></i>
+                                            Delete All
+                                        </button>
+                                    </form>
+
+                                    <span class="admin-count-pill">
+                                        <%= students.length %> Students
+                                    </span>
+                                </div>
+
+                                <% if (!students || students.length===0) { %>
+                                    <div class="admin-empty">
+                                        No students found.
+                                    </div>
+                                    <% } %>
+
+                                        <% if (groupedStudents.length> 0) { %>
+                                            <div class="admin-student-org-toolbar">
+                                                <div class="admin-student-filter-field">
+                                                    <label for="studentsDepartmentFilter">Department</label>
+                                                    <select id="studentsDepartmentFilter"
+                                                        data-student-filter="department">
+                                                        <option value="">All Departments</option>
+
+                                                        <% departmentOptions.forEach(function(departmentName) { %>
+                                                            <option value="<%= departmentName %>">
+                                                                <%= departmentName %>
+                                                            </option>
+                                                            <% }) %>
+                                                    </select>
+                                                </div>
+
+                                                <div class="admin-student-filter-field">
+                                                    <label for="studentsSemesterFilter">Semester</label>
+                                                    <select id="studentsSemesterFilter" data-student-filter="semester">
+                                                        <option value="">All Semesters</option>
+
+                                                        <% semesterOptions.forEach(function(semesterValue) { %>
+                                                            <option value="<%= semesterValue %>">Sem <%= semesterValue
+                                                                    %>
+                                                            </option>
+                                                            <% }) %>
+                                                    </select>
+                                                </div>
+
+                                                <div class="admin-student-filter-field">
+                                                    <label for="studentsClassGroupFilter">Class Group</label>
+                                                    <select id="studentsClassGroupFilter" data-student-filter="group">
+                                                        <option value="">All Class Groups</option>
+
+                                                        <% groupedStudents.forEach(function(group) { %>
+                                                            <option value="<%= group.id %>">
+                                                                <%= group.name %>
+                                                            </option>
+                                                            <% }) %>
+                                                    </select>
+                                                </div>
+
+                                                <div class="admin-student-filter-field admin-student-filter-action">
+                                                    <label>&nbsp;</label>
+                                                    <button type="button" class="admin-secondary-btn"
+                                                        data-student-filter-reset>
+                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                        Clear Filters
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <% } %>
+
+                                                <div class="admin-student-groups">
+                                                    <% groupedStudents.forEach(function(group, groupIndex) { %>
+                                                        <details class="admin-student-group-panel"
+                                                            data-search-container="students"
+                                                            data-filter-department="<%= group.department %>"
+                                                            data-filter-semester="<%= group.semester %>"
+                                                            data-filter-group="<%= group.id %>" <%=groupIndex===0
+                                                            ? "open" : "" %>
+                                                            >
+                                                            <summary class="admin-student-group-summary">
+                                                                <div class="admin-student-group-summary-copy">
+                                                                    <h3>
+                                                                        <%= group.name %>
+                                                                    </h3>
+                                                                    <p>
+                                                                        <%= group.meta %>
+                                                                    </p>
+
+                                                                    <div class="admin-student-group-rooms">
+                                                                        <% if (group.classrooms &&
+                                                                            group.classrooms.length> 0) { %>
+                                                                            <% group.classrooms.forEach(function(roomName)
+                                                                                { %>
+                                                                                <span class="admin-room-badge">
+                                                                                    <i
+                                                                                        class="fa-solid fa-location-dot"></i>
+                                                                                    <%= roomName %>
+                                                                                </span>
+                                                                                <% }) %>
+                                                                                    <% } else { %>
+                                                                                        <span
+                                                                                            class="admin-room-badge muted">
+                                                                                            <i
+                                                                                                class="fa-regular fa-circle-question"></i>
+                                                                                            No mapped classroom
+                                                                                        </span>
+                                                                                        <% } %>
+                                                                    </div>
+                                                                </div>
+                                                                <span class="admin-count-pill"
+                                                                    data-student-visible-count>
+                                                                    <%= group.students.length %> Students
+                                                                </span>
+                                                            </summary>
+
+                                                            <div class="admin-grid admin-student-group-grid">
+                                                                <% group.students.forEach(function(student) { %>
+
+                                                                    <article class="admin-item-card admin-student-card"
+                                                                        data-search-group="students">
+
+                                                                        <div class="admin-item-top">
+                                                                            <div class="admin-item-icon">
+                                                                                <i
+                                                                                    class="fa-solid fa-user-graduate"></i>
+                                                                            </div>
+
+                                                                            <form
+                                                                                action="/admin/students/<%= student._id %>/delete"
+                                                                                method="POST" class="admin-delete-form"
+                                                                                onsubmit="return confirmAdminDelete('Delete this student?')">
+                                                                                <button
+                                                                                    class="admin-delete-btn admin-delete-btn-icon"
+                                                                                    type="submit" title="Delete student"
+                                                                                    aria-label="Delete student">
+                                                                                    <i class="fa-solid fa-trash"></i>
+                                                                                </button>
+                                                                            </form>
+                                                                        </div>
+
+                                                                        <div class="admin-student-body">
+                                                                            <h4>
+                                                                                <%= typeof student !=="undefined" &&
+                                                                                    student.fullName %>
+                                                                            </h4>
+                                                                            <p>
+                                                                                <%= student.email %>
+                                                                            </p>
+
+                                                                            <div class="admin-meta admin-student-meta">
+                                                                                <span class="admin-badge">
+                                                                                    <%= student.enrollmentNumber %>
+                                                                                </span>
+
+                                                                                <span class="admin-badge">
+                                                                                    <%= student.department %>
+                                                                                </span>
+
+                                                                                <span class="admin-badge">
+                                                                                    Sem <%= student.semester %>
+                                                                                </span>
+
+                                                                                <% if (student.classGroup) { %>
+                                                                                    <span class="admin-badge">
+                                                                                        <%= student.classGroup.name %>
+                                                                                    </span>
+                                                                                    <% } else { %>
+                                                                                        <span class="admin-badge">
+                                                                                            Class Missing
+                                                                                        </span>
+                                                                                        <% } %>
+
+                                                                                            <span
+                                                                                                class="admin-badge <%= student.passkeys && student.passkeys.length > 0 ? 'success' : 'danger' %>">
+                                                                                                <i
+                                                                                                    class="fa-solid fa-fingerprint"></i>
+                                                                                                <% if (student.passkeys
+                                                                                                    &&
+                                                                                                    student.passkeys.length>
+                                                                                                    0) { %>
+                                                                                                    <%= student.passkeys.length
+                                                                                                        %> Passkey(s)
+                                                                                                        <% } else { %>
+                                                                                                            No Passkey
+                                                                                                            <% } %>
+                                                                                            </span>
+                                                                            </div>
+
+                                                                            <% if (student.passkeySetupAllowedUntil &&
+                                                                                new
+                                                                                Date(student.passkeySetupAllowedUntil).getTime()>
+                                                                                Date.now()) { %>
+                                                                                <div class="admin-passkey-status">
+                                                                                    <span class="admin-badge success">
+                                                                                        Passkey setup open until
+                                                                                        <%= new
+                                                                                            Date(student.passkeySetupAllowedUntil).toLocaleTimeString()
+                                                                                            %>
+                                                                                    </span>
+                                                                                </div>
+                                                                                <% } %>
+                                                                        </div>
+
+                                                                        <div class="admin-student-actions">
+                                                                            <form
+                                                                                action="/admin/students/<%= student._id %>/allow-passkey-setup"
+                                                                                method="POST"
+                                                                                data-confirm="Allow passkey setup for <%= student.fullName || 'this student' %> for 30 minutes?"
+                                                                                onsubmit="return confirm(this.dataset.confirm)">
+                                                                                <button class="admin-secondary-btn"
+                                                                                    type="submit">
+                                                                                    <i
+                                                                                        class="fa-solid fa-user-shield"></i>
+                                                                                    Allow Passkey Setup
+                                                                                </button>
+                                                                            </form>
+
+                                                                            <form
+                                                                                action="/admin/students/<%= student._id %>/allow-trusted-device-setup"
+                                                                                method="POST"
+                                                                                data-confirm="Allow trusted browser fallback for <%= student.fullName || 'this student' %> for 30 minutes? Use this only if passkeys are not supported."
+                                                                                onsubmit="return confirm(this.dataset.confirm)">
+
+                                                                                <% if
+                                                                                    (student.trustedDeviceSetupAllowedUntil
+                                                                                    && new
+                                                                                    Date(student.trustedDeviceSetupAllowedUntil).getTime()>
+                                                                                    Date.now()) { %>
+                                                                                    <div class="admin-passkey-status">
+                                                                                        <span
+                                                                                            class="admin-badge success">
+                                                                                            Browser fallback open until
+                                                                                            <%= new
+                                                                                                Date(student.trustedDeviceSetupAllowedUntil).toLocaleTimeString()
+                                                                                                %>
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <% } %>
+
+                                                                                        <form
+                                                                                            action="/admin/students/<%= student._id %>/reset-passkeys"
+                                                                                            method="POST"
+                                                                                            data-confirm="Reset all passkeys for <%= student.fullName || 'this student' %>? Student will need to register a new passkey."
+                                                                                            onsubmit="return confirm(this.dataset.confirm)">
+                                                                                            <button
+                                                                                                class="admin-warning-btn"
+                                                                                                type="submit">
+                                                                                                <i
+                                                                                                    class="fa-solid fa-fingerprint"></i>
+                                                                                                Reset Passkeys
+                                                                                            </button>
+                                                                                        </form>
+                                                                        </div>
+
+                                                                        <details
+                                                                            class="admin-edit-box admin-student-edit">
+                                                                            <summary>
+                                                                                <i
+                                                                                    class="fa-solid fa-pen-to-square"></i>
+                                                                                Edit Student
+                                                                            </summary>
+
+                                                                            <form
+                                                                                action="/admin/students/<%= student._id %>/update"
+                                                                                method="POST" class="admin-edit-form">
+                                                                                <div class="admin-field">
+                                                                                    <label>Full Name</label>
+                                                                                    <input type="text" name="fullName"
+                                                                                        value="<%= typeof student !== "
+                                                                                        undefined" && student.fullName
+                                                                                        %>"
+                                                                                    required
+                                                                                    >
+                                                                                </div>
+
+                                                                                <div class="admin-field">
+                                                                                    <label>Email</label>
+                                                                                    <input type="email" name="email"
+                                                                                        value="<%= student.email %>"
+                                                                                        required>
+                                                                                </div>
+
+                                                                                <div class="admin-field">
+                                                                                    <label>New Password</label>
+                                                                                    <input type="password"
+                                                                                        name="password"
+                                                                                        placeholder="Leave blank to keep old password">
+                                                                                </div>
+
+                                                                                <div class="admin-field">
+                                                                                    <label>Enrollment Number</label>
+                                                                                    <input type="text"
+                                                                                        name="enrollmentNumber"
+                                                                                        value="<%= student.enrollmentNumber %>"
+                                                                                        required>
+                                                                                </div>
+
+                                                                                <div class="admin-field">
+                                                                                    <label>Department</label>
+                                                                                    <input type="text" name="department"
+                                                                                        value="<%= student.department %>"
+                                                                                        required>
+                                                                                </div>
+
+                                                                                <div class="admin-field">
+                                                                                    <label>Semester</label>
+                                                                                    <input type="number" name="semester"
+                                                                                        value="<%= student.semester %>"
+                                                                                        min="1" max="12" required>
+                                                                                </div>
+
+                                                                                <div class="admin-field">
+                                                                                    <label>Class Group</label>
+                                                                                    <select name="classGroupId"
+                                                                                        required>
+                                                                                        <option value="">Select Class
+                                                                                            Group</option>
+
+                                                                                        <% classGroups.forEach(function(group)
+                                                                                            { %>
+                                                                                            <option
+                                                                                                value="<%= group._id %>"
+                                                                                                data-department="<%= group.department %>"
+                                                                                                data-semester="<%= group.semester %>"
+                                                                                                <%=student.classGroup &&
+                                                                                                student.classGroup._id.toString()===group._id.toString()
+                                                                                                ? "selected" : "" %>
+                                                                                                >
+                                                                                                <%= group.name %> - Sem
+                                                                                                    <%= group.semester
+                                                                                                        %>
+                                                                                                        <%= group.section
+                                                                                                            %>
+                                                                                            </option>
+                                                                                            <% }) %>
+                                                                                    </select>
+                                                                                </div>
+
+                                                                                <button class="admin-primary-btn"
+                                                                                    type="submit">
+                                                                                    Save Changes
+                                                                                </button>
+                                                                            </form>
+                                                                        </details>
+
+                                                                    </article>
+
+                                                                    <% }) %>
+                                                            </div>
+                                                        </details>
+                                                        <% }) %>
+                                                </div>
+
+                                                <% if (groupedStudents.length> 0) { %>
+                                                    <div class="admin-empty hidden-by-search"
+                                                        data-search-empty="students">
+                                                        No students match your search and selected filters.
+                                                    </div>
+                                                    <% } %>
+
+                            </section>
+
+                </main>
+
+        </div>
+
+        <script src="/js/adminSearch.js"></script>
+        <script src="/js/adminValidation.js"></script>
+        <script src="/js/adminDynamicForms.js"></script>
+        <script src="/js/uiShell.js"></script>
 </body>
+
 </html>

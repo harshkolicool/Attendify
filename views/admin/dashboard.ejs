@@ -36,8 +36,8 @@
             </div>
         </header>
 
-        <% if (message) { %>
-            <div class="alert success"><%= message %></div>
+        <% if (typeof message !== "undefined" && message) { %>
+            <div class="alert success"><%= typeof message !== "undefined" ? message : "" %></div>
         <% } %>
 
         <section class="admin-stat-grid" aria-label="Overview statistics">

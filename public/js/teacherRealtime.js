@@ -2,16 +2,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const config = window.AttendifyRealtimeConfig || { mode: "socket" };
 
     if (config.mode !== "socket") {
-        window.addEventListener("attendify:poll-data", function(e) {
+        window.addEventListener("attendify:poll-data", function (e) {
             const data = e.detail;
             if (!data) return;
-            
+
             // If new suspicious attempts arrive, we could render them
             if (data.recentSuspiciousAttempts) {
                 // (Optional: handle polling response data if needed)
             }
         });
-        
+
         loadRecentSuspiciousAttempts();
         return;
     }
@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     socket.on("connect_error", function () {
-        showTeacherToast("Realtime connection issue. Reconnecting...", "danger");
+        showTeacherToast("Realtime temporarily unavailable. The page will keep updating automatically.", "danger");
     });
 
     function formatTime(dateValue) {
@@ -338,9 +338,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         showTeacherToast(
             "Suspicious attempt: " +
-                (payload.studentName || "Student") +
-                " - " +
-                getReasonLabel(payload.reasonCode, payload.reasonMessage),
+            (payload.studentName || "Student") +
+            " - " +
+            getReasonLabel(payload.reasonCode, payload.reasonMessage),
             "danger"
         );
     });

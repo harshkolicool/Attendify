@@ -363,6 +363,7 @@ h4 {
 .view-btn {
     min-width: 170px;
     height: 48px;
+    padding: 0 20px;
     border-radius: 12px;
     border: 1px solid #e5e7eb;
     background: #ffffff;
@@ -370,6 +371,11 @@ h4 {
     font-size: 15px;
     font-weight: 900;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
 }
 
 .view-btn.live {
@@ -1734,6 +1740,17 @@ h4 {
     gap: 20px;
 }
 
+.student-passkey-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.student-passkey-actions form {
+    margin: 0;
+}
+
 .student-passkey-hero h3 {
     margin: 0;
     color: #0f172a;
@@ -1986,6 +2003,11 @@ h4 {
 
 @media (max-width: 700px) {
     .student-passkey-hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .student-passkey-actions {
         flex-direction: column;
         align-items: stretch;
     }
