@@ -455,26 +455,22 @@ function getTrustedDeviceWaitMinutes(device) {
 }
 
 function setTrustedDeviceCookie(res, deviceId, rawToken) {
-    const cookieValue = encodeURIComponent(deviceId + "." + rawToken);
-    const secureCookie = process.env.NODE_ENV === "production" ? "; Secure" : "";
-
-    res.setHeader(
-        "Set-Cookie",
-        "studentTrustedDevice=" +
-            cookieValue +
-            "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" +
-            (60 * 60 * 24 * 180) +
-            secureCookie
-    );
+    res.cookie("studentTrustedDevice", deviceId + "." + rawToken, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 180 * 24 * 60 * 60 * 1000, // 180 days in ms
+        secure: process.env.NODE_ENV === "production"
+    });
 }
 
 function clearTrustedDeviceCookie(res) {
-    const secureCookie = process.env.NODE_ENV === "production" ? "; Secure" : "";
-
-    res.setHeader(
-        "Set-Cookie",
-        "studentTrustedDevice=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0" + secureCookie
-    );
+    res.clearCookie("studentTrustedDevice", {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production"
+    });
 }
 
 async function saveAttendanceAttempt(options) {
@@ -3273,18 +3269,39 @@ router.get("/realtime/poll", isStudent, async function (req, res) {
 
         const unreadCount = await getUnreadCount(student._id.toString(), "STUDENT");
 
-        // We could also fetch active sessions, attendance states, etc., 
-        // to fully drive the UI without page reloads.
-        // For simplicity right now, we return the minimum needed.
-        // Complex UI state syncing is handled via `uiShell.js` triggering page reloads 
-        // when necessary.
+        // Fetch active session states for realtime polling
+        const AttendanceSession = require("../models/attendanceSessionSchema");
+        const AttendanceRecord = require("../models/attendanceRecordSchema");
+
+        const activeSessions = await AttendanceSession.find({
+            classGroup: student.classGroup,
+            isActive: true,
+            status: "ACTIVE"
+        }).select("_id schedule");
+
+        const sessionIds = activeSessions.map(s => s._id);
+        const attendanceRecords = await AttendanceRecord.find({
+            attendanceSession: { $in: sessionIds },
+            student: student._id
+        }).select("attendanceSession schedule status");
+
+        const attendanceStates = activeSessions.map(function(session) {
+            const record = attendanceRecords.find(function(r) {
+                return r.attendanceSession.toString() === session._id.toString();
+            });
+
+            return {
+                sessionId: session._id.toString(),
+                scheduleId: session.schedule ? session.schedule.toString() : "",
+                state: record && record.status === "PRESENT" ? "present" : "live"
+            };
+        });
 
         res.json({
             success: true,
             serverTimestamp: Date.now(),
             unreadNotificationCount: unreadCount,
-            // activeSessions: [] - placeholder for future deeper polling
-            // attendanceStates: {} - placeholder
+            attendanceStates: attendanceStates
         });
     } catch (err) {
         res.json({ success: false });

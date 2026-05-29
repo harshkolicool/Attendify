@@ -7,11 +7,21 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = e.detail;
             if (!data || !data.attendanceStates) return;
 
-            let changed = false;
+            if (data.attendanceStates && Array.isArray(data.attendanceStates)) {
+                data.attendanceStates.forEach(function (stateObj) {
+                    const card = getScheduleCard(stateObj.scheduleId);
+                    if (card) {
+                        const currentState = card.getAttribute("data-attendance-state");
+                        if (stateObj.state === "present" && currentState !== "present") {
+                            setPresentUI(card);
+                        } else if (stateObj.state === "live" && currentState !== "present" && currentState !== "live") {
+                            setLiveUI(card, stateObj.sessionId);
+                        }
+                    }
+                });
+            }
 
-            // In a real deep implementation we could compare the state of each schedule card
-            // But uiShell.js will just refresh if there are new sessions anyway.
-            // For now we just sync the ongoing cards by clock to keep UI fresh
+            // Sync other cards based on clock 
             syncOngoingCardsByClock();
         });
 
@@ -49,6 +59,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     socket.on("connect", function () {
         joinStudentRealtime();
+
+        // Re-fetch state on reconnect to recover missed events
+        fetch("/student/realtime/poll", { method: "GET", credentials: "same-origin" })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.success && data.attendanceStates) {
+                    window.dispatchEvent(new CustomEvent("attendify:poll-data", { detail: data }));
+                }
+            })
+            .catch(function() {});
     });
 
     if (socket.connected) {

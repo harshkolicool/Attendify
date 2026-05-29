@@ -2209,11 +2209,26 @@ router.get("/realtime/poll", isTeacher, async function (req, res) {
             }));
         }
 
+        // Fetch active session states for realtime polling
+        const activeSessions = await AttendanceSession.find({
+            teacher: req.user._id,
+            isActive: true,
+            status: "ACTIVE"
+        }).select("_id presentStudents");
+
+        const sessionStates = activeSessions.map(function(s) {
+            return {
+                sessionId: s._id.toString(),
+                presentCount: s.presentStudents ? s.presentStudents.length : 0
+            };
+        });
+
         res.json({
             success: true,
             serverTimestamp: Date.now(),
             unreadNotificationCount: unreadCount,
-            recentSuspiciousAttempts: recentSuspiciousAttempts
+            recentSuspiciousAttempts: recentSuspiciousAttempts,
+            sessionStates: sessionStates
         });
     } catch (err) {
         res.json({ success: false });

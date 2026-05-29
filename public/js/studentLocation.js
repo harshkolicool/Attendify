@@ -165,20 +165,10 @@ async function getBestAttendanceToken(sessionId, button) {
     try {
         return await getAttendanceTokenWithPasskey(sessionId);
     } catch (err) {
-        const message = (err && err.message ? err.message : "").toLowerCase();
-
-        const canFallback =
-            message.includes("does not support passkeys") ||
-            message.includes("passkey library is not loaded") ||
-            message.includes("please register your passkey") ||
-            message.includes("passkey verification is not available") ||
-            message.includes("passkeys need https") ||
-            message.includes("not supported");
-
-        if (!canFallback) {
-            throw err;
-        }
-
+        // If passkey fails for ANY reason (user cancelled, not supported, missing, etc.),
+        // automatically fallback to the trusted device route.
+        // If the browser isn't trusted, the trusted device route will return an appropriate error.
+        
         button.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Trusted Browser...';
         return await getAttendanceTokenWithTrustedDevice(sessionId);
     }

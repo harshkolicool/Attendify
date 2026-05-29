@@ -6,9 +6,29 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = e.detail;
             if (!data) return;
 
-            // If new suspicious attempts arrive, we could render them
+            if (data.sessionStates && Array.isArray(data.sessionStates)) {
+                data.sessionStates.forEach(function (state) {
+                    const card = document.querySelector(".live-card[data-session-id='" + state.sessionId + "']");
+                    if (card) {
+                        const countElement = card.querySelector(".js-live-present-count");
+                        if (countElement) {
+                            const currentCount = parseInt(countElement.textContent, 10) || 0;
+                            if (currentCount !== state.presentCount) {
+                                countElement.textContent = state.presentCount;
+                            }
+                        }
+                    }
+                });
+            }
+
             if (data.recentSuspiciousAttempts) {
-                // (Optional: handle polling response data if needed)
+                // Suspicious attempts are fetched directly by loadRecentSuspiciousAttempts, 
+                // but we can also use this data if we want.
+                if (Array.isArray(data.recentSuspiciousAttempts)) {
+                    data.recentSuspiciousAttempts.reverse().forEach(function (attempt) {
+                        addSuspiciousAttempt(attempt, true);
+                    });
+                }
             }
         });
 
@@ -45,6 +65,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     socket.on("connect", function () {
         joinTeacherRealtime();
+        
+        // Re-fetch state on reconnect to recover missed events
+        fetch("/teacher/realtime/poll", { method: "GET", credentials: "same-origin" })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.success && data.sessionStates) {
+                    window.dispatchEvent(new CustomEvent("attendify:poll-data", { detail: data }));
+                }
+            })
+            .catch(function() {});
     });
 
     if (socket.connected) {
