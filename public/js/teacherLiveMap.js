@@ -886,6 +886,22 @@ function initTeacherLiveMap() {
         socket.on("student:location:update", function (payload) {
             upsertStudent(payload);
         });
+        
+        socket.on("disconnect", function () {
+            if (activeSessionId) {
+                startPollingSession(activeSessionId);
+            }
+        });
+
+        socket.on("connect", function () {
+            if (pollingTimer) {
+                clearInterval(pollingTimer);
+                pollingTimer = null;
+            }
+            if (activeSessionId) {
+                socket.emit("teacher:watch-session", { sessionId: activeSessionId });
+            }
+        });
 
         // When AUTO_ABSENT is overridden to PRESENT, update present/absent pill counters
         socket.on("attendance:record-updated", function (payload) {

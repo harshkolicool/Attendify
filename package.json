@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
+    "start": "node cluster.js",
+    "dev": "nodemon cluster.js",
     "init:admin": "node init/initAdmin.js"
   },
   "keywords": [],
@@ -14,6 +15,8 @@
   "type": "commonjs",
   "dependencies": {
     "@simplewebauthn/server": "^13.3.0",
+    "@socket.io/cluster-adapter": "^0.3.0",
+    "@socket.io/sticky": "^1.0.4",
     "bcrypt": "^6.0.0",
     "connect-mongo": "^6.0.0",
     "dotenv": "^17.4.2",

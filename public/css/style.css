@@ -686,17 +686,36 @@ a { text-decoration: none; color: inherit; }
     font-size: 14px;
 }
 
-.input-wrap input {
+.input-wrap input,
+.input-wrap select {
     width: 100%;
     height: 48px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 0 14px 0 42px;
     font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    background: #fff;
     transition: var(--transition);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
-.input-wrap input:focus {
+.input-wrap select {
+    cursor: pointer;
+}
+
+.input-wrap select:disabled {
+    background-color: #f8fafc;
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.input-wrap input:focus,
+.input-wrap select:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);

@@ -176,21 +176,21 @@ document.addEventListener("DOMContentLoaded", function () {
         const teacherSelect = form.querySelector(".js-schedule-teacher");
 
         if (!classGroupSelect.value || !subjectSelect.value || !teacherSelect.value) {
-            alert("Please select class group, subject and teacher.");
+            uiAlert("Please select class group, subject and teacher.");
             return false;
         }
 
         const selectedSubjectOption = getSelectedOption(subjectSelect);
 
         if (!selectedSubjectOption) {
-            alert("Please select a valid subject.");
+            uiAlert("Please select a valid subject.");
             return false;
         }
 
         const subjectClassGroupId = selectedSubjectOption.getAttribute("data-class-group-id");
 
         if (subjectClassGroupId !== classGroupSelect.value) {
-            alert("Selected subject does not belong to selected class group.");
+            uiAlert("Selected subject does not belong to selected class group.");
             return false;
         }
 
@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .filter(Boolean);
 
         if (!allowedTeacherIds.includes(teacherSelect.value)) {
-            alert("Selected teacher is not assigned to selected subject.");
+            uiAlert("Selected teacher is not assigned to selected subject.");
             return false;
         }
 

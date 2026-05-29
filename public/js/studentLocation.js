@@ -2,7 +2,7 @@ function showMessage(message, type) {
     const messageBox = document.getElementById("messageBox");
 
     if (!messageBox) {
-        alert(message);
+        uiAlert(message);
         return;
     }
 
@@ -427,10 +427,10 @@ function getBestStudentLocationPosition(onProgress) {
         let timeoutId = null;
 
         const targetAccuracyMeters = 10;
-        const acceptableAccuracyMeters = 25;
-        const minimumSamples = 4;
-        const minCollectionMs = 10000;
-        const maxWaitMs = 20000;
+        const acceptableAccuracyMeters = 15;
+        const minimumSamples = 8;
+        const minCollectionMs = 15000;
+        const maxWaitMs = 25000;
         const startTime = Date.now();
 
         function cleanup() {
@@ -477,7 +477,7 @@ function getBestStudentLocationPosition(onProgress) {
                 !Number.isFinite(lat) ||
                 !Number.isFinite(lon) ||
                 accuracy <= 0 ||
-                accuracy > 500
+                accuracy > 150
             ) {
                 return;
             }

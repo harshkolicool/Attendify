@@ -15,6 +15,10 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
     <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- SweetAlert2 for Custom UI Alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/customAlerts.js"></script>
 </head>
 <body>
 
@@ -65,42 +69,47 @@
     const scheduleGroupMap = {};
     const classroomOptionMap = {};
     const dayPresenceMap = {};
+    
+    const departmentSet = new Set();
+    const semesterSet = new Set();
+    const classGroupMap = {};
 
     (schedules || []).forEach(function(schedule) {
-        let groupId = "missing";
-        let groupName = "Class Group Missing";
-        let groupMeta = "Schedules without linked class group";
-        let groupSort = "zzz-missing";
-        let groupDepartment = "UNASSIGNED";
-        let groupSemester = "";
-        let groupSection = "";
-
+        // Collect filter options
+        let scheduleDepartment = "";
+        let scheduleSemester = "";
+        let scheduleClassGroupId = "";
+        
         if (schedule.classGroup && schedule.classGroup._id) {
-            const classGroup = schedule.classGroup;
-            const department = classGroup.department || "";
-            const semester = classGroup.semester || "";
-            const section = classGroup.section || "";
-
-            groupId = classGroup._id.toString();
-            groupName = classGroup.name || "Unnamed Class Group";
-            groupDepartment = (department || "UNASSIGNED").toString().toUpperCase();
-            groupSemester = semester ? String(semester) : "";
-            groupSection = (section || "").toString().toUpperCase();
-
-            const semesterLabel = semester ? "Sem " + semester : "";
-            const sectionLabel = section ? "Section " + section : "";
-            groupMeta = [department, semesterLabel, sectionLabel].filter(Boolean).join(" · ");
-            if (!groupMeta) {
-                groupMeta = "Class metadata not set";
-            }
-
-            groupSort = [
-                department || "zzz",
-                String(semester || 99).padStart(2, "0"),
-                section || "ZZ",
-                groupName
-            ].join("-");
+            scheduleDepartment = schedule.classGroup.department || "";
+            scheduleSemester = schedule.classGroup.semester ? String(schedule.classGroup.semester) : "";
+            scheduleClassGroupId = schedule.classGroup._id.toString();
+            
+            if (scheduleDepartment) departmentSet.add(scheduleDepartment);
+            if (scheduleSemester) semesterSet.add(scheduleSemester);
+            classGroupMap[scheduleClassGroupId] = schedule.classGroup.name || "Unnamed Class Group";
         }
+        
+        let roomToken = "";
+        if (schedule.classroom) {
+            roomToken = schedule.classroom._id
+                ? schedule.classroom._id.toString()
+                : (schedule.classroom.classroomName || "");
+            const roomLabel = [
+                schedule.classroom.classroomName || "Room",
+                schedule.classroom.buildingName || ""
+            ].filter(Boolean).join(" · ");
+
+            if (roomToken) {
+                classroomOptionMap[roomToken] = roomLabel;
+            }
+        }
+
+        // Group by Day
+        let groupId = schedule.day || "missing";
+        let groupName = schedule.day || "Day Missing";
+        let groupMeta = "All classes scheduled for " + groupName;
+        let groupSort = String(dayRank[schedule.day] !== undefined ? dayRank[schedule.day] : 99).padStart(2, "0");
 
         if (!scheduleGroupMap[groupId]) {
             scheduleGroupMap[groupId] = {
@@ -108,9 +117,9 @@
                 name: groupName,
                 meta: groupMeta,
                 sortKey: groupSort,
-                department: groupDepartment,
-                semester: groupSemester,
-                section: groupSection,
+                department: "",
+                semester: "",
+                section: "",
                 roomMap: {},
                 dayMap: {},
                 schedules: []
@@ -122,20 +131,15 @@
             dayPresenceMap[schedule.day] = true;
         }
 
-        if (schedule.classroom) {
-            const roomToken = schedule.classroom._id
-                ? schedule.classroom._id.toString()
-                : (schedule.classroom.classroomName || "");
-            const roomLabel = [
-                schedule.classroom.classroomName || "Room",
-                schedule.classroom.buildingName || ""
-            ].filter(Boolean).join(" · ");
-
-            if (roomToken) {
-                scheduleGroupMap[groupId].roomMap[roomToken] = roomLabel;
-                classroomOptionMap[roomToken] = roomLabel;
-            }
+        if (roomToken) {
+            scheduleGroupMap[groupId].roomMap[roomToken] = classroomOptionMap[roomToken];
         }
+
+        // Tag the schedule for filtering
+        schedule._filterDepartment = scheduleDepartment;
+        schedule._filterSemester = scheduleSemester;
+        schedule._filterGroup = scheduleClassGroupId;
+        schedule._filterClassroom = roomToken;
 
         scheduleGroupMap[groupId].schedules.push(schedule);
     });
@@ -146,54 +150,28 @@
 
     groupedSchedules.forEach(function(group) {
         group.schedules.sort(function(first, second) {
-            const firstDayRank = dayRank[first.day] !== undefined ? dayRank[first.day] : 99;
-            const secondDayRank = dayRank[second.day] !== undefined ? dayRank[second.day] : 99;
+            // First by Subject Name
+            const firstSubject = first.subject && first.subject.subjectName ? first.subject.subjectName : "";
+            const secondSubject = second.subject && second.subject.subjectName ? second.subject.subjectName : "";
+            
+            const subjectCompare = firstSubject.localeCompare(secondSubject);
+            if (subjectCompare !== 0) return subjectCompare;
 
-            if (firstDayRank !== secondDayRank) {
-                return firstDayRank - secondDayRank;
-            }
-
+            // Then by Start Time
             const firstStartMinutes = toTimeMinutes(first.startTime);
             const secondStartMinutes = toTimeMinutes(second.startTime);
-
-            if (firstStartMinutes !== secondStartMinutes) {
-                return firstStartMinutes - secondStartMinutes;
-            }
-
-            const firstSubject = first.subject && first.subject.subjectName
-                ? first.subject.subjectName
-                : "";
-            const secondSubject = second.subject && second.subject.subjectName
-                ? second.subject.subjectName
-                : "";
-
-            return firstSubject.localeCompare(secondSubject);
+            return firstStartMinutes - secondStartMinutes;
         });
     });
 
-    const departmentOptions = groupedSchedules
-        .map(function(group) { return group.department; })
-        .filter(function(value) { return value && value !== "UNASSIGNED"; })
-        .filter(function(value, index, array) { return array.indexOf(value) === index; })
-        .sort();
-
-    const semesterOptions = groupedSchedules
-        .map(function(group) { return group.semester; })
-        .filter(function(value) { return value !== ""; })
-        .filter(function(value, index, array) { return array.indexOf(value) === index; })
-        .sort(function(first, second) { return Number(first) - Number(second); });
-
-    const classGroupOptions = groupedSchedules
-        .filter(function(group) { return group.id !== "missing"; })
-        .map(function(group) {
-            return {
-                id: group.id,
-                label: group.name
-            };
-        })
-        .sort(function(first, second) {
-            return first.label.localeCompare(second.label);
-        });
+    const departmentOptions = Array.from(departmentSet).filter(function(v) { return v && v !== "UNASSIGNED"; }).sort();
+    const semesterOptions = Array.from(semesterSet).sort(function(a, b) { return Number(a) - Number(b); });
+    
+    const classGroupOptions = Object.keys(classGroupMap).map(function(id) {
+        return { id: id, label: classGroupMap[id] };
+    }).sort(function(a, b) {
+        return a.label.localeCompare(b.label);
+    });
 
     const classroomOptions = Object.keys(classroomOptionMap)
         .map(function(roomToken) {
@@ -211,9 +189,7 @@
     });
 
     const totalSchedulesCount = (schedules || []).length;
-    const groupedClassCount = groupedSchedules.filter(function(group) {
-        return group.id !== "missing";
-    }).length;
+    const groupedClassCount = classGroupOptions.length;
     const mappedClassroomsCount = classroomOptions.length;
 %>
 
@@ -632,10 +608,10 @@
                                 <article
                                     class="admin-item-card admin-entity-card admin-schedule-card"
                                     data-search-group="schedules"
-                                    data-filter-department="<%= group.department %>"
-                                    data-filter-semester="<%= group.semester %>"
-                                    data-filter-group="<%= group.id %>"
-                                    data-filter-classroom="<%= scheduleClassroomToken %>"
+                                    data-filter-department="<%= schedule._filterDepartment || '' %>"
+                                    data-filter-semester="<%= schedule._filterSemester || '' %>"
+                                    data-filter-group="<%= schedule._filterGroup || '' %>"
+                                    data-filter-classroom="<%= schedule._filterClassroom || '' %>"
                                     data-filter-day="<%= schedule.day || '' %>"
                                 >
 
@@ -647,7 +623,7 @@
                                         <form
                                             action="/admin/schedules/<%= schedule._id %>/delete"
                                             method="POST"
-                                            onsubmit="return confirmAdminDelete('Delete this schedule? Existing attendance history stays safe.')"
+                                            onsubmit="return uiConfirm(event, 'Delete this schedule? Existing attendance history stays safe.')"
                                         >
                                             <button class="admin-delete-btn" type="submit">
                                                 Delete
@@ -664,10 +640,6 @@
                                     </h4>
 
                                     <div class="admin-meta">
-                                        <span class="admin-badge admin-day-badge">
-                                            <i class="fa-regular fa-calendar"></i>
-                                            <%= schedule.day %>
-                                        </span>
 
                                         <span class="admin-badge">
                                             <i class="fa-regular fa-clock"></i>

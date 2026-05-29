@@ -67,7 +67,8 @@ const helmetDirectives = {
         "'self'",
         "'unsafe-inline'",
         "https://cdnjs.cloudflare.com",
-        "https://unpkg.com"
+        "https://unpkg.com",
+        "https://cdn.jsdelivr.net"
     ],
     styleSrc: [
         "'self'",
@@ -147,7 +148,7 @@ app.use(async function ensureDatabaseConnection(req, res, next) {
 app.use(
     rateLimit({
         windowMs: 60 * 1000,
-        limit: 300,
+        limit: 3000,
         standardHeaders: true,
         legacyHeaders: false
     })
@@ -161,7 +162,8 @@ const sessionMiddleware = session({
     store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI,
         collectionName: "sessions",
-        ttl: 60 * 60 * 8
+        ttl: 60 * 60 * 8,
+        touchAfter: 24 * 3600
     }),
     cookie: {
         httpOnly: true,

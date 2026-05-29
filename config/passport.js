@@ -22,6 +22,10 @@ passport.use("student-local",
                     return done(null, false, { message: "Student account is blocked" });
                 }
 
+                if (student.isApproved === false) {
+                    return done(null, false, { message: "Your account is pending admin approval." });
+                }
+
                 const isMatch = await student.comparePassword(password);
 
                 if (!isMatch) {

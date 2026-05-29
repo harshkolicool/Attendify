@@ -2223,6 +2223,77 @@ body {
     color: var(--admin-muted);
 }
 
+/* Admin Table */
+.admin-table-wrap {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    overflow-x: auto;
+    border: 1px solid var(--admin-border);
+    margin-top: 16px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.admin-table th {
+    background-color: #f8fafc;
+    color: var(--admin-muted);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 16px 20px;
+    border-bottom: 2px solid var(--admin-border);
+}
+
+.admin-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--admin-border);
+    color: var(--admin-text);
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.admin-table tbody tr {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.admin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+@media (max-width: 768px) {
+    .admin-table th, .admin-table td {
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+    
+    .admin-table-wrap {
+        margin-top: 12px;
+        border-radius: 8px;
+    }
+}
+
+/* Empty State */
+.empty-state p {
+    font-size: 14px;
+    color: var(--admin-muted);
+}
+
+@keyframes pulse {
+    0% { background-color: rgba(37, 99, 235, 0.2); transform: scale(1.02); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15); }
+    100% { background-color: transparent; transform: scale(1); box-shadow: none; }
+}
+
 .admin-kicker {
     color: var(--admin-primary);
 }

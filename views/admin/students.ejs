@@ -13,6 +13,10 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- SweetAlert2 for Custom UI Alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/customAlerts.js"></script>
 </head>
 
 <body>
@@ -276,7 +280,7 @@
                                     </div>
 
                                     <form action="/admin/students/delete-all" method="POST" class="admin-toolbar-action"
-                                        onsubmit="return confirmAdminDelete('Delete all students? Students with attendance history will be archived safely.')">
+                                        onsubmit="return uiConfirm(event, 'Delete all students? Students with attendance history will be archived safely.')">
                                         <button class="admin-secondary-btn danger" type="submit">
                                             <i class="fa-solid fa-trash"></i>
                                             Delete All
@@ -407,7 +411,7 @@
                                                                             <form
                                                                                 action="/admin/students/<%= student._id %>/delete"
                                                                                 method="POST" class="admin-delete-form"
-                                                                                onsubmit="return confirmAdminDelete('Delete this student?')">
+                                                                                onsubmit="return uiConfirm(event, 'Delete this student?')">
                                                                                 <button
                                                                                     class="admin-delete-btn admin-delete-btn-icon"
                                                                                     type="submit" title="Delete student"
@@ -485,7 +489,7 @@
                                                                                 action="/admin/students/<%= student._id %>/allow-passkey-setup"
                                                                                 method="POST"
                                                                                 data-confirm="Allow passkey setup for <%= student.fullName || 'this student' %> for 30 minutes?"
-                                                                                onsubmit="return confirm(this.dataset.confirm)">
+                                                                                onsubmit="return uiConfirm(event, this.dataset.confirm)">
                                                                                 <button class="admin-secondary-btn"
                                                                                     type="submit">
                                                                                     <i
@@ -498,7 +502,7 @@
                                                                                 action="/admin/students/<%= student._id %>/allow-trusted-device-setup"
                                                                                 method="POST"
                                                                                 data-confirm="Allow trusted browser fallback for <%= student.fullName || 'this student' %> for 30 minutes? Use this only if passkeys are not supported."
-                                                                                onsubmit="return confirm(this.dataset.confirm)">
+                                                                                onsubmit="return uiConfirm(event, this.dataset.confirm)">
 
                                                                                 <% if
                                                                                     (student.trustedDeviceSetupAllowedUntil
@@ -520,7 +524,7 @@
                                                                                             action="/admin/students/<%= student._id %>/reset-passkeys"
                                                                                             method="POST"
                                                                                             data-confirm="Reset all passkeys for <%= student.fullName || 'this student' %>? Student will need to register a new passkey."
-                                                                                            onsubmit="return confirm(this.dataset.confirm)">
+                                                                                            onsubmit="return uiConfirm(event, this.dataset.confirm)">
                                                                                             <button
                                                                                                 class="admin-warning-btn"
                                                                                                 type="submit">

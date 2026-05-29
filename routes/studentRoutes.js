@@ -2273,13 +2273,6 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             // Delete the old non-present record
             await AttendanceRecord.findByIdAndDelete(alreadyMarked._id);
             wasAbsentOverridden = true;
-
-            // Remove the old ID from the session array to prevent dangling references
-            if (session.attendanceRecords) {
-                session.attendanceRecords = session.attendanceRecords.filter(function(id) {
-                    return id.toString() !== alreadyMarked._id.toString();
-                });
-            }
         }
 
         // ── NEW RECORD CREATION ───────────────────────────────────────────────
@@ -2301,49 +2294,38 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             markedAt:            markedAt
         });
 
-        if (!session.attendanceRecords) {
-            session.attendanceRecords = [];
-        }
-
-        if (!session.presentStudents) {
-            session.presentStudents = [];
-        }
-
-        if (!session.absentStudents) {
-            session.absentStudents = [];
-        }
-
-        // Always push the fresh new record ID
-        session.attendanceRecords.push(attendanceRecord._id);
-
-        if (wasAbsentOverridden) {
-            // Override: remove from absentStudents, remove any stale present entry
-            session.absentStudents = session.absentStudents.filter(function (s) {
-                return s.student.toString() !== student._id.toString();
-            });
-            session.presentStudents = session.presentStudents.filter(function (s) {
-                return s.student.toString() !== student._id.toString();
-            });
-        }
-
-        session.presentStudents.push({
-            student: student._id,
-            fullName: student.fullName,
-            enrollmentNumber: student.enrollmentNumber,
-            status: attendanceRecord.status,
-            attendanceRecord: attendanceRecord._id,
-            markedAt: markedAt,
-            verificationMethod: verificationMethod,
-            distanceFromClassroom: evaluation.measuredDistance
-        });
-
-        session.attendanceSummary = {
-            totalPresent: session.presentStudents.length,
-            totalAbsent: session.absentStudents.length,
-            totalMarked: session.presentStudents.length + session.absentStudents.length
+        const updateQuery = {
+            $push: {
+                attendanceRecords: attendanceRecord._id,
+                presentStudents: {
+                    student: student._id,
+                    fullName: student.fullName,
+                    enrollmentNumber: student.enrollmentNumber,
+                    status: attendanceRecord.status,
+                    attendanceRecord: attendanceRecord._id,
+                    markedAt: markedAt,
+                    verificationMethod: verificationMethod,
+                    distanceFromClassroom: evaluation.measuredDistance
+                }
+            },
+            $inc: {
+                "attendanceSummary.totalPresent": 1,
+                "attendanceSummary.totalMarked": wasAbsentOverridden ? 0 : 1
+            }
         };
 
-        await session.save();
+        if (wasAbsentOverridden) {
+            updateQuery.$pull = {
+                absentStudents: { student: student._id },
+                attendanceRecords: alreadyMarked._id
+            };
+            updateQuery.$inc["attendanceSummary.totalAbsent"] = -1;
+        }
+
+        await AttendanceSession.updateOne(
+            { _id: session._id },
+            updateQuery
+        );
 
         // Always emit record-updated when an absent record was overridden to present.
         // This updates the teacher live map and student sidebar counts in real time.
@@ -2731,6 +2713,7 @@ router.get("/passkeys", isStudent, async function (req, res) {
             }),
             currentTrustedDeviceId: getTrustedDeviceCookieDeviceId(req),
             isPasskeySetupOpen: isPasskeySetupAllowed(student),
+            passkeySetupAllowedUntil: student.passkeySetupAllowedUntil || null,
             isTrustedDeviceSetupOpen: isTrustedDeviceSetupAllowed(student),
             pendingPasskeyRequest: pendingPasskeyRequest || null,
             message: req.query.message || null

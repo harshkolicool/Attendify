@@ -8,6 +8,27 @@ document.addEventListener("DOMContentLoaded", function () {
         registerButton.addEventListener("click", function () {
             registerStudentPasskey(registerButton, passkeyStatusText);
         });
+        
+        // Handle expiration dynamically
+        const allowedUntilStr = registerButton.getAttribute("data-allowed-until");
+        if (allowedUntilStr && !registerButton.disabled) {
+            const allowedUntil = parseInt(allowedUntilStr, 10);
+            if (!isNaN(allowedUntil)) {
+                const timeRemaining = allowedUntil - Date.now();
+                if (timeRemaining > 0) {
+                    setTimeout(function() {
+                        if (!registerButton.disabled) {
+                            registerButton.disabled = true;
+                            registerButton.innerHTML = '<i class="fa-solid fa-clock"></i> Setup Window Expired';
+                            showPasskeyMessage("Your 30-minute passkey setup window has expired. Please request a new passkey setup.", "error");
+                        }
+                    }, timeRemaining);
+                } else {
+                    registerButton.disabled = true;
+                    registerButton.innerHTML = '<i class="fa-solid fa-clock"></i> Setup Window Expired';
+                }
+            }
+        }
     }
 
     if (registerButton && passkeySupportHint) {
@@ -70,7 +91,7 @@ function showPasskeyMessage(message, type) {
         return;
     }
 
-    alert(message);
+    uiAlert(message);
 }
 
 function getBrowserFingerprintForSecurityPage() {

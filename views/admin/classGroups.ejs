@@ -15,6 +15,10 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
     <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- SweetAlert2 for Custom UI Alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/customAlerts.js"></script>
 </head>
 <body>
 
@@ -117,7 +121,7 @@
                     action="/admin/class-groups/delete-all"
                     method="POST"
                     class="admin-toolbar-action"
-                    onsubmit="return confirmAdminDelete('Delete all class groups? Linked schedules will be removed and history-safe groups will be archived.')"
+                    onsubmit="return uiConfirm(event, 'Delete all class groups? Linked schedules will be removed and history-safe groups will be archived.')"
                 >
                     <button class="admin-secondary-btn danger" type="submit">
                         <i class="fa-solid fa-trash"></i>
@@ -150,7 +154,7 @@
                             <form
                                 action="/admin/class-groups/<%= item._id %>/delete"
                                 method="POST"
-                                onsubmit="return confirmAdminDelete('Delete this class group? Future schedules will be removed. Existing attendance history stays safe.')"
+                                onsubmit="return uiConfirm(event, 'Delete this class group? Future schedules will be removed. Existing attendance history stays safe.')"
                             >
                                 <button class="admin-delete-btn" type="submit">
                                     Delete

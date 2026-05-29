@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration | Attendify</title>
+    <link rel="stylesheet" href="/css/style.css?v=3">
+    <link rel="stylesheet" href="/css/finalUiFix.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+    <script>
+        // Data injected from the backend
+        const classGroupsData = <%- JSON.stringify(typeof classGroups !== "undefined" ? classGroups : []) %>;
+    </script>
+
+    <!-- SweetAlert2 for Custom UI Alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/customAlerts.js"></script>
+</head>
+<body>
+
+<div class="auth-page">
+    <div class="auth-split">
+
+        <aside class="auth-brand-panel student">
+            <a href="/" class="brand-logo light">
+                <span><i class="fa-solid fa-clipboard-check"></i></span>
+                Attendify
+            </a>
+            <h2>Join your college</h2>
+            <p>Register for your classes to track your attendance securely using GPS verification.</p>
+            <ul class="auth-perks">
+                <li><i class="fa-solid fa-check"></i> Join Class Groups securely</li>
+                <li><i class="fa-solid fa-check"></i> Mark attendance from your phone</li>
+                <li><i class="fa-solid fa-check"></i> Real-time notification updates</li>
+            </ul>
+        </aside>
+
+        <div class="auth-card" style="max-height: 95vh; overflow-y: auto;">
+            <div class="auth-header student compact">
+                <div class="auth-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <h2>Student Registration</h2>
+                <p>Create your new student account</p>
+            </div>
+
+            <% if (typeof error !== "undefined" && error) { %>
+                <div class="error-box auth-alert">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <%= typeof error !== "undefined" ? error : "" %>
+                </div>
+            <% } %>
+
+            <form action="/student/register" method="POST" class="auth-form" id="registerForm">
+                
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-user"></i>
+                        <input type="text" name="fullName" placeholder="John Doe" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" name="email" placeholder="student@college.com" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" name="password" placeholder="Create a strong password" required minlength="6">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Department</label>
+                    <div class="select-shell">
+                        <i class="fa-solid fa-building select-shell-icon"></i>
+                        <select id="departmentSelect" required>
+                            <option value="">-- Select Department --</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Semester</label>
+                    <div class="select-shell">
+                        <i class="fa-solid fa-layer-group select-shell-icon"></i>
+                        <select id="semesterSelect" required disabled>
+                            <option value="">-- Select Semester --</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Class Group (Section)</label>
+                    <div class="select-shell">
+                        <i class="fa-solid fa-users select-shell-icon"></i>
+                        <!-- The actual value sent to server is classGroupId -->
+                        <select id="classGroupSelect" name="classGroupId" required disabled>
+                            <option value="">-- Select Class Group --</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full" style="margin-top: 15px;">
+                    <i class="fa-solid fa-user-check"></i>
+                    Register
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <span>Already have an account?</span>
+                <a href="/student/login">Login here</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const deptSelect = document.getElementById("departmentSelect");
+        const semSelect = document.getElementById("semesterSelect");
+        const groupSelect = document.getElementById("classGroupSelect");
+        const form = document.getElementById("registerForm");
+
+        // 1. Extract unique departments
+        const departments = [...new Set(classGroupsData.map(g => g.department))].filter(Boolean).sort();
+        departments.forEach(dept => {
+            const opt = document.createElement("option");
+            opt.value = dept;
+            opt.textContent = dept;
+            deptSelect.appendChild(opt);
+        });
+
+        // 2. Handle Department change
+        deptSelect.addEventListener("change", function() {
+            const selectedDept = this.value;
+            
+            semSelect.innerHTML = '<option value="">-- Select Semester --</option>';
+            groupSelect.innerHTML = '<option value="">-- Select Class Group --</option>';
+            groupSelect.disabled = true;
+
+            if (!selectedDept) {
+                semSelect.disabled = true;
+                return;
+            }
+
+            semSelect.disabled = false;
+            
+            const filteredGroups = classGroupsData.filter(g => g.department === selectedDept);
+            const semesters = [...new Set(filteredGroups.map(g => g.semester))].filter(Boolean).sort((a,b) => Number(a) - Number(b));
+            
+            semesters.forEach(sem => {
+                const opt = document.createElement("option");
+                opt.value = sem;
+                opt.textContent = `Semester ${sem}`;
+                semSelect.appendChild(opt);
+            });
+        });
+
+        // 3. Handle Semester change
+        semSelect.addEventListener("change", function() {
+            const selectedDept = deptSelect.value;
+            const selectedSem = this.value;
+
+            groupSelect.innerHTML = '<option value="">-- Select Class Group --</option>';
+
+            if (!selectedSem) {
+                groupSelect.disabled = true;
+                return;
+            }
+
+            groupSelect.disabled = false;
+
+            const filteredGroups = classGroupsData.filter(g => 
+                g.department === selectedDept && 
+                String(g.semester) === String(selectedSem)
+            );
+
+            filteredGroups.sort((a, b) => (a.section || "").localeCompare(b.section || ""));
+
+            filteredGroups.forEach(group => {
+                const opt = document.createElement("option");
+                opt.value = group._id;
+                opt.textContent = group.name + (group.section ? ` (Section ${group.section})` : "");
+                groupSelect.appendChild(opt);
+            });
+        });
+
+        // 4. Form submission hook
+        form.addEventListener("submit", function(e) {
+            if (!groupSelect.value) {
+                e.preventDefault();
+                uiAlert("Please select a Class Group.");
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

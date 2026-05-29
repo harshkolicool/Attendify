@@ -14,6 +14,10 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
     <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- SweetAlert2 for Custom UI Alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/customAlerts.js"></script>
 </head>
 <body>
 
@@ -46,7 +50,7 @@
                 <form
                     action="/teacher/notifications/clear-all"
                     method="POST"
-                    onsubmit="return confirm('Clear all notifications?')"
+                    onsubmit="return uiConfirm(event, 'Clear all notifications?')"
                 >
                     <button class="teacher-notification-toolbar-btn danger" type="submit">
                         <i class="fa-solid fa-trash"></i>
@@ -109,7 +113,7 @@
                                 <form
                                     action="/teacher/notifications/<%= notification._id %>/delete"
                                     method="POST"
-                                    onsubmit="return confirm('Delete this notification?')"
+                                    onsubmit="return uiConfirm(event, 'Delete this notification?')"
                                 >
                                     <button class="view-btn marked absent notification-delete-btn notification-action-btn" type="submit">
                                         <i class="fa-solid fa-trash"></i>

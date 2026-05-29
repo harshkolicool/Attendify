@@ -11,7 +11,7 @@ const {
 } = require("./locationVerification");
 const gpsPeerCalibration = require("./gpsPeerCalibration");
 
-const LOCATION_PERSIST_INTERVAL_MS = 10000;
+const LOCATION_PERSIST_INTERVAL_MS = 30000;
 const locationPersistedAt = new Map();
 
 function getId(value) {
@@ -93,6 +93,10 @@ function getClassGroupRoom(classGroupId) {
 
 function getPlatformAdminRoom() {
     return "platform-admin:all";
+}
+
+function getWaitingStudentRoom(studentId) {
+    return "student:waiting:" + studentId.toString();
 }
 
 function getSessionRoom(sessionId) {
@@ -223,26 +227,35 @@ async function persistLiveDeviceLocation(payload) {
         lastActiveAt: payload.updatedAt || new Date()
     };
 
-    await AttendanceSession.updateOne(
+    // Attempt to update existing device atomically using arrayFilters
+    const result = await AttendanceSession.updateOne(
         { _id: payload.sessionId },
-        {
-            $pull: {
-                liveDevices: {
-                    student: payload.studentId,
-                    deviceId: payload.deviceId || "default"
-                }
-            }
-        }
+        { $set: { "liveDevices.$[elem]": deviceDoc } },
+        { arrayFilters: [{ "elem.student": payload.studentId, "elem.deviceId": payload.deviceId || "default" }] }
     );
 
-    await AttendanceSession.updateOne(
-        { _id: payload.sessionId },
-        {
-            $push: {
-                liveDevices: deviceDoc
-            }
-        }
-    );
+    // If device doesn't exist yet, push it
+    if (result.matchedCount > 0 && result.modifiedCount === 0 && !result.upsertedId) {
+        // Matched session but array filter didn't match (element not found)
+        // Actually, if arrayFilter doesn't match, modifiedCount is 0, but wait, Mongoose returns matchedCount=1 if the parent document matches.
+        // Let's do a safe fallback push if modifiedCount is 0 (meaning either array element didn't exist, or it was identical).
+        // Since we update lastActiveAt to Date.now(), it's extremely rare for it to be identical.
+    }
+    
+    // Safer and cleaner approach for Mongoose:
+    // Mongoose arrayFilters will modify 0 docs if the element doesn't exist.
+    if (result.modifiedCount === 0) {
+        // Clean any potential duplicate first to prevent array bloat in edge cases
+        await AttendanceSession.updateOne(
+            { _id: payload.sessionId },
+            { $pull: { liveDevices: { student: payload.studentId, deviceId: payload.deviceId || "default" } } }
+        );
+        // Then push the new document
+        await AttendanceSession.updateOne(
+            { _id: payload.sessionId },
+            { $push: { liveDevices: deviceDoc } }
+        );
+    }
 }
 
 async function persistOfflineDevice(payload) {
@@ -269,9 +282,19 @@ function initializeSocket(io) {
     ioInstance = io;
 
     io.on("connection", function (socket) {
-        if (!getSessionUser(socket) && !getPlatformAdminSessionId(socket)) {
+        const isWaitingStudent = socket.handshake.query && socket.handshake.query.waitingId;
+
+        if (!getSessionUser(socket) && !getPlatformAdminSessionId(socket) && !isWaitingStudent) {
             emitSocketError(socket, "Login required for realtime updates.");
             socket.disconnect(true);
+            return;
+        }
+
+        if (isWaitingStudent) {
+            const waitingId = socket.handshake.query.waitingId;
+            socket.join(getWaitingStudentRoom(waitingId));
+            socket.data.isWaitingStudent = true;
+            socket.data.waitingId = waitingId;
             return;
         }
 
@@ -935,12 +958,18 @@ function emitAttendanceEnded(session) {
         return;
     }
 
+    const sessionId = getId(session._id);
+    if (!sessionId) return;
+    
+    // Clear the memory leak!
+    liveLocationStore.clearSession(sessionId);
+
     const classGroupId = getId(session.classGroup);
     const teacherId = getId(session.teacher);
     const collegeId = getId(session.college);
 
     const payload = {
-        sessionId: getId(session._id),
+        sessionId: sessionId,
         scheduleId: getId(session.schedule),
         classGroupId: classGroupId,
         subjectId: getId(session.subject),
@@ -1163,6 +1192,24 @@ function emitNotificationUnreadCount(payload) {
     }
 }
 
+function emitPasskeyStateChanged(studentId, payload) {
+    const io = getIO();
+    if (!io || !studentId) return;
+    io.to(getStudentRoom(studentId)).emit("student:passkey-state-changed", payload);
+}
+
+function emitStudentApproved(studentId, token) {
+    const io = getIO();
+    if (!io || !studentId) return;
+    io.to(getWaitingStudentRoom(studentId)).emit("student:approved", { studentId, token });
+}
+
+function emitNewRegistration(collegeId, studentData) {
+    const io = getIO();
+    if (!io || !collegeId || !studentData) return;
+    io.to(getAdminCollegeRoom(collegeId)).emit("admin:newRegistration", studentData);
+}
+
 module.exports = {
     initializeSocket,
     getIO,
@@ -1174,5 +1221,8 @@ module.exports = {
     emitSuspiciousAttendanceAttempt,
     emitScheduleChanged,
     emitNotification,
-    emitNotificationUnreadCount
+    emitNotificationUnreadCount,
+    emitPasskeyStateChanged,
+    emitStudentApproved,
+    emitNewRegistration
 };

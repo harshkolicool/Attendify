@@ -13,6 +13,10 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- SweetAlert2 for Custom UI Alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/customAlerts.js"></script>
 </head>
 
 <body>
@@ -174,7 +178,7 @@
                                                                     action="/platform-admin/requests/<%= request._id %>/reset-admin-password"
                                                                     method="POST"
                                                                     data-confirm="Reset college admin password for <%= request.collegeName || 'this college' %>? A new temporary password will be generated."
-                                                                    onsubmit="return confirm(this.dataset.confirm)">
+                                                                    onsubmit="return uiConfirm(event, this.dataset.confirm)">
                                                                     <input type="hidden" name="_csrf"
                                                                         value="<%= csrfToken %>">
                                                                     <button class="platform-admin-warning-btn"

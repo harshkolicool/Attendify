@@ -3314,6 +3314,59 @@ router.post("/teachers/delete-all", isCollegeAdmin, async function (req, res) {
 
 /* ================= STUDENTS ================= */
 
+router.get("/students/pending", isCollegeAdmin, async function (req, res) {
+    try {
+        const collegeId = getCollegeId(req);
+        
+        const pendingStudents = await Student.find({
+            college: collegeId,
+            isApproved: false,
+            isDeleted: { $ne: true }
+        }).sort({ createdAt: -1 }).lean();
+
+        res.render("admin/pendingStudents", {
+            activePage: "pendingStudents",
+            message: req.query.message || null,
+            pendingStudents
+        });
+    } catch (err) {
+        console.error("ADMIN GET PENDING STUDENTS ERROR:", err);
+        res.redirect("/admin/dashboard?message=error");
+    }
+});
+
+router.post("/students/approve/:id", isCollegeAdmin, async function (req, res) {
+    try {
+        const crypto = require("crypto");
+        const collegeId = getCollegeId(req);
+        const studentId = req.params.id;
+
+        if (!isValidObjectId(studentId)) {
+            return res.redirect("/admin/students/pending?message=invalid_id");
+        }
+
+        const autoToken = crypto.randomBytes(32).toString("hex");
+
+        const student = await Student.findOneAndUpdate(
+            { _id: studentId, college: collegeId, isDeleted: { $ne: true } },
+            { $set: { isApproved: true, autoLoginToken: autoToken } },
+            { new: true }
+        );
+
+        if (!student) {
+            return res.redirect("/admin/students/pending?message=invalid_student");
+        }
+
+        socketManager.emitStudentApproved(studentId, autoToken);
+
+        res.redirect("/admin/students/pending?message=student_approved_successfully");
+
+    } catch (err) {
+        console.error("ADMIN APPROVE STUDENT ERROR:", err);
+        res.redirect("/admin/students/pending?message=error");
+    }
+});
+
 router.get("/students", isCollegeAdmin, async function (req, res) {
     try {
         const collegeId = getCollegeId(req);
@@ -3830,6 +3883,11 @@ router.post("/students/:id/reset-passkeys", isCollegeAdmin, async function (req,
             unreadCount: studentUnreadCount
         });
 
+        socketManager.emitPasskeyStateChanged(student._id, {
+            message: "Your passkeys were reset. Refreshing...",
+            toast: "Your passkeys were reset."
+        });
+
         res.redirect("/admin/students?message=passkeys_reset");
 
     } catch (err) {
@@ -3910,6 +3968,11 @@ router.post("/passkey-requests/:id/approve", isCollegeAdmin, async function (req
             unreadCount: studentUnreadCount
         });
 
+        socketManager.emitPasskeyStateChanged(request.student._id, {
+            message: "Passkey setup approved. Refreshing...",
+            toast: "Passkey setup approved."
+        });
+
         const adminUnreadCount = await getUnreadCount(getAdminNotificationFilter(collegeId));
 
         socketManager.emitNotificationUnreadCount({
@@ -3985,6 +4048,11 @@ router.post("/passkey-requests/:id/reject", isCollegeAdmin, async function (req,
             recipientRole: "STUDENT",
             recipientUserId: request.student._id,
             unreadCount: studentUnreadCount
+        });
+
+        socketManager.emitPasskeyStateChanged(request.student._id, {
+            message: "Passkey setup rejected. Refreshing...",
+            toast: "Passkey setup request rejected."
         });
 
         const adminUnreadCount = await getUnreadCount(getAdminNotificationFilter(collegeId));

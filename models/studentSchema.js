@@ -188,6 +188,11 @@ const studentSchema = new mongoose.Schema({
         }
     ],
 
+    autoLoginToken: {
+        type: String,
+        default: null
+    },
+
     passkeys: [studentPasskeySchema],
     trustedDevices: [trustedDeviceSchema],
 
@@ -224,6 +229,11 @@ const studentSchema = new mongoose.Schema({
 
     deletedAt: {
         type: Date
+    },
+
+    isApproved: {
+        type: Boolean,
+        default: false
     },
 
     lastLogin: {
@@ -267,6 +277,21 @@ studentSchema.methods.comparePassword = async function (enteredPassword) {
 
     return enteredPassword === this.password;
 };
+
+studentSchema.index({
+    college: 1,
+    classGroup: 1,
+    isApproved: 1,
+    isDeleted: 1
+});
+
+studentSchema.index({
+    isDeleted: 1
+});
+
+studentSchema.index({
+    isApproved: 1
+});
 
 const Student = mongoose.models.Student || mongoose.model("Student", studentSchema);
 

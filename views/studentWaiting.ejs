@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiting for Approval | Attendify</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        .waiting-card {
+            text-align: center;
+            padding: 48px 32px;
+        }
+        .waiting-icon {
+            font-size: 64px;
+            color: var(--primary);
+            margin-bottom: 24px;
+            animation: pulse 2s infinite;
+        }
+        .waiting-spinner {
+            margin: 32px auto 0;
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+
+    <!-- SweetAlert2 for Custom UI Alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/customAlerts.js"></script>
+</head>
+<body>
+
+<div class="auth-page">
+    <div class="auth-card" style="max-width: 480px; width: 100%;">
+        <div class="waiting-card">
+            <i class="fa-solid fa-clock-rotate-left waiting-icon"></i>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 12px; color: var(--text);">Waiting for Admin Approval</h2>
+            <p style="color: var(--text-muted); font-size: 15px; line-height: 1.6;">
+                Hi <strong><%= student.fullName %></strong>, your registration was successful! 
+                Please keep this page open. You will be automatically redirected to the login screen as soon as your college admin approves your account.
+            </p>
+            
+            <div class="waiting-spinner"></div>
+            
+            <p id="status-text" style="margin-top: 24px; font-weight: 600; color: var(--primary);">Connecting to live server...</p>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var studentId = "<%= student._id %>";
+        var statusText = document.getElementById("status-text");
+        var redirecting = false;
+
+        function doRedirect(token) {
+            if (redirecting) return;
+            redirecting = true;
+
+            // Stop the spinner
+            var spinner = document.querySelector(".waiting-spinner");
+            if (spinner) spinner.style.display = "none";
+
+            // Show success checkmark
+            var icon = document.querySelector(".waiting-icon");
+            if (icon) {
+                icon.className = "fa-solid fa-circle-check waiting-icon";
+                icon.style.color = "var(--success)";
+                icon.style.animation = "none";
+            }
+
+            statusText.textContent = "Approved! Redirecting...";
+            statusText.style.color = "var(--success)";
+
+            // Build redirect URL
+            var url = token
+                ? "/student/auto-login?token=" + token
+                : "/student/login?message=approved";
+
+            // Redirect immediately
+            window.location.href = url;
+        }
+
+        // === Strategy 1: Socket (instant when it works) ===
+        try {
+            var socket = io({ query: { waitingId: studentId } });
+
+            socket.on("connect", function() {
+                if (!redirecting) {
+                    statusText.textContent = "Connected. Waiting for admin...";
+                    statusText.style.color = "var(--primary)";
+                }
+            });
+
+            socket.on("student:approved", function(data) {
+                doRedirect(data && data.token ? data.token : null);
+            });
+
+            socket.on("disconnect", function() {
+                if (!redirecting) {
+                    statusText.textContent = "Connection lost. Still checking...";
+                    statusText.style.color = "var(--danger)";
+                }
+            });
+        } catch (e) {
+            console.log("Socket connection failed, relying on polling:", e);
+        }
+
+        // === Strategy 2: HTTP Polling (reliable fallback) ===
+        function checkApproval() {
+            if (redirecting) return;
+
+            fetch("/student/check-approval/" + studentId)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data && data.approved) {
+                        doRedirect(data.token || null);
+                    }
+                })
+                .catch(function(err) {
+                    console.log("Poll check failed:", err);
+                });
+        }
+
+        // Start polling every 3 seconds
+        setInterval(checkApproval, 3000);
+
+        // Also check immediately on page load (in case already approved)
+        checkApproval();
+    });
+</script>
+</body>
+</html>

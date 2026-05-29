@@ -8,12 +8,12 @@
     "use strict";
 
     var TARGET_ACCURACY_M = 10;
-    var ACCEPTABLE_ACCURACY_M = 25;
-    var MAX_ACCURACY_ALLOWED_M = 2500;
-    var MIN_SAMPLES = 4;
+    var ACCEPTABLE_ACCURACY_M = 15;
+    var MAX_ACCURACY_ALLOWED_M = 1500;
+    var MIN_SAMPLES = 8;
     var MAX_SAMPLES = 24;
-    var MIN_COLLECTION_MS = 10000;
-    var MAX_WAIT_MS = 20000;
+    var MIN_COLLECTION_MS = 15000;
+    var MAX_WAIT_MS = 25000;
     var OUTLIER_SIGMA = 2.5;
     var MAX_SPEED_KMH = 100;
 

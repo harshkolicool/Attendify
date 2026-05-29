@@ -123,6 +123,7 @@ function markDeviceOffline(sessionId, studentId, deviceId, connectionId) {
 }
 
 function clearSession(sessionId) {
+    if (!sessionId) return;
     sessions.delete(String(sessionId));
 }
 

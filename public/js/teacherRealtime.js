@@ -325,17 +325,43 @@ document.addEventListener("DOMContentLoaded", function () {
             const list = card.querySelector(".js-live-student-list");
 
             if (list) {
+                const emptyState = list.querySelector(".empty-student-card");
+                if (emptyState) {
+                    emptyState.remove();
+                }
+
                 const item = document.createElement("li");
+                item.className = "student-card-item";
+
+                const studentNameStr = payload.studentName || "Unknown Student";
+                const initial = studentNameStr.charAt(0).toUpperCase();
+
+                const avatar = document.createElement("div");
+                avatar.className = "student-avatar";
+                avatar.textContent = initial;
+
+                const infoBox = document.createElement("div");
+                infoBox.className = "student-info";
 
                 const studentName = document.createElement("strong");
-                studentName.textContent = payload.studentName || "Unknown Student";
+                studentName.textContent = studentNameStr;
 
                 const enrollmentNumber = document.createElement("span");
                 enrollmentNumber.textContent = payload.enrollmentNumber || "Unknown";
 
-                item.appendChild(studentName);
-                item.appendChild(document.createTextNode(" "));
-                item.appendChild(enrollmentNumber);
+                infoBox.appendChild(studentName);
+                infoBox.appendChild(enrollmentNumber);
+
+                const statusIconBox = document.createElement("div");
+                statusIconBox.className = "student-status-icon";
+                
+                const checkIcon = document.createElement("i");
+                checkIcon.className = "fa-solid fa-check";
+                statusIconBox.appendChild(checkIcon);
+
+                item.appendChild(avatar);
+                item.appendChild(infoBox);
+                item.appendChild(statusIconBox);
 
                 list.prepend(item);
             }

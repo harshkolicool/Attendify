@@ -12,6 +12,10 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
     <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- SweetAlert2 for Custom UI Alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/customAlerts.js"></script>
 </head>
 <body>
 
@@ -35,6 +39,7 @@
             <a href="/college/register">Register College</a>
             <a href="/admin/login">Admin</a>
             <a href="/teacher/login">Teacher</a>
+            <a href="/student/register">Register Student</a>
             <a href="/student/login" class="home-nav-cta">Student Login</a>
         </nav>
     </header>
@@ -239,6 +244,20 @@
                     </span>
                 </a>
 
+                <a href="/student/register" class="role-card highlight" style="background: var(--bg-tertiary); border-color: var(--primary-accent);">
+                    <div class="role-icon student">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+
+                    <h3>New Student</h3>
+                    <p>Register yourself for your college. Requires admin approval.</p>
+
+                    <span>
+                        Register Student
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                </a>
+
             </div>
 
         </section>
@@ -394,7 +413,8 @@
             <a href="/college/register">Register College</a>
             <a href="/admin/login">Admin</a>
             <a href="/teacher/login">Teacher</a>
-            <a href="/student/login">Student</a>
+            <a href="/student/login">Student Login</a>
+            <a href="/student/register">Student Register</a>
             <a href="/platform-admin/login">Platform Admin</a>
         </div>
     </footer>

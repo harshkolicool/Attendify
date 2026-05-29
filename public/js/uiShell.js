@@ -708,6 +708,16 @@
                     updateNotificationBadges(payload.unreadCount || 0);
                 });
 
+                socket.on("student:passkey-state-changed", function (payload) {
+                    if (!payload) return;
+                    
+                    if (window.location.pathname.indexOf("/student/passkeys") !== -1) {
+                        queueReload(payload.message || "Passkey settings updated. Refreshing...");
+                    } else {
+                        showRealtimeToast(payload.toast || "Your passkey settings were updated.", "success");
+                    }
+                });
+
                 socket.on("schedule:changed", function (payload) {
                     dispatchRealtimeEvent("attendify:schedule-changed", payload);
 

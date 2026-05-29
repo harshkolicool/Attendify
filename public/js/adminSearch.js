@@ -350,8 +350,4 @@ function setupAdminSearch() {
     setupSingleOpenPanels("schedules");
 }
 
-function confirmAdminDelete(message) {
-    return confirm(message || "Are you sure you want to delete this record?");
-}
-
 document.addEventListener("DOMContentLoaded", setupAdminSearch);

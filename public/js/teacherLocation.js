@@ -33,7 +33,7 @@
             return;
         }
 
-        alert(text);
+        uiAlert(text);
     }
 
     function getStartButton(form) {
@@ -145,10 +145,10 @@
             var timeoutId  = null;
 
             var targetAccuracyMeters     = 10;
-            var acceptableAccuracyMeters = 25;
-            var minimumSamples           = 4;
-            var minCollectionMs          = 10000;
-            var maxWaitMs                = 20000;
+            var acceptableAccuracyMeters = 15;
+            var minimumSamples           = 8;
+            var minCollectionMs          = 15000;
+            var maxWaitMs                = 25000;
             var startTime                = Date.now();
 
             function cleanup() {
@@ -191,7 +191,7 @@
                 var lon = Number(position.coords.longitude);
                 var accuracy = getAccuracy(position);
 
-                if (!Number.isFinite(lat) || !Number.isFinite(lon) || accuracy <= 0 || accuracy > 500) {
+                if (!Number.isFinite(lat) || !Number.isFinite(lon) || accuracy <= 0 || accuracy > 150) {
                     return;
                 }
 

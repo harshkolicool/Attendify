@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const LIVE_SAMPLE_MAX_AGE_MS = 25000;
     const LIVE_MAX_SAMPLES = 16;
-    const LIVE_MAX_ACCURACY_M = 300;
+    const LIVE_MAX_ACCURACY_M = 100;
     const LIVE_SEND_HEARTBEAT_MS = 30000;
 
     const streamStabilizer =

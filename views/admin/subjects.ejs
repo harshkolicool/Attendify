@@ -15,6 +15,10 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
     <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- SweetAlert2 for Custom UI Alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/customAlerts.js"></script>
 </head>
 <body>
 
@@ -199,7 +203,7 @@
                             <form
                                 action="/admin/subjects/<%= subject._id %>/delete"
                                 method="POST"
-                                onsubmit="return confirmAdminDelete('Delete this subject?')"
+                                onsubmit="return uiConfirm(event, 'Delete this subject?')"
                             >
                                 <button class="admin-delete-btn" type="submit">
                                     Delete
