@@ -655,6 +655,8 @@ async function deleteTeacherRecord(collegeId, teacherId) {
             },
             {
                 $set: {
+                    email: teacher.email + "_deleted_" + Date.now(),
+                    employeeId: teacher.employeeId + "_DELETED_" + Date.now(),
                     isDeleted: true,
                     isBlocked: true,
                     deletedAt: new Date(),
@@ -761,6 +763,7 @@ async function deleteClassroomRecord(collegeId, classroomId) {
             },
             {
                 $set: {
+                    roomNumber: classroom.roomNumber + "_DELETED_" + Date.now(),
                     isDeleted: true,
                     deletedAt: new Date(),
                     students: [],
@@ -878,7 +881,10 @@ async function deleteClassGroupRecord(collegeId, classGroupId) {
                 college: collegeId
             },
             {
-                $set: { isActive: false }
+                $set: { 
+                    section: classGroup.section + "_ARCHIVED_" + Date.now(),
+                    isActive: false 
+                }
             }
         );
 
@@ -962,7 +968,12 @@ async function deleteSubjectRecord(collegeId, subjectId) {
     if (hasSchedules || hasAttendanceSessions) {
         await Subject.updateOne(
             { _id: subjectId, college: collegeId },
-            { $set: { isActive: false } }
+            { 
+                $set: { 
+                    subjectCode: subject.subjectCode + "_ARCHIVED_" + Date.now(),
+                    isActive: false 
+                } 
+            }
         );
         return { code: "subject_archived" };
     }
@@ -1059,6 +1070,8 @@ async function deleteStudentRecord(collegeId, studentId) {
             },
             {
                 $set: {
+                    email: student.email + "_deleted_" + Date.now(),
+                    enrollmentNumber: student.enrollmentNumber + "_DELETED_" + Date.now(),
                     isDeleted: true,
                     isBlocked: true,
                     deletedAt: new Date(),
