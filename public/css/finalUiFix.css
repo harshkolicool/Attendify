@@ -1471,8 +1471,7 @@ svg {
     .dashboard-header,
     .admin-header,
     .student-header,
-    .platform-header,
-    .student-history-card-head {
+    .platform-header {
         margin-top: calc(72px + env(safe-area-inset-top, 0px)) !important;
     }
 }
