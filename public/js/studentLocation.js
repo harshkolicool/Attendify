@@ -573,3 +573,29 @@ document.addEventListener("touchend", handleMarkAttendanceTrigger, {
     capture: true,
     passive: false
 });
+
+// GPS Warmer
+// Start a silent background watcher to wake up the device's GPS chip
+// This forces a "Hot Start" so that when the student clicks "Mark Attendance"
+// a few seconds later, the GPS is already highly accurate and stable.
+(function warmUpStudentGPS() {
+    if (!navigator.geolocation) return;
+
+    // Only warm up if the browser has already granted permission,
+    // otherwise it will prompt the user immediately on page load.
+    getStudentGeolocationPermissionState().then(function(state) {
+        if (state === "granted") {
+            const warmUpWatchId = navigator.geolocation.watchPosition(
+                function() { /* Do nothing, just keep GPS warm */ },
+                function() { /* Ignore errors */ },
+                { enableHighAccuracy: true, timeout: 60000, maximumAge: 0 }
+            );
+
+            // Turn off the warmer after 3 minutes to save battery
+            // if they haven't marked attendance yet.
+            setTimeout(function() {
+                navigator.geolocation.clearWatch(warmUpWatchId);
+            }, 3 * 60 * 1000);
+        }
+    });
+})();
