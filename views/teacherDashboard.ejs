@@ -603,7 +603,7 @@
                     <div class="live-card" data-session-id="<%= session._id %>">
 
                         <div class="live-top">
-                            <div>
+                            <div class="live-course-info">
                                 <% if (session.subject) { %>
                                     <h4><%= session.subject.subjectName %></h4>
                                 <% } else { %>
@@ -617,7 +617,10 @@
                                 <% } %>
                             </div>
 
-                            <span class="live-badge"><span>LIV</span><span>E</span></span>
+                            <div class="live-badge-modern">
+                                <span class="pulse-dot"></span>
+                                LIVE
+                            </div>
                         </div>
 
                         <div class="live-meta">
@@ -648,11 +651,23 @@
                         <ul class="live-student-list js-live-student-list">
                             <% if (session.presentStudents && session.presentStudents.length > 0) { %>
                                 <% session.presentStudents.slice(-5).reverse().forEach(function(studentItem) { %>
-                                    <li>
-                                        <strong><%= studentItem.fullName %></strong>
-                                        <span><%= studentItem.enrollmentNumber %></span>
+                                    <li class="student-card-item">
+                                        <div class="student-avatar">
+                                            <%= studentItem.fullName ? studentItem.fullName.charAt(0).toUpperCase() : 'S' %>
+                                        </div>
+                                        <div class="student-info">
+                                            <strong><%= studentItem.fullName %></strong>
+                                            <span><%= studentItem.enrollmentNumber %></span>
+                                        </div>
+                                        <div class="student-status-icon">
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
                                     </li>
                                 <% }) %>
+                            <% } else { %>
+                                <li class="empty-student-card">
+                                    <p>No students present yet.</p>
+                                </li>
                             <% } %>
                         </ul>
 

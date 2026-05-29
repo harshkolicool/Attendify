@@ -395,135 +395,242 @@ button {
 
 .live-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid rgba(226, 232, 240, 0.8);
     border-radius: 20px;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.live-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+}
+
+.live-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #ef4444, #f97316);
 }
 
 .live-top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     gap: 16px;
 }
 
+.live-course-info {
+    flex: 1;
+}
+
 .live-top h4 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 800;
     color: #0f172a;
-    margin: 0 0 4px 0;
+    margin: 0 0 6px 0;
     text-transform: uppercase;
-    line-height: 1.3;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
 }
 
 .live-top p {
     font-size: 15px;
     color: #64748b;
     margin: 0;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.01em;
 }
 
-.live-badge {
-    background: #ef4444;
-    color: #ffffff;
+.live-badge-modern {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
     font-size: 13px;
-    font-weight: 700;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 9999px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    text-transform: uppercase;
-    flex-shrink: 0;
-    line-height: 1.1;
-    text-align: center;
+    gap: 8px;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.15);
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 .live-meta {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 24px;
     color: #475569;
     font-size: 15px;
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 12px;
 }
 
 .live-meta p {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     margin: 0;
+    font-weight: 500;
 }
 
 .live-meta i {
-    color: #64748b;
+    color: #94a3b8;
     font-size: 16px;
-    width: 16px;
+    width: 20px;
     text-align: center;
+}
+
+.live-meta .js-live-present-count {
+    background: #10b981;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-weight: 700;
+    font-size: 14px;
+    margin-left: auto;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
 }
 
 .live-student-list {
     list-style: none;
     padding: 0;
-    margin: 0 0 20px 0;
+    margin: 0 0 24px 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
-.live-student-list li {
+.live-student-list li.student-card-item {
     display: flex;
-    align-items: baseline;
-    font-size: 16px;
-    color: #0f172a;
-    position: relative;
-    padding-left: 20px;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 12px 16px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    gap: 14px;
 }
 
-.live-student-list li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 8px;
-    width: 6px;
-    height: 6px;
+.live-student-list li.student-card-item:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.student-avatar {
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background-color: #1e293b;
+    background: #dcfce7;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    flex-shrink: 0;
+    border: 2px solid #bbf7d0;
 }
 
-.live-student-list strong {
+.student-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+}
+
+.student-info strong {
+    font-size: 15px;
     font-weight: 700;
-    margin-right: 6px;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.live-student-list span {
-    color: #334155;
+.student-info span {
+    font-size: 13px;
+    color: #64748b;
     font-weight: 500;
 }
 
+.student-status-icon {
+    width: 28px;
+    height: 28px;
+    background: #f0fdf4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #10b981;
+    font-size: 12px;
+}
+
+.live-student-list li.empty-student-card {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    text-align: center;
+    padding: 20px;
+    border-radius: 12px;
+    color: #64748b;
+    font-size: 14px;
+    display: block;
+}
+
 .end-btn {
-    background: #dc2626;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
     color: #ffffff;
     border: none;
     border-radius: 12px;
-    padding: 12px 20px;
-    font-size: 15px;
+    padding: 14px 20px;
+    font-size: 16px;
     font-weight: 700;
-    display: inline-flex;
+    display: flex;
+    width: 100%;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 
 .end-btn:hover {
-    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+}
+
+.end-btn:active {
+    transform: translateY(1px);
 }
 
 .empty-box {
