@@ -3,7 +3,7 @@ const getDistanceInMeters = require("./geoDistance");
 const MAX_GPS_ACCURACY_METERS = Number(
     process.env.GPS_MAX_ACCEPTABLE_ACCURACY_METERS ||
         process.env.GPS_HARD_BLOCK_ACCURACY_METERS ||
-        100000
+        1000
 );
 
 const MAX_GPS_UNCERTAINTY_ALLOWANCE = Number(process.env.GPS_UNCERTAINTY_CAP_METERS || 100);
@@ -12,9 +12,9 @@ const SMALL_RADIUS_THRESHOLD = Number(process.env.GPS_SMALL_RADIUS_PRACTICAL_THR
 const SMALL_RADIUS_GRACE = Number(process.env.GPS_SMALL_RADIUS_GRACE_METERS || 10);
 const NEAR_BOUNDARY_RATIO = Number(process.env.GPS_NEAR_BOUNDARY_RATIO || 0.7);
 
-const GPS_RETRY_EXTREME_METERS = Number(process.env.GPS_RETRY_EXTREME_METERS || 100000);
-const GPS_RETRY_POOR_METERS = Number(process.env.GPS_RETRY_POOR_METERS || 5000);
-const GPS_WEAK_THRESHOLD_METERS = Number(process.env.GPS_WEAK_THRESHOLD_METERS || 2000);
+const GPS_RETRY_EXTREME_METERS = Number(process.env.GPS_RETRY_EXTREME_METERS || 1000);
+const GPS_RETRY_POOR_METERS = Number(process.env.GPS_RETRY_POOR_METERS || 500);
+const GPS_WEAK_THRESHOLD_METERS = Number(process.env.GPS_WEAK_THRESHOLD_METERS || 300);
 
 const PROXIMITY_BOOST_MAX_METERS = Number(process.env.GPS_PROXIMITY_BOOST_MAX_METERS || 40);
 
@@ -209,28 +209,18 @@ function evaluateLocationRange(
     let shouldRetry = false;
     let isOutside = false;
 
-    if (isAccuracyExtreme) {
-        decision = "RETRY";
-        reasonCode = "GPS_ACCURACY_EXTREME";
-        shouldRetry = true;
-        userMessage = WEAK_GPS_USER_MESSAGE;
-    } else if (isAccuracyPoor) {
-        decision = "RETRY";
-        reasonCode = "GPS_ACCURACY_POOR";
-        shouldRetry = true;
-        userMessage = WEAK_GPS_USER_MESSAGE;
-    } else if (isInsideByConfidence) {
+    // PRIORITY 1: If student is clearly inside the allowed radius (even with poor
+    // accuracy), accept them. This is critical for laptops/Macs that use Wi-Fi
+    // geolocation and inherently report 500-1000m accuracy but are physically
+    // sitting in the classroom.
+    if (isInsideByConfidence) {
         decision = "PASS";
-        reasonCode = isAccuracyWeak ? "OK_POOR_GPS" : "OK";
-        userMessage = isAccuracyWeak
+        reasonCode = (isAccuracyWeak || isAccuracyPoor) ? "OK_POOR_GPS" : "OK";
+        userMessage = (isAccuracyWeak || isAccuracyPoor)
             ? "GPS accuracy is low but you appear to be within range. Attendance accepted."
             : "Inside allowed range. Attendance accepted.";
-    } else if (!clearlyOutside && isAccuracyWeak) {
-        decision = "RETRY";
-        reasonCode = "GPS_ACCURACY_WEAK";
-        shouldRetry = true;
-        userMessage = WEAK_GPS_USER_MESSAGE;
     } else if (clearlyOutside || minimumPossibleDistance > verificationRadius) {
+        // PRIORITY 2: Student is clearly outside — reject regardless of accuracy.
         decision = "FAIL";
         reasonCode = clearlyOutside ? "CLEARLY_OUTSIDE" : "OUTSIDE_RADIUS";
         isOutside = true;
@@ -244,6 +234,18 @@ function evaluateLocationRange(
             studentAccuracy: sAcc,
             teacherAccuracy: tAcc
         });
+    } else if (isAccuracyExtreme) {
+        // PRIORITY 3: Ambiguous position + extremely bad accuracy → retry
+        decision = "RETRY";
+        reasonCode = "GPS_ACCURACY_EXTREME";
+        shouldRetry = true;
+        userMessage = WEAK_GPS_USER_MESSAGE;
+    } else if (isAccuracyPoor || isAccuracyWeak) {
+        // PRIORITY 4: Ambiguous position + poor/weak accuracy → retry
+        decision = "RETRY";
+        reasonCode = isAccuracyPoor ? "GPS_ACCURACY_POOR" : "GPS_ACCURACY_WEAK";
+        shouldRetry = true;
+        userMessage = WEAK_GPS_USER_MESSAGE;
     } else {
         decision = "RETRY";
         reasonCode = "GPS_UNCERTAIN";

@@ -13,7 +13,6 @@ if (ATTENDANCE_SECRET.length < 32) {
 }
 
 const rateLimitStore = new Map();
-const tokenNonceStore = new Map();
 
 function base64UrlEncode(value) {
     return Buffer.from(value)
@@ -53,43 +52,25 @@ function safeCompare(a, b) {
     return crypto.timingSafeEqual(first, second);
 }
 
-function cleanupExpiredNonces() {
-    const now = Date.now();
 
-    for (const [nonce, data] of tokenNonceStore.entries()) {
-        if (!data || !data.exp || data.exp < now) {
-            tokenNonceStore.delete(nonce);
-        }
-    }
-}
 
 function createAttendanceToken(options) {
-    cleanupExpiredNonces();
-
     const payload = {
         sid: options.sessionId.toString(),
         stid: options.studentId.toString(),
         cid: options.credentialId ? options.credentialId.toString() : "",
         exp: Date.now() + (options.expiresInSeconds || 120) * 1000,
-        nonce: crypto.randomBytes(18).toString("hex")
+        jti: crypto.randomBytes(18).toString("hex")
     };
 
     const body = base64UrlEncode(JSON.stringify(payload));
     const signature = signBody(body);
-
-    tokenNonceStore.set(payload.nonce, {
-        sid: payload.sid,
-        stid: payload.stid,
-        exp: payload.exp
-    });
 
     return body + "." + signature;
 }
 
 function consumeAttendanceToken(token, options) {
     try {
-        cleanupExpiredNonces();
-
         if (!token || typeof token !== "string") {
             return {
                 valid: false,
@@ -139,17 +120,6 @@ function consumeAttendanceToken(token, options) {
                 message: "Security token student mismatch."
             };
         }
-
-        const savedNonce = tokenNonceStore.get(payload.nonce);
-
-        if (!savedNonce) {
-            return {
-                valid: false,
-                message: "Security token already used or expired. Please try again."
-            };
-        }
-
-        tokenNonceStore.delete(payload.nonce);
 
         return {
             valid: true,
