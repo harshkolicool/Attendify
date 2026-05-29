@@ -69,7 +69,7 @@
                                 </span>
                             </div>
 
-                            <div class="admin-student-actions">
+                            <div class="admin-passkey-actions">
                                 <form action="/admin/passkey-requests/<%= request._id %>/approve" method="POST">
                                     <button class="admin-secondary-btn" type="submit">
                                         <i class="fa-solid fa-circle-check"></i>
@@ -78,16 +78,17 @@
                                 </form>
 
                                 <form action="/admin/passkey-requests/<%= request._id %>/reject" method="POST">
-                                    <input
-                                        type="text"
-                                        name="reviewNote"
-                                        placeholder="Reason (optional)"
-                                        class="admin-inline-input"
-                                    >
-                                    <button class="admin-warning-btn" type="submit">
-                                        <i class="fa-solid fa-circle-xmark"></i>
-                                        Reject
-                                    </button>
+                                    <div class="admin-passkey-reject-group">
+                                        <input
+                                            type="text"
+                                            name="reviewNote"
+                                            placeholder="Reason (optional)"
+                                        >
+                                        <button class="admin-warning-btn" type="submit">
+                                            <i class="fa-solid fa-circle-xmark"></i>
+                                            Reject
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         </article>
