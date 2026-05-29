@@ -2129,6 +2129,7 @@ h4 {
     .dashboard-action-btn {
         width: 100%;
         justify-content: center;
+        margin-top: 12px;
     }
 
     .dashboard-stats-grid {

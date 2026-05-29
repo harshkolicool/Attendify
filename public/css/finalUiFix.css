@@ -1468,7 +1468,7 @@ svg {
 /* Fix for Hamburger menu overlapping header text on mobile */
 @media (max-width: 1280px) {
     .teacher-header,
-    .dashboard-head,
+    .dashboard-header,
     .admin-header,
     .student-header,
     .platform-header,
