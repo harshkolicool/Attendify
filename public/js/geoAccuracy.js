@@ -38,8 +38,7 @@
             lon >= -180 &&
             lon <= 180 &&
             Number.isFinite(acc) &&
-            acc > 0 &&
-            acc <= MAX_ACCURACY_ALLOWED_M
+            acc > 0
         );
     }
 
@@ -307,6 +306,12 @@
                 timeout: 18000,
                 maximumAge: 0
             };
+            
+            var fallbackOptions = {
+                enableHighAccuracy: false,
+                timeout: 15000,
+                maximumAge: 30000
+            };
 
             try {
                 navigator.geolocation.getCurrentPosition(addSample, handleError, options);
@@ -319,6 +324,14 @@
             } catch (e) {
                 // ignore
             }
+            
+            setTimeout(function () {
+                if (!finished && rawSamples.length === 0 && navigator.geolocation) {
+                    try {
+                        navigator.geolocation.getCurrentPosition(addSample, function(){}, fallbackOptions);
+                    } catch (e) {}
+                }
+            }, 4000);
 
             timeoutId = setTimeout(function () {
                 done();

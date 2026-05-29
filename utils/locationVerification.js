@@ -3,7 +3,7 @@ const getDistanceInMeters = require("./geoDistance");
 const MAX_GPS_ACCURACY_METERS = Number(
     process.env.GPS_MAX_ACCEPTABLE_ACCURACY_METERS ||
         process.env.GPS_HARD_BLOCK_ACCURACY_METERS ||
-        2500
+        100000
 );
 
 const MAX_GPS_UNCERTAINTY_ALLOWANCE = Number(process.env.GPS_UNCERTAINTY_CAP_METERS || 100);
@@ -12,9 +12,9 @@ const SMALL_RADIUS_THRESHOLD = Number(process.env.GPS_SMALL_RADIUS_PRACTICAL_THR
 const SMALL_RADIUS_GRACE = Number(process.env.GPS_SMALL_RADIUS_GRACE_METERS || 10);
 const NEAR_BOUNDARY_RATIO = Number(process.env.GPS_NEAR_BOUNDARY_RATIO || 0.7);
 
-const GPS_RETRY_EXTREME_METERS = Number(process.env.GPS_RETRY_EXTREME_METERS || 2500);
-const GPS_RETRY_POOR_METERS = Number(process.env.GPS_RETRY_POOR_METERS || 1500);
-const GPS_WEAK_THRESHOLD_METERS = Number(process.env.GPS_WEAK_THRESHOLD_METERS || 800);
+const GPS_RETRY_EXTREME_METERS = Number(process.env.GPS_RETRY_EXTREME_METERS || 100000);
+const GPS_RETRY_POOR_METERS = Number(process.env.GPS_RETRY_POOR_METERS || 5000);
+const GPS_WEAK_THRESHOLD_METERS = Number(process.env.GPS_WEAK_THRESHOLD_METERS || 2000);
 
 const PROXIMITY_BOOST_MAX_METERS = Number(process.env.GPS_PROXIMITY_BOOST_MAX_METERS || 40);
 
