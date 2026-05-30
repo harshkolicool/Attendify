@@ -12,5 +12,7 @@ services:
         value: production
       - key: MONGO_URI
         sync: false
-      - key: JWT_SECRET
+      - key: SESSION_SECRET
+        sync: false
+      - key: ATTENDANCE_TOKEN_SECRET
         sync: false
