@@ -21,49 +21,19 @@
         const opts = options || {};
         const minMoveMeters = Number(opts.minMoveMeters) || 4;
         const accuracyRatio = Number(opts.accuracyRatio) || 0.35;
-        const emaAlpha = Number(opts.emaAlpha) || 0.2;
         const heartbeatMs = Number(opts.heartbeatMs) || 28000;
-        const bufferSize = Number(opts.bufferSize) || 10;
 
         let displayLat = null;
         let displayLon = null;
         let lastHeartbeatAt = 0;
-        const buffer = [];
-
-        function getWeightedTarget() {
-            if (!buffer.length) {
-                return null;
-            }
-
-            let totalWeight = 0;
-            let lat = 0;
-            let lon = 0;
-
-            for (let i = 0; i < buffer.length; i++) {
-                const sample = buffer[i];
-                const accuracy = Math.max(Number(sample.accuracy) || 25, 1);
-                const weight = 1 / (accuracy * accuracy);
-                totalWeight += weight;
-                lat += sample.lat * weight;
-                lon += sample.lon * weight;
-            }
-
-            if (!totalWeight) {
-                return null;
-            }
-
-            return {
-                lat: lat / totalWeight,
-                lon: lon / totalWeight
-            };
-        }
+        let kalman = typeof window.KalmanFilter === "function" ? new window.KalmanFilter() : null;
 
         return {
             reset: function () {
                 displayLat = null;
                 displayLon = null;
                 lastHeartbeatAt = 0;
-                buffer.length = 0;
+                if (kalman) kalman = new window.KalmanFilter();
             },
 
             update: function (latitude, longitude, accuracy) {
@@ -81,28 +51,21 @@
                 }
 
                 const safeAcc = Number.isFinite(acc) && acc > 0 ? acc : 25;
+                const now = Date.now();
 
-                buffer.push({
-                    lat: lat,
-                    lon: lon,
-                    accuracy: safeAcc,
-                    at: Date.now()
-                });
+                let filteredLat = lat;
+                let filteredLon = lon;
 
-                while (buffer.length > bufferSize) {
-                    buffer.shift();
-                }
-
-                const target = getWeightedTarget();
-
-                if (!target) {
-                    return { lat: lat, lon: lon, moved: true, isFirst: true };
+                if (kalman) {
+                    const result = kalman.filter(lat, lon, safeAcc, now);
+                    filteredLat = result.lat;
+                    filteredLon = result.lon;
                 }
 
                 if (displayLat === null || displayLon === null) {
-                    displayLat = target.lat;
-                    displayLon = target.lon;
-                    lastHeartbeatAt = Date.now();
+                    displayLat = filteredLat;
+                    displayLon = filteredLon;
+                    lastHeartbeatAt = now;
 
                     return {
                         lat: displayLat,
@@ -112,9 +75,8 @@
                     };
                 }
 
-                const deltaToTarget = distanceM(displayLat, displayLon, target.lat, target.lon);
+                const deltaToTarget = distanceM(displayLat, displayLon, filteredLat, filteredLon);
                 const threshold = Math.max(minMoveMeters, safeAcc * accuracyRatio);
-                const now = Date.now();
                 const heartbeatDue = now - lastHeartbeatAt >= heartbeatMs;
 
                 if (deltaToTarget < threshold && !heartbeatDue) {
@@ -126,13 +88,8 @@
                     };
                 }
 
-                const step =
-                    deltaToTarget > threshold * 2.5
-                        ? Math.min(0.5, emaAlpha * 2)
-                        : emaAlpha;
-
-                displayLat = displayLat + (target.lat - displayLat) * step;
-                displayLon = displayLon + (target.lon - displayLon) * step;
+                displayLat = filteredLat;
+                displayLon = filteredLon;
                 lastHeartbeatAt = now;
 
                 return {

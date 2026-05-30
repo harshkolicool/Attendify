@@ -893,6 +893,67 @@ router.get("/live-map/session/:sessionId", isTeacher, async function (req, res) 
     }
 });
 
+router.get("/live-map/global", isTeacher, async function (req, res) {
+    try {
+        const students = await Student.find({
+            college: req.user.college,
+            isDeleted: { $ne: true },
+            isBlocked: { $ne: true }
+        })
+            .select("fullName enrollmentNumber email lastLocation")
+            .sort({ fullName: 1 })
+            .lean();
+
+        const now = Date.now();
+        const OFFLINE_THRESHOLD_MS = 15000;
+
+        const snapshot = students.map(student => {
+            const hasLocation = student.lastLocation && student.lastLocation.latitude;
+            const updatedAt = hasLocation ? new Date(student.lastLocation.updatedAt).getTime() : 0;
+            const isOnline = hasLocation && (now - updatedAt) < OFFLINE_THRESHOLD_MS;
+
+            return {
+                sessionId: "global",
+                studentId: student._id.toString(),
+                studentName: student.fullName || "Student",
+                enrollmentNumber: student.enrollmentNumber || student.email || "",
+                deviceId: "default",
+                deviceLabel: "Browser",
+                latitude: hasLocation ? student.lastLocation.latitude : 0,
+                longitude: hasLocation ? student.lastLocation.longitude : 0,
+                accuracy: hasLocation ? student.lastLocation.accuracy : null,
+                status: isOnline ? "GLOBAL_TRACKING" : "OFFLINE",
+                online: isOnline,
+                updatedAt: hasLocation ? new Date(student.lastLocation.updatedAt) : new Date(0)
+            };
+        }).filter(device => device.latitude !== 0 || device.online);
+
+        res.json({
+            success: true,
+            sessionId: "global",
+            latitude: 0,
+            longitude: 0,
+            radius: 0,
+            endTime: new Date(Date.now() + 1000 * 60 * 60 * 24),
+            classGroupName: "All College Students",
+            roster: students.map(function (student) {
+                return {
+                    studentId: student._id.toString(),
+                    fullName: student.fullName || "Student",
+                    enrollmentNumber: student.enrollmentNumber || student.email || ""
+                };
+            }),
+            snapshot: snapshot
+        });
+    } catch (err) {
+        console.error("TEACHER GLOBAL LIVE MAP ERROR:", err);
+        res.status(500).json({
+            success: false,
+            message: "Unable to load global map."
+        });
+    }
+});
+
 router.post("/attendance/start", isTeacher, async (req, res) => {
     try {
         const durationMinutes = Number(req.body.durationMinutes) || 5;

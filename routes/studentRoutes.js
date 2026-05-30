@@ -1802,6 +1802,50 @@ router.get("/attendance/device-token/:sessionId", isStudent, async function (req
     }
 });
 
+router.post("/global-location/update", isStudent, async function (req, res) {
+    try {
+        const studentId = getStudentIdFromRequest(req);
+
+        if (!isValidLiveCoordinate(req.body.latitude, req.body.longitude)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid live location."
+            });
+        }
+
+        const accuracy = Number(req.body.accuracy);
+
+        if (!Number.isFinite(accuracy) || accuracy <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid GPS accuracy."
+            });
+        }
+
+        await Student.updateOne(
+            { _id: studentId },
+            {
+                $set: {
+                    lastLocation: {
+                        latitude: req.body.latitude,
+                        longitude: req.body.longitude,
+                        accuracy: accuracy,
+                        updatedAt: new Date()
+                    }
+                }
+            }
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Global location update error:", err);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error."
+        });
+    }
+});
+
 router.post("/live-location/update", isStudent, async function (req, res) {
     try {
         const studentId = getStudentIdFromRequest(req);

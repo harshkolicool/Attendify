@@ -193,7 +193,22 @@
                 var best0 = getBestRaw();
                 var filtered = rejectOutliers(rawSamples, centroid, best0.coords.accuracy);
                 var finalSamples = filtered.length >= 2 ? filtered : rawSamples;
+                
                 var finalCentroid = weightedCentroid(finalSamples);
+                
+                if (typeof window.KalmanFilter === "function") {
+                    var kf = new window.KalmanFilter();
+                    var lastFiltered = null;
+                    for (var i = 0; i < finalSamples.length; i++) {
+                        var s = finalSamples[i];
+                        lastFiltered = kf.filter(s.coords.latitude, s.coords.longitude, s.coords.accuracy, s.timestamp);
+                    }
+                    if (lastFiltered) {
+                        finalCentroid.lat = lastFiltered.lat;
+                        finalCentroid.lon = lastFiltered.lon;
+                    }
+                }
+
                 var resultSample = nearestSampleToCentroid(finalSamples, finalCentroid);
 
                 var avgAcc = 0;

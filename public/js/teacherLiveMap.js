@@ -281,7 +281,11 @@ function initTeacherLiveMap() {
 
         pollingRequestPending = true;
 
-        fetch("/teacher/live-map/session/" + encodeURIComponent(String(sessionId)), {
+        const url = sessionId === "global" 
+            ? "/teacher/live-map/global" 
+            : "/teacher/live-map/session/" + encodeURIComponent(String(sessionId));
+
+        fetch(url, {
             method: "GET",
             credentials: "same-origin",
             headers: {
@@ -368,6 +372,25 @@ function initTeacherLiveMap() {
         if (!payload) return;
 
         const sessionId = String(payload.sessionId || "");
+        
+        if (sessionId === "global") {
+            const sessionChanged = activeSessionId !== sessionId;
+            activeSessionId = sessionId;
+            sessionCenter = null;
+            if (sessionChanged) {
+                removeDeviceLayers();
+                hasFitInitialDevices = false;
+            }
+            if (mapOverlay) mapOverlay.style.display = "none";
+            
+            if (teacherMarker) { try { teacherMarker.remove(); } catch(e){} teacherMarker = null; }
+            if (radiusCircle) { try { radiusCircle.remove(); } catch(e){} radiusCircle = null; }
+            if (effectiveRadiusCircle) { try { effectiveRadiusCircle.remove(); } catch(e){} effectiveRadiusCircle = null; }
+            
+            setHint("Showing all logged-in students in your college.");
+            return;
+        }
+
         const lat = Number(payload.latitude || 0);
         const lon = Number(payload.longitude || 0);
         const adminRadius = Number(
@@ -495,6 +518,7 @@ function initTeacherLiveMap() {
         if (status === "NEAR") return { bg: "#fef3c7", color: "#d97706", border: "#fde68a", text: "Near Boundary" };
         if (status === "OUTSIDE") return { bg: "#e0e7ff", color: "#4f46e5", border: "#c7d2fe", text: "Outside" };
         if (status === "POOR_ACCURACY") return { bg: "#f1f5f9", color: "#64748b", border: "#e2e8f0", text: "Poor GPS" };
+        if (status === "GLOBAL_TRACKING") return { bg: "#f0fdf4", color: "#22c55e", border: "#bbf7d0", text: "Online" };
         return { bg: "#f1f5f9", color: "#64748b", border: "#e2e8f0", text: "Unknown" };
     }
 
@@ -771,20 +795,21 @@ function initTeacherLiveMap() {
                     </div>
                     <div style="display: grid; gap: 6px; font-size: 13px; color: #334155;">
                         <div style="display: flex; justify-content: space-between;">
-                            <span>Distance:</span> <strong>${formatDistance(distance)}</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
                             <span>Status:</span> <strong style="color: ${colors.color};">${colors.text}</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>GPS Accuracy:</span> <strong>±${Math.round(accuracy || 0)}m</strong>
+                        </div>
+                        ${sessionId !== "global" ? `
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Distance:</span> <strong>${formatDistance(distance)}</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Base Radius:</span> <strong>${configuredRadius}m</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Effective Radius:</span> <strong>${effectiveRadius}m</strong>
-                        </div>
+                        </div>` : ""}
                     </div>
                         ${
                             payload.gpsCorrected
@@ -828,16 +853,17 @@ function initTeacherLiveMap() {
         if (!sessionSelectEl) return;
         sessionSelectEl.innerHTML = "";
         
-        if (!sessions.length) {
-            const option = document.createElement("option");
-            option.value = "";
-            option.textContent = "No live session";
-            sessionSelectEl.appendChild(option);
-            sessionSelectEl.disabled = true;
+        const globalOption = document.createElement("option");
+        globalOption.value = "global";
+        globalOption.textContent = "Global College Map";
+        sessionSelectEl.appendChild(globalOption);
+
+        if (!sessions || !sessions.length) {
+            sessionSelectEl.disabled = false;
             return;
         }
 
-        sessionSelectEl.disabled = sessions.length < 2;
+        sessionSelectEl.disabled = false;
 
         for (let i = 0; i < sessions.length; i++) {
             const row = sessions[i];
@@ -932,22 +958,27 @@ function initTeacherLiveMap() {
     const bootstrap = readBootstrap();
     populateSessionSelect(bootstrap);
 
-    let initialSessionId = "";
+    let initialSessionId = "global";
     if (bootstrap.length > 0) {
         initialSessionId = bootstrap[0].sessionId;
     } else {
         const firstLive = document.querySelector(".live-card[data-session-id]");
-        if (firstLive) initialSessionId = firstLive.getAttribute("data-session-id") || "";
+        if (firstLive) initialSessionId = firstLive.getAttribute("data-session-id") || "global";
     }
 
-    if (initialSessionId) {
-        if (sessionSelectEl) sessionSelectEl.value = initialSessionId;
+    if (sessionSelectEl) sessionSelectEl.value = initialSessionId;
+    
+    if (initialSessionId !== "global") {
         const bootRow = bootstrap.find(row => String(row.sessionId) === String(initialSessionId));
         if (bootRow) setSessionCenter(bootRow);
-        watchSession(initialSessionId);
     } else {
-        if (mapOverlay) mapOverlay.style.display = "flex";
+        // Global map defaults
+        activeSessionId = "global";
+        if (mapOverlay) mapOverlay.style.display = "none";
+        setHint("Showing all logged-in students in your college.");
     }
+    
+    watchSession(initialSessionId);
 }
 
 if (document.readyState !== "loading") {

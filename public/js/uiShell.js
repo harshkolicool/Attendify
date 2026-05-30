@@ -598,7 +598,7 @@
 
                 if (!window.AttendifySharedSocket) {
                     window.AttendifySharedSocket = window.io({
-                        transports: ["websocket", "polling"],
+                        transports: ["websocket"],
                         withCredentials: true,
                         timeout: 20000,
                         reconnectionAttempts: 20,

@@ -236,6 +236,13 @@ const studentSchema = new mongoose.Schema({
         default: false
     },
 
+    lastLocation: {
+        latitude: { type: Number },
+        longitude: { type: Number },
+        accuracy: { type: Number },
+        updatedAt: { type: Date }
+    },
+
     lastLogin: {
         type: Date
     }

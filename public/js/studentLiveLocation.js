@@ -341,7 +341,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         pollingRequestPending = true;
 
-        fetch("/student/live-location/update", {
+        const endpoint = payload.sessionId ? "/student/live-location/update" : "/student/global-location/update";
+
+        fetch(endpoint, {
             method: "POST",
             credentials: "same-origin",
             headers: {
@@ -361,7 +363,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function sendLocation(position) {
         const smoothedPosition = getSmoothedPosition(position);
 
-        if (!smoothedPosition || !smoothedPosition.coords || !activeSessionId) {
+        if (!smoothedPosition || !smoothedPosition.coords) {
             return;
         }
 
@@ -465,7 +467,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function startWatch(sessionId) {
-        if (!sessionId || !canUseGeolocation()) {
+        if (!canUseGeolocation()) {
             return;
         }
 
@@ -473,7 +475,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        activeSessionId = String(sessionId);
+        activeSessionId = sessionId ? String(sessionId) : "";
         persistSessionId(activeSessionId);
         liveSamples.length = 0;
         lastSentLat = null;
@@ -566,16 +568,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function refreshFromDom() {
         const sessionId = findFirstLiveSessionIdOnPage();
-
-        if (!sessionId) {
-            if (!activeSessionId) {
-                stopWatch();
-            }
-
-            return;
-        }
-
-        startWatch(sessionId);
+        startWatch(sessionId || "");
     }
 
     deviceId = getOrCreateDeviceId();
