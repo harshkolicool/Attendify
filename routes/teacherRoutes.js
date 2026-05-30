@@ -1049,15 +1049,33 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
 
         let attendanceSession;
 
+        let finalLatitude = Number(teacherLatitude);
+        let finalLongitude = Number(teacherLongitude);
+        let finalLocationSource = "TEACHER_GPS";
+
+        // Prioritize Admin-verified classroom coordinates if they exist
+        // This permanently fixes the issue where a Teacher on a MacBook gets inaccurate Wi-Fi triangulation
+        if (
+            scheduleItem.classroom &&
+            scheduleItem.classroom.latitude &&
+            scheduleItem.classroom.longitude &&
+            scheduleItem.classroom.latitude !== 0 &&
+            scheduleItem.classroom.longitude !== 0
+        ) {
+            finalLatitude = scheduleItem.classroom.latitude;
+            finalLongitude = scheduleItem.classroom.longitude;
+            finalLocationSource = "CLASSROOM_PRESET";
+        }
+
         if (previousSession) {
             previousSession.endTime = sessionEndTime;
             previousSession.scheduledEndTime = classEndTime || sessionEndTime;
             previousSession.status = "ACTIVE";
             previousSession.isActive = true;
-            previousSession.latitude = Number(teacherLatitude);
-            previousSession.longitude = Number(teacherLongitude);
+            previousSession.latitude = finalLatitude;
+            previousSession.longitude = finalLongitude;
             previousSession.teacherGpsAccuracy = Number(teacherAccuracy);
-            previousSession.locationSource = "TEACHER_GPS";
+            previousSession.locationSource = finalLocationSource;
             previousSession.locationMeta = locationMeta;
             previousSession.radius = scheduleItem.classroom.radius || 100;
 
@@ -1078,10 +1096,10 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
                 classGroup: scheduleItem.classGroup._id,
                 classroom: scheduleItem.classroom._id,
 
-                latitude: Number(teacherLatitude),
-                longitude: Number(teacherLongitude),
+                latitude: finalLatitude,
+                longitude: finalLongitude,
                 teacherGpsAccuracy: Number(teacherAccuracy),
-                locationSource: "TEACHER_GPS",
+                locationSource: finalLocationSource,
                 locationMeta: locationMeta,
                 radius: scheduleItem.classroom.radius || 100,
 
