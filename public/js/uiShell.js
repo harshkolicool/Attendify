@@ -550,9 +550,10 @@
                     .catch(() => { });
             }
 
+            let isPolling = false;
             // Polling loop for core state changes
             setInterval(function () {
-                if (reloadPending) return;
+                if (reloadPending || isPolling) return;
 
                 const pollApi = role === "student" ? "/student/realtime/poll" :
                     role === "teacher" ? "/teacher/realtime/poll" :
@@ -561,6 +562,7 @@
 
                 if (!pollApi) return;
 
+                isPolling = true;
                 const url = lastPollServerTime ? pollApi + "?since=" + lastPollServerTime : pollApi;
 
                 fetch(url, { method: "GET", credentials: "same-origin" })
@@ -583,7 +585,10 @@
                         // Role-specific JS will listen to a custom event.
                         window.dispatchEvent(new CustomEvent("attendify:poll-data", { detail: data }));
                     })
-                    .catch(() => { });
+                    .catch(() => { })
+                    .finally(() => {
+                        isPolling = false;
+                    });
             }, config.pollIntervalMs || 5000);
 
             return;

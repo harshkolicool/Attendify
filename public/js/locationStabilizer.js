@@ -88,8 +88,10 @@
                     };
                 }
 
-                displayLat = filteredLat;
-                displayLon = filteredLon;
+                const step = deltaToTarget > threshold * 2.5 ? 0.4 : 0.2; // EMA alpha
+
+                displayLat = displayLat + (filteredLat - displayLat) * step;
+                displayLon = displayLon + (filteredLon - displayLon) * step;
                 lastHeartbeatAt = now;
 
                 return {

@@ -199,8 +199,11 @@
                 if (typeof window.KalmanFilter === "function") {
                     var kf = new window.KalmanFilter();
                     var lastFiltered = null;
-                    for (var i = 0; i < finalSamples.length; i++) {
-                        var s = finalSamples[i];
+                    var sortedSamples = finalSamples.slice().sort(function(a, b) {
+                        return a.timestamp - b.timestamp;
+                    });
+                    for (var i = 0; i < sortedSamples.length; i++) {
+                        var s = sortedSamples[i];
                         lastFiltered = kf.filter(s.coords.latitude, s.coords.longitude, s.coords.accuracy, s.timestamp);
                     }
                     if (lastFiltered) {
