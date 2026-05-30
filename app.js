@@ -8,6 +8,7 @@ const { MongoStore } = require("connect-mongo");
 const passport = require("passport");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const compression = require("compression");
 const mongoose = require("mongoose");
 
 const connectDB = require("./config/db");
@@ -129,6 +130,7 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(express.json({ limit: "1mb" }));
 
+app.use(compression());
 app.use(express.static(path.join(__dirname, "public")));
 
 /*
