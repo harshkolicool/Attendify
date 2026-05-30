@@ -1,9 +1,0 @@
-{
-  "appId": "com.attendify.app",
-  "appName": "Attendify",
-  "webDir": "www",
-  "server": {
-    "url": "https://attendify-xi-seven.vercel.app/",
-    "cleartext": true
-  }
-}

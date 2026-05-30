@@ -520,23 +520,7 @@ function getBestStudentLocationPosition(onProgress) {
         });
     }
 
-    // 1. Android App Native Geolocation (100% Accuracy via Capacitor Fused Location)
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
-        return window.Capacitor.Plugins.Geolocation.getCurrentPosition({
-            enableHighAccuracy: true,
-            timeout: 10000
-        }).then(function(position) {
-            // Fake some meta data to keep backend happy
-            position.meta = { sampleCount: 1, nativeAndroid: true };
-            if (onProgress) onProgress(position.coords.accuracy, position);
-            return position;
-        }).catch(function(err) {
-            console.warn("Native Geolocation failed, falling back to web sampler:", err);
-            return getWebLocation();
-        });
-    }
-
-    // 2. Web Geolocation Fallback
+    // Web Geolocation Fallback
     return getWebLocation();
 }
 

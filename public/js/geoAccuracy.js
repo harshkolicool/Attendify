@@ -7,13 +7,13 @@
 (function (root) {
     "use strict";
 
-    var TARGET_ACCURACY_M = 10;
+    var TARGET_ACCURACY_M = 8;
     var ACCEPTABLE_ACCURACY_M = 15;
     var MAX_ACCURACY_ALLOWED_M = 1500;
-    var MIN_SAMPLES = 8;
-    var MAX_SAMPLES = 24;
-    var MIN_COLLECTION_MS = 15000;
-    var MAX_WAIT_MS = 25000;
+    var MIN_SAMPLES = 12;
+    var MAX_SAMPLES = 30;
+    var MIN_COLLECTION_MS = 20000;
+    var MAX_WAIT_MS = 35000;
     var OUTLIER_SIGMA = 2.5;
     var MAX_SPEED_KMH = 100;
 
