@@ -22,6 +22,21 @@ function generateRandomHex(length = 4) {
 }
 
 router.get("/", (req, res) => {
+    if (req.session && req.session.platformAdminId) {
+        return res.redirect("/platform-admin/dashboard");
+    }
+    if (req.isAuthenticated()) {
+        if (req.user.accountType === "student") {
+            return res.redirect("/student/dashboard");
+        }
+        if (req.user.accountType === "teacher") {
+            if (req.user.role === "ADMIN") {
+                return res.redirect("/admin/dashboard");
+            } else {
+                return res.redirect("/teacher/dashboard");
+            }
+        }
+    }
     res.render("home");
 });
 
