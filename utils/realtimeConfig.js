@@ -11,8 +11,18 @@
 const VALID_MODES = ["socket", "polling", "disabled", "auto"];
 
 function getRealtimeMode() {
-    // Forced Socket mode per user request (Note: will cause issues on standard Vercel)
-    return "socket";
+    var raw = (process.env.REALTIME_MODE || "auto").trim().toLowerCase();
+
+    if (VALID_MODES.indexOf(raw) === -1) {
+        raw = "auto";
+    }
+
+    if (raw === "auto") {
+        // Vercel sets VERCEL=1 in the environment automatically
+        return process.env.VERCEL === "1" ? "polling" : "socket";
+    }
+
+    return raw;
 }
 
 function isSocketMode() {
