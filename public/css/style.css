@@ -22,6 +22,33 @@
     --shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
     --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
     --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Glassmorphism Defaults */
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-blur: blur(16px);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --surface-2: #334155;
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+        --border: #334155;
+        
+        --glass-bg: rgba(30, 41, 59, 0.75);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.5);
+    }
+    
+    .landing-bg {
+        background: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(11, 99, 246, 0.1), transparent), radial-gradient(ellipse 60% 40% at 90% 0%, rgba(6, 182, 212, 0.08), transparent), var(--bg) !important;
+    }
 }
 
 *, *::before, *::after {
@@ -224,9 +251,9 @@ a { text-decoration: none; color: inherit; }
     max-width: 1140px;
     margin: 20px auto 0;
     padding: 14px 22px;
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     display: flex;
@@ -434,8 +461,9 @@ a { text-decoration: none; color: inherit; }
 }
 
 .stat-banner-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius);
     padding: 22px;
     text-align: center;
@@ -466,8 +494,9 @@ a { text-decoration: none; color: inherit; }
 }
 
 .feature-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     padding: 28px;
     transition: var(--transition);
@@ -507,8 +536,9 @@ a { text-decoration: none; color: inherit; }
 }
 
 .step-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     padding: 28px;
     position: relative;

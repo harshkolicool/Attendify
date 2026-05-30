@@ -589,3 +589,18 @@ document.addEventListener("touchend", handleMarkAttendanceTrigger, {
         }
     });
 })();
+
+// PWA Offline Sync Listener
+window.addEventListener('online', () => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        console.log('[PWA] Internet reconnected! Triggering background sync...');
+        navigator.serviceWorker.controller.postMessage('trigger-sync');
+        
+        // Show brief notification to user
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#4f46e5;color:white;padding:12px 24px;border-radius:8px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);animation:fadeInOut 3s forwards;';
+        toast.innerText = 'Internet reconnected! Syncing offline attendance...';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+});
