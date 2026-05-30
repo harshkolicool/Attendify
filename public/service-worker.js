@@ -1,4 +1,4 @@
-const CACHE_NAME = 'attendify-v3';
+const CACHE_NAME = 'attendify-v4';
 const OFFLINE_URL = '/';
 
 const ASSETS_TO_CACHE = [
@@ -58,9 +58,14 @@ self.addEventListener('fetch', (event) => {
 
     // Network-First strategy for GET requests (always get latest if online)
     if (event.request.method === 'GET') {
+        const url = new URL(event.request.url);
+        // Exclude authentication routes from caching to prevent CSRF token issues
+        if (url.pathname.includes('/login') || url.pathname.includes('/register')) {
+            return; // Let the browser handle it normally (no SW interception)
+        }
+
         event.respondWith(
             fetch(event.request).then((response) => {
-                // Optionally cache the new response here
                 return response;
             }).catch(() => {
                 // If offline, fallback to cache
