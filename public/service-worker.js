@@ -1,4 +1,4 @@
-const CACHE_NAME = 'attendify-v2';
+const CACHE_NAME = 'attendify-v3';
 const OFFLINE_URL = '/';
 
 const ASSETS_TO_CACHE = [
