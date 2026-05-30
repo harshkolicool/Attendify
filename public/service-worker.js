@@ -1,4 +1,4 @@
-const CACHE_NAME = 'attendify-v1';
+const CACHE_NAME = 'attendify-v2';
 const OFFLINE_URL = '/';
 
 const ASSETS_TO_CACHE = [
@@ -56,14 +56,16 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Default Cache-First strategy for GET requests
+    // Network-First strategy for GET requests (always get latest if online)
     if (event.request.method === 'GET') {
         event.respondWith(
-            caches.match(event.request).then((response) => {
-                return response || fetch(event.request).catch(() => {
-                    if (event.request.mode === 'navigate') {
-                        return caches.match(OFFLINE_URL);
-                    }
+            fetch(event.request).then((response) => {
+                // Optionally cache the new response here
+                return response;
+            }).catch(() => {
+                // If offline, fallback to cache
+                return caches.match(event.request).then((cachedResponse) => {
+                    return cachedResponse || (event.request.mode === 'navigate' ? caches.match(OFFLINE_URL) : undefined);
                 });
             })
         );
