@@ -7,14 +7,85 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!data) return;
 
             if (data.sessionStates && Array.isArray(data.sessionStates)) {
+                // Keep track of active session IDs to detect closed sessions
+                const activeSessionIds = data.sessionStates.map(function(s) { return s.sessionId; });
+
+                // Mark sessions as closed if they are in the DOM but not in the active list
+                const allLiveCards = document.querySelectorAll(".live-card:not(.session-ended)");
+                for (let i = 0; i < allLiveCards.length; i++) {
+                    const domSessionId = allLiveCards[i].getAttribute("data-session-id");
+                    if (domSessionId && !activeSessionIds.includes(domSessionId)) {
+                        allLiveCards[i].classList.add("session-ended");
+                        const badge = allLiveCards[i].querySelector(".live-badge");
+                        if (badge) {
+                            badge.textContent = "CLOSED";
+                        }
+                    }
+                }
+
                 data.sessionStates.forEach(function (state) {
                     const card = document.querySelector(".live-card[data-session-id='" + state.sessionId + "']");
                     if (card) {
                         const countElement = card.querySelector(".js-live-present-count");
                         if (countElement) {
-                            const currentCount = parseInt(countElement.textContent, 10) || 0;
-                            if (currentCount !== state.presentCount) {
-                                countElement.textContent = state.presentCount;
+                            countElement.textContent = state.presentCount;
+                        }
+
+                        // Update student list dynamically
+                        if (state.presentStudents && Array.isArray(state.presentStudents)) {
+                            const list = card.querySelector(".js-live-student-list");
+                            if (list) {
+                                state.presentStudents.forEach(function(studentSnapshot) {
+                                    // Check if student is already in the list
+                                    const existingItems = list.querySelectorAll(".student-info strong");
+                                    let found = false;
+                                    for (let i = 0; i < existingItems.length; i++) {
+                                        if (existingItems[i].textContent === studentSnapshot.fullName) {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (!found) {
+                                        const emptyState = list.querySelector(".empty-student-card");
+                                        if (emptyState) emptyState.remove();
+
+                                        const item = document.createElement("li");
+                                        item.className = "student-card-item";
+
+                                        const studentNameStr = studentSnapshot.fullName || "Unknown Student";
+                                        const initial = studentNameStr.charAt(0).toUpperCase();
+
+                                        const avatar = document.createElement("div");
+                                        avatar.className = "student-avatar";
+                                        avatar.textContent = initial;
+
+                                        const infoBox = document.createElement("div");
+                                        infoBox.className = "student-info";
+
+                                        const studentName = document.createElement("strong");
+                                        studentName.textContent = studentNameStr;
+
+                                        const enrollmentNumber = document.createElement("span");
+                                        enrollmentNumber.textContent = studentSnapshot.enrollmentNumber || "Unknown";
+
+                                        infoBox.appendChild(studentName);
+                                        infoBox.appendChild(enrollmentNumber);
+
+                                        const statusIconBox = document.createElement("div");
+                                        statusIconBox.className = "student-status-icon";
+                                        
+                                        const checkIcon = document.createElement("i");
+                                        checkIcon.className = "fa-solid fa-check";
+                                        statusIconBox.appendChild(checkIcon);
+
+                                        item.appendChild(avatar);
+                                        item.appendChild(infoBox);
+                                        item.appendChild(statusIconBox);
+
+                                        list.prepend(item);
+                                    }
+                                });
                             }
                         }
                     }

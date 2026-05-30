@@ -572,11 +572,6 @@
                             lastPollServerTime = data.serverTimestamp;
                         }
 
-                        if (data.needsReload) {
-                            queueReload(data.reloadReason || "New updates received. Refreshing...");
-                            return;
-                        }
-
                         if (typeof data.unreadNotificationCount !== "undefined") {
                             updateNotificationBadges(data.unreadNotificationCount);
                         }

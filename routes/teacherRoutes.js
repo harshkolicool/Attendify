@@ -2219,7 +2219,8 @@ router.get("/realtime/poll", isTeacher, async function (req, res) {
         const sessionStates = activeSessions.map(function(s) {
             return {
                 sessionId: s._id.toString(),
-                presentCount: s.presentStudents ? s.presentStudents.length : 0
+                presentCount: s.presentStudents ? s.presentStudents.length : 0,
+                presentStudents: s.presentStudents || []
             };
         });
 

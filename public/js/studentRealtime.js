@@ -8,6 +8,17 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!data || !data.attendanceStates) return;
 
             if (data.attendanceStates && Array.isArray(data.attendanceStates)) {
+                const activeScheduleIds = data.attendanceStates.filter(s => s.state === "live").map(s => s.scheduleId);
+                const allLiveCards = document.querySelectorAll(".schedule-card[data-attendance-state='live']");
+                
+                for (let i = 0; i < allLiveCards.length; i++) {
+                    const card = allLiveCards[i];
+                    const scheduleId = card.getAttribute("data-schedule-id");
+                    if (scheduleId && !activeScheduleIds.includes(scheduleId)) {
+                        setPendingUI(card);
+                    }
+                }
+
                 data.attendanceStates.forEach(function (stateObj) {
                     const card = getScheduleCard(stateObj.scheduleId);
                     if (card) {
