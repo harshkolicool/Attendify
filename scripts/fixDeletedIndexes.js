@@ -15,7 +15,7 @@ async function fixDeletedRecords() {
         console.log("Connected.");
 
         let ts = Date.now();
-        
+
         function getSuffix(type) {
             return `_${type}_${ts++}`;
         }

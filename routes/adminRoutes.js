@@ -5303,4 +5303,48 @@ router.post("/schedules/:id/delete", isCollegeAdmin, async function (req, res) {
     }
 });
 
+// ── REALTIME POLLING FALLBACK ────────────────────────────────────────────────
+router.get("/realtime/poll", isCollegeAdmin, async function (req, res) {
+    try {
+        const adminId = req.user._id || req.user.id;
+        const collegeId = req.user.college;
+
+        const { getUnreadCount } = require("../utils/notificationManager");
+        const unreadCount = await getUnreadCount(adminId.toString(), "ADMIN");
+
+        const since = Number(req.query.since) || 0;
+        let needsReload = false;
+
+        if (since > 0) {
+            const AttendanceSession = require("../models/attendanceSessionSchema");
+            const majorChanges = await AttendanceSession.countDocuments({
+                college: collegeId,
+                $or: [
+                    { startTime: { $gt: new Date(since) } },
+                    { closedAt: { $gt: new Date(since) } },
+                    { absentsMarkedAt: { $gt: new Date(since) } }
+                ]
+            });
+            if (majorChanges > 0) needsReload = true;
+            else {
+                const AttendanceRecord = require("../models/attendanceRecordSchema");
+                const newRecords = await AttendanceRecord.countDocuments({
+                    college: collegeId,
+                    createdAt: { $gt: new Date(since) }
+                });
+                if (newRecords > 0) needsReload = true;
+            }
+        }
+
+        res.json({
+            success: true,
+            serverTimestamp: Date.now(),
+            unreadNotificationCount: unreadCount,
+            needsReload: needsReload
+        });
+    } catch (err) {
+        res.json({ success: false });
+    }
+});
+
 module.exports = router;

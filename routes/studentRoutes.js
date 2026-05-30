@@ -3256,6 +3256,21 @@ router.get("/realtime/poll", isStudent, async function (req, res) {
         const AttendanceSession = require("../models/attendanceSessionSchema");
         const AttendanceRecord = require("../models/attendanceRecordSchema");
 
+        const since = Number(req.query.since) || 0;
+        let needsReload = false;
+
+        if (since > 0) {
+            const majorChanges = await AttendanceSession.countDocuments({
+                classGroup: student.classGroup,
+                $or: [
+                    { startTime: { $gt: new Date(since) } },
+                    { closedAt: { $gt: new Date(since) } },
+                    { absentsMarkedAt: { $gt: new Date(since) } }
+                ]
+            });
+            if (majorChanges > 0) needsReload = true;
+        }
+
         const activeSessions = await AttendanceSession.find({
             classGroup: student.classGroup,
             isActive: true,
@@ -3284,7 +3299,8 @@ router.get("/realtime/poll", isStudent, async function (req, res) {
             success: true,
             serverTimestamp: Date.now(),
             unreadNotificationCount: unreadCount,
-            attendanceStates: attendanceStates
+            attendanceStates: attendanceStates,
+            needsReload: needsReload
         });
     } catch (err) {
         res.json({ success: false });

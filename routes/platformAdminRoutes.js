@@ -896,4 +896,33 @@ router.post("/platform-admin/colleges/:collegeId/reset-admin-password", isPlatfo
     }
 });
 
+// ── REALTIME POLLING FALLBACK ────────────────────────────────────────────────
+router.get("/realtime/poll", isPlatformAdmin, async function (req, res) {
+    try {
+        const platformAdminId = req.session.platformAdminId;
+        const { getPlatformAdminUnreadCount } = require("../utils/notificationManager");
+        const unreadCount = await getPlatformAdminUnreadCount(platformAdminId);
+
+        const since = Number(req.query.since) || 0;
+        let needsReload = false;
+
+        if (since > 0) {
+            const College = require("../models/collegeSchema");
+            const newColleges = await College.countDocuments({
+                createdAt: { $gt: new Date(since) }
+            });
+            if (newColleges > 0) needsReload = true;
+        }
+
+        res.json({
+            success: true,
+            serverTimestamp: Date.now(),
+            unreadNotificationCount: unreadCount,
+            needsReload: needsReload
+        });
+    } catch (err) {
+        res.json({ success: false });
+    }
+});
+
 module.exports = router;

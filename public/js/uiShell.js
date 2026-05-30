@@ -535,6 +535,7 @@
 
         if (config.mode === "polling") {
             console.log("Realtime using polling fallback.");
+            let lastPollServerTime = 0;
 
             // Do initial unread count fetch immediately
             const unreadCountApi = getUnreadCountApiPath(role);
@@ -554,14 +555,27 @@
                 if (reloadPending) return;
 
                 const pollApi = role === "student" ? "/student/realtime/poll" :
-                    role === "teacher" ? "/teacher/realtime/poll" : null;
+                    role === "teacher" ? "/teacher/realtime/poll" :
+                    role === "admin" ? "/admin/realtime/poll" :
+                    role === "platform-admin" ? "/platform-admin/realtime/poll" : null;
 
                 if (!pollApi) return;
 
-                fetch(pollApi, { method: "GET", credentials: "same-origin" })
+                const url = lastPollServerTime ? pollApi + "?since=" + lastPollServerTime : pollApi;
+
+                fetch(url, { method: "GET", credentials: "same-origin" })
                     .then(res => res.json())
                     .then(data => {
                         if (!data || !data.success) return;
+
+                        if (data.serverTimestamp) {
+                            lastPollServerTime = data.serverTimestamp;
+                        }
+
+                        if (data.needsReload) {
+                            queueReload(data.reloadReason || "New updates received. Refreshing...");
+                            return;
+                        }
 
                         if (typeof data.unreadNotificationCount !== "undefined") {
                             updateNotificationBadges(data.unreadNotificationCount);

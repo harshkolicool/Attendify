@@ -2223,12 +2223,36 @@ router.get("/realtime/poll", isTeacher, async function (req, res) {
             };
         });
 
+        const since = Number(req.query.since) || 0;
+        let needsReload = false;
+
+        if (since > 0) {
+            const majorChanges = await AttendanceSession.countDocuments({
+                teacher: req.user._id,
+                $or: [
+                    { startTime: { $gt: new Date(since) } },
+                    { closedAt: { $gt: new Date(since) } },
+                    { absentsMarkedAt: { $gt: new Date(since) } }
+                ]
+            });
+            if (majorChanges > 0) needsReload = true;
+            else {
+                const AttendanceRecord = require("../models/attendanceRecordSchema");
+                const newRecords = await AttendanceRecord.countDocuments({
+                    college: req.user.college,
+                    createdAt: { $gt: new Date(since) }
+                });
+                if (newRecords > 0) needsReload = true;
+            }
+        }
+
         res.json({
             success: true,
             serverTimestamp: Date.now(),
             unreadNotificationCount: unreadCount,
             recentSuspiciousAttempts: recentSuspiciousAttempts,
-            sessionStates: sessionStates
+            sessionStates: sessionStates,
+            needsReload: needsReload
         });
     } catch (err) {
         res.json({ success: false });
