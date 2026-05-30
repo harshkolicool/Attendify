@@ -196,21 +196,8 @@
                 
                 var finalCentroid = weightedCentroid(finalSamples);
                 
-                if (typeof window.KalmanFilter === "function") {
-                    var kf = new window.KalmanFilter();
-                    var lastFiltered = null;
-                    var sortedSamples = finalSamples.slice().sort(function(a, b) {
-                        return a.timestamp - b.timestamp;
-                    });
-                    for (var i = 0; i < sortedSamples.length; i++) {
-                        var s = sortedSamples[i];
-                        lastFiltered = kf.filter(s.coords.latitude, s.coords.longitude, s.coords.accuracy, s.timestamp);
-                    }
-                    if (lastFiltered) {
-                        finalCentroid.lat = lastFiltered.lat;
-                        finalCentroid.lon = lastFiltered.lon;
-                    }
-                }
+                // We no longer use Kalman Filter here to mutate the raw coordinate.
+                // The pure Weighted Centroid is passed to the backend for accurate Overlap math.
 
                 var resultSample = nearestSampleToCentroid(finalSamples, finalCentroid);
 
