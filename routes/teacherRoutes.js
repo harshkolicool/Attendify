@@ -1033,7 +1033,6 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
             $set: {
                 status: "CLOSED",
                 isActive: false,
-                closedBy: "SYSTEM_AUTO_FIX",
                 closedAt: new Date()
             }
         });
