@@ -30,19 +30,6 @@
         return enctype.includes("multipart/form-data");
     }
 
-    function addCsrfToFormAction(form, token) {
-        if (!form || !token) {
-            return;
-        }
-
-        const currentAction = form.getAttribute("action") || window.location.href;
-        const url = new URL(currentAction, window.location.origin);
-
-        url.searchParams.set("_csrf", token);
-
-        form.setAttribute("action", url.pathname + url.search + url.hash);
-    }
-
     function ensureFormToken(form) {
         if (!form) {
             return;
@@ -70,10 +57,6 @@
         }
 
         input.value = token;
-
-        if (isMultipartForm(form)) {
-            addCsrfToFormAction(form, token);
-        }
     }
 
     function prepareAllForms() {
@@ -91,7 +74,54 @@
     document.addEventListener(
         "submit",
         function (event) {
-            ensureFormToken(event.target);
+            const form = event.target;
+            ensureFormToken(form);
+
+            // If it's a multipart form, submit via fetch to send CSRF token securely in headers
+            if (isMultipartForm(form)) {
+                event.preventDefault();
+                
+                const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    if (submitButton.innerHTML) {
+                        submitButton.dataset.originalText = submitButton.innerHTML;
+                        submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+                    }
+                }
+
+                const token = getCsrfToken();
+                const formData = new FormData(form);
+                
+                fetch(form.action || window.location.href, {
+                    method: form.method || "POST",
+                    body: formData,
+                    headers: {
+                        "X-CSRF-Token": token
+                    }
+                }).then(function(res) {
+                    if (res.redirected) {
+                        window.location.href = res.url;
+                    } else if (res.ok) {
+                        return res.text().then(function(html) {
+                            document.open();
+                            document.write(html);
+                            document.close();
+                        });
+                    } else {
+                        window.location.reload();
+                    }
+                }).catch(function(err) {
+                    console.error("Form submit error:", err);
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        if (submitButton.dataset.originalText) {
+                            submitButton.innerHTML = submitButton.dataset.originalText;
+                        }
+                    }
+                    alert("An error occurred during upload. Please check console.");
+                });
+            }
         },
         true
     );

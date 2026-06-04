@@ -135,6 +135,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     socket.on("connect", function () {
+        connectErrorShown = false;
         joinTeacherRealtime();
         
         // Re-fetch state on reconnect to recover missed events
@@ -203,8 +204,12 @@ document.addEventListener("DOMContentLoaded", function () {
         showTeacherToast(payload.message, "danger");
     });
 
+    let connectErrorShown = false;
     socket.on("connect_error", function () {
-        showTeacherToast("Realtime temporarily unavailable. The page will keep updating automatically.", "danger");
+        if (!connectErrorShown) {
+            showTeacherToast("Realtime temporarily unavailable. The page will keep updating automatically.", "danger");
+            connectErrorShown = true;
+        }
     });
 
     function formatTime(dateValue) {

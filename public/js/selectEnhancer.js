@@ -1,4 +1,5 @@
 (function () {
+    window.AttendifySelectEnhancerLoaded = true;
     function normalizeText(value) {
         return String(value || "").toLowerCase();
     }

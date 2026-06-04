@@ -30,7 +30,7 @@ async function isPlatformAdmin(req, res, next) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Platform admin authorization error: " + err.message);
+        res.status(500).send("Platform admin authorization error. Please try again.");
     }
 }
 

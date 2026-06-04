@@ -119,6 +119,26 @@
         return "Please allow location access to start attendance.";
     }
 
+    function getAdaptiveConfidenceThresholdFromPosition(position, radiusHint) {
+        var meta = position && position.meta ? position.meta : null;
+        var target = Number(meta && meta.targetConfidenceScore);
+
+        if (!Number.isFinite(target) || target <= 0) {
+            target = 50;
+        }
+
+        var radius = Math.max(1, Number(radiusHint) || 100);
+        if (radius <= 5) {
+            target = Math.max(target, 63);
+        } else if (radius < 25) {
+            target = Math.max(target, 58);
+        } else if (radius <= 50) {
+            target = Math.max(target, 54);
+        }
+
+        return Math.max(45, Math.min(72, target));
+    }
+
     function getBestTeacherLocationPosition(onProgress, formRef) {
         var radiusHint = 100;
         var radiusInput = formRef && formRef.querySelector("input[name='classroomRadius']");
@@ -133,7 +153,11 @@
                 : null;
 
         if (window.AttendifyGeo && typeof window.AttendifyGeo.getBestPosition === "function") {
-            return window.AttendifyGeo.getBestPosition(onProgress, geoOptions);
+            var finalOptions = Object.assign({}, geoOptions || {}, {
+                radiusHintMeters: radiusHint
+            });
+
+            return window.AttendifyGeo.getBestPosition(onProgress, finalOptions);
         }
 
         // Fallback: original simple sampler
@@ -256,10 +280,16 @@
         const button = getStartButton(form);
         let lastTipAt = 0;
 
-        getBestTeacherLocationPosition(function(currentAccuracy, bestSample) {
+        const radiusHint =
+            form.querySelector("input[name='classroomRadius']") &&
+            form.querySelector("input[name='classroomRadius']").value
+                ? Number(form.querySelector("input[name='classroomRadius']").value)
+                : 100;
+
+        getBestTeacherLocationPosition(function(currentAccuracy, bestSample, sampleCountRaw) {
             if (button) {
                 const bestAcc = bestSample && bestSample.coords ? Math.round(bestSample.coords.accuracy) : Math.round(currentAccuracy);
-                const sampleCount = window.AttendifyGeo && bestSample && bestSample.meta ? bestSample.meta.sampleCount : 0;
+                const sampleCount = Number(sampleCountRaw) || (bestSample && bestSample.meta ? bestSample.meta.sampleCount : 0) || 0;
                 
                 let text = '<i class="fa-solid fa-spinner fa-spin"></i> GPS: ±' + bestAcc + 'm';
                 if (sampleCount > 0) text += ' (' + sampleCount + ' samples)';
@@ -275,6 +305,35 @@
                 }
             }
         }, form)
+            .then(function (position) {
+                // Only retry if accuracy is extremely poor (>200m)
+                const accuracy = Number(position && position.coords && position.coords.accuracy);
+                const isExtremelyPoor = Number.isFinite(accuracy) && accuracy > 200;
+
+                if (isExtremelyPoor) {
+                    if (button) {
+                        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Improving GPS fix...';
+                    }
+
+                    return getBestTeacherLocationPosition(function (currentAccuracy, bestSample, sampleCountRaw) {
+                        if (!button) return;
+                        const bestAcc = bestSample && bestSample.coords
+                            ? Math.round(bestSample.coords.accuracy)
+                            : Math.round(currentAccuracy);
+                        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> GPS refine: ±' + bestAcc + 'm';
+                    }, form).then(function (refinedPosition) {
+                        const refinedAcc = Number(refinedPosition && refinedPosition.coords && refinedPosition.coords.accuracy);
+                        if (Number.isFinite(refinedAcc) && refinedAcc < accuracy) {
+                            return refinedPosition;
+                        }
+                        return position;
+                    }).catch(function () {
+                        return position;
+                    });
+                }
+
+                return position;
+            })
             .then(function (position) {
                 inputs.latitudeInput.value = position.coords.latitude;
                 inputs.longitudeInput.value = position.coords.longitude;

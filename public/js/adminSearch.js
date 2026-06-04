@@ -2,6 +2,321 @@ function setupAdminSearch() {
     const searchInputs = document.querySelectorAll("[data-admin-search]");
     const studentFilterInputs = document.querySelectorAll("[data-student-filter]");
     const scheduleFilterInputs = document.querySelectorAll("[data-schedule-filter]");
+    const studentPageSize = 8;
+    const defaultFlatPageSize = 10;
+    const flatPageSizeByTarget = {
+        teachers: 8,
+        subjects: 8,
+        "class-groups": 10,
+        classrooms: 10
+    };
+    const flatPageState = {};
+
+    function clampPage(page, totalPages) {
+        const safeTotal = Math.max(1, totalPages || 1);
+        const numericPage = Number(page || 1);
+
+        if (!Number.isFinite(numericPage) || numericPage < 1) {
+            return 1;
+        }
+
+        if (numericPage > safeTotal) {
+            return safeTotal;
+        }
+
+        return Math.floor(numericPage);
+    }
+
+    function normalizeSearchText(value) {
+        const raw = String(value || "");
+        const normalized = typeof raw.normalize === "function"
+            ? raw.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+            : raw;
+
+        return normalized.toLowerCase().replace(/\s+/g, " ").trim();
+    }
+
+    function getStudentCardSearchText(item) {
+        if (!item) {
+            return "";
+        }
+
+        const fields = [
+            item.getAttribute("data-student-name"),
+            item.getAttribute("data-student-email"),
+            item.getAttribute("data-student-enrollment")
+        ].filter(Boolean).join(" ");
+
+        if (fields.trim()) {
+            return normalizeSearchText(fields);
+        }
+
+        return normalizeSearchText(item.getAttribute("data-search-text") || "");
+    }
+
+    function getSearchableItemText(item, targetName) {
+        if (!item) {
+            return "";
+        }
+
+        if (targetName === "students") {
+            return getStudentCardSearchText(item);
+        }
+
+        if (item.hasAttribute("data-search-text")) {
+            return normalizeSearchText(item.getAttribute("data-search-text"));
+        }
+
+        let rawText = "";
+        Array.from(item.children).forEach(function(child) {
+            if (!child.classList.contains("admin-edit-box")) {
+                rawText += " " + child.textContent;
+            }
+        });
+
+        return normalizeSearchText(rawText);
+    }
+
+    function getStudentPage(container) {
+        return clampPage(container.getAttribute("data-student-page"), 99999);
+    }
+
+    function setStudentPage(container, page) {
+        container.setAttribute("data-student-page", String(Math.max(1, page || 1)));
+    }
+
+    function createStudentPaginationControls(container) {
+        let controls = container.querySelector("[data-student-pagination]");
+        if (controls) {
+            return controls;
+        }
+
+        controls = document.createElement("div");
+        controls.className = "admin-student-pagination";
+        controls.setAttribute("data-student-pagination", "");
+        controls.innerHTML = [
+            '<button type="button" class="admin-student-page-btn" data-student-page-prev>Previous</button>',
+            '<span class="admin-student-page-meta" data-student-page-meta></span>',
+            '<button type="button" class="admin-student-page-btn" data-student-page-next>Next</button>'
+        ].join("");
+
+        const grid = container.querySelector(".admin-student-group-grid");
+        if (grid && grid.parentNode === container) {
+            container.appendChild(controls);
+        } else {
+            container.appendChild(controls);
+        }
+
+        const prevButton = controls.querySelector("[data-student-page-prev]");
+        const nextButton = controls.querySelector("[data-student-page-next]");
+
+        if (prevButton) {
+            prevButton.addEventListener("click", function() {
+                const current = getStudentPage(container);
+                setStudentPage(container, Math.max(1, current - 1));
+                updateStudentPaginationForContainer(container, false);
+            });
+        }
+
+        if (nextButton) {
+            nextButton.addEventListener("click", function() {
+                const current = getStudentPage(container);
+                setStudentPage(container, current + 1);
+                updateStudentPaginationForContainer(container, false);
+            });
+        }
+
+        return controls;
+    }
+
+    function updateStudentPaginationForContainer(container, resetPage) {
+        if (!container) {
+            return;
+        }
+
+        const allItems = Array.from(container.querySelectorAll("[data-search-group='students']"));
+        if (allItems.length === 0) {
+            return;
+        }
+
+        const matchedItems = allItems.filter(function(item) {
+            return !item.classList.contains("hidden-by-search");
+        });
+
+        if (resetPage) {
+            setStudentPage(container, 1);
+        }
+
+        const totalPages = Math.max(1, Math.ceil(matchedItems.length / studentPageSize));
+        const currentPage = clampPage(getStudentPage(container), totalPages);
+        setStudentPage(container, currentPage);
+
+        const startIndex = (currentPage - 1) * studentPageSize;
+        const endIndex = startIndex + studentPageSize;
+
+        allItems.forEach(function(item) {
+            item.classList.remove("hidden-by-pagination");
+        });
+
+        matchedItems.forEach(function(item, index) {
+            const isInCurrentPage = index >= startIndex && index < endIndex;
+            if (!isInCurrentPage) {
+                item.classList.add("hidden-by-pagination");
+            }
+        });
+
+        const controls = createStudentPaginationControls(container);
+        const prevButton = controls.querySelector("[data-student-page-prev]");
+        const nextButton = controls.querySelector("[data-student-page-next]");
+        const meta = controls.querySelector("[data-student-page-meta]");
+
+        const shouldShowControls = matchedItems.length > studentPageSize;
+        controls.classList.toggle("is-hidden", !shouldShowControls);
+
+        if (prevButton) {
+            prevButton.disabled = currentPage <= 1;
+        }
+
+        if (nextButton) {
+            nextButton.disabled = currentPage >= totalPages;
+        }
+
+        if (meta) {
+            meta.textContent = "Page " + currentPage + " of " + totalPages + " • " +
+                matchedItems.length + (matchedItems.length === 1 ? " student" : " students");
+        }
+    }
+
+    function updateStudentPagination(resetPage) {
+        const studentContainers = document.querySelectorAll("[data-search-container='students']");
+        studentContainers.forEach(function(container) {
+            updateStudentPaginationForContainer(container, resetPage);
+        });
+    }
+
+    function getFlatPageSize(targetName) {
+        return flatPageSizeByTarget[targetName] || defaultFlatPageSize;
+    }
+
+    function getFlatPage(targetName) {
+        return clampPage(flatPageState[targetName] || 1, 99999);
+    }
+
+    function setFlatPage(targetName, page) {
+        flatPageState[targetName] = Math.max(1, Number(page || 1));
+    }
+
+    function getFlatPaginationControls(targetName, host) {
+        if (!host) {
+            return null;
+        }
+
+        let controls = host.querySelector("[data-flat-pagination='" + targetName + "']");
+        if (controls) {
+            return controls;
+        }
+
+        controls = document.createElement("div");
+        controls.className = "admin-flat-pagination";
+        controls.setAttribute("data-flat-pagination", targetName);
+        controls.innerHTML = [
+            '<button type="button" class="admin-student-page-btn" data-flat-page-prev>Previous</button>',
+            '<span class="admin-student-page-meta" data-flat-page-meta></span>',
+            '<button type="button" class="admin-student-page-btn" data-flat-page-next>Next</button>'
+        ].join("");
+
+        host.appendChild(controls);
+
+        const prevButton = controls.querySelector("[data-flat-page-prev]");
+        const nextButton = controls.querySelector("[data-flat-page-next]");
+
+        if (prevButton) {
+            prevButton.addEventListener("click", function() {
+                const current = getFlatPage(targetName);
+                setFlatPage(targetName, current - 1);
+                updateFlatPagination(targetName, false);
+            });
+        }
+
+        if (nextButton) {
+            nextButton.addEventListener("click", function() {
+                const current = getFlatPage(targetName);
+                setFlatPage(targetName, current + 1);
+                updateFlatPagination(targetName, false);
+            });
+        }
+
+        return controls;
+    }
+
+    function updateFlatPagination(targetName, resetPage) {
+        const allItems = Array.from(
+            document.querySelectorAll("[data-search-group='" + targetName + "']")
+        );
+
+        if (allItems.length === 0) {
+            return;
+        }
+
+        const firstItem = allItems[0];
+        const grid = firstItem.closest(".admin-grid");
+        const host = grid ? grid.parentElement : firstItem.parentElement;
+        if (!host) {
+            return;
+        }
+
+        const matchedItems = allItems.filter(function(item) {
+            return !item.classList.contains("hidden-by-search");
+        });
+
+        if (resetPage) {
+            setFlatPage(targetName, 1);
+        }
+
+        const pageSize = getFlatPageSize(targetName);
+        const totalPages = Math.max(1, Math.ceil(matchedItems.length / pageSize));
+        const currentPage = clampPage(getFlatPage(targetName), totalPages);
+        setFlatPage(targetName, currentPage);
+
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+
+        allItems.forEach(function(item) {
+            item.classList.remove("hidden-by-pagination");
+        });
+
+        matchedItems.forEach(function(item, index) {
+            const isInCurrentPage = index >= startIndex && index < endIndex;
+            if (!isInCurrentPage) {
+                item.classList.add("hidden-by-pagination");
+            }
+        });
+
+        const controls = getFlatPaginationControls(targetName, host);
+        if (!controls) {
+            return;
+        }
+
+        const prevButton = controls.querySelector("[data-flat-page-prev]");
+        const nextButton = controls.querySelector("[data-flat-page-next]");
+        const meta = controls.querySelector("[data-flat-page-meta]");
+        const shouldShowControls = matchedItems.length > pageSize;
+
+        controls.classList.toggle("is-hidden", !shouldShowControls);
+
+        if (prevButton) {
+            prevButton.disabled = currentPage <= 1;
+        }
+
+        if (nextButton) {
+            nextButton.disabled = currentPage >= totalPages;
+        }
+
+        if (meta) {
+            meta.textContent = "Page " + currentPage + " of " + totalPages + " • " +
+                matchedItems.length + " result" + (matchedItems.length === 1 ? "" : "s");
+        }
+    }
 
     function getStudentFilterState() {
         const departmentInput = document.querySelector("[data-student-filter='department']");
@@ -154,7 +469,7 @@ function setupAdminSearch() {
 
     function runSearch(targetName) {
         const input = document.querySelector("[data-admin-search='" + targetName + "']");
-        const query = input ? input.value.toLowerCase().trim() : "";
+        const query = normalizeSearchText(input ? input.value : "");
         const hasQuery = query.length > 0;
 
         const studentFilterState =
@@ -172,7 +487,7 @@ function setupAdminSearch() {
             const flatItems = document.querySelectorAll("[data-search-group='" + targetName + "']");
 
             flatItems.forEach(function(item) {
-                const itemText = item.innerText.toLowerCase();
+                const itemText = getSearchableItemText(item, targetName);
                 const passesText = itemText.includes(query);
 
                 if (passesText) {
@@ -182,6 +497,7 @@ function setupAdminSearch() {
                 }
             });
 
+            updateFlatPagination(targetName, true);
             return;
         }
 
@@ -194,7 +510,7 @@ function setupAdminSearch() {
 
             const items = container.querySelectorAll("[data-search-group='" + targetName + "']");
             items.forEach(function(item) {
-                const itemText = item.innerText.toLowerCase();
+                const itemText = getSearchableItemText(item, targetName);
                 const passesText = itemText.includes(query);
                 const passesTargetFilter = targetName !== "schedules" ||
                     scheduleItemMatchesFilters(item, scheduleFilterState);
@@ -209,6 +525,10 @@ function setupAdminSearch() {
         });
 
         updateSearchContainers(targetName, hasQuery || hasFilters);
+
+        if (targetName === "students") {
+            updateStudentPagination(true);
+        }
 
         if (!hasQuery && !hasFilters) {
             let firstVisiblePanelOpened = false;
@@ -348,6 +668,11 @@ function setupAdminSearch() {
 
     setupSingleOpenPanels("students");
     setupSingleOpenPanels("schedules");
+
+    updateStudentPagination(true);
+    Object.keys(flatPageSizeByTarget).forEach(function(targetName) {
+        updateFlatPagination(targetName, true);
+    });
 }
 
 document.addEventListener("DOMContentLoaded", setupAdminSearch);

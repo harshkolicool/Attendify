@@ -834,6 +834,7 @@ h4 {
 /* Dashboard schedule panel */
 .dashboard-panel {
     padding: 24px;
+    margin-bottom: 24px;
     border-radius: 28px;
     background: rgba(255, 255, 255, 0.94);
     border: 1px solid rgba(226, 232, 240, 0.95);
@@ -858,6 +859,16 @@ h4 {
     color: #64748b;
     font-size: 14px;
     font-weight: 700;
+}
+
+.schedule-day-name {
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.student-main .gps-help-banner {
+    margin-bottom: 15px;
 }
 
 .panel-count {
@@ -2153,5 +2164,117 @@ h4 {
     .student-history-card-head .student-count-pill {
         margin-top: 14px;
         display: inline-flex;
+    }
+}
+
+/* Mobile stacking fixes */
+@media (max-width: 480px) {
+    .class-card-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .class-body, .class-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .class-time {
+        display: flex;
+        flex-direction: column;
+    }
+    .dashboard-class-card {
+        grid-template-columns: 1fr;
+    }
+    .dashboard-class-left {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .schedule-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+}
+
+/* ================= AUTH PREFERENCE ================= */
+.student-auth-preference-wrap {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.student-auth-option {
+    position: relative;
+    cursor: pointer;
+}
+
+.student-auth-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.student-auth-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 22px;
+    border: 2px solid #e2e8f0;
+    border-radius: 18px;
+    background: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.student-auth-content i {
+    font-size: 24px;
+    color: #64748b;
+    width: 32px;
+    text-align: center;
+    transition: 0.2s ease;
+}
+
+.student-auth-content strong {
+    display: block;
+    font-size: 16px;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.student-auth-content p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.student-auth-option input:checked + .student-auth-content {
+    border-color: #2563eb;
+    background: #f0fdf4; /* Passkey mode or trusted browser mode, using a nice active bg */
+}
+
+#studentAuthPasskeyLabel input:checked + .student-auth-content {
+    background: #eff6ff;
+    border-color: #2563eb;
+}
+
+#studentAuthPasskeyLabel input:checked + .student-auth-content i {
+    color: #2563eb;
+}
+
+#studentAuthTrustedLabel input:checked + .student-auth-content {
+    background: #f8fafc;
+    border-color: #64748b;
+}
+
+#studentAuthTrustedLabel input:checked + .student-auth-content i {
+    color: #475569;
+}
+
+@media (max-width: 768px) {
+    .student-auth-preference-wrap {
+        grid-template-columns: 1fr;
     }
 }

@@ -1,22 +1,33 @@
 :root {
-    --uifix-bg: #f3f7fd;
-    --uifix-surface: rgba(255, 255, 255, 0.94);
     --uifix-border: #d9e5f4;
-    --uifix-text: #0f1f36;
-    --uifix-muted: #64748b;
-    --uifix-primary: #2563eb;
-    --uifix-danger: #dc2626;
-    --uifix-success: #15803d;
-    --uifix-warning: #c2410c;
-    --uifix-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
-}
-
-html {
-    scroll-behavior: smooth;
+    --uifix-surface: #ffffff;
+    --uifix-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
 }
 
 body {
     overflow-x: hidden;
+}
+
+body.ui-sidebar-open {
+    touch-action: none;
+    overscroll-behavior: none;
+}
+
+.hidden-by-search,
+.hidden-by-pagination {
+    display: none !important;
+}
+
+a:focus-visible,
+button:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.32);
+    outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: none !important;
 }
 
 .admin-main,
@@ -26,7 +37,6 @@ body {
 .schedule-main {
     min-width: 0;
     overflow-x: hidden;
-    margin-left: 0 !important;
 }
 
 .teacher-main *,
@@ -36,29 +46,15 @@ body {
     min-width: 0;
 }
 
-.teacher-header,
-.student-header,
-.admin-header,
-.platform-header,
-.student-history-card-head,
-.teacher-card-header,
-.teacher-report-card-head,
-.admin-card-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
 .teacher-card,
 .admin-card,
 .admin-item-card,
 .student-history-card,
 .platform-card,
 .teacher-notification-item,
-.notification-card {
-    border-radius: 24px;
+.notification-card,
+.panel-box {
+    border-radius: 20px;
     border: 1px solid var(--uifix-border);
     background: var(--uifix-surface);
     box-shadow: var(--uifix-shadow);
@@ -76,11 +72,20 @@ body {
 .end-btn,
 .manual-link-btn,
 .manual-mark-link,
-.manual-edit-link {
-    min-height: 48px;
-    border-radius: 15px;
-    font-weight: 900;
-    white-space: nowrap;
+.manual-edit-link,
+.js-mark-attendance-btn {
+    min-height: 46px;
+    border-radius: 14px;
+    font-weight: 800;
+}
+
+/* Keep desktop buttons content-sized by default */
+.view-btn,
+.start-btn,
+.end-btn,
+.js-mark-attendance-btn {
+    width: auto;
+    max-width: max-content;
 }
 
 input,
@@ -98,21 +103,12 @@ textarea {
 
 .student-history-table,
 .teacher-report-table,
-.admin-table {
-    min-width: 760px;
+.admin-table,
+.report-table {
+    min-width: 720px;
 }
 
-.notification-head-actions {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.notification-head-actions form {
-    margin: 0;
-}
-
+.notification-head-actions,
 .notification-meta {
     display: flex;
     align-items: center;
@@ -120,1362 +116,353 @@ textarea {
     gap: 10px;
 }
 
+.notification-head-actions form,
 .notification-meta form {
     margin: 0;
 }
 
-.notification-meta .admin-badge,
-.notification-meta .platform-chip {
-    flex: 0 0 auto;
-    max-width: 100%;
-}
-
 .notification-open-link {
-    flex: 0 1 220px !important;
+    flex: 0 1 220px;
 }
 
 .notification-action-btn,
-.notification-meta>form>button {
+.notification-meta > form > button {
     flex: 0 0 auto;
 }
 
-.teacher-dashboard-page .stats-row {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-}
-
-.teacher-dashboard-page .content-area {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(330px, 0.7fr);
-    gap: 20px;
-    align-items: start;
-}
-
-/* teacher map layout is managed entirely in teacherDashboard.css */
-
-.teacher-dashboard-page .date-box {
-    width: 58px;
-    height: 58px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: #ffffff;
-    display: inline-flex;
+.admin-toolbar {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.34);
-    isolation: isolate;
-    overflow: hidden;
-}
-
-.teacher-dashboard-page .date-box::before,
-.teacher-dashboard-page .date-box::after {
-    content: none !important;
-}
-
-.teacher-dashboard-page .date-box span {
-    display: block;
-    line-height: 1;
-    font-size: 30px;
-    font-weight: 900;
-    font-family: "Sora", "Manrope", "Segoe UI", sans-serif;
-    letter-spacing: -0.02em;
-    text-decoration: none !important;
-    text-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
-    -webkit-font-smoothing: antialiased;
-}
-
-.teacher-dashboard-page .teacher-schedule-toolbar-card {
-    margin-bottom: 18px;
-    padding: 16px;
-    border-radius: 20px;
-    border: 1px solid #dbe7f5;
-    background: #f8fbff;
-}
-
-.teacher-dashboard-page .teacher-schedule-search-row {
-    display: grid;
-    gap: 8px;
-}
-
-.teacher-dashboard-page .teacher-schedule-search-row label {
-    margin: 0;
-    color: #475569;
-    font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.teacher-dashboard-page .teacher-schedule-filter-grid {
-    margin-top: 12px;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    flex-wrap: wrap;
     gap: 12px;
 }
 
-.teacher-dashboard-page .teacher-schedule-filter-field {
-    display: grid;
-    gap: 6px;
-}
-
-.teacher-dashboard-page .teacher-schedule-filter-field label {
-    margin: 0;
-    color: #475569;
-    font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.teacher-dashboard-page .teacher-schedule-filter-field select,
-.teacher-dashboard-page .teacher-search-box {
-    min-height: 48px;
-    border-radius: 14px;
-    border: 1px solid #dbe3ef;
-    background: #ffffff;
-}
-
-.teacher-dashboard-page .teacher-schedule-group-list {
-    display: grid;
-    gap: 14px;
-    padding: 16px;
-}
-
-.teacher-dashboard-page .teacher-schedule-class-card.class-card {
-    margin: 0;
-    display: grid;
-    grid-template-columns: 118px minmax(0, 1fr) auto;
-    gap: 16px;
-    align-items: center;
-    padding: 18px;
-    border-radius: 20px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-}
-
-.teacher-dashboard-page .teacher-schedule-class-info h4 {
-    line-height: 1.2;
-    word-break: break-word;
-}
-
-.teacher-dashboard-page .teacher-schedule-class-info p {
-    gap: 8px 12px;
-}
-
-.teacher-dashboard-page .teacher-schedule-card-action {
-    justify-self: end;
+.admin-toolbar-action {
     display: inline-flex;
     align-items: center;
 }
 
-.teacher-dashboard-page .status-badge,
-.teacher-dashboard-page .start-btn,
-.teacher-dashboard-page .manual-link-btn,
-.teacher-dashboard-page .invalid-badge {
-    min-height: 44px;
-    min-width: 132px;
-    border-radius: 999px;
+.admin-search-box {
+    flex: 1 1 320px;
+    min-width: min(100%, 260px);
 }
 
-.teacher-dashboard-page .status-badge.ended,
-.teacher-dashboard-page .invalid-badge {
-    background: #fee2e2;
-    color: var(--uifix-danger);
+/* Unified admin card grids and select spacing */
+.admin-main .admin-card {
+    padding: clamp(18px, 2vw, 28px) !important;
 }
 
-.teacher-dashboard-page .status-badge.done {
-    background: #dcfce7;
-    color: var(--uifix-success);
+.admin-main .admin-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)) !important;
+    gap: 18px !important;
+    align-items: stretch !important;
 }
 
-.teacher-dashboard-page .status-badge.upcoming {
-    background: #f1f5f9;
-    color: #64748b;
+.admin-main .admin-grid.admin-student-group-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)) !important;
+    gap: 18px !important;
 }
 
-.teacher-dashboard-page .status-badge.live {
-    background: #fee2e2;
-    color: #b91c1c;
-    border: 1px solid #fecaca;
+.admin-main .admin-grid.admin-schedule-group-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)) !important;
 }
 
-.teacher-dashboard-page .live-dot {
-    background: #ef4444;
-    box-shadow: 0 0 0 rgba(239, 68, 68, 0.85);
-    animation: uifix-livePulse 1.2s ease-in-out infinite;
+.admin-main .pending-students-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)) !important;
 }
 
-@keyframes uifix-livePulse {
-    0% {
-        opacity: 0.95;
-        transform: scale(0.85);
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
-    }
-
-    70% {
-        opacity: 1;
-        transform: scale(1);
-        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-    }
-
-    100% {
-        opacity: 0.95;
-        transform: scale(0.85);
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-    }
-}
-
-.teacher-manual-page .manual-date-nav-row {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.teacher-manual-page .manual-summary-row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.teacher-manual-page .manual-schedule-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.admin-main .admin-item-card,
+.admin-main .admin-entity-card,
+.admin-main .admin-student-card,
+.admin-main .admin-schedule-card {
+    min-height: 100%;
+    display: flex !important;
+    flex-direction: column;
     gap: 14px;
+    padding: clamp(18px, 1.6vw, 24px) !important;
+    border-radius: 22px !important;
 }
 
-.teacher-manual-page .manual-schedule-card {
-    border: 1px solid #dce6f4;
-    border-radius: 20px;
-    background: #ffffff;
-    box-shadow: none;
-}
-
-.teacher-manual-page .manual-student-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 12px;
-}
-
-.teacher-notifications-header-actions {
+.admin-main .admin-item-top {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.teacher-notification-actions {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.teacher-notification-action,
-.teacher-notification-read-label {
-    min-height: 42px;
-    border-radius: 12px;
-}
-
-.admin-grid {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
-}
-
-.admin-card .admin-form-grid {
-    gap: 12px;
-}
-
-.admin-students-page .admin-students-control-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 16px;
-    align-items: start;
-}
-
-.admin-students-page .admin-csv-actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-}
-
-.admin-students-page .admin-csv-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.admin-schedules-page .admin-schedule-org-toolbar {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.admin-schedules-page .admin-schedule-directory-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.admin-schedules-page .admin-schedule-directory-actions .admin-secondary-btn {
-    min-height: 44px;
-    box-shadow: none;
-}
-
-.admin-schedules-page .admin-schedule-filter-action {
-    grid-column: span 1;
-}
-
-.admin-schedules-page .admin-schedule-group-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 12px;
-}
-
-.admin-schedules-page .admin-schedule-group-summary {
-    position: relative;
-}
-
-.admin-schedules-page .admin-schedule-group-summary::after {
-    content: "\f078";
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    width: 34px;
-    height: 34px;
-    border-radius: 999px;
-    border: 1px solid #d7e4ff;
-    background: #ffffff;
-    color: #2563eb;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    transition: transform 0.18s ease;
-}
-
-.admin-schedules-page .admin-schedule-group-panel[open] .admin-schedule-group-summary::after {
-    transform: rotate(180deg);
-}
-
-.admin-schedules-page .admin-schedule-group-summary>.admin-count-pill {
-    margin-left: auto;
-}
-
-.admin-schedules-page .admin-schedule-card h4 {
-    line-height: 1.2;
-    overflow-wrap: anywhere;
-}
-
-.admin-classroom-card .admin-edit-form {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.admin-classroom-card .admin-edit-form .admin-primary-btn {
-    grid-column: 1 / -1;
-}
-
-.platform-stats-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
-}
-
-.platform-card .notification-list,
-.platform-main .notification-list {
-    gap: 12px;
-}
-
-.student-main .schedule-feed,
-.student-main .schedule-list {
-    display: grid;
-    gap: 14px;
-}
-
-.student-main .class-card {
-    border: 1px solid #dce6f4;
-    border-radius: 22px;
-    background: #ffffff;
-    box-shadow: none;
-}
-
-.student-main .class-content,
-.student-main .class-body {
-    display: grid;
-    grid-template-columns: minmax(130px, auto) minmax(0, 1fr);
-    gap: 14px;
-}
-
-.student-main .class-action,
-.student-main .class-card-top {
-    display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 12px;
+}
+
+.admin-main .admin-item-icon {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-main .admin-item-icon i,
+.admin-main .admin-badge i,
+.admin-main .admin-secondary-btn i,
+.admin-main .admin-primary-btn i,
+.admin-main .admin-warning-btn i {
+    line-height: 1;
+}
+
+.admin-main .admin-meta {
+    display: flex;
     flex-wrap: wrap;
     gap: 10px;
 }
 
-
-
-
-@media (max-width: 1320px) {
-    .teacher-dashboard-page .content-area {
-        grid-template-columns: 1fr;
-    }
-
-    .platform-stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .admin-schedules-page .admin-schedule-org-toolbar {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 1024px) {
-
-    .admin-main,
-    .student-main,
-    .teacher-main,
-    .platform-main {
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-
-    .teacher-dashboard-page .teacher-schedule-class-card.class-card,
-    .student-main .class-content,
-    .student-main .class-body {
-        grid-template-columns: 1fr;
-    }
-
-    .teacher-dashboard-page .teacher-schedule-filter-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .teacher-manual-page .manual-summary-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .teacher-manual-page .manual-schedule-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .admin-students-page .admin-students-control-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .admin-schedules-page .admin-schedule-org-toolbar {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 760px) {
-    .teacher-dashboard-page .stats-row {
-        grid-template-columns: 1fr;
-    }
-
-    .teacher-dashboard-page .teacher-schedule-filter-grid,
-    .teacher-manual-page .manual-date-nav-row,
-    .teacher-manual-page .manual-summary-row,
-    .admin-schedules-page .admin-schedule-org-toolbar,
-    .admin-students-page .admin-csv-buttons,
-    .platform-stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .teacher-dashboard-page .date-box {
-        width: 52px;
-        height: 52px;
-        border-radius: 16px;
-    }
-
-    .teacher-dashboard-page .date-box span {
-        font-size: 22px;
-    }
-
-    .teacher-dashboard-page .teacher-schedule-card-action {
-        justify-self: stretch;
-        width: 100%;
-    }
-
-    .admin-schedules-page .admin-schedule-directory-actions,
-    .notification-head-actions {
-        width: 100%;
-        justify-content: stretch;
-        align-items: stretch;
-    }
-
-    .admin-schedules-page .admin-schedule-directory-actions .admin-secondary-btn,
-    .notification-head-actions form,
-    .notification-head-actions button,
-    .notification-head-actions a {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .teacher-dashboard-page .status-badge,
-    .teacher-dashboard-page .start-btn,
-    .teacher-dashboard-page .manual-link-btn,
-    .teacher-dashboard-page .invalid-badge,
-    .notification-meta a,
-    .notification-meta button,
-    .notification-meta form {
-        width: 100%;
-        min-width: 100%;
-        max-width: none !important;
-        justify-content: center;
-    }
-
-    .notification-open-link {
-        flex-basis: auto !important;
-    }
-
-    .teacher-notification-item {
-        grid-template-columns: 1fr;
-    }
-
-    .teacher-notification-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-    }
-
-    .admin-schedules-page .admin-schedule-group-summary>.admin-count-pill {
-        margin-left: 0;
-    }
-}
-
-@media (max-width: 520px) {
-
-    .teacher-card,
-    .admin-card,
-    .admin-item-card,
-    .student-history-card,
-    .platform-card,
-    .teacher-notification-item,
-    .notification-card {
-        border-radius: 18px;
-        padding: 14px;
-    }
-
-    .teacher-dashboard-page #schedule-section.panel-box,
-    .teacher-dashboard-page #attendance-section.panel-box {
-        padding: 14px;
-    }
-}
-
-
-/* =========================
-   Global professional select UI
-   Works across student, teacher, admin and platform pages.
-   Add data-select-icon="fa-solid fa-book" on any select to override the icon.
-========================= */
-.select-shell {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-}
-
-.select-shell select {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    min-height: 48px !important;
-    padding: 0 44px 0 44px !important;
-    border: 1px solid #dbe5f0 !important;
-    border-radius: 15px !important;
-    background: #ffffff !important;
-    color: #0f172a !important;
-    font-size: 14px !important;
-    font-weight: 800 !important;
-    line-height: 1.2 !important;
-    outline: none !important;
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05) !important;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease !important;
-}
-
-.select-shell select:hover {
-    border-color: #b8c7da !important;
-    background: #fbfdff !important;
-}
-
-.select-shell select:focus {
-    border-color: #2563eb !important;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), 0 12px 26px rgba(15, 23, 42, 0.08) !important;
-}
-
-.select-shell-icon,
-.select-shell-chevron {
-    position: absolute;
-    z-index: 2;
-    pointer-events: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #64748b;
-    line-height: 1;
-}
-
-.select-shell-icon {
-    left: 16px;
+.admin-main .admin-empty {
+    margin-top: 10px;
+    padding: 14px 16px;
+    border: 1px solid #d7e4f4;
+    border-radius: 14px;
+    background: #f8fbff;
+    color: #4f5f78;
     font-size: 15px;
+    font-weight: 800;
+    display: flex !important;
+    align-items: center !important;
+    min-height: 72px !important;
 }
 
-.select-shell-chevron {
-    right: 16px;
-    font-size: 13px;
+.admin-students-page .admin-student-body {
+    min-height: 0 !important;
 }
 
-.select-shell:focus-within .select-shell-icon,
-.select-shell:focus-within .select-shell-chevron {
-    color: #2563eb;
-}
-
-.select-shell.is-disabled {
-    opacity: 0.68;
-}
-
-.select-shell.is-disabled select {
-    cursor: not-allowed !important;
-    background: #f1f5f9 !important;
-}
-
-.select-shell select option {
-    color: #0f172a;
-    background: #ffffff;
-    font-weight: 700;
-}
-
-.select-shell.select-shell-compact select,
-.teacher-schedule-filter-field .select-shell select,
-.admin-student-filter-field .select-shell select,
-.admin-schedule-filter-field .select-shell select {
-    min-height: 44px !important;
-    border-radius: 14px !important;
-}
-
-@media (max-width: 640px) {
-    .select-shell select {
-        min-height: 46px !important;
-        padding-left: 42px !important;
-        padding-right: 42px !important;
-        font-size: 13px !important;
-    }
-
-    .select-shell-icon {
-        left: 14px;
-    }
-
-    .select-shell-chevron {
-        right: 14px;
-    }
-}
-
-/* =========================
-   Cross-page responsive hardening
-========================= */
-img,
-video,
-canvas,
-svg {
-    max-width: 100%;
-    height: auto;
-}
-
-.teacher-main,
-.student-main,
-.admin-main,
-.platform-main,
-.schedule-main {
-    overflow-wrap: anywhere;
-}
-
-@media (max-width: 900px) {
-
-    .student-history-table,
-    .teacher-report-table,
-    .admin-table,
-    .report-table {
-        min-width: 640px !important;
-    }
-
-    .notification-open-link,
-    .notification-action-btn,
-    .notification-meta>form>button {
-        min-width: 0 !important;
-        max-width: 100% !important;
-    }
-}
-
-@media (max-width: 640px) {
-
-    .teacher-primary-btn,
-    .teacher-secondary-btn,
-    .admin-primary-btn,
-    .admin-secondary-btn,
-    .admin-warning-btn,
-    .platform-primary-btn,
-    .platform-secondary-btn,
-    .view-btn,
-    .start-btn,
-    .end-btn,
-    .manual-link-btn,
-    .manual-mark-link,
-    .manual-edit-link {
-        min-height: 46px;
-        height: auto;
-        white-space: normal;
-        line-height: 1.25;
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
-
-    .status-badge,
-    .platform-chip,
-    .report-percent-pill {
-        white-space: normal;
-        text-align: center;
-        line-height: 1.2;
-    }
-
-    .notification-top {
-        align-items: flex-start;
-    }
-
-    .notification-top span {
-        white-space: normal;
-    }
-
-    .notification-meta {
-        align-items: stretch;
-    }
-
-    .notification-meta form,
-    .notification-meta a,
-    .notification-meta button {
-        width: 100%;
-    }
-}
-
-@media (max-width: 460px) {
-
-    .student-history-table,
-    .teacher-report-table,
-    .admin-table,
-    .report-table {
-        min-width: 480px !important;
-    }
-
-    .teacher-card,
-    .admin-card,
-    .admin-item-card,
-    .student-history-card,
-    .platform-card,
-    .teacher-notification-item,
-    .notification-card {
-        padding: 12px;
-        border-radius: 16px;
-    }
-}
-
-/* =========================
-   Student card action buttons fix
-========================= */
 .admin-students-page .admin-student-actions {
     display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
+    align-items: stretch !important;
+}
+
+.admin-students-page .admin-student-actions form {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
 }
 
 .admin-students-page .admin-student-actions .admin-secondary-btn,
 .admin-students-page .admin-student-actions .admin-warning-btn {
     width: 100% !important;
-    min-height: 50px !important;
-    height: auto !important;
-    padding: 10px 12px !important;
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    line-height: 1.25 !important;
-    text-align: center !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 8px !important;
-}
-
-.admin-students-page .admin-student-actions .admin-secondary-btn i,
-.admin-students-page .admin-student-actions .admin-warning-btn i {
-    flex: 0 0 auto;
-    line-height: 1;
-}
-
-@media (max-width: 900px) {
-    .admin-students-page .admin-student-actions {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-/* =========================
-   Admin / platform form selects — remove browser default chrome
-   Works without wrapping in .select-shell since admin forms use
-   .admin-form-grid and .admin-field wrappers.
-========================= */
-.admin-form-grid select,
-.admin-field select,
-.admin-schedule-filter-field select,
-.admin-student-filter-field select,
-.platform-main select {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 14px center !important;
-    padding-right: 36px !important;
-    cursor: pointer !important;
-}
-
-/* Student schedule select */
-.student-main select,
-.schedule-main select {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-}
-
-/* =========================
-   Notification pages — consistent layout
-========================= */
-.teacher-notification-item {
-    display: grid;
-    grid-template-columns: 56px 1fr;
-    gap: 16px;
-    align-items: start;
-    padding: 18px 20px;
-}
-
-@media (max-width: 560px) {
-    .teacher-notification-item {
-        grid-template-columns: 44px 1fr;
-        gap: 12px;
-        padding: 14px 16px;
-    }
-
-    .teacher-notification-icon {
-        width: 44px !important;
-        height: 44px !important;
-        border-radius: 12px !important;
-    }
-}
-
-/* =========================
-   Admin table cells — prevent text overflow
-========================= */
-.admin-table td,
-.admin-table th {
-    max-width: 260px;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-}
-
-/* =========================
-   Platform admin page improvements
-========================= */
-.platform-main .platform-card {
-    border-radius: 24px;
-    padding: 22px;
-}
-
-.platform-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 18px;
-}
-
-/* =========================
-   Student dashboard — history table fix
-========================= */
-.student-main .student-history-table-wrap,
-.student-main .teacher-table-wrap {
-    border-radius: 16px;
-    overflow: hidden;
-    overflow-x: auto;
-}
-
-/* =========================
-   Global input/select touch targets for mobile
-========================= */
-@media (max-width: 600px) {
-
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="number"],
-    input[type="date"],
-    input[type="time"],
-    input[type="search"],
-    textarea,
-    select {
-        min-height: 46px;
-        font-size: 16px !important;
-        /* prevents iOS zoom */
-    }
-
-    .admin-form-grid {
-        grid-template-columns: 1fr !important;
-    }
-
-    .admin-form-grid .admin-submit-field label {
-        display: none;
-    }
-
-    .class-group-form {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-/* =========================
-   Sidebar mobile — prevent content shift
-========================= */
-@media (max-width: 1280px) {
-    .ui-sidebar {
-        z-index: 1001 !important;
-        pointer-events: auto !important;
-    }
-
-    .ui-sidebar-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.45);
-        z-index: 900 !important;
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
-    }
-
-    body.ui-sidebar-open .ui-sidebar-overlay {
-        display: block;
-    }
-
-    .ui-mobile-sidebar-toggle {
-        z-index: 1102 !important;
-    }
-}
-
-/* =========================
-   Map overlay improvement — ensure no grey background shows through
-========================= */
-.leaflet-container {
-    background: #e8f0f8 !important;
-}
-
-/* Ensure popup text is readable */
-.leaflet-popup-content-wrapper {
-    border-radius: 16px !important;
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14) !important;
-}
-
-.leaflet-popup-tip-container {
-    margin-top: -1px;
-}
-
-/* =========================
-   Live map — stable markers (no visual drift)
-========================= */
-.custom-student-marker,
-.custom-teacher-marker,
-.leaflet-marker-icon {
-    transition: none !important;
-}
-
-.teacher-map-wrapper {
-    touch-action: pan-x pan-y;
-}
-
-.teacher-map-student-card {
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    background: #fff;
-    padding: 12px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.teacher-map-layout {
-    align-items: stretch;
-}
-
-/* =========================
-   App-wide responsive polish
-========================= */
-.schedule-layout,
-.teacher-layout {
-    width: 100%;
-    min-width: 0;
-}
-
-.student-layout .side-stats,
-.schedule-layout .side-stats {
-    display: grid;
-    gap: 12px;
-}
-
-#messageBox,
-#teacherLocationClientError,
-.alert-box {
-    width: 100%;
-    max-width: 100%;
-}
-
-.success-box,
-.error-box {
-    border-radius: 14px;
-    padding: 12px 14px;
-    font-weight: 800;
-    line-height: 1.45;
-    word-break: break-word;
-}
-
-.view-btn,
-.start-btn,
-.end-btn,
-.js-mark-attendance-btn {
-    width: 100%;
-    max-width: 100%;
-}
-
-.class-card {
-    overflow: hidden;
-}
-
-.teacher-dashboard-page .teacher-profile-panel,
-.teacher-dashboard-page .teacher-map-card,
-.teacher-dashboard-page .panel-box,
-.teacher-dashboard-page .suspicious-attempts-card {
-    width: 100%;
-    min-width: 0;
-}
-
-@media (max-width: 1180px) {
-
-    .schedule-layout,
-    .teacher-layout {
-        grid-template-columns: var(--shell-sidebar-width) minmax(0, 1fr) !important;
-    }
-
-    .student-layout .side-stats,
-    .schedule-layout .side-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 900px) {
-    .teacher-dashboard-page .content-area {
-        gap: 16px;
-    }
-
-    .teacher-map-head {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .teacher-map-stats {
-        flex-wrap: wrap;
-    }
-
-    .teacher-map-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .teacher-map-select {
-        width: 100%;
-    }
-
-    .teacher-map-actions {
-        width: 100%;
-        justify-content: flex-start;
-    }
-
-    .student-layout .side-stats,
-    .schedule-layout .side-stats {
-        grid-template-columns: 1fr;
-    }
-
-    .student-main .class-card {
-        padding: 14px;
-    }
-
-    .student-main .class-content,
-    .student-main .class-body {
-        gap: 10px;
-    }
-
-    .js-mark-attendance-btn {
-        min-height: 50px;
-        font-size: 15px;
-    }
-}
-
-@media (max-width: 640px) {
-
-    .admin-main,
-    .student-main,
-    .teacher-main,
-    .platform-main,
-    .schedule-main {
-        padding: 16px 14px !important;
-    }
-
-    .teacher-dashboard-page .date-box {
-        width: 52px;
-        height: 52px;
-    }
-
-    .teacher-dashboard-page .date-box span {
-        font-size: 24px;
-    }
-
-    .teacher-dashboard-page .teacher-schedule-class-card.class-card {
-        padding: 14px;
-        gap: 12px;
-    }
-
-    .teacher-dashboard-page .teacher-schedule-card-action,
-    .teacher-dashboard-page .teacher-schedule-card-action form,
-    .teacher-dashboard-page .teacher-schedule-card-action .start-btn {
-        width: 100%;
-    }
-
-    .teacher-map-wrapper {
-        min-height: 240px;
-    }
-
-    .teacher-map {
-        min-height: 240px;
-    }
-
-    .teacher-map-roster-wrap {
-        max-height: 280px;
-    }
-
-    .platform-stats-grid,
-    .teacher-dashboard-page .stats-row {
-        grid-template-columns: 1fr !important;
-    }
-
-    .notification-open-link {
-        flex: 1 1 100% !important;
-        max-width: 100% !important;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-
-    .teacher-dashboard-page .live-dot,
-    .ui-sidebar * {
-        animation: none !important;
-        transition: none !important;
-    }
-}
-
-
-/* =====================================================
-   STUDENT PASSKEY PAGE RESPONSIVE UI FIX
-   Fixes: oversized buttons, overlap, bad desktop/mobile layout
-===================================================== */
-
-.student-passkey-hero {
-    width: 100% !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto !important;
-    align-items: center !important;
-    gap: 24px !important;
-    padding: clamp(20px, 2.4vw, 32px) !important;
-    border-radius: 26px !important;
-    background: #ffffff !important;
-    border: 1px solid #dbe5f1 !important;
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08) !important;
-    overflow: hidden !important;
-}
-
-.student-passkey-hero>div:first-child {
     min-width: 0 !important;
-}
-
-.student-passkey-hero h3 {
-    margin: 0 !important;
-    color: #0f172a !important;
-    font-size: clamp(22px, 2.2vw, 34px) !important;
-    line-height: 1.15 !important;
-    font-weight: 950 !important;
-    letter-spacing: -0.04em !important;
-}
-
-.student-passkey-hero p {
-    max-width: 760px !important;
-    margin-top: 14px !important;
-    color: #64748b !important;
-    font-size: clamp(14px, 1.2vw, 17px) !important;
-    line-height: 1.75 !important;
-    font-weight: 800 !important;
-    word-break: normal !important;
-    overflow-wrap: anywhere !important;
-}
-
-.student-support-hint {
-    display: block !important;
-    margin-top: 16px !important;
-    font-size: clamp(14px, 1.1vw, 16px) !important;
-    line-height: 1.45 !important;
-    font-weight: 900 !important;
-}
-
-.student-support-hint.supported {
-    color: #15803d !important;
-}
-
-.student-support-hint.unsupported {
-    color: #c2410c !important;
-}
-
-.student-passkey-actions {
-    width: auto !important;
     max-width: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    gap: 14px !important;
-    flex-wrap: wrap !important;
-    flex-shrink: 0 !important;
+    justify-content: center !important;
+    white-space: normal !important;
 }
 
-.student-passkey-actions form {
+.admin-student-pagination {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-student-page-meta {
+    color: #51627d;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.admin-student-page-btn {
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid #cdddf2;
+    background: #edf4ff;
+    color: #21498f;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.admin-student-page-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.admin-flat-pagination {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.select-shell select {
+    padding-left: 46px !important;
+    padding-right: 40px !important;
+}
+
+.select-shell-icon {
+    left: 15px !important;
+    width: 16px;
+}
+
+.select-shell-chevron {
+    right: 14px !important;
+}
+
+/* Notification badge stability in sidebars */
+.ui-sidebar .ui-notification-badge {
+    display: none;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    min-width: 22px !important;
     width: auto !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    display: flex !important;
-}
-
-.student-passkey-actions .view-btn {
-    width: auto !important;
-    min-width: 230px !important;
-    max-width: 100% !important;
-    min-height: 54px !important;
-    height: auto !important;
-    padding: 14px 22px !important;
-    border-radius: 18px !important;
-    white-space: nowrap !important;
-    line-height: 1.2 !important;
-    font-size: clamp(14px, 1vw, 16px) !important;
-    font-weight: 950 !important;
-    text-align: center !important;
-}
-
-.student-passkey-actions .view-btn i {
-    flex-shrink: 0 !important;
-    font-size: 17px !important;
-}
-
-.student-passkey-actions .view-btn.live {
-    background: #dbeafe !important;
-    color: #1d4ed8 !important;
-    border: 1px solid #3b82f6 !important;
-}
-
-.student-passkey-actions .view-btn:not(.live) {
-    background: #ffffff !important;
-    color: #2563eb !important;
-    border: 1px solid #e2e8f0 !important;
-}
-
-.student-passkey-actions .view-btn:hover:not(:disabled) {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.14) !important;
-}
-
-.student-passkey-actions .view-btn:disabled {
-    cursor: not-allowed !important;
-    opacity: 0.78 !important;
+    height: 22px !important;
+    padding: 0 7px !important;
+    border-radius: 999px !important;
+    line-height: 1 !important;
+    white-space: nowrap;
+    flex: 0 0 auto !important;
+    align-self: center !important;
     transform: none !important;
+}
+
+.ui-sidebar .ui-notification-badge.has-unread {
+    display: inline-flex !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+.admin-sidebar .admin-brand-text p {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    line-height: 1.2;
+}
+
+.admin-sidebar .admin-college-code-badge {
+    margin-left: 0 !important;
+}
+
+/* Teacher live-map roster search and empty-state cleanup */
+.teacher-dashboard-page .teacher-map-roster-header .teacher-search-box {
+    min-height: 48px;
+    border-radius: 14px;
+    border: 1px solid #cbd8ea;
+    background: #ffffff;
+    padding: 0 14px;
+    box-shadow: none;
+}
+
+.teacher-dashboard-page .teacher-map-roster-header .teacher-search-box:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.teacher-dashboard-page .teacher-map-roster-header .teacher-search-box input {
+    border: 0 !important;
+    outline: 0 !important;
     box-shadow: none !important;
 }
 
-/* Tablet fix */
-@media (max-width: 1100px) {
-    .student-passkey-hero {
-        grid-template-columns: 1fr !important;
-        align-items: stretch !important;
-    }
-
-    .student-passkey-actions {
-        justify-content: flex-start !important;
-    }
+.teacher-dashboard-page .teacher-map-roster-empty {
+    margin-top: 8px;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px dashed #c7d7ea;
+    background: #f8fbff;
+    color: #596b85;
+    font-size: 14px;
+    font-weight: 700;
 }
 
-/* Mobile fix */
-@media (max-width: 640px) {
-    .student-passkey-hero {
-        padding: 20px !important;
-        border-radius: 22px !important;
-        gap: 20px !important;
-    }
-
-    .student-passkey-actions {
-        width: 100% !important;
-        display: grid !important;
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
-    }
-
-    .student-passkey-actions form {
-        width: 100% !important;
-    }
-
-    .student-passkey-actions .view-btn {
-        width: 100% !important;
-        min-width: 0 !important;
-        white-space: normal !important;
-        padding: 14px 16px !important;
-    }
+/* Teacher header date pill should never collapse */
+.teacher-dashboard-page .date-box {
+    width: 56px !important;
+    min-width: 56px !important;
+    height: 56px !important;
+    flex: 0 0 56px !important;
+    border-radius: 12px !important;
 }
 
-/* Very small phone fix */
-@media (max-width: 420px) {
-    .student-passkey-hero h3 {
-        font-size: 22px !important;
-    }
-
-    .student-passkey-hero p {
-        font-size: 14px !important;
-        line-height: 1.65 !important;
-    }
-
-    .student-passkey-actions .view-btn {
-        font-size: 14px !important;
-    }
+.teacher-dashboard-page .date-box span {
+    display: block;
+    line-height: 1;
 }
 
-/* Fix for Hamburger menu overlapping header text on mobile */
-@media (max-width: 1280px) {
-    .teacher-header,
-    .dashboard-header,
-    .admin-header,
-    .student-header,
-    .platform-header {
-        margin-top: calc(72px + env(safe-area-inset-top, 0px)) !important;
-    }
+/* Auth submit buttons: remove left-edge visual artifacts */
+.auth-form .btn,
+.auth-form .btn.btn-primary {
+    border: none !important;
+    outline: none !important;
+    background-clip: padding-box;
 }
-/* Fix for Admin Passkey Request Actions UI Overlap */
+
+/* Change password page compact spacing */
+.admin-password-card {
+    width: 100%;
+    max-width: min(980px, 100%) !important;
+}
+
+.admin-password-form {
+    gap: 14px !important;
+}
+
+.admin-password-card .admin-field-error {
+    min-height: 0 !important;
+    margin-top: 4px;
+}
+
+.admin-password-card .admin-password-rules {
+    margin-top: 6px;
+}
+
+.admin-password-card .admin-primary-btn {
+    min-height: 54px;
+}
+
+/* Student dashboard empty schedule card layout */
+.student-main .dashboard-panel > .empty-state {
+    margin-top: 8px;
+    padding: 24px;
+    border: 1px solid #d8e5f5;
+    border-radius: 20px;
+    background: #f8fbff;
+    text-align: left;
+}
+
+.student-main .dashboard-panel > .empty-state i {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.student-main .dashboard-panel > .empty-state h3 {
+    margin: 0;
+}
+
+.student-main .dashboard-panel > .empty-state p {
+    margin-top: 6px;
+}
+
+/* Map readability */
+.leaflet-container {
+    background: #e8f0f8;
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+.custom-student-marker,
+.custom-teacher-marker,
+.leaflet-marker-icon {
+    /* Smoothly glide markers to their new positions instead of teleporting */
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Admin passkey request actions */
 .admin-passkey-actions {
     display: flex;
     flex-direction: column;
@@ -1507,7 +494,6 @@ svg {
     padding: 0 16px;
     font-size: 14px;
     font-weight: 600;
-    outline: none;
     background: #f8fafc;
     transition: all 0.2s;
 }
@@ -1525,3 +511,1012 @@ svg {
     justify-content: center;
 }
 
+/* Sidebar/mobile overlap safety
+   uiShell already adds top padding to main content in drawer mode.
+   Keep header top margin at zero to avoid double spacing below hamburger. */
+@media (max-width: 1280px) {
+    .teacher-header,
+    .dashboard-header,
+    .admin-header,
+    .student-header,
+    .platform-header {
+        margin-top: 0 !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .teacher-header,
+    .student-header,
+    .admin-header,
+    .platform-header {
+        gap: 12px;
+    }
+
+    .teacher-header > div,
+    .student-header > div,
+    .admin-header > div,
+    .platform-header > div {
+        width: 100%;
+    }
+
+    .student-history-table,
+    .teacher-report-table,
+    .admin-table,
+    .report-table {
+        min-width: 640px;
+    }
+
+    .admin-main .admin-grid,
+    .admin-main .admin-grid.admin-student-group-grid,
+    .admin-main .admin-grid.admin-schedule-group-grid,
+    .admin-main .pending-students-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)) !important;
+    }
+
+    .admin-students-page .admin-student-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 1280px) {
+    .ui-sidebar {
+        z-index: 1200 !important;
+        width: min(92vw, 360px) !important;
+    }
+
+    .ui-sidebar-overlay {
+        z-index: 1180 !important;
+    }
+
+    .ui-mobile-sidebar-toggle {
+        z-index: 1250 !important;
+    }
+}
+
+@media (max-width: 760px) {
+    .teacher-primary-btn,
+    .teacher-secondary-btn,
+    .admin-primary-btn,
+    .admin-secondary-btn,
+    .admin-warning-btn,
+    .platform-primary-btn,
+    .platform-secondary-btn,
+    .view-btn,
+    .start-btn,
+    .end-btn,
+    .manual-link-btn,
+    .manual-mark-link,
+    .manual-edit-link,
+    .js-mark-attendance-btn {
+        width: 100%;
+        max-width: 100%;
+        min-height: 46px;
+        white-space: normal;
+        line-height: 1.25;
+    }
+
+    .notification-open-link,
+    .notification-action-btn,
+    .notification-meta > form > button,
+    .admin-toolbar-action,
+    .admin-toolbar-action .admin-secondary-btn,
+    .admin-count-pill {
+        width: 100%;
+    }
+
+    .admin-count-pill {
+        justify-content: center;
+    }
+
+    .admin-passkey-reject-group {
+        flex-direction: column;
+    }
+
+    .ui-sidebar {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+    }
+
+    .admin-student-pagination {
+        justify-content: center;
+    }
+
+    .admin-flat-pagination {
+        justify-content: center;
+    }
+
+    .admin-student-page-meta {
+        width: 100%;
+        text-align: center;
+        order: -1;
+    }
+}
+
+/* =========================
+   2026-06-02 Global UI Stabilization
+========================= */
+
+/* Make search empty states predictable even when JS toggles classes dynamically */
+.admin-empty[data-search-empty] {
+    display: none !important;
+}
+
+.admin-empty[data-search-empty]:not(.hidden-by-search) {
+    display: flex !important;
+}
+
+/* Normalize select icon positioning and prevent text/icon overlap */
+.select-shell .select-shell-icon,
+.select-shell .select-shell-chevron {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.select-shell .select-shell-icon {
+    left: 16px !important;
+    width: 18px;
+    font-size: 15px;
+}
+
+.select-shell .select-shell-chevron {
+    right: 14px !important;
+    font-size: 12px;
+}
+
+.admin-main .select-shell select,
+.teacher-main .select-shell select,
+.student-main .select-shell select,
+.schedule-main .select-shell select,
+.platform-main .select-shell select {
+    padding-left: 50px !important;
+    padding-right: 42px !important;
+    line-height: 1.2;
+}
+
+/* Better card rhythm across all admin list routes */
+.admin-main .admin-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)) !important;
+    gap: 18px !important;
+}
+
+.admin-main .admin-grid > .admin-item-card,
+.admin-main .admin-grid > .admin-entity-card,
+.admin-main .admin-grid > .admin-student-card,
+.admin-main .admin-grid > .admin-schedule-card {
+    height: 100%;
+}
+
+.admin-main .admin-item-card,
+.admin-main .admin-entity-card {
+    padding: clamp(18px, 1.7vw, 24px) !important;
+}
+
+/* Student cards: desktop should be compact buttons, mobile should stack */
+.admin-students-page .admin-student-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+}
+
+.admin-students-page .admin-student-actions form {
+    flex: 0 1 auto !important;
+    min-width: min(100%, 210px) !important;
+    margin: 0 !important;
+}
+
+.admin-students-page .admin-student-actions .admin-secondary-btn,
+.admin-students-page .admin-student-actions .admin-warning-btn {
+    width: auto !important;
+    min-width: 210px !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    justify-content: center !important;
+}
+
+/* Ensure dashboard empty cards look intentional on student routes */
+.student-main .dashboard-panel > .empty-state,
+.schedule-main .dashboard-panel > .empty-state {
+    margin-top: 8px;
+    padding: 20px 22px;
+    border: 1px solid #d8e5f5;
+    border-radius: 18px;
+    background: #f8fbff;
+    text-align: left;
+}
+
+.student-main .dashboard-panel > .empty-state i,
+.schedule-main .dashboard-panel > .empty-state i {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.student-main .dashboard-panel > .empty-state h3,
+.schedule-main .dashboard-panel > .empty-state h3 {
+    margin: 0;
+}
+
+.student-main .dashboard-panel > .empty-state p,
+.schedule-main .dashboard-panel > .empty-state p {
+    margin-top: 6px;
+}
+
+.student-main .dashboard-panel,
+.schedule-main .dashboard-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.student-main .dashboard-panel > .empty-state,
+.schedule-main .dashboard-panel > .empty-state {
+    max-width: 560px;
+}
+
+/* Sidebar brand + college code visual alignment */
+.ui-sidebar .admin-brand {
+    padding: 16px 14px !important;
+    gap: 12px !important;
+}
+
+.ui-sidebar .admin-brand-text {
+    min-width: 0;
+}
+
+.ui-sidebar .admin-brand-text h2 {
+    line-height: 1.1;
+}
+
+.ui-sidebar .admin-brand-text p {
+    margin-top: 4px !important;
+    line-height: 1.25 !important;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ui-sidebar .admin-college-code-badge {
+    padding: 3px 10px !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0.04em;
+}
+
+/* Remove occasional left-edge artifacts on primary call-to-action buttons */
+.btn-primary,
+.admin-primary-btn,
+.dashboard-action-btn,
+.auth-submit-btn {
+    border: 1px solid transparent !important;
+    background-clip: padding-box;
+}
+
+@media (max-width: 900px) {
+    .admin-students-page .admin-student-actions {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-students-page .admin-student-actions form {
+        min-width: 0 !important;
+    }
+
+    .admin-students-page .admin-student-actions .admin-secondary-btn,
+    .admin-students-page .admin-student-actions .admin-warning-btn {
+        width: 100% !important;
+        min-width: 0 !important;
+        white-space: normal !important;
+    }
+}
+
+@media (max-width: 860px) {
+    .ui-sidebar {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+    }
+}
+
+@media (max-width: 460px) {
+    .student-history-table,
+    .teacher-report-table,
+    .admin-table,
+    .report-table {
+        min-width: 440px;
+    }
+
+    .teacher-card,
+    .admin-card,
+    .admin-item-card,
+    .student-history-card,
+    .platform-card,
+    .teacher-notification-item,
+    .notification-card,
+    .panel-box {
+        border-radius: 16px;
+    }
+}
+
+/* =========================
+   Small Device Responsive Hardening
+========================= */
+
+@media (max-width: 640px) {
+    .admin-main,
+    .student-main,
+    .schedule-main,
+    .teacher-main,
+    .platform-main {
+        padding: calc(80px + env(safe-area-inset-top, 0px)) 12px 20px !important;
+    }
+
+    .admin-card,
+    .admin-item-card,
+    .teacher-card,
+    .panel-box,
+    .platform-card,
+    .student-history-card,
+    .dashboard-panel,
+    .class-card {
+        padding: 14px !important;
+        border-radius: 16px !important;
+    }
+
+    .admin-header,
+    .teacher-header,
+    .dashboard-header,
+    .student-header,
+    .platform-header,
+    .admin-card-head,
+    .dashboard-panel-head,
+    .student-history-card-head,
+    .teacher-card-header,
+    .notification-head-actions,
+    .notification-meta,
+    .admin-toolbar,
+    .class-card-top,
+    .class-action {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .admin-main .admin-grid,
+    .admin-main .admin-grid.admin-student-group-grid,
+    .admin-main .admin-grid.admin-schedule-group-grid,
+    .admin-main .pending-students-grid,
+    .admin-students-page .admin-students-overview-row,
+    .admin-schedules-page .admin-schedules-overview-row,
+    .admin-students-page .admin-students-control-grid,
+    .admin-students-page .admin-student-org-toolbar,
+    .admin-schedules-page .admin-schedule-org-toolbar {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .admin-student-group-summary,
+    .admin-schedule-group-summary {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .admin-schedule-group-highlights,
+    .admin-student-group-rooms,
+    .admin-meta {
+        gap: 8px !important;
+    }
+
+    .admin-item-icon,
+    .admin-main .admin-item-icon {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        border-radius: 14px !important;
+    }
+
+    .admin-main .admin-item-icon i {
+        font-size: 17px !important;
+    }
+
+    .admin-search-box {
+        min-height: 48px;
+        flex: 0 0 auto !important;
+        width: 100% !important;
+    }
+
+    .admin-search-box input,
+    .teacher-search-box input,
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+
+    .select-shell select {
+        min-height: 46px;
+        padding-left: 46px !important;
+    }
+
+    .student-main .dashboard-panel > .empty-state,
+    .schedule-main .dashboard-panel > .empty-state {
+        max-width: 100%;
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    .student-main .panel-count,
+    .schedule-main .panel-count,
+    .admin-count-pill {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-header h1,
+    .teacher-header h1,
+    .dashboard-header h1,
+    .student-header h1,
+    .platform-header h1 {
+        font-size: clamp(22px, 7vw, 27px) !important;
+    }
+
+    .ui-mobile-sidebar-toggle {
+        width: 42px !important;
+        height: 42px !important;
+        border-radius: 12px !important;
+        top: 10px !important;
+        left: 10px !important;
+    }
+
+    .ui-sidebar .admin-brand {
+        padding: 12px !important;
+        border-radius: 16px !important;
+    }
+
+    .ui-sidebar .admin-brand-icon {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        border-radius: 12px !important;
+    }
+
+    .ui-sidebar .admin-brand-text h2 {
+        font-size: 20px !important;
+    }
+
+    .ui-sidebar .admin-brand-text p {
+        font-size: 12px !important;
+    }
+
+    .admin-student-pagination,
+    .admin-flat-pagination {
+        gap: 8px;
+    }
+
+    .admin-student-page-btn {
+        min-height: 34px;
+        padding: 0 12px;
+        font-size: 12px;
+    }
+}
+
+/* =========================
+   Pagination UI Polish
+========================= */
+
+.admin-student-pagination,
+.admin-flat-pagination {
+    width: 100%;
+    margin-top: 18px;
+    padding: 12px 14px;
+    border: 1px solid #d5e3f5;
+    border-radius: 16px;
+    background: #f8fbff;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-student-page-meta {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: #405472;
+    line-height: 1.25;
+}
+
+.admin-student-page-btn {
+    min-height: 38px;
+    padding: 0 16px;
+    border: 1px solid #c5d8f3;
+    background: #ffffff;
+    color: #1d4f95;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 13px;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.admin-student-page-btn:hover:not(:disabled) {
+    background: #eaf2ff;
+    border-color: #aecdff;
+    color: #153e7c;
+}
+
+.admin-student-page-btn:disabled {
+    opacity: 0.5;
+    background: #eef4ff;
+    color: #7a8dab;
+    border-color: #d3e0f3;
+    cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+    .admin-student-pagination,
+    .admin-flat-pagination {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .admin-student-page-meta {
+        grid-column: 1 / -1;
+        order: -1;
+        font-size: 13px;
+    }
+
+    .admin-student-page-btn {
+        width: 100%;
+        justify-self: stretch;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-student-pagination,
+    .admin-flat-pagination {
+        border-radius: 14px;
+        padding: 8px;
+    }
+
+    .admin-student-page-meta {
+        font-size: 12px;
+    }
+
+    .admin-student-page-btn {
+        min-height: 34px;
+        padding: 0 10px;
+        font-size: 12px;
+    }
+}
+
+/* =========================
+   Sidebar Brand Spacing + Mobile Responsiveness
+========================= */
+
+.ui-sidebar .admin-brand {
+    padding: 18px 16px !important;
+    gap: 14px !important;
+    margin: 0 2px 20px !important;
+    border-radius: 20px !important;
+}
+
+.ui-sidebar .admin-brand-icon {
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    border-radius: 16px !important;
+}
+
+.ui-sidebar .admin-brand-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ui-sidebar .admin-brand-text h2 {
+    margin: 0 !important;
+    line-height: 1.06 !important;
+}
+
+.ui-sidebar .admin-brand-text p {
+    margin: 0 !important;
+    line-height: 1.25 !important;
+    row-gap: 6px !important;
+}
+
+.ui-sidebar .admin-college-code-badge {
+    margin-left: 0 !important;
+    margin-top: 1px !important;
+}
+
+/* Compact, cleaner empty boxes for notifications/passkey cards */
+.admin-main .admin-empty.admin-empty-compact {
+    margin-top: 8px !important;
+    min-height: 54px !important;
+    padding: 10px 16px !important;
+    width: fit-content;
+    max-width: 100%;
+    border-radius: 16px !important;
+    gap: 0;
+    align-items: center !important;
+    font-size: clamp(15px, 1.15vw, 18px);
+    font-weight: 800;
+    color: #4d5f79;
+    display: inline-flex !important;
+}
+
+.admin-main .admin-empty.admin-empty-compact i {
+    color: #6b7e98;
+    font-size: 17px;
+    line-height: 1;
+}
+
+.admin-main .admin-empty.admin-empty-compact span {
+    line-height: 1.35;
+}
+
+/* Pending passkey header: add space between subtitle and count pill */
+.admin-passkey-pending-card .admin-card-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.admin-passkey-pending-card .admin-card-head > div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-passkey-pending-card .admin-card-head .admin-count-pill {
+    margin: 0;
+}
+
+@media (max-width: 760px) {
+    .ui-sidebar {
+        padding-top: calc(72px + env(safe-area-inset-top, 0px)) !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    .ui-sidebar .admin-brand {
+        margin: 0 0 16px !important;
+        padding: 16px 14px !important;
+    }
+
+    .admin-main .admin-empty.admin-empty-compact {
+        min-height: 52px !important;
+        width: 100%;
+        padding: 10px 14px !important;
+        border-radius: 14px !important;
+        font-size: 15px;
+        display: flex !important;
+    }
+
+    .admin-passkey-pending-card .admin-card-head {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ui-sidebar {
+        padding-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .ui-sidebar .admin-brand {
+        margin-bottom: 14px !important;
+        padding: 14px 12px !important;
+        gap: 10px !important;
+        border-radius: 18px !important;
+    }
+
+    .ui-sidebar .admin-brand-icon {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        border-radius: 14px !important;
+    }
+
+    .admin-main .admin-empty.admin-empty-compact {
+        min-height: 48px !important;
+        padding: 9px 12px !important;
+        font-size: 15px;
+        line-height: 1.25;
+    }
+}
+
+@media (max-width: 1024px) {
+    .admin-main .admin-grid,
+    .dashboard-stats-grid,
+    .teacher-dashboard-page .teacher-map-roster-header {
+        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .admin-students-page .admin-student-actions {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+
+    .admin-students-page .admin-student-actions form,
+    .admin-students-page .admin-student-actions .admin-secondary-btn,
+    .admin-students-page .admin-student-actions .admin-warning-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-header,
+    .admin-header,
+    .student-header,
+    .teacher-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .schedule-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+    }
+
+    .class-body,
+    .class-action {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .view-btn,
+    .js-mark-attendance-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+@media (max-width: 430px) {
+    .admin-main,
+    .student-main,
+    .teacher-main,
+    .schedule-main {
+        padding: 80px 12px 24px !important;
+    }
+
+    .dashboard-stat-card {
+        padding: 16px !important;
+    }
+}
+
+@media (max-width: 390px) {
+    .admin-item-card,
+    .admin-entity-card {
+        padding: 14px !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .ui-sidebar {
+        padding: 16px 12px !important;
+    }
+    .student-history-table,
+    .teacher-report-table,
+    .admin-table {
+        font-size: 13px !important;
+    }
+}
+
+/* Responsive tables: card-style rows on narrow screens */
+@media (max-width: 768px) {
+    .admin-main .admin-table,
+    .admin-table.report-table {
+        min-width: 640px !important;
+    }
+
+    .student-history-table,
+    .teacher-report-table,
+    .schedule-table,
+    .student-schedule-table {
+        min-width: 600px !important;
+    }
+
+    .schedule-layout .profile-panel,
+    .teacher-layout .profile-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .student-layout,
+    .schedule-layout,
+    .teacher-layout,
+    .teacher-page {
+        gap: 16px !important;
+    }
+
+    .home-nav-links.is-open {
+        display: flex !important;
+        flex-direction: column;
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-table-wrap,
+    .teacher-table-wrap,
+    .student-history-table-wrap {
+        margin-left: -4px;
+        margin-right: -4px;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-search-box {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .notification-open-link {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+
+    .college-register-shell {
+        padding: 16px !important;
+    }
+}
+
+/* Search visibility must win over later card layout display rules. */
+.admin-students-page [data-search-group="students"].hidden-by-search,
+.admin-students-page [data-search-group="students"].hidden-by-pagination,
+.admin-students-page [data-search-container="students"].hidden-by-search,
+.admin-students-page [data-search-empty="students"].hidden-by-search {
+    display: none !important;
+}
+
+/* Schedule directory header actions */
+.admin-schedule-directory-card > .admin-card-head {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center !important;
+    gap: 16px 24px !important;
+}
+
+.admin-schedule-directory-card > .admin-card-head > div {
+    min-width: 0;
+}
+
+.admin-schedule-directory-actions {
+    justify-self: end;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+
+.admin-schedule-directory-actions .admin-secondary-btn {
+    min-height: 44px;
+    min-width: 154px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+    .admin-schedule-directory-card > .admin-card-head {
+        grid-template-columns: 1fr;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .admin-schedule-directory-actions {
+        justify-self: stretch;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .admin-schedule-directory-actions .admin-secondary-btn {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 430px) {
+    .admin-schedule-directory-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile admin search bars must stay control-sized, never stretch vertically. */
+@media (max-width: 760px) {
+    .admin-main .admin-toolbar {
+        display: grid !important;
+        grid-template-columns: 1fr;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .admin-main .admin-search-box {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 52px !important;
+        height: 52px !important;
+        max-height: 52px !important;
+        flex: none !important;
+        align-self: stretch !important;
+        overflow: hidden;
+    }
+
+    .admin-main .admin-search-box input {
+        min-height: 0 !important;
+        height: 100% !important;
+        line-height: 1.2 !important;
+        text-overflow: ellipsis;
+    }
+
+    .admin-main .admin-toolbar > .admin-count-pill {
+        width: 100% !important;
+        margin: 0 !important;
+        justify-content: center !important;
+    }
+}
+
+/* Drawer sidebar: keep primary nav above Settings without sticky overlap. */
+@media (max-width: 1280px) {
+    body.ui-sidebar-open .ui-sidebar,
+    .ui-sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    .ui-sidebar .shell-sidebar-nav,
+    .ui-sidebar .admin-menu.shell-sidebar-nav {
+        flex: 0 0 auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        padding-bottom: 14px !important;
+        margin-bottom: 0 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .ui-sidebar .shell-sidebar-footer {
+        position: static !important;
+        bottom: auto !important;
+        z-index: auto !important;
+        flex: 0 0 auto !important;
+        margin-top: 14px !important;
+        padding-top: 0 !important;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+        border-top: 0 !important;
+        background: transparent !important;
+    }
+
+    .ui-sidebar .shell-settings-label {
+        margin: 0 0 4px !important;
+        padding: 0 8px !important;
+        line-height: 1.2 !important;
+    }
+}

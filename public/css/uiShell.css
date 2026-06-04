@@ -15,8 +15,8 @@
     --shell-primary-dark: #0a4fd0;
     --shell-success: #0f9d63;
     --shell-warning: #c46e1b;
-    --shell-shadow: 0 18px 52px rgba(10, 28, 56, 0.08);
-    --shell-shadow-soft: 0 10px 28px rgba(10, 28, 56, 0.08);
+    --shell-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shell-shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     --shell-font: "Manrope", "Segoe UI", "Trebuchet MS", sans-serif;
     --shell-heading-font: "Sora", "Manrope", "Segoe UI", sans-serif;
 }
@@ -42,11 +42,147 @@ body {
     }
 }
 
+@media (max-width: 640px) {
+    .select-shell select {
+        min-height: 46px;
+        font-size: 16px;
+    }
+}
+
 body {
     overflow-x: hidden;
     color: var(--shell-text);
     font-family: var(--shell-font);
     text-rendering: optimizeLegibility;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.gps-help-banner {
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    border: 1px solid #bfdbfe;
+    border-left-width: 4px;
+    border-left-color: #2563eb;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.gps-help-banner i {
+    color: #2563eb;
+    margin-right: 7px;
+}
+
+.attendify-sync-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    z-index: 9999;
+    padding: 12px 24px;
+    border-radius: 10px;
+    background: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    font-size: 14px;
+    font-weight: 800;
+    animation: attendifySyncToastFade 3s forwards;
+}
+
+@keyframes attendifySyncToastFade {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 6px);
+    }
+
+    14%,
+    82% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, 6px);
+    }
+}
+
+/* Shared enhanced select shell */
+.select-shell {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.select-shell select {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    border: 1px solid #dbe5f0;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.2;
+    padding: 0 42px 0 42px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.select-shell select:hover {
+    border-color: #b8c7da;
+}
+
+.select-shell select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    outline: none;
+}
+
+.select-shell-icon,
+.select-shell-chevron {
+    position: absolute;
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    line-height: 1;
+}
+
+.select-shell-icon {
+    left: 14px;
+    font-size: 15px;
+}
+
+.select-shell-chevron {
+    right: 14px;
+    font-size: 12px;
+}
+
+.select-shell:focus-within .select-shell-icon,
+.select-shell:focus-within .select-shell-chevron {
+    color: #2563eb;
+}
+
+.select-shell.is-disabled {
+    opacity: 0.7;
+}
+
+.select-shell.is-disabled select {
+    cursor: not-allowed;
+    background: #f1f5f9;
 }
 
 h1,
@@ -94,10 +230,7 @@ body.ui-sidebar-open {
     width: 100%;
     overflow-x: hidden;
     padding: clamp(24px, 2.8vw, 42px) !important;
-    background:
-        radial-gradient(circle at top left, rgba(11, 99, 246, 0.14), transparent 34%),
-        radial-gradient(circle at 90% 8%, rgba(10, 79, 208, 0.09), transparent 28%),
-        var(--shell-bg) !important;
+    background: var(--shell-bg) !important;
 }
 
 .teacher-page .teacher-main {
@@ -130,9 +263,7 @@ body.ui-sidebar-open {
     display: flex !important;
     flex-direction: column !important;
     gap: 0 !important;
-    background:
-        radial-gradient(circle at 12% 12%, rgba(11, 99, 246, 0.25), transparent 44%),
-        linear-gradient(170deg, var(--shell-dark), var(--shell-dark-soft) 66%) !important;
+    background: var(--shell-dark) !important;
     color: #ffffff !important;
     padding: 24px 20px !important;
     border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
@@ -213,7 +344,7 @@ body.ui-sidebar-open {
 }
 
 .shell-footer-link.active {
-    background: linear-gradient(135deg, var(--shell-primary), var(--shell-primary-dark)) !important;
+    background: var(--shell-primary) !important;
     color: #ffffff !important;
     box-shadow: none !important;
 }
@@ -232,6 +363,8 @@ body.ui-sidebar-open {
     border: 0;
     background: transparent;
     cursor: pointer;
+    font-size: 18px !important;
+    font-weight: 700 !important;
 }
 
 .ui-sidebar::-webkit-scrollbar {
@@ -298,7 +431,7 @@ body.ui-sidebar-open {
 .ui-sidebar .platform-menu a.active,
 .ui-sidebar .platform-nav-link.active,
 .ui-sidebar .shell-footer-link.active {
-    background: linear-gradient(135deg, var(--shell-primary), var(--shell-primary-dark)) !important;
+    background: var(--shell-primary) !important;
     color: #ffffff !important;
     box-shadow: none !important;
 }
@@ -340,7 +473,7 @@ body.ui-sidebar-open {
     height: 52px !important;
     min-width: 52px !important;
     border-radius: 16px !important;
-    background: linear-gradient(135deg, var(--shell-primary), var(--shell-primary-dark)) !important;
+    background: var(--shell-primary) !important;
     color: #ffffff !important;
     display: flex !important;
     align-items: center !important;
@@ -438,7 +571,7 @@ body.ui-sidebar-open {
     z-index: 45;
     display: none;
     background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(5px);
+    backdrop-filter: none;
 }
 
 /* =========================
@@ -1619,4 +1752,74 @@ a {
     .notification-meta > form > button {
         max-width: none;
     }
+}
+
+/* =========================
+   ENHANCED SWEETALERT
+========================= */
+.shell-enhanced-alert {
+    border-radius: 24px !important;
+    padding: 32px 24px 24px !important;
+    box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.15) !important;
+    font-family: var(--shell-font) !important;
+}
+
+.shell-enhanced-title {
+    font-family: var(--shell-heading-font) !important;
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: var(--shell-text) !important;
+    margin-top: 16px !important;
+}
+
+.shell-enhanced-text {
+    font-size: 16px !important;
+    color: var(--shell-muted) !important;
+    margin-top: 8px !important;
+}
+
+.shell-enhanced-actions {
+    margin-top: 32px !important;
+    gap: 12px !important;
+}
+
+.shell-enhanced-confirm {
+    background: var(--shell-primary) !important;
+    color: #ffffff !important;
+    border-radius: 14px !important;
+    padding: 14px 28px !important;
+    font-weight: 800 !important;
+    font-size: 15px !important;
+    box-shadow: 0 8px 16px -4px rgba(11, 99, 246, 0.25) !important;
+    transition: all 0.2s ease !important;
+}
+
+.shell-enhanced-confirm:hover {
+    background: var(--shell-primary-dark) !important;
+    transform: translateY(-2px) !important;
+}
+
+.shell-enhanced-cancel {
+    background: #ffffff !important;
+    color: var(--shell-text) !important;
+    border: 1px solid #dbe5f0 !important;
+    border-radius: 14px !important;
+    padding: 14px 28px !important;
+    font-weight: 800 !important;
+    font-size: 15px !important;
+    transition: all 0.2s ease !important;
+}
+
+.shell-enhanced-cancel:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Make the warning icon match the design */
+.swal2-icon.swal2-warning {
+    border-color: #fbd38d !important;
+    color: #fba341 !important;
+}
+.swal2-icon.swal2-warning .swal2-icon-content {
+    color: #fba341 !important;
 }

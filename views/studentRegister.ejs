@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Registration | Attendify</title>
+    <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/style.css?v=3">
     <link rel="stylesheet" href="/css/finalUiFix.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -11,7 +12,7 @@
     
     <script>
         // Data injected from the backend
-        const classGroupsData = <%- JSON.stringify(typeof classGroups !== "undefined" ? classGroups : []) %>;
+        const classGroupsData = <%- JSON.stringify(typeof classGroups !== "undefined" ? classGroups : []).replace(/</g, "\\u003c") %>;
     </script>
 
     <!-- SweetAlert2 for Custom UI Alerts -->
@@ -29,6 +30,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -49,7 +60,7 @@
             </ul>
         </aside>
 
-        <div class="auth-card" style="max-height: 95vh; overflow-y: auto;">
+        <div class="auth-card auth-card-scroll">
             <div class="auth-header student compact">
                 <div class="auth-icon"><i class="fa-solid fa-user-plus"></i></div>
                 <h2>Student Registration</h2>
@@ -63,71 +74,88 @@
                 </div>
             <% } %>
 
-            <form action="/student/register" method="POST" class="auth-form" id="registerForm">
-                
-                <div class="input-group">
-                    <label>Full Name</label>
-                    <div class="input-wrap">
-                        <i class="fa-regular fa-user"></i>
-                        <input type="text" name="fullName" placeholder="John Doe" required>
+            <% if (!collegeFound) { %>
+                <form action="/student/register" method="GET" class="auth-form" id="collegeCodeForm">
+                    <div class="input-group">
+                        <label>College Code</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-building-columns"></i>
+                            <input type="text" name="collegeCode" placeholder="Enter College Code" value="<%= typeof collegeCode !== 'undefined' ? collegeCode : '' %>" required>
+                        </div>
                     </div>
-                </div>
-
-                <div class="input-group">
-                    <label>Email Address</label>
-                    <div class="input-wrap">
-                        <i class="fa-regular fa-envelope"></i>
-                        <input type="email" name="email" placeholder="student@college.com" required>
+                    <button type="submit" class="btn btn-primary btn-full auth-submit-btn">
+                        <i class="fa-solid fa-arrow-right"></i>
+                        Next
+                    </button>
+                </form>
+            <% } else { %>
+                <form action="/student/register" method="POST" class="auth-form" id="registerForm">
+                    <input type="hidden" name="collegeCode" value="<%= collegeCode %>">
+                    
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <div class="input-wrap">
+                            <i class="fa-regular fa-user"></i>
+                            <input type="text" name="fullName" placeholder="John Doe" required>
+                        </div>
                     </div>
-                </div>
 
-                <div class="input-group">
-                    <label>Password</label>
-                    <div class="input-wrap">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" name="password" placeholder="Create a strong password" required minlength="6">
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <div class="input-wrap">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" name="email" placeholder="student@college.com" required>
+                        </div>
                     </div>
-                </div>
 
-                <div class="input-group">
-                    <label>Department</label>
-                    <div class="select-shell">
-                        <i class="fa-solid fa-building select-shell-icon"></i>
-                        <select id="departmentSelect" required>
-                            <option value="">-- Select Department --</option>
-                        </select>
-                        <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" name="password" placeholder="Create a strong password" required minlength="6">
+                        </div>
                     </div>
-                </div>
 
-                <div class="input-group">
-                    <label>Semester</label>
-                    <div class="select-shell">
-                        <i class="fa-solid fa-layer-group select-shell-icon"></i>
-                        <select id="semesterSelect" required disabled>
-                            <option value="">-- Select Semester --</option>
-                        </select>
-                        <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                    <div class="input-group">
+                        <label>Department</label>
+                        <div class="select-shell">
+                            <i class="fa-solid fa-building select-shell-icon"></i>
+                            <select id="departmentSelect" required>
+                                <option value="">-- Select Department --</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                        </div>
                     </div>
-                </div>
 
-                <div class="input-group">
-                    <label>Class Group (Section)</label>
-                    <div class="select-shell">
-                        <i class="fa-solid fa-users select-shell-icon"></i>
-                        <!-- The actual value sent to server is classGroupId -->
-                        <select id="classGroupSelect" name="classGroupId" required disabled>
-                            <option value="">-- Select Class Group --</option>
-                        </select>
-                        <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                    <div class="input-group">
+                        <label>Semester</label>
+                        <div class="select-shell">
+                            <i class="fa-solid fa-layer-group select-shell-icon"></i>
+                            <select id="semesterSelect" required disabled>
+                                <option value="">-- Select Semester --</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                        </div>
                     </div>
-                </div>
 
-                <button type="submit" class="btn btn-primary btn-full" style="margin-top: 15px;">
-                    <i class="fa-solid fa-user-check"></i>
-                    Register
-                </button>
-            </form>
+                    <div class="input-group">
+                        <label>Class Group (Section)</label>
+                        <div class="select-shell">
+                            <i class="fa-solid fa-users select-shell-icon"></i>
+                            <!-- The actual value sent to server is classGroupId -->
+                            <select id="classGroupSelect" name="classGroupId" required disabled>
+                                <option value="">-- Select Class Group --</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full auth-submit-btn">
+                        <i class="fa-solid fa-user-check"></i>
+                        Register
+                    </button>
+                </form>
+            <% } %>
 
             <div class="auth-footer">
                 <span>Already have an account?</span>
@@ -218,5 +246,8 @@
     });
 </script>
 
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

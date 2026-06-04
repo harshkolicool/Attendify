@@ -227,8 +227,85 @@
 
         installShell();
         installRealtime();
+        normalizeFormAccessibility();
         wrapSelects();
         enableFileInputs();
+    }
+
+    function normalizeFormAccessibility() {
+        const controls = document.querySelectorAll("input, select, textarea");
+        let nextId = 0;
+
+        controls.forEach(function (control) {
+            if (control.type === "hidden") {
+                return;
+            }
+
+            if (!control.id) {
+                nextId += 1;
+                control.id = "attendify-field-" + nextId;
+            }
+        });
+
+        const labels = document.querySelectorAll("label");
+        labels.forEach(function (label) {
+            if (label.getAttribute("for")) {
+                return;
+            }
+
+            let target =
+                label.querySelector("input, select, textarea") ||
+                (label.nextElementSibling &&
+                    label.nextElementSibling.matches("input, select, textarea")
+                    ? label.nextElementSibling
+                    : null);
+
+            if (!target && label.parentElement) {
+                target = label.parentElement.querySelector("input, select, textarea");
+            }
+
+            if (!target || target.type === "hidden") {
+                return;
+            }
+
+            if (!target.id) {
+                nextId += 1;
+                target.id = "attendify-field-" + nextId;
+            }
+
+            label.setAttribute("for", target.id);
+        });
+
+        const iconButtons = document.querySelectorAll("button");
+        iconButtons.forEach(function (button) {
+            const hasText = (button.textContent || "").trim().length > 0;
+            if (hasText || button.getAttribute("aria-label")) {
+                return;
+            }
+
+            const title = button.getAttribute("title");
+            if (title) {
+                button.setAttribute("aria-label", title);
+            }
+        });
+
+        const decorativeIcons = document.querySelectorAll("i");
+        decorativeIcons.forEach(function (icon) {
+            if (icon.hasAttribute("aria-hidden") || icon.closest("svg")) {
+                return;
+            }
+
+            if (icon.closest("button") || icon.closest("a")) {
+                if ((icon.textContent || "").trim()) {
+                    return;
+                }
+
+                icon.setAttribute("aria-hidden", "true");
+                return;
+            }
+
+            icon.setAttribute("aria-hidden", "true");
+        });
     }
 
     function installShell() {
@@ -677,8 +754,12 @@
                         showSocketIssueToast(payload.message);
                     });
 
+                    let uiShellConnectErrorShown = false;
                     socket.on("connect_error", function () {
-                        showSocketIssueToast("Realtime temporarily unavailable. The page will keep updating automatically.");
+                        if (!uiShellConnectErrorShown) {
+                            showSocketIssueToast("Realtime temporarily unavailable. The page will keep updating automatically.");
+                            uiShellConnectErrorShown = true;
+                        }
                     });
                 }
 
@@ -814,6 +895,10 @@
     }
 
     function wrapSelects() {
+        if (window.AttendifySelectEnhancerLoaded) {
+            return;
+        }
+
         const selects = document.querySelectorAll('select');
         for (let i = 0; i < selects.length; i++) {
             const select = selects[i];

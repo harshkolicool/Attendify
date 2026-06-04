@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Reports | Attendify</title>
 
-    <link rel="stylesheet" href="/css/teacherDashboard.css">
-
     <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/teacherDashboard.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
     <link
@@ -31,6 +30,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -54,6 +63,7 @@
                 "toDate=" + encodeURIComponent(filters.toDate),
                 "classGroupId=" + encodeURIComponent(filters.classGroupId),
                 "subjectId=" + encodeURIComponent(filters.subjectId),
+                "classroomId=" + encodeURIComponent(filters.classroomId),
                 "status=" + encodeURIComponent(filters.status)
             ].join("&");
 
@@ -68,6 +78,7 @@
             const filterFlags = [
                 filters.classGroupId && filters.classGroupId !== "all",
                 filters.subjectId && filters.subjectId !== "all",
+                filters.classroomId && filters.classroomId !== "all",
                 filters.status && filters.status !== "all"
             ];
 
@@ -302,6 +313,22 @@
                                     <% if (subject.subjectCode) { %>
                                         - <%= subject.subjectCode %>
                                     <% } %>
+                                </option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <div class="teacher-field">
+                        <label>Classroom</label>
+                        <select name="classroomId">
+                            <option value="all">All Classrooms</option>
+
+                            <% classrooms.forEach(function(classroom) { %>
+                                <option
+                                    value="<%= classroom._id %>"
+                                    <%= filters.classroomId === classroom._id.toString() ? "selected" : "" %>
+                                >
+                                    <%= classroom.classroomName %>
                                 </option>
                             <% }) %>
                         </select>
@@ -824,5 +851,8 @@
 <script src="/js/teacherNav.js"></script>
 <script src="/js/teacherPanels.js"></script>
 <script src="/js/uiShell.js"></script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

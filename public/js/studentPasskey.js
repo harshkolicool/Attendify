@@ -96,13 +96,47 @@ function showPasskeyMessage(message, type) {
 
 function getBrowserFingerprintForSecurityPage() {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown";
+    const languageToken = Array.isArray(navigator.languages) && navigator.languages.length > 0
+        ? navigator.languages.slice(0, 4).join(",")
+        : (navigator.language || "unknown");
+    const width = Number(screen && screen.width) || 0;
+    const height = Number(screen && screen.height) || 0;
+    const shortEdge = Math.min(width, height);
+    const longEdge = Math.max(width, height);
+    const stableScreen = shortEdge > 0 && longEdge > 0
+        ? shortEdge + "x" + longEdge
+        : "unknown";
+
+    let webglVendor = "unknown";
+    let webglRenderer = "unknown";
+    try {
+        const canvas = document.createElement("canvas");
+        const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+        if (gl) {
+            const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+            if (debugInfo) {
+                webglVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || "unknown";
+                webglRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || "unknown";
+            }
+        }
+    } catch (e) {
+        webglVendor = "error";
+    }
+
+    const deviceMemory = navigator.deviceMemory || "unknown";
 
     return [
         navigator.userAgent || "unknown",
-        navigator.language || "unknown",
+        languageToken,
         timezone,
-        screen.width + "x" + screen.height,
-        screen.colorDepth || "unknown"
+        stableScreen,
+        screen.colorDepth || "unknown",
+        navigator.platform || "unknown",
+        Number(navigator.hardwareConcurrency || 0) || "unknown",
+        deviceMemory,
+        Number(navigator.maxTouchPoints || 0) || 0,
+        webglVendor,
+        webglRenderer
     ].join("|");
 }
 
@@ -134,7 +168,12 @@ async function checkLocalPasskeySupport() {
 }
 
 async function registerStudentPasskey(button, statusText) {
+    if (button.hasAttribute("data-registration-active")) {
+        return;
+    }
+
     try {
+        button.setAttribute("data-registration-active", "true");
         if (!passkeyLibraryReady()) {
             showPasskeyMessage("Passkey library is not loaded. Check internet and refresh.", "error");
             return;
@@ -203,6 +242,14 @@ async function registerStudentPasskey(button, statusText) {
 
         let message = err.message || "Passkey setup cancelled or failed.";
 
+        if (message.indexOf("security token") !== -1) {
+            showPasskeyMessage("Session refreshing. Please wait a moment...", "error");
+            setTimeout(function() {
+                window.location.reload();
+            }, 1500);
+            return;
+        }
+
         if (
             message.toLowerCase().includes("notallowed") ||
             message.toLowerCase().includes("not allowed")
@@ -214,6 +261,8 @@ async function registerStudentPasskey(button, statusText) {
 
         button.disabled = false;
         button.innerText = "Add New Passkey";
+    } finally {
+        button.removeAttribute("data-registration-active");
     }
 }
 
@@ -267,9 +316,18 @@ async function registerTrustedBrowserFromSecurityPage(form) {
 
     } catch (err) {
         console.log(err);
+        let message = err.message || "Could not trust this browser. Please try again.";
 
-        showPasskeyMessage(err.message || "Could not trust this browser.", "error");
+        if (message.indexOf("security token") !== -1) {
+            showPasskeyMessage("Session refreshing. Please wait a moment...", "error");
+            setTimeout(function() {
+                window.location.reload();
+            }, 1500);
+            return;
+        }
 
+        showPasskeyMessage(message, "error");
+    } finally {
         button.disabled = false;
         button.innerText = oldText;
     }

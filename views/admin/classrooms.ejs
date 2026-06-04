@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Classrooms | Admin</title>
 
-    <link rel="stylesheet" href="/css/adminTheme.css">
-
     <link rel="stylesheet" href="/css/uiShell.css">
+
+    <link rel="stylesheet" href="/css/adminTheme.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
     <link
@@ -31,6 +31,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -95,6 +105,29 @@
                 </div>
 
                 <div class="admin-field">
+                    <label>Latitude (Optional Preset)</label>
+                    <input
+                        type="number"
+                        step="any"
+                        name="latitude"
+                        placeholder="e.g. 37.7749"
+                    >
+                </div>
+
+                <div class="admin-field">
+                    <label>Longitude (Optional Preset)</label>
+                    <input
+                        type="number"
+                        step="any"
+                        name="longitude"
+                        placeholder="e.g. -122.4194"
+                    >
+                    <button type="button" class="admin-secondary-btn js-get-location-btn" style="margin-top: 8px;">
+                        <i class="fa-solid fa-location-crosshairs"></i> Use my current location
+                    </button>
+                </div>
+
+                <div class="admin-field">
                     <label>Allowed Radius</label>
                     <input
                         type="number"
@@ -102,11 +135,11 @@
                         class="js-radius-input"
                         placeholder="100"
                         value="100"
-                        min="1"
+                        min="50"
                         max="10000"
                         required
                     >
-                    <p class="admin-help-text js-radius-warning" style="display: none; color: #d97706; font-size: 0.85rem; margin-top: 4px;">
+                    <p class="admin-help-text js-radius-warning admin-radius-warning">
                         <i class="fa-solid fa-triangle-exclamation"></i> Browser GPS is not reliable for strict indoor accuracy. The app will use GPS accuracy allowance while still storing your configured radius.
                     </p>
                 </div>
@@ -234,17 +267,42 @@
                                 </div>
 
                                 <div class="admin-field">
+                                    <label>Latitude (Optional Preset)</label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        name="latitude"
+                                        value="<%= room.latitude !== 0 ? room.latitude : '' %>"
+                                        placeholder="e.g. 37.7749"
+                                    >
+                                </div>
+
+                                <div class="admin-field">
+                                    <label>Longitude (Optional Preset)</label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        name="longitude"
+                                        value="<%= room.longitude !== 0 ? room.longitude : '' %>"
+                                        placeholder="e.g. -122.4194"
+                                    >
+                                    <button type="button" class="admin-secondary-btn js-get-location-btn" style="margin-top: 8px;">
+                                        <i class="fa-solid fa-location-crosshairs"></i> Use my current location
+                                    </button>
+                                </div>
+
+                                <div class="admin-field">
                                     <label>Allowed Radius</label>
                                     <input
                                         type="number"
                                         name="radius"
                                         class="js-radius-input"
                                         value="<%= room.radius %>"
-                                        min="1"
+                                        min="50"
                                         max="10000"
                                         required
                                     >
-                                    <p class="admin-help-text js-radius-warning" style="display: none; color: #d97706; font-size: 0.85rem; margin-top: 4px;">
+                                    <p class="admin-help-text js-radius-warning admin-radius-warning">
                                         <i class="fa-solid fa-triangle-exclamation"></i> Browser GPS is not reliable for strict indoor accuracy. The app will use GPS accuracy allowance while still storing your configured radius.
                                     </p>
                                 </div>
@@ -267,7 +325,7 @@
 
 </div>
 
-<script src="/js/adminSearch.js"></script>
+<script src="/js/adminSearch.js?v=1780440263"></script>
 <script src="/js/adminValidation.js"></script>
 <script src="/js/uiShell.js"></script>
 <script>
@@ -287,5 +345,50 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const locButtons = document.querySelectorAll(".js-get-location-btn");
+    locButtons.forEach(btn => {
+        btn.addEventListener("click", function() {
+            if (!navigator.geolocation) {
+                uiAlert("Geolocation is not supported by your browser.");
+                return;
+            }
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Getting...';
+            btn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const form = btn.closest("form");
+                    const latInput = form.querySelector("input[name='latitude']");
+                    const lonInput = form.querySelector("input[name='longitude']");
+                    
+                    if (latInput && lonInput) {
+                        latInput.value = position.coords.latitude.toFixed(6);
+                        lonInput.value = position.coords.longitude.toFixed(6);
+                    }
+                    
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Found';
+                    setTimeout(() => {
+                        btn.innerHTML = origHtml;
+                        btn.disabled = false;
+                    }, 2000);
+                },
+                function(error) {
+                    uiAlert("Unable to retrieve your location. Please check browser permissions.");
+                    btn.innerHTML = origHtml;
+                    btn.disabled = false;
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        });
+    });
+});
+</script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/adminRealtime.js"></script>
 </body>
 </html>

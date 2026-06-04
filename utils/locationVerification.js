@@ -1,22 +1,24 @@
 const getDistanceInMeters = require("./geoDistance");
 
-const MAX_GPS_ACCURACY_METERS = Number(
-    process.env.GPS_MAX_ACCEPTABLE_ACCURACY_METERS ||
-        process.env.GPS_HARD_BLOCK_ACCURACY_METERS ||
-        1000
-);
-
+const MAX_GPS_ACCURACY_METERS = Number(process.env.GPS_MAX_ACCEPTABLE_ACCURACY_METERS || 1000);
 const MAX_GPS_UNCERTAINTY_ALLOWANCE = Number(process.env.GPS_UNCERTAINTY_CAP_METERS || 250);
-
-const SMALL_RADIUS_THRESHOLD = Number(process.env.GPS_SMALL_RADIUS_PRACTICAL_THRESHOLD || 25);
+const MIN_PRACTICAL_RADIUS = Number(process.env.GPS_MIN_PRACTICAL_RADIUS_METERS || 50);
 const SMALL_RADIUS_GRACE = Number(process.env.GPS_SMALL_RADIUS_GRACE_METERS || 10);
-const NEAR_BOUNDARY_RATIO = Number(process.env.GPS_NEAR_BOUNDARY_RATIO || 0.7);
+const NEAR_BOUNDARY_RATIO = Number(process.env.GPS_NEAR_BOUNDARY_RATIO || 0.85);
 
 const GPS_RETRY_EXTREME_METERS = Number(process.env.GPS_RETRY_EXTREME_METERS || 1000);
 const GPS_RETRY_POOR_METERS = Number(process.env.GPS_RETRY_POOR_METERS || 500);
 const GPS_WEAK_THRESHOLD_METERS = Number(process.env.GPS_WEAK_THRESHOLD_METERS || 300);
 
 const PROXIMITY_BOOST_MAX_METERS = Number(process.env.GPS_PROXIMITY_BOOST_MAX_METERS || 40);
+const GPS_LOW_CONFIDENCE_SCORE = Number(process.env.GPS_LOW_CONFIDENCE_SCORE || 45);
+const GPS_LOW_CONFIDENCE_MIN_ACCURACY = Number(process.env.GPS_LOW_CONFIDENCE_MIN_ACCURACY || 90);
+const GPS_LOW_SAMPLE_COUNT_MIN_ACCURACY = Number(process.env.GPS_LOW_SAMPLE_COUNT_MIN_ACCURACY || 45);
+const GPS_CELLULAR_2G_MIN_ACCURACY = Number(process.env.GPS_CELLULAR_2G_MIN_ACCURACY || 120);
+const GPS_CELLULAR_3G_MIN_ACCURACY = Number(process.env.GPS_CELLULAR_3G_MIN_ACCURACY || 85);
+const GPS_HIGH_RTT_MS = Number(process.env.GPS_HIGH_RTT_MS || 300);
+const GPS_HIGH_RTT_MIN_ACCURACY = Number(process.env.GPS_HIGH_RTT_MIN_ACCURACY || 75);
+const GPS_DYNAMIC_CONFIDENCE_MAX = Number(process.env.GPS_DYNAMIC_CONFIDENCE_MAX || 72);
 
 const WEAK_GPS_USER_MESSAGE =
     "GPS accuracy is weak. Please turn on precise location, move near a window, wait a few seconds, and try again.";
@@ -69,6 +71,15 @@ function inferAccuracyFromMeta(reportedAccuracy, locationMeta) {
     const averageAccuracy = normalizeGpsAccuracy(locationMeta.averageAccuracy);
     const bestAccuracy = normalizeGpsAccuracy(locationMeta.bestAccuracy);
     const sampleCount = Number(locationMeta.sampleCount) || 0;
+    const confidenceScore = Number(locationMeta.confidenceScore);
+    const network =
+        locationMeta.network && typeof locationMeta.network === "object"
+            ? locationMeta.network
+            : null;
+    const effectiveType = network && network.effectiveType
+        ? String(network.effectiveType).toLowerCase()
+        : "";
+    const rtt = network ? Number(network.rtt) : NaN;
 
     if (averageAccuracy > inferred) {
         inferred = Math.max(inferred, Math.round(averageAccuracy * 0.9));
@@ -82,21 +93,110 @@ function inferAccuracyFromMeta(reportedAccuracy, locationMeta) {
         inferred = Math.max(inferred, 35);
     }
 
+    if (sampleCount > 0 && sampleCount < 8) {
+        inferred = Math.max(inferred, GPS_LOW_SAMPLE_COUNT_MIN_ACCURACY);
+    }
+
+    if (Number.isFinite(confidenceScore) && confidenceScore > 0 && confidenceScore < GPS_LOW_CONFIDENCE_SCORE) {
+        inferred = Math.max(inferred, GPS_LOW_CONFIDENCE_MIN_ACCURACY);
+    }
+
+    if (effectiveType === "slow-2g" || effectiveType === "2g") {
+        inferred = Math.max(inferred, GPS_CELLULAR_2G_MIN_ACCURACY);
+    } else if (effectiveType === "3g") {
+        inferred = Math.max(inferred, GPS_CELLULAR_3G_MIN_ACCURACY);
+    }
+
+    if (Number.isFinite(rtt) && rtt >= GPS_HIGH_RTT_MS) {
+        inferred = Math.max(inferred, GPS_HIGH_RTT_MIN_ACCURACY);
+    }
+
     return inferred;
 }
 
+function getNetworkMeta(locationMeta) {
+    if (!locationMeta || typeof locationMeta !== "object") {
+        return null;
+    }
+
+    if (!locationMeta.network || typeof locationMeta.network !== "object") {
+        return null;
+    }
+
+    const network = locationMeta.network;
+
+    return {
+        effectiveType: network.effectiveType
+            ? String(network.effectiveType).toLowerCase()
+            : "",
+        rtt: Number(network.rtt),
+        downlink: Number(network.downlink)
+    };
+}
+
+function getAdaptiveConfidenceThreshold(adminRadiusMeters, studentLocationMeta) {
+    const adminRadius = Math.max(1, Number(adminRadiusMeters) || 100);
+    const sampleCount = Number(studentLocationMeta && studentLocationMeta.sampleCount) || 0;
+    const net = getNetworkMeta(studentLocationMeta);
+
+    let threshold = GPS_LOW_CONFIDENCE_SCORE;
+
+    if (adminRadius <= 5) {
+        threshold += 14;
+    } else if (adminRadius < 25) {
+        threshold += 10;
+    } else if (adminRadius <= 50) {
+        threshold += 6;
+    }
+
+    if (sampleCount > 0 && sampleCount < 8) {
+        threshold += 7;
+    } else if (sampleCount >= 8 && sampleCount < 12) {
+        threshold += 4;
+    }
+
+    if (net) {
+        if (net.effectiveType === "slow-2g" || net.effectiveType === "2g") {
+            threshold += 10;
+        } else if (net.effectiveType === "3g") {
+            threshold += 7;
+        } else if (net.effectiveType === "4g") {
+            threshold += 4;
+        }
+
+        if (Number.isFinite(net.rtt) && net.rtt >= GPS_HIGH_RTT_MS) {
+            threshold += 3;
+        }
+
+        if (Number.isFinite(net.downlink) && net.downlink > 0 && net.downlink < 1) {
+            threshold += 3;
+        }
+    }
+
+    return Math.max(GPS_LOW_CONFIDENCE_SCORE, Math.min(GPS_DYNAMIC_CONFIDENCE_MAX, threshold));
+}
+
 /**
- * Admin-configured classroom radius (dynamic per classroom) — never overridden.
+ * Admin-configured classroom radius (dynamic per classroom) — never overridden, but we add grace
+ * if it is smaller than the practical GPS minimum for indoor use.
+ * Indoor GPS routinely has 40-80m multipath error, so any admin radius below
+ * GPS_MINIMUM_CLASSROOM_RADIUS_METERS needs grace to prevent false "outside" verdicts.
  */
 function getAdminRadiusPolicy(adminRadiusMeters) {
     const adminConfiguredRadius = Math.max(1, Number(adminRadiusMeters) || 100);
 
+    // The floor for effective indoor verification — comes from env or defaults to 80m.
+    const minimumClassroomRadius = Number(
+        process.env.GPS_MINIMUM_CLASSROOM_RADIUS_METERS || 80
+    );
+    const effectiveMinimum = Math.max(MIN_PRACTICAL_RADIUS, minimumClassroomRadius);
+
     let graceMeters = 0;
 
-    if (adminConfiguredRadius < SMALL_RADIUS_THRESHOLD) {
+    if (adminConfiguredRadius < effectiveMinimum) {
         graceMeters = Math.max(
             SMALL_RADIUS_GRACE,
-            Math.ceil(adminConfiguredRadius * 3)
+            effectiveMinimum - adminConfiguredRadius
         );
     }
 
@@ -202,6 +302,14 @@ function evaluateLocationRange(
     const isAccuracyExtreme = sAcc > GPS_RETRY_EXTREME_METERS || tAcc > GPS_RETRY_EXTREME_METERS;
     const isAccuracyPoor = sAcc > GPS_RETRY_POOR_METERS;
     const isAccuracyWeak = sAcc >= GPS_WEAK_THRESHOLD_METERS || tAcc >= GPS_WEAK_THRESHOLD_METERS;
+    const studentMeta = opts.studentLocationMeta && typeof opts.studentLocationMeta === "object"
+        ? opts.studentLocationMeta
+        : null;
+    const confidenceScore = studentMeta ? Number(studentMeta.confidenceScore) : NaN;
+    const requiredConfidence = getAdaptiveConfidenceThreshold(adminConfiguredRadius, studentMeta);
+    const isLowConfidenceFix = Number.isFinite(confidenceScore) && confidenceScore > 0 && confidenceScore < requiredConfidence;
+    const boundarySlack = verificationRadius - minimumPossibleDistance;
+    const isBoundaryAmbiguous = boundarySlack >= 0 && boundarySlack < Math.max(15, adminConfiguredRadius * 0.15);
 
     let decision = "PASS";
     let reasonCode = "OK";
@@ -213,12 +321,21 @@ function evaluateLocationRange(
     // accuracy), accept them. This is critical for laptops/Macs that use Wi-Fi
     // geolocation and inherently report 500-1000m accuracy but are physically
     // sitting in the classroom.
-    if (isInsideByConfidence) {
+    const stronglyInsideMargin = verificationRadius - minimumPossibleDistance;
+    const isStronglyInside = stronglyInsideMargin >= Math.max(18, adminConfiguredRadius * 0.3);
+
+    if (isInsideByConfidence && (!isLowConfidenceFix || isStronglyInside)) {
         decision = "PASS";
         reasonCode = (isAccuracyWeak || isAccuracyPoor) ? "OK_POOR_GPS" : "OK";
         userMessage = (isAccuracyWeak || isAccuracyPoor)
             ? "GPS accuracy is low but you appear to be within range. Attendance accepted."
             : "Inside allowed range. Attendance accepted.";
+    } else if (isInsideByConfidence && isLowConfidenceFix && isBoundaryAmbiguous) {
+        decision = "RETRY";
+        reasonCode = "GPS_LOW_CONFIDENCE";
+        shouldRetry = true;
+        userMessage =
+            "Location signal is unstable on this network near the classroom boundary. Keep precise location on, stay still for a few seconds, and try again.";
     } else if (clearlyOutside || minimumPossibleDistance > verificationRadius) {
         // PRIORITY 2: Student is clearly outside — reject regardless of accuracy.
         decision = "FAIL";
@@ -292,6 +409,9 @@ function evaluateLocationRange(
         isAccuracyPoor: isAccuracyPoor,
         isAccuracyWeak: isAccuracyWeak,
         isAccuracyExtreme: isAccuracyExtreme,
+        isLowConfidenceFix: isLowConfidenceFix,
+        requiredConfidenceScore: requiredConfidence,
+        locationConfidenceScore: Number.isFinite(confidenceScore) ? confidenceScore : 0,
         shouldRetry: shouldRetry,
         decision: decision,
         reasonCode: reasonCode,
@@ -300,7 +420,7 @@ function evaluateLocationRange(
         status: status,
         distanceLabel: formatDistance(distanceMeters),
         gpsNote:
-            adminConfiguredRadius < SMALL_RADIUS_THRESHOLD
+            adminConfiguredRadius < MIN_PRACTICAL_RADIUS
                 ? "Admin radius is very small; GPS verification uses a larger uncertainty zone."
                 : ""
     };
@@ -375,7 +495,7 @@ function getRecommendedCollectionMs(adminRadiusMeters) {
         return 20000;
     }
 
-    if (admin < SMALL_RADIUS_THRESHOLD) {
+    if (admin < MIN_PRACTICAL_RADIUS) {
         return 15000;
     }
 
@@ -398,9 +518,10 @@ module.exports = {
     isValidCoordinate,
     isUsableAccuracy,
     clampAccuracyAllowance,
+    getAdaptiveConfidenceThreshold,
     MAX_GPS_ACCURACY_METERS,
     MAX_GPS_UNCERTAINTY_ALLOWANCE_METERS: MAX_GPS_UNCERTAINTY_ALLOWANCE,
-    SMALL_RADIUS_THRESHOLD_METERS: SMALL_RADIUS_THRESHOLD,
+    MIN_PRACTICAL_RADIUS_METERS: MIN_PRACTICAL_RADIUS,
     SMALL_RADIUS_GRACE_METERS: SMALL_RADIUS_GRACE,
     NEAR_BOUNDARY_RATIO,
     GPS_RETRY_EXTREME_METERS,

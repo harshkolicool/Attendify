@@ -108,7 +108,26 @@ app.use(
     })
 );
 
-app.set("trust proxy", 1);
+const trustProxyEnv = process.env.TRUST_PROXY;
+let trustProxyValue = false;
+
+if (typeof trustProxyEnv === "string" && trustProxyEnv.trim() !== "") {
+    const normalizedTrustProxy = trustProxyEnv.trim().toLowerCase();
+
+    if (normalizedTrustProxy === "true") {
+        trustProxyValue = 1;
+    } else if (normalizedTrustProxy === "false") {
+        trustProxyValue = false;
+    } else if (/^\d+$/.test(normalizedTrustProxy)) {
+        trustProxyValue = Number(normalizedTrustProxy);
+    } else {
+        trustProxyValue = trustProxyEnv;
+    }
+} else if (isProduction) {
+    trustProxyValue = 1;
+}
+
+app.set("trust proxy", trustProxyValue);
 
 const sessionSecret = process.env.SESSION_SECRET;
 

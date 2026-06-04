@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendify | Smart College Attendance System</title>
 
+    <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/home.css">
+    <link rel="stylesheet" href="/css/finalUiFix.css">
 
     <link
         rel="stylesheet"
@@ -28,6 +30,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -41,7 +53,14 @@
             Attendify
         </a>
 
-        <button class="home-menu-btn" id="homeMenuBtn" type="button">
+        <button
+            class="home-menu-btn"
+            id="homeMenuBtn"
+            type="button"
+            aria-label="Toggle navigation menu"
+            aria-controls="homeNavLinks"
+            aria-expanded="false"
+        >
             <i class="fa-solid fa-bars"></i>
         </button>
 
@@ -55,6 +74,7 @@
             <a href="/student/login" class="home-nav-cta">Student Login</a>
         </nav>
     </header>
+    <div class="home-nav-overlay" id="homeNavOverlay"></div>
 
     <main>
 
@@ -256,7 +276,7 @@
                     </span>
                 </a>
 
-                <a href="/student/register" class="role-card highlight" style="background: var(--bg-tertiary); border-color: var(--primary-accent);">
+                <a href="/student/register" class="role-card highlight role-card-student-register">
                     <div class="role-icon student">
                         <i class="fa-solid fa-user-plus"></i>
                     </div>
@@ -434,5 +454,8 @@
 </div>
 
 <script src="/js/home.js"></script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

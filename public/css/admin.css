@@ -277,3 +277,35 @@ button, input, select {
 .data-table tr:hover {
     background: #f8fafc;
 }
+
+@media (max-width: 768px) {
+    .admin-login-card {
+        margin: 16px;
+        padding: 24px 20px;
+        border-radius: 16px;
+    }
+
+    .admin-login-head h1 {
+        font-size: 22px;
+    }
+
+    .row-form {
+        grid-template-columns: 1fr;
+    }
+
+    .data-table {
+        min-width: 560px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-login-page {
+        align-items: flex-start;
+        padding-top: max(24px, env(safe-area-inset-top, 0px));
+    }
+
+    .admin-login-card {
+        max-width: none;
+        width: calc(100% - 24px);
+    }
+}

@@ -8,43 +8,44 @@ window.uiAlert = function (message, title = "Alert", icon = "info") {
         title: title,
         text: message,
         icon: icon,
-        confirmButtonColor: "#2563eb", // Tailwind blue-600 to match admin-primary-btn
+        confirmButtonColor: "#0b63f6",
         confirmButtonText: "OK",
         customClass: {
-            popup: 'admin-card',
-            confirmButton: 'admin-primary-btn'
+            popup: 'shell-enhanced-alert',
+            title: 'shell-enhanced-title',
+            htmlContainer: 'shell-enhanced-text',
+            actions: 'shell-enhanced-actions',
+            confirmButton: 'shell-enhanced-confirm'
         }
     });
 };
 
 window.uiConfirm = function (event, message, title = "Are you sure?") {
-    // Stop the form from submitting immediately
     event.preventDefault();
     
-    // Find the closest form to submit if confirmed
     const form = event.target.closest("form") || event.target;
-    
-    // Some buttons use data-confirm for the message
     const customMessage = message || event.target.dataset.confirm || "Are you sure you want to proceed?";
 
     Swal.fire({
         title: title,
         text: customMessage,
         icon: "warning",
+        iconColor: "#fba341", // Custom orange color for icon
         showCancelButton: true,
-        confirmButtonColor: "#ef4444", // Tailwind red-500
-        cancelButtonColor: "#64748b", // Tailwind slate-500
+        confirmButtonColor: "#0b63f6", // var(--shell-primary)
+        cancelButtonColor: "#ffffff",
         confirmButtonText: "Yes, proceed",
         cancelButtonText: "Cancel",
         customClass: {
-            popup: 'admin-card',
-            confirmButton: 'admin-primary-btn danger',
-            cancelButton: 'admin-secondary-btn'
+            popup: 'shell-enhanced-alert',
+            title: 'shell-enhanced-title',
+            htmlContainer: 'shell-enhanced-text',
+            actions: 'shell-enhanced-actions',
+            confirmButton: 'shell-enhanced-confirm',
+            cancelButton: 'shell-enhanced-cancel'
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            // Programmatically submit the form
-            // Bypasses the onsubmit handler to prevent infinite loops
             form.submit();
         }
     });

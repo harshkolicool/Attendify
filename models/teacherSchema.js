@@ -112,7 +112,18 @@ const teacherSchema = new mongoose.Schema({
 
     lastLogin: {
         type: Date
-    }
+    },
+
+    pushSubscriptions: [
+        {
+            endpoint: { type: String, required: true },
+            expirationTime: { type: Date },
+            keys: {
+                p256dh: { type: String, required: true },
+                auth: { type: String, required: true }
+            }
+        }
+    ]
 
 }, {
     timestamps: true

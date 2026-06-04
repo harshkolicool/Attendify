@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Login | Attendify</title>
+    <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/finalUiFix.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
 
@@ -23,6 +25,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -89,5 +101,8 @@
     </div>
 </div>
 
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

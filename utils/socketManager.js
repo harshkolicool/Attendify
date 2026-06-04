@@ -291,7 +291,20 @@ function initializeSocket(io) {
         }
 
         if (isWaitingStudent) {
-            const waitingId = socket.handshake.query.waitingId;
+            const waitingId = String(socket.handshake.query.waitingId || "");
+            const sessionPendingId =
+                socket.request &&
+                socket.request.session &&
+                socket.request.session.pendingRegistrationId
+                    ? String(socket.request.session.pendingRegistrationId)
+                    : "";
+
+            if (!waitingId || !sessionPendingId || waitingId !== sessionPendingId) {
+                emitSocketError(socket, "Waiting room authorization failed.");
+                socket.disconnect(true);
+                return;
+            }
+
             socket.join(getWaitingStudentRoom(waitingId));
             socket.data.isWaitingStudent = true;
             socket.data.waitingId = waitingId;
@@ -648,6 +661,30 @@ function initializeSocket(io) {
                 const accuracy = payload ? Number(payload.accuracy) : NaN;
 
                 if (!sessionId) {
+                    if (
+                        isFiniteNumber(latitude) &&
+                        isFiniteNumber(longitude) &&
+                        latitude >= -90 &&
+                        latitude <= 90 &&
+                        longitude >= -180 &&
+                        longitude <= 180 &&
+                        isFiniteNumber(accuracy) &&
+                        accuracy > 0
+                    ) {
+                        Student.updateOne(
+                            { _id: socket.data.studentId },
+                            {
+                                $set: {
+                                    lastLocation: {
+                                        latitude: latitude,
+                                        longitude: longitude,
+                                        accuracy: accuracy,
+                                        updatedAt: new Date()
+                                    }
+                                }
+                            }
+                        ).catch(function () {});
+                    }
                     return;
                 }
 
@@ -734,14 +771,34 @@ function initializeSocket(io) {
 
                 evaluation = calibrated.evaluation;
 
-                const displayLat = calibrated.displayLatitude;
-                const displayLon = calibrated.displayLongitude;
+                let displayLat = calibrated.displayLatitude;
+                let displayLon = calibrated.displayLongitude;
                 const distance = evaluation.measuredDistance;
                 const inside = !evaluation.isOutside;
                 const studentStatus =
                     evaluation.isAccuracyPoor && !evaluation.isOutside
                         ? "POOR_ACCURACY"
                         : evaluation.status;
+
+                // Visual snap: if they are physically verified as INSIDE the room, 
+                // their GPS difference from the teacher is purely noise.
+                // Snap them to the teacher's exact location to match physical reality.
+                if (studentStatus === "INSIDE") {
+                    // Add a tiny deterministic micro-jitter (~2m) based on their ID
+                    // so the markers form a tight cluster around the teacher instead 
+                    // of perfectly overlapping and hiding each other.
+                    const seed = socket.data.studentId || "default";
+                    let hash = 0;
+                    for (let i = 0; i < seed.length; i++) {
+                        hash = (hash << 5) - hash + seed.charCodeAt(i);
+                        hash |= 0;
+                    }
+                    const jitterLat = ((Math.abs(hash) % 100) / 100) * 0.00004 - 0.00002;
+                    const jitterLon = ((Math.abs(hash >> 3) % 100) / 100) * 0.00004 - 0.00002;
+
+                    displayLat = centerLat + jitterLat;
+                    displayLon = centerLon + jitterLon;
+                }
 
                 const eventPayload = {
                     sessionId: session._id.toString(),
@@ -949,6 +1006,45 @@ function emitAttendanceRecordUpdated(session, student, attendanceRecord) {
     if (collegeId) {
         io.to(getAdminCollegeRoom(collegeId)).emit("attendance:record-updated", payload);
     }
+
+    // Push notification to student
+    setTimeout(async () => {
+        try {
+            const webpush = require("web-push");
+            if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+                webpush.setVapidDetails(
+                    "mailto:harshkoli@example.com",
+                    process.env.VAPID_PUBLIC_KEY,
+                    process.env.VAPID_PRIVATE_KEY
+                );
+                const stu = await Student.findById(student._id || student).select("pushSubscriptions");
+                if (stu && stu.pushSubscriptions && stu.pushSubscriptions.length > 0) {
+                    const status = attendanceRecord && attendanceRecord.status ? attendanceRecord.status : "PRESENT";
+                    let title = "Attendance Updated";
+                    let body = `Your attendance has been marked ${status}.`;
+                    
+                    if (status === "PRESENT") {
+                        title = "Marked Present";
+                        body = "Your attendance has been marked as PRESENT.";
+                    } else if (status === "ABSENT") {
+                        title = "Marked Absent";
+                        body = "Your attendance has been marked as ABSENT.";
+                    }
+                    
+                    const notificationPayload = JSON.stringify({
+                        title: title,
+                        body: body,
+                        icon: "/img/attendify-icon.png",
+                        url: "/student/dashboard"
+                    });
+                    
+                    await Promise.all(stu.pushSubscriptions.map(sub => 
+                        webpush.sendNotification(sub, notificationPayload).catch(e => {})
+                    ));
+                }
+            }
+        } catch(e) { console.log("Push error:", e.message); }
+    }, 100);
 }
 
 function emitAttendanceEnded(session) {
@@ -1038,6 +1134,37 @@ function emitAttendanceMarked(session, student, attendanceRecord, distance) {
     }
 
     io.to(getStudentRoom(student._id)).emit("attendance:marked:self", payload);
+
+    // Push notification to student
+    setTimeout(async () => {
+        try {
+            const webpush = require("web-push");
+            if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+                webpush.setVapidDetails(
+                    "mailto:harshkoli@example.com",
+                    process.env.VAPID_PUBLIC_KEY,
+                    process.env.VAPID_PRIVATE_KEY
+                );
+                const stu = await Student.findById(student._id || student).select("pushSubscriptions");
+                if (stu && stu.pushSubscriptions && stu.pushSubscriptions.length > 0) {
+                    const status = attendanceRecord && attendanceRecord.status ? attendanceRecord.status : "PRESENT";
+                    let title = "Attendance Marked";
+                    let body = `You successfully marked your attendance as ${status}.`;
+                    
+                    const notificationPayload = JSON.stringify({
+                        title: title,
+                        body: body,
+                        icon: "/img/attendify-icon.png",
+                        url: "/student/dashboard"
+                    });
+                    
+                    await Promise.all(stu.pushSubscriptions.map(sub => 
+                        webpush.sendNotification(sub, notificationPayload).catch(e => {})
+                    ));
+                }
+            }
+        } catch(e) { console.log("Push error:", e.message); }
+    }, 100);
 }
 
 function emitSuspiciousAttendanceAttempt(attempt) {
@@ -1198,10 +1325,19 @@ function emitPasskeyStateChanged(studentId, payload) {
     io.to(getStudentRoom(studentId)).emit("student:passkey-state-changed", payload);
 }
 
-function emitStudentApproved(studentId, token) {
+function emitStudentApproved(studentId, collegeId) {
     const io = getIO();
     if (!io || !studentId) return;
-    io.to(getWaitingStudentRoom(studentId)).emit("student:approved", { studentId, token });
+    io.to(getWaitingStudentRoom(studentId)).emit("student:approved", { studentId });
+    if (collegeId) {
+        io.to(getAdminCollegeRoom(collegeId)).emit("admin:studentApproved", { studentId });
+    }
+}
+
+function emitStudentRejected(studentId, collegeId) {
+    const io = getIO();
+    if (!io || !studentId || !collegeId) return;
+    io.to(getAdminCollegeRoom(collegeId)).emit("admin:studentRejected", { studentId });
 }
 
 function emitNewRegistration(collegeId, studentData) {
@@ -1224,5 +1360,6 @@ module.exports = {
     emitNotificationUnreadCount,
     emitPasskeyStateChanged,
     emitStudentApproved,
+    emitStudentRejected,
     emitNewRegistration
 };

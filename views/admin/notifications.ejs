@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications | Admin</title>
 
-    <link rel="stylesheet" href="/css/adminTheme.css">
     <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/adminTheme.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
     <link
@@ -30,6 +30,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -52,7 +62,7 @@
             </div>
         <% } %>
 
-        <section class="admin-card">
+        <section class="admin-card admin-passkey-pending-card">
             <div class="admin-card-head">
                 <div>
                     <h3>Pending Passkey Requests</h3>
@@ -65,8 +75,8 @@
             </div>
 
             <% if (!pendingPasskeyRequests || pendingPasskeyRequests.length === 0) { %>
-                <div class="admin-empty">
-                    No pending passkey requests.
+                <div class="admin-empty admin-empty-compact">
+                    <span>No pending passkey requests.</span>
                 </div>
             <% } else { %>
                 <div class="admin-grid">
@@ -144,8 +154,8 @@
             </div>
 
             <% if (!notifications || notifications.length === 0) { %>
-                <div class="admin-empty">
-                    No notifications yet.
+                <div class="admin-empty admin-empty-compact">
+                    <span>No notifications yet.</span>
                 </div>
             <% } else { %>
                 <div class="notification-list">
@@ -197,5 +207,9 @@
 </div>
 
 <script src="/js/uiShell.js"></script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/adminRealtime.js"></script>
 </body>
 </html>

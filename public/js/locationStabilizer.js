@@ -88,7 +88,19 @@
                     };
                 }
 
-                const step = deltaToTarget > threshold * 2.5 ? 0.4 : 0.2; // EMA alpha
+                // How many sigma is this move relative to GPS accuracy?
+                // Moves within the accuracy circle are almost certainly noise, not real movement.
+                const noiseRatio = deltaToTarget / safeAcc;
+                let step;
+                if (noiseRatio < 0.8) {
+                    step = 0.05; // Within ~1-sigma: GPS noise — barely move the display marker
+                } else if (noiseRatio < 1.5) {
+                    step = 0.18; // Could be real, track slowly
+                } else if (noiseRatio < 3.0) {
+                    step = 0.40; // Probably genuine, moderate tracking
+                } else {
+                    step = 0.65; // Far beyond accuracy radius: almost certainly a real physical move
+                }
 
                 displayLat = displayLat + (filteredLat - displayLat) * step;
                 displayLon = displayLon + (filteredLon - displayLon) * step;

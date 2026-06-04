@@ -814,6 +814,30 @@ button {
     color: #3730a3;
 }
 
+.teacher-map-pill-inside {
+    background: #dcfce7;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.teacher-map-pill-near {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.teacher-map-pill-outside {
+    background: #e0e7ff;
+    color: #4f46e5;
+    border: 1px solid #c7d2fe;
+}
+
+.teacher-map-pill-poor {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
 .teacher-map-toolbar {
     display: flex;
     align-items: center;
@@ -829,7 +853,8 @@ button {
 }
 
 .teacher-map-select {
-    min-width: min(100%, 320px);
+    min-width: 0;
+    width: 100%;
     padding: 10px 12px;
     border-radius: 12px;
     border: 1px solid #cbd5e1;
@@ -837,6 +862,11 @@ button {
     font-size: 14px;
     font-weight: 700;
     color: #0f172a;
+}
+
+.teacher-map-toolbar .select-shell {
+    width: auto;
+    flex: 1;
 }
 
 .teacher-map-actions {
@@ -914,6 +944,12 @@ button {
     font-size: 1.1rem;
 }
 
+.teacher-map-overlay-icon {
+    font-size: 2rem;
+    color: #2563eb;
+    margin-bottom: 10px;
+}
+
 .teacher-map-roster-wrap {
     border: 1px solid #e2e8f0;
     border-radius: 18px;
@@ -961,6 +997,310 @@ button {
 .teacher-map-student-card.is-live {
     cursor: pointer;
     transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.teacher-map-student-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 12px;
+}
+
+.teacher-map-student-top {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.teacher-map-student-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.teacher-map-student-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.teacher-map-student-head strong {
+    font-size: 14px;
+    font-weight: 900;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.teacher-map-student-copy p {
+    margin-top: 2px;
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.teacher-map-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    flex-shrink: 0;
+    border: 2px solid #e2e8f0;
+}
+
+.teacher-map-avatar-inside {
+    background: #dcfce7;
+    color: #16a34a;
+    border-color: #bbf7d0;
+}
+
+.teacher-map-avatar-near {
+    background: #fef3c7;
+    color: #d97706;
+    border-color: #fde68a;
+}
+
+.teacher-map-avatar-outside {
+    background: #e0e7ff;
+    color: #4f46e5;
+    border-color: #c7d2fe;
+}
+
+.teacher-map-avatar-poor,
+.teacher-map-avatar-offline,
+.teacher-map-avatar-unknown {
+    background: #f1f5f9;
+    color: #64748b;
+    border-color: #e2e8f0;
+}
+
+.teacher-map-avatar-online {
+    background: #f0fdf4;
+    color: #22c55e;
+    border-color: #bbf7d0;
+}
+
+.teacher-map-device-status {
+    font-size: 11px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.teacher-map-device-status-inside {
+    background: #dcfce7;
+    color: #16a34a;
+    border-color: #bbf7d0;
+}
+
+.teacher-map-device-status-near {
+    background: #fef3c7;
+    color: #d97706;
+    border-color: #fde68a;
+}
+
+.teacher-map-device-status-outside {
+    background: #e0e7ff;
+    color: #4f46e5;
+    border-color: #c7d2fe;
+}
+
+.teacher-map-device-status-poor,
+.teacher-map-device-status-offline,
+.teacher-map-device-status-unknown {
+    background: #f1f5f9;
+    color: #64748b;
+    border-color: #e2e8f0;
+}
+
+.teacher-map-device-status-online {
+    background: #f0fdf4;
+    color: #22c55e;
+    border-color: #bbf7d0;
+}
+
+.teacher-map-device-metrics {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #64748b;
+    gap: 10px;
+}
+
+.teacher-map-distance-row,
+.teacher-map-accuracy-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.teacher-map-last-seen {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.teacher-map-disabled {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    background: #f8fafc;
+    padding: 20px;
+    text-align: center;
+    border-radius: 12px;
+}
+
+.teacher-map-disabled-inner i {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.teacher-map-center-marker {
+    width: 20px;
+    height: 20px;
+    background: #0f172a;
+    border-radius: 50%;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.teacher-map-center-marker i {
+    color: #ffffff;
+    font-size: 10px;
+}
+
+.teacher-map-device-marker {
+    width: 28px;
+    height: 28px;
+    background: #ffffff;
+    border-radius: 50%;
+    border: 3px solid #64748b;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 12px;
+    color: #64748b;
+    font-family: "Manrope", "Segoe UI", sans-serif;
+}
+
+.teacher-map-device-marker-inside {
+    border-color: #16a34a;
+    color: #16a34a;
+}
+
+.teacher-map-device-marker-near {
+    border-color: #d97706;
+    color: #d97706;
+}
+
+.teacher-map-device-marker-outside {
+    border-color: #4f46e5;
+    color: #4f46e5;
+}
+
+.teacher-map-device-marker-poor,
+.teacher-map-device-marker-offline,
+.teacher-map-device-marker-unknown {
+    border-color: #64748b;
+    color: #64748b;
+}
+
+.teacher-map-device-marker-online {
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+.teacher-map-popup {
+    min-width: 180px;
+    font-family: var(--shell-font, "Manrope", sans-serif);
+}
+
+.teacher-map-popup-head {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.teacher-map-popup-head strong {
+    display: block;
+    font-size: 15px;
+    color: #0f172a;
+}
+
+.teacher-map-popup-head span {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.teacher-map-popup-grid {
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+    color: #334155;
+}
+
+.teacher-map-popup-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.teacher-map-popup-status-inside {
+    color: #16a34a;
+}
+
+.teacher-map-popup-status-near {
+    color: #d97706;
+}
+
+.teacher-map-popup-status-outside {
+    color: #4f46e5;
+}
+
+.teacher-map-popup-status-poor,
+.teacher-map-popup-status-offline,
+.teacher-map-popup-status-unknown {
+    color: #64748b;
+}
+
+.teacher-map-popup-status-online {
+    color: #22c55e;
+}
+
+.teacher-map-popup-gps-note {
+    margin-top: 6px;
+    font-size: 11px;
+    color: #0369a1;
+}
+
+.teacher-map-popup-updated {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: right;
+}
+
+.teacher-gps-help-banner {
+    margin: 0 20px 15px 20px;
 }
 
 .teacher-map-student-card.is-live:hover,
@@ -3317,17 +3657,15 @@ html {
 }
 
 .teacher-schedule-filter-grid {
-    display: grid;
-    grid-template-columns:
-        minmax(170px, 1fr)
-        minmax(170px, 1fr)
-        minmax(150px, 0.8fr)
-        minmax(160px, 0.8fr);
+    display: flex;
+    flex-wrap: wrap;
     gap: 14px;
     align-items: end;
 }
 
-.teacher-schedule-filter-field {
+.teacher-schedule-filter-field,
+.teacher-schedule-filter-action {
+    flex: 1 1 150px;
     min-width: 0;
 }
 
@@ -3461,13 +3799,14 @@ html {
     border: 1px solid #e2e8f0 !important;
     background: #ffffff !important;
     box-shadow: 0 12px 34px rgba(15, 23, 42, 0.045) !important;
-    display: grid !important;
-    grid-template-columns: 140px minmax(0, 1fr) auto !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
     align-items: center !important;
     gap: 24px !important;
 }
 
 .teacher-schedule-time {
+    flex: 0 0 120px;
     min-width: 0;
 }
 
@@ -3490,6 +3829,7 @@ html {
 }
 
 .teacher-schedule-class-info {
+    flex: 1 1 200px;
     min-width: 0;
 }
 
@@ -3497,27 +3837,28 @@ html {
     margin: 0;
     max-width: 100%;
     color: #0f172a;
-    font-size: clamp(20px, 2vw, 30px);
-    line-height: 1.15;
+    font-size: clamp(18px, 1.8vw, 24px);
+    line-height: 1.25;
     font-weight: 950;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
     text-transform: uppercase;
 }
 
 .teacher-dashboard-page .teacher-schedule-class-info p {
-    margin: 12px 0 0;
+    margin: 10px 0 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px 18px;
+    gap: 8px 16px;
     color: #64748b;
-    font-size: 15px;
-    font-weight: 850;
+    font-size: 14px;
+    font-weight: 800;
 }
 
 .teacher-dashboard-page .teacher-schedule-class-info p span {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .teacher-dashboard-page .teacher-schedule-class-info p i {
@@ -3525,7 +3866,8 @@ html {
 }
 
 .teacher-schedule-card-action {
-    justify-self: end;
+    flex: 0 0 auto;
+    margin-left: auto;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -3588,13 +3930,11 @@ html {
     color: #b91c1c;
 }
 
-@media (max-width: 1180px) {
-    .teacher-schedule-filter-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+@media (max-width: 1440px) {
+    /* Flexbox handles the layout automatically now */
 
     .teacher-dashboard-page .teacher-schedule-class-card.class-card {
-        grid-template-columns: 120px minmax(0, 1fr);
+        grid-template-columns: 120px minmax(0, 1fr) !important;
     }
 
     .teacher-schedule-card-action {
@@ -3607,10 +3947,8 @@ html {
     .teacher-dashboard-page .teacher-schedule-panel {
         padding: 18px !important;
     }
-
-    .teacher-schedule-filter-grid {
-        grid-template-columns: 1fr;
-    }
+    
+    /* Flexbox handles the layout automatically now */
 
     .teacher-schedule-group-summary {
         display: block;

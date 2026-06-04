@@ -1,31 +1,40 @@
 /**
- * AttendifyGeo — multi-sample high-accuracy geolocation for attendance.
+ * AttendifyGeo — high-confidence geolocation sampler.
  *
- * Collects readings for 10–20 seconds, rejects outliers, returns a stable fix
- * with accuracy metadata for server-side uncertainty handling.
+ * Goals:
+ * - Improve real-world stability across Wi-Fi and cellular links.
+ * - Avoid single-sample spikes by using weighted multi-sample fusion.
+ * - Return confidence metadata so backend can enforce safer decisions.
  */
 (function (root) {
     "use strict";
 
-    var TARGET_ACCURACY_M = 8;
-    var ACCEPTABLE_ACCURACY_M = 15;
+    var TARGET_ACCURACY_M = 15;
+    var ACCEPTABLE_ACCURACY_M = 35;
+    var WEAK_ACCURACY_M = 80;
     var MAX_ACCURACY_ALLOWED_M = 1500;
-    var MIN_SAMPLES = 12;
-    var MAX_SAMPLES = 30;
-    var MIN_COLLECTION_MS = 20000;
-    var MAX_WAIT_MS = 35000;
+
+    var MIN_SAMPLES = 4;
+    var MAX_SAMPLES = 20;
+    var MIN_COLLECTION_MS = 5000;
+    var MAX_WAIT_MS = 30000;
+
     var OUTLIER_SIGMA = 2.5;
-    var MAX_SPEED_KMH = 100;
+    var MAX_SPEED_KMH = 120;
+
+    function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+    }
 
     function distanceM(lat1, lon1, lat2, lon2) {
         var R = 6371000;
-        var φ1 = (lat1 * Math.PI) / 180;
-        var φ2 = (lat2 * Math.PI) / 180;
-        var Δφ = ((lat2 - lat1) * Math.PI) / 180;
-        var Δλ = ((lon2 - lon1) * Math.PI) / 180;
+        var p1 = (lat1 * Math.PI) / 180;
+        var p2 = (lat2 * Math.PI) / 180;
+        var dp = ((lat2 - lat1) * Math.PI) / 180;
+        var dl = ((lon2 - lon1) * Math.PI) / 180;
         var a =
-            Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-            Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            Math.sin(dp / 2) * Math.sin(dp / 2) +
+            Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
@@ -38,8 +47,93 @@
             lon >= -180 &&
             lon <= 180 &&
             Number.isFinite(acc) &&
-            acc > 0
+            acc > 0 &&
+            acc <= MAX_ACCURACY_ALLOWED_M
         );
+    }
+
+    function getConnectionMeta() {
+        var c =
+            (navigator && (navigator.connection || navigator.mozConnection || navigator.webkitConnection)) ||
+            null;
+
+        if (!c) {
+            return {
+                effectiveType: "unknown",
+                rtt: null,
+                downlink: null,
+                saveData: false
+            };
+        }
+
+        return {
+            effectiveType: String(c.effectiveType || "unknown").toLowerCase(),
+            rtt: Number.isFinite(Number(c.rtt)) ? Number(c.rtt) : null,
+            downlink: Number.isFinite(Number(c.downlink)) ? Number(c.downlink) : null,
+            saveData: Boolean(c.saveData)
+        };
+    }
+
+    function getConnectionLinkType(connectionMeta) {
+        var c =
+            (navigator && (navigator.connection || navigator.mozConnection || navigator.webkitConnection)) ||
+            null;
+
+        if (!c || !c.type) {
+            return "";
+        }
+
+        return String(c.type).toLowerCase();
+    }
+
+    function isConstrainedMobileNetwork(connectionMeta) {
+        if (!connectionMeta) {
+            return false;
+        }
+
+        var type = connectionMeta.effectiveType;
+
+        if (type === "slow-2g" || type === "2g" || type === "3g") {
+            return true;
+        }
+
+        if (type === "4g" && getConnectionLinkType(connectionMeta) === "cellular") {
+            return true;
+        }
+
+        return false;
+    }
+
+    function getAdaptiveConfidenceTarget(connectionMeta, radiusHintMeters) {
+        var radius = Math.max(1, Number(radiusHintMeters) || 100);
+        var target = 50;
+        var net = connectionMeta || { effectiveType: "unknown", rtt: null, downlink: null };
+
+        if (radius <= 5) {
+            target += 13;
+        } else if (radius < 25) {
+            target += 9;
+        } else if (radius <= 50) {
+            target += 5;
+        }
+
+        if (net.effectiveType === "slow-2g" || net.effectiveType === "2g") {
+            target += 9;
+        } else if (net.effectiveType === "3g") {
+            target += 7;
+        } else if (net.effectiveType === "4g") {
+            target += 4;
+        }
+
+        if (Number.isFinite(net.rtt) && net.rtt >= 300) {
+            target += 3;
+        }
+
+        if (Number.isFinite(net.downlink) && net.downlink > 0 && net.downlink < 1) {
+            target += 3;
+        }
+
+        return clamp(Math.round(target), 45, 72);
     }
 
     function weightedCentroid(positions) {
@@ -48,33 +142,26 @@
         }
 
         var totalWeight = 0;
-        var wLat = 0;
-        var wLon = 0;
+        var weightedLat = 0;
+        var weightedLon = 0;
 
         for (var i = 0; i < positions.length; i++) {
             var c = positions[i].coords;
-            var acc = Math.max(c.accuracy, 1);
+            var acc = Math.max(Number(c.accuracy || 1), 1);
             var w = 1 / (acc * acc);
             totalWeight += w;
-            wLat += c.latitude * w;
-            wLon += c.longitude * w;
+            weightedLat += Number(c.latitude) * w;
+            weightedLon += Number(c.longitude) * w;
         }
 
-        var lat = wLat / totalWeight;
-        var lon = wLon / totalWeight;
-        var wAcc = 0;
-
-        for (var j = 0; j < positions.length; j++) {
-            var c2 = positions[j].coords;
-            var acc2 = Math.max(c2.accuracy, 1);
-            var w2 = 1 / (acc2 * acc2);
-            wAcc += acc2 * acc2 * w2;
+        if (totalWeight <= 0) {
+            return null;
         }
 
         return {
-            lat: lat,
-            lon: lon,
-            accuracy: Math.sqrt(wAcc / totalWeight)
+            lat: weightedLat / totalWeight,
+            lon: weightedLon / totalWeight,
+            accuracy: Math.sqrt(positions.length / totalWeight)
         };
     }
 
@@ -85,7 +172,7 @@
         for (var i = 0; i < positions.length; i++) {
             var c = positions[i].coords;
             var d = distanceM(c.latitude, c.longitude, centroid.lat, centroid.lon);
-            var score = d + c.accuracy * 0.5;
+            var score = d + Number(c.accuracy || 0) * 0.5;
 
             if (score < bestScore) {
                 bestScore = score;
@@ -96,57 +183,200 @@
         return best;
     }
 
-    function rejectOutliers(positions, centroid, bestAcc) {
-        var threshold = Math.max(bestAcc * OUTLIER_SIGMA, 30);
-        var now = Date.now();
+    function percentile(values, p) {
+        if (!values || values.length === 0) {
+            return 0;
+        }
 
-        return positions.filter(function (pos, index) {
-            var sampleAgeMs = now - pos.timestamp;
-            if (sampleAgeMs > 30000) {
-                return false;
+        var sorted = values.slice().sort(function (a, b) {
+            return a - b;
+        });
+
+        var idx = clamp(Math.round((sorted.length - 1) * p), 0, sorted.length - 1);
+        return sorted[idx];
+    }
+
+    function computeSpreadMetrics(positions, centroid) {
+        if (!positions || positions.length === 0 || !centroid) {
+            return { p50: 0, p90: 0, max: 0 };
+        }
+
+        var distances = [];
+
+        for (var i = 0; i < positions.length; i++) {
+            var c = positions[i].coords;
+            distances.push(distanceM(c.latitude, c.longitude, centroid.lat, centroid.lon));
+        }
+
+        return {
+            p50: percentile(distances, 0.5),
+            p90: percentile(distances, 0.9),
+            max: percentile(distances, 1)
+        };
+    }
+
+    function sortSamplesByTimestamp(positions) {
+        return positions.slice().sort(function (a, b) {
+            return Number(a.timestamp || 0) - Number(b.timestamp || 0);
+        });
+    }
+
+    function rejectOutliers(positions, centroid, bestAcc) {
+        var now = Date.now();
+        var ordered = sortSamplesByTimestamp(positions);
+        var spread = computeSpreadMetrics(ordered, centroid);
+        var threshold = Math.max(bestAcc * OUTLIER_SIGMA, spread.p90 * 1.8, 30);
+        var filtered = [];
+
+        for (var i = 0; i < ordered.length; i++) {
+            var pos = ordered[i];
+            var c = pos.coords;
+
+            if (now - Number(pos.timestamp || now) > 45000) {
+                continue;
             }
 
-            var c = pos.coords;
             var d = distanceM(c.latitude, c.longitude, centroid.lat, centroid.lon);
             if (d > threshold) {
-                return false;
+                continue;
             }
 
-            if (index > 0) {
-                var prev = positions[index - 1];
-                var timeDiffSec = Math.max((pos.timestamp - prev.timestamp) / 1000, 1);
-                var distM = distanceM(
-                    c.latitude,
-                    c.longitude,
-                    prev.coords.latitude,
-                    prev.coords.longitude
-                );
-                var speedKmh = (distM / timeDiffSec) * 3.6;
+            if (i > 0) {
+                var prev = ordered[i - 1];
+                var dtSec = Math.max((Number(pos.timestamp || now) - Number(prev.timestamp || now)) / 1000, 1);
+                var jumpM = distanceM(c.latitude, c.longitude, prev.coords.latitude, prev.coords.longitude);
+                var speedKmh = (jumpM / dtSec) * 3.6;
+
                 if (speedKmh > MAX_SPEED_KMH) {
-                    return false;
+                    continue;
                 }
             }
 
-            return true;
-        });
+            filtered.push(pos);
+        }
+
+        return filtered.length >= 2 ? filtered : ordered;
+    }
+
+    function scoreInverse(value, goodValue, badValue) {
+        var v = Number(value);
+
+        if (!Number.isFinite(v)) {
+            return 0;
+        }
+
+        if (v <= goodValue) {
+            return 1;
+        }
+
+        if (v >= badValue) {
+            return 0;
+        }
+
+        return 1 - (v - goodValue) / Math.max(1, badValue - goodValue);
+    }
+
+    function calculateConfidence(metrics) {
+        var bestAccScore = scoreInverse(metrics.bestAccuracy, 5, 85) * 42;
+        var spreadScore = scoreInverse(metrics.spreadP90, 7, 75) * 25;
+        var sampleScore = clamp((metrics.usedSampleCount / 18) * 20, 0, 20);
+        var timeScore = clamp((metrics.collectionMs / 22000) * 13, 0, 13);
+
+        var penalty = 0;
+
+        if (metrics.connection && metrics.connection.effectiveType === "slow-2g") {
+            penalty += 10;
+        } else if (metrics.connection && metrics.connection.effectiveType === "2g") {
+            penalty += 8;
+        } else if (metrics.connection && metrics.connection.effectiveType === "3g") {
+            penalty += 4;
+        }
+
+        if (metrics.connection && Number.isFinite(metrics.connection.rtt) && metrics.connection.rtt >= 300) {
+            penalty += 4;
+        }
+
+        if (metrics.connection && Number.isFinite(metrics.connection.downlink) && metrics.connection.downlink > 0 && metrics.connection.downlink < 1) {
+            penalty += 3;
+        }
+
+        var total = Math.round(bestAccScore + spreadScore + sampleScore + timeScore - penalty);
+        return clamp(total, 1, 99);
+    }
+
+    function getCollectionOptionsForRadius(adminRadiusMeters, connectionMeta) {
+        var admin = Math.max(1, Number(adminRadiusMeters) || 100);
+        var net = connectionMeta || getConnectionMeta();
+
+        var minMs = MIN_COLLECTION_MS;
+        var maxMs = MAX_WAIT_MS;
+
+        if (admin <= 5) {
+            minMs = 6000;
+            maxMs = 14000;
+        } else if (admin < 25) {
+            minMs = 5000;
+            maxMs = 12000;
+        }
+
+        if (isConstrainedMobileNetwork(net)) {
+            minMs += 2000;
+            maxMs += 3000;
+        }
+
+        if (net && (net.effectiveType === "slow-2g" || net.effectiveType === "2g")) {
+            minMs += 2000;
+            maxMs += 3000;
+        }
+
+        if (net && Number.isFinite(net.rtt) && net.rtt >= 300) {
+            minMs += 1000;
+            maxMs += 1000;
+        }
+
+        if (net && net.saveData) {
+            minMs += 500;
+        }
+
+        return {
+            minCollectionMs: minMs,
+            maxWaitMs: maxMs
+        };
     }
 
     function getBestPosition(onProgress, options) {
         options = options || {};
 
-        var minCollectionMs = Number(options.minCollectionMs) || MIN_COLLECTION_MS;
-        var maxWaitMs = Number(options.maxWaitMs) || MAX_WAIT_MS;
+        var connectionMeta = getConnectionMeta();
+        var radiusHintMeters = Number(options.radiusHintMeters) || 100;
+        var defaultCollection = getCollectionOptionsForRadius(radiusHintMeters, connectionMeta);
+
+        var minCollectionMs = Number(options.minCollectionMs) || defaultCollection.minCollectionMs;
+        var maxWaitMs = Number(options.maxWaitMs) || defaultCollection.maxWaitMs;
+
+        if (maxWaitMs < minCollectionMs + 3000) {
+            maxWaitMs = minCollectionMs + 3000;
+        }
 
         return new Promise(function (resolve, reject) {
             var rawSamples = [];
             var finished = false;
             var watchId = null;
             var timeoutId = null;
+            var fallbackTimeoutId = null;
+            var usingFallback = false;
+            var errorRetryCount = 0;
             var startTime = Date.now();
+
+            root.__attendifyGeoActiveCount = Number(root.__attendifyGeoActiveCount || 0) + 1;
 
             function cleanup() {
                 if (timeoutId) {
                     clearTimeout(timeoutId);
+                }
+
+                if (fallbackTimeoutId) {
+                    clearTimeout(fallbackTimeoutId);
                 }
 
                 if (watchId !== null && navigator.geolocation) {
@@ -155,7 +385,10 @@
                     } catch (e) {
                         // ignore
                     }
+                    watchId = null;
                 }
+
+                root.__attendifyGeoActiveCount = Math.max(0, Number(root.__attendifyGeoActiveCount || 1) - 1);
             }
 
             function elapsedMs() {
@@ -176,6 +409,70 @@
                 });
             }
 
+            function buildFinalResult(finalSamples) {
+                var centroid = weightedCentroid(finalSamples);
+                var best = getBestRaw();
+
+                if (!centroid || !best) {
+                    return null;
+                }
+
+                var representative = nearestSampleToCentroid(finalSamples, centroid) || best;
+                var averageAccuracy =
+                    rawSamples.reduce(function (sum, cur) {
+                        return sum + Number(cur.coords.accuracy || 0);
+                    }, 0) / Math.max(rawSamples.length, 1);
+
+                var spread = computeSpreadMetrics(finalSamples, centroid);
+                var targetConfidence = getAdaptiveConfidenceTarget(connectionMeta, radiusHintMeters);
+                var confidenceScore = calculateConfidence({
+                    bestAccuracy: Number(best.coords.accuracy || 0),
+                    spreadP90: spread.p90,
+                    usedSampleCount: finalSamples.length,
+                    collectionMs: elapsedMs(),
+                    connection: connectionMeta
+                });
+
+                var reportedAccuracy = Math.max(
+                    Number(representative.coords.accuracy || 0),
+                    Number(centroid.accuracy || 0),
+                    Math.round(averageAccuracy * 0.9),
+                    Math.round(spread.p90 * 0.7)
+                );
+
+                var isWeakFix = reportedAccuracy > WEAK_ACCURACY_M;
+                var shouldRetry = confidenceScore < targetConfidence || isWeakFix;
+
+                return {
+                    coords: {
+                        latitude: centroid.lat,
+                        longitude: centroid.lon,
+                        accuracy: reportedAccuracy,
+                        altitude: representative.coords.altitude,
+                        altitudeAccuracy: representative.coords.altitudeAccuracy,
+                        heading: representative.coords.heading,
+                        speed: representative.coords.speed
+                    },
+                    timestamp: representative.timestamp,
+                    meta: {
+                        source: "attendify-geo-v4",
+                        sampleCount: rawSamples.length,
+                        usedSampleCount: finalSamples.length,
+                        rejectedOutliers: rawSamples.length - finalSamples.length,
+                        bestAccuracy: Number(best.coords.accuracy || 0),
+                        averageAccuracy: averageAccuracy,
+                        spreadP50: spread.p50,
+                        spreadP90: spread.p90,
+                        spreadMax: spread.max,
+                        collectionMs: elapsedMs(),
+                        confidenceScore: confidenceScore,
+                        targetConfidenceScore: targetConfidence,
+                        shouldRetry: shouldRetry,
+                        network: connectionMeta
+                    }
+                };
+            }
+
             function done(error) {
                 if (finished) {
                     return;
@@ -189,80 +486,61 @@
                     return;
                 }
 
-                var centroid = weightedCentroid(rawSamples);
+                var centroid0 = weightedCentroid(rawSamples);
                 var best0 = getBestRaw();
-                var filtered = rejectOutliers(rawSamples, centroid, best0.coords.accuracy);
-                var finalSamples = filtered.length >= 2 ? filtered : rawSamples;
-                
-                var finalCentroid = weightedCentroid(finalSamples);
-                
-                // We no longer use Kalman Filter here to mutate the raw coordinate.
-                // The pure Weighted Centroid is passed to the backend for accurate Overlap math.
 
-                var resultSample = nearestSampleToCentroid(finalSamples, finalCentroid);
-
-                var avgAcc = 0;
-                if (rawSamples.length > 0) {
-                    avgAcc =
-                        rawSamples.reduce(function (sum, cur) {
-                            return sum + cur.coords.accuracy;
-                        }, 0) / rawSamples.length;
+                if (!centroid0 || !best0) {
+                    reject(error || new Error("Location unavailable."));
+                    return;
                 }
 
-                var reportedAccuracy = Math.max(
-                    resultSample.coords.accuracy,
-                    finalCentroid.accuracy,
-                    Math.round(avgAcc * 0.85)
-                );
+                var filtered = rejectOutliers(rawSamples, centroid0, Number(best0.coords.accuracy || 0));
+                var finalResult = buildFinalResult(filtered);
 
-                var synth = {
-                    coords: {
-                        latitude: finalCentroid.lat,
-                        longitude: finalCentroid.lon,
-                        accuracy: reportedAccuracy,
-                        altitude: resultSample.coords.altitude,
-                        altitudeAccuracy: resultSample.coords.altitudeAccuracy,
-                        heading: resultSample.coords.heading,
-                        speed: resultSample.coords.speed
-                    },
-                    timestamp: resultSample.timestamp,
-                    meta: {
-                        source: "attendify-geo-v3",
-                        sampleCount: rawSamples.length,
-                        usedSampleCount: finalSamples.length,
-                        rejectedOutliers: rawSamples.length - finalSamples.length,
-                        bestAccuracy: best0.coords.accuracy,
-                        averageAccuracy: avgAcc,
-                        collectionMs: elapsedMs()
-                    }
-                };
+                if (!finalResult) {
+                    reject(error || new Error("Location unavailable."));
+                    return;
+                }
 
-                resolve(synth);
+                resolve(finalResult);
             }
 
-            function tryFinishEarly() {
+            function shouldFinishEarly() {
                 if (!minCollectionReached()) {
                     return false;
                 }
 
-                var best = getBestRaw();
-                if (!best) {
+                if (rawSamples.length < MIN_SAMPLES) {
                     return false;
                 }
 
-                var acc = best.coords.accuracy;
+                var centroid = weightedCentroid(rawSamples);
+                var best = getBestRaw();
 
-                if (acc <= TARGET_ACCURACY_M && rawSamples.length >= MIN_SAMPLES) {
-                    done();
+                if (!centroid || !best) {
+                    return false;
+                }
+
+                var filtered = rejectOutliers(rawSamples, centroid, Number(best.coords.accuracy || 0));
+                var preview = buildFinalResult(filtered);
+
+                if (!preview || !preview.meta) {
+                    return false;
+                }
+
+                var bestAcc = Number(best.coords.accuracy || 9999);
+                var confidence = Number(preview.meta.confidenceScore || 0);
+                var targetConfidence = Number(preview.meta.targetConfidenceScore || 50);
+
+                if (bestAcc <= TARGET_ACCURACY_M && confidence >= Math.max(45, targetConfidence)) {
                     return true;
                 }
 
-                if (acc <= ACCEPTABLE_ACCURACY_M && rawSamples.length >= MIN_SAMPLES) {
-                    setTimeout(function () {
-                        if (!finished) {
-                            done();
-                        }
-                    }, 1200);
+                if (bestAcc <= ACCEPTABLE_ACCURACY_M && confidence >= Math.max(38, targetConfidence - 10)) {
+                    return true;
+                }
+
+                if (bestAcc <= WEAK_ACCURACY_M && rawSamples.length >= MIN_SAMPLES && elapsedMs() >= minCollectionMs) {
                     return true;
                 }
 
@@ -274,68 +552,122 @@
                     return;
                 }
 
-                var acc = Number(position.coords.accuracy);
                 var lat = Number(position.coords.latitude);
                 var lon = Number(position.coords.longitude);
+                var acc = Number(position.coords.accuracy);
 
                 if (!isValidCoords(lat, lon, acc)) {
-                    if (onProgress) {
-                        onProgress(acc, getBestRaw());
-                    }
-                    return;
+                if (typeof onProgress === "function") {
+                    onProgress(acc, getBestRaw(), rawSamples.length);
+                }
+                return;
+            }
+
+            rawSamples.push(position);
+
+                if (rawSamples.length > MAX_SAMPLES) {
+                    rawSamples.shift();
                 }
 
-                rawSamples.push(position);
-
-                if (onProgress) {
-                    onProgress(acc, getBestRaw());
+                if (typeof onProgress === "function") {
+                    onProgress(acc, getBestRaw(), rawSamples.length);
                 }
 
-                if (tryFinishEarly()) {
-                    return;
-                }
-
-                if (rawSamples.length >= MAX_SAMPLES && minCollectionReached()) {
+                if (shouldFinishEarly()) {
                     done();
+                    return;
                 }
+            }
+
+            function getBestAccuracy() {
+                var best = getBestRaw();
+                return best ? Number(best.coords.accuracy || 9999) : 9999;
+            }
+
+            function shouldUseFallbackMode() {
+                if (usingFallback) {
+                    return false;
+                }
+
+                if (rawSamples.length === 0) {
+                    return true;
+                }
+
+                return minCollectionReached() && getBestAccuracy() > WEAK_ACCURACY_M;
+            }
+
+            function startWatch(options, isFallback) {
+                if (!navigator.geolocation || finished) {
+                    return;
+                }
+
+                if (watchId !== null) {
+                    try {
+                        navigator.geolocation.clearWatch(watchId);
+                    } catch (e) {
+                        // ignore
+                    }
+                    watchId = null;
+                }
+
+                usingFallback = Boolean(isFallback);
+
+                try {
+                    watchId = navigator.geolocation.watchPosition(addSample, handleError, options);
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            function switchToFallbackMode() {
+                if (!shouldUseFallbackMode() || !navigator.geolocation) {
+                    return;
+                }
+
+                startWatch(
+                    {
+                        enableHighAccuracy: false,
+                        timeout: 15000,
+                        maximumAge: 0
+                    },
+                    true
+                );
             }
 
             function handleError(error) {
-                if (error && error.code === 1) {
+                if (!error) {
+                    return;
+                }
+
+                if (Number(error.code) === 1) {
                     done(error);
+                    return;
+                }
+
+                if (Number(error.code) === 2 || Number(error.code) === 3) {
+                    errorRetryCount += 1;
+
+                    if (errorRetryCount <= 2) {
+                        switchToFallbackMode();
+                        return;
+                    }
+
+                    if (rawSamples.length > 0) {
+                        done();
+                    }
                 }
             }
 
-            var options = {
+            var optionsPrimary = {
                 enableHighAccuracy: true,
                 timeout: 18000,
                 maximumAge: 0
             };
-            
-            var fallbackOptions = {
-                enableHighAccuracy: false,
-                timeout: 15000,
-                maximumAge: 30000
-            };
 
-            try {
-                navigator.geolocation.getCurrentPosition(addSample, handleError, options);
-            } catch (e) {
-                // ignore
-            }
+            startWatch(optionsPrimary, false);
 
-            try {
-                watchId = navigator.geolocation.watchPosition(addSample, handleError, options);
-            } catch (e) {
-                // ignore
-            }
-            
-            setTimeout(function () {
-                if (!finished && rawSamples.length === 0 && navigator.geolocation) {
-                    try {
-                        navigator.geolocation.getCurrentPosition(addSample, function(){}, fallbackOptions);
-                    } catch (e) {}
-                }
+            fallbackTimeoutId = setTimeout(function () {
+                switchToFallbackMode();
             }, 4000);
 
             timeoutId = setTimeout(function () {
@@ -344,23 +676,13 @@
         });
     }
 
-    function getCollectionOptionsForRadius(adminRadiusMeters) {
-        var admin = Math.max(1, Number(adminRadiusMeters) || 100);
-
-        if (admin <= 5) {
-            return { minCollectionMs: 20000, maxWaitMs: 25000 };
-        }
-
-        if (admin < 25) {
-            return { minCollectionMs: 15000, maxWaitMs: 22000 };
-        }
-
-        return { minCollectionMs: MIN_COLLECTION_MS, maxWaitMs: MAX_WAIT_MS };
-    }
-
     root.AttendifyGeo = {
         getBestPosition: getBestPosition,
         getCollectionOptionsForRadius: getCollectionOptionsForRadius,
+        getConnectionMeta: getConnectionMeta,
+        isGeoCollectionActive: function () {
+            return Number(root.__attendifyGeoActiveCount || 0) > 0;
+        },
         distanceM: distanceM,
         weightedCentroid: weightedCentroid,
         MIN_COLLECTION_MS: MIN_COLLECTION_MS,

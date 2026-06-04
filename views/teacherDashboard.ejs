@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard | Attendify</title>
 
-    <link rel="stylesheet" href="/css/teacherDashboard.css">
-
     <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/teacherDashboard.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
     <link
@@ -36,6 +35,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -317,8 +326,8 @@
                     </div>
                 </div>
 
-                <div class="gps-help-banner" style="margin: 0 20px 15px 20px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; font-size: 0.9rem;">
-                    <i class="fa-solid fa-circle-info" style="color: #3b82f6; margin-right: 6px;"></i>
+                <div class="gps-help-banner teacher-gps-help-banner">
+                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
                     <strong>GPS Tip:</strong> For best accuracy when starting class, enable precise location, step away from thick walls, and wait a few seconds.
                 </div>
 
@@ -556,10 +565,16 @@
 
                                                 <% } else if (card.todaySession) { %>
 
-                                                    <span class="status-badge done">
-                                                        <i class="fa-solid fa-circle-check"></i>
-                                                        Recorded
-                                                    </span>
+                                                    <div style="display:flex; gap:10px; align-items:center;">
+                                                        <span class="status-badge done">
+                                                            <i class="fa-solid fa-circle-check"></i>
+                                                            Recorded
+                                                        </span>
+                                                        <a href="/teacher/attendance/export/<%= card.todaySession._id %>" class="manual-link-btn" style="background:#f1f5f9; color:#475569;">
+                                                            <i class="fa-solid fa-file-csv"></i>
+                                                            Export
+                                                        </a>
+                                                    </div>
 
                                                 <% } else if (card.timeStatus === "upcoming") { %>
 
@@ -766,10 +781,10 @@
 
                 <div class="teacher-map-stats">
                     <span class="teacher-map-pill neutral" id="teacherMapTrackingPill">0 live</span>
-                    <span class="teacher-map-pill" id="teacherMapInsidePill" style="background:#dcfce7; color:#16a34a; border: 1px solid #bbf7d0;">0 inside</span>
-                    <span class="teacher-map-pill" id="teacherMapNearPill" style="background:#fef3c7; color:#d97706; border: 1px solid #fde68a;">0 near</span>
-                    <span class="teacher-map-pill ghost" id="teacherMapOutsidePill" style="background:#e0e7ff; color:#4f46e5; border: 1px solid #c7d2fe;">0 outside</span>
-                    <span class="teacher-map-pill" id="teacherMapPoorPill" style="background:#f1f5f9; color:#64748b; border: 1px solid #e2e8f0;">0 poor GPS</span>
+                    <span class="teacher-map-pill teacher-map-pill-inside" id="teacherMapInsidePill">0 inside</span>
+                    <span class="teacher-map-pill teacher-map-pill-near" id="teacherMapNearPill">0 near</span>
+                    <span class="teacher-map-pill teacher-map-pill-outside" id="teacherMapOutsidePill">0 outside</span>
+                    <span class="teacher-map-pill teacher-map-pill-poor" id="teacherMapPoorPill">0 poor GPS</span>
                 </div>
             </div>
 
@@ -808,7 +823,7 @@
                 <div class="teacher-map-wrapper">
                     <div id="teacherMapOverlay" class="teacher-map-overlay">
                         <div class="teacher-map-overlay-inner">
-                            <i class="fa-solid fa-map-location-dot" style="font-size: 2rem; color: #2563eb; margin-bottom: 10px;"></i>
+                            <i class="fa-solid fa-map-location-dot teacher-map-overlay-icon" aria-hidden="true"></i>
                             <strong>Map preview is ready.</strong>
                             <span>Start attendance to begin live tracking.</span>
                         </div>
@@ -901,6 +916,52 @@
     };
 </script>
 
+<script>
+const vapidPublicKey = "<%= typeof vapidPublicKey !== 'undefined' ? vapidPublicKey : '' %>";
+
+function urlB64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
+    navigator.serviceWorker.ready.then(function(registration) {
+        registration.pushManager.getSubscription().then(function(subscription) {
+            if (!subscription) {
+                if (Notification.permission === 'granted' || Notification.permission === 'default') {
+                    registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlB64ToUint8Array(vapidPublicKey)
+                    }).then(function(newSubscription) {
+                        fetch('/teacher/push/subscribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newSubscription)
+                        });
+                    }).catch(function(err) {
+                        console.error('Failed to subscribe to push', err);
+                    });
+                }
+            } else {
+                fetch('/teacher/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(subscription)
+                });
+            }
+        });
+    });
+}
+</script>
+
 <% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>
 <script src="/socket.io/socket.io.js"></script>
 <% } %>
@@ -910,5 +971,8 @@
 <script src="/js/teacherPanels.js"></script>
 <script src="/js/teacherLiveMap.js" defer></script>
 <script src="/js/uiShell.js"></script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

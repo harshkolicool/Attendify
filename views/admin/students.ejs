@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Students | Admin</title>
 
-    <link rel="stylesheet" href="/css/adminTheme.css">
-
     <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/finalUiFix.css">
+
+    <link rel="stylesheet" href="/css/adminTheme.css">
+    <link rel="stylesheet" href="/css/finalUiFix.css?v=2780440267">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -29,6 +29,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 
 <body>
@@ -288,7 +298,7 @@
                                     <div class="admin-search-box">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                         <input type="text" data-admin-search="students"
-                                            placeholder="Search student by name, email, enrollment number, class group or department...">
+                                            placeholder="Search student by name, email, or enrollment number...">
                                     </div>
 
                                     <form action="/admin/students/delete-all" method="POST" class="admin-toolbar-action"
@@ -410,9 +420,20 @@
 
                                                             <div class="admin-grid admin-student-group-grid">
                                                                 <% group.students.forEach(function(student) { %>
+                                                                    <%
+                                                                        const studentSearchName = String(student.fullName || "");
+                                                                        const studentSearchEmail = String(student.email || "");
+                                                                        const studentSearchEnrollment = String(student.enrollmentNumber || "");
+                                                                    %>
 
-                                                                    <article class="admin-item-card admin-student-card"
-                                                                        data-search-group="students">
+                                                                    <article
+                                                                        class="admin-item-card admin-student-card"
+                                                                        data-search-group="students"
+                                                                        data-student-name="<%= studentSearchName %>"
+                                                                        data-student-email="<%= studentSearchEmail %>"
+                                                                        data-student-enrollment="<%= studentSearchEnrollment %>"
+                                                                        data-search-text="<%= studentSearchName %> <%= studentSearchEmail %> <%= studentSearchEnrollment %>"
+                                                                    >
 
                                                                         <div class="admin-item-top">
                                                                             <div class="admin-item-icon">
@@ -494,6 +515,23 @@
                                                                                     </span>
                                                                                 </div>
                                                                                 <% } %>
+
+                                                                                    <% if
+                                                                                        (student.trustedDeviceSetupAllowedUntil
+                                                                                        && new
+                                                                                        Date(student.trustedDeviceSetupAllowedUntil).getTime()>
+                                                                                        Date.now()) { %>
+                                                                                        <div class="admin-passkey-status">
+                                                                                            <span
+                                                                                                class="admin-badge success">
+                                                                                                Browser fallback open
+                                                                                                until
+                                                                                                <%= new
+                                                                                                    Date(student.trustedDeviceSetupAllowedUntil).toLocaleTimeString()
+                                                                                                    %>
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <% } %>
                                                                         </div>
 
                                                                         <div class="admin-student-actions">
@@ -515,36 +553,25 @@
                                                                                 method="POST"
                                                                                 data-confirm="Allow trusted browser fallback for <%= student.fullName || 'this student' %> for 30 minutes? Use this only if passkeys are not supported."
                                                                                 onsubmit="return uiConfirm(event, this.dataset.confirm)">
+                                                                                <button class="admin-secondary-btn"
+                                                                                    type="submit">
+                                                                                    <i class="fa-solid fa-laptop"></i>
+                                                                                    Allow Trusted Browser
+                                                                                </button>
+                                                                            </form>
 
-                                                                                <% if
-                                                                                    (student.trustedDeviceSetupAllowedUntil
-                                                                                    && new
-                                                                                    Date(student.trustedDeviceSetupAllowedUntil).getTime()>
-                                                                                    Date.now()) { %>
-                                                                                    <div class="admin-passkey-status">
-                                                                                        <span
-                                                                                            class="admin-badge success">
-                                                                                            Browser fallback open until
-                                                                                            <%= new
-                                                                                                Date(student.trustedDeviceSetupAllowedUntil).toLocaleTimeString()
-                                                                                                %>
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <% } %>
-
-                                                                                        <form
-                                                                                            action="/admin/students/<%= student._id %>/reset-passkeys"
-                                                                                            method="POST"
-                                                                                            data-confirm="Reset all passkeys for <%= student.fullName || 'this student' %>? Student will need to register a new passkey."
-                                                                                            onsubmit="return uiConfirm(event, this.dataset.confirm)">
-                                                                                            <button
-                                                                                                class="admin-warning-btn"
-                                                                                                type="submit">
-                                                                                                <i
-                                                                                                    class="fa-solid fa-fingerprint"></i>
-                                                                                                Reset Passkeys
-                                                                                            </button>
-                                                                                        </form>
+                                                                            <form
+                                                                                action="/admin/students/<%= student._id %>/reset-passkeys"
+                                                                                method="POST"
+                                                                                data-confirm="Reset all passkeys for <%= student.fullName || 'this student' %>? Student will need to register a new passkey."
+                                                                                onsubmit="return uiConfirm(event, this.dataset.confirm)">
+                                                                                <button class="admin-warning-btn"
+                                                                                    type="submit">
+                                                                                    <i
+                                                                                        class="fa-solid fa-fingerprint"></i>
+                                                                                    Reset Passkeys
+                                                                                </button>
+                                                                            </form>
                                                                         </div>
 
                                                                         <details
@@ -656,10 +683,14 @@
 
         </div>
 
-        <script src="/js/adminSearch.js"></script>
+        <script src="/js/adminSearch.js?v=2780440266"></script>
         <script src="/js/adminValidation.js"></script>
         <script src="/js/adminDynamicForms.js"></script>
         <script src="/js/uiShell.js"></script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/adminRealtime.js"></script>
 </body>
 
 </html>

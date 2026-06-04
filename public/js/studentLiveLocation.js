@@ -57,18 +57,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const LIVE_SAMPLE_MAX_AGE_MS = 25000;
     const LIVE_MAX_SAMPLES = 16;
-    const LIVE_MAX_ACCURACY_M = 100;
-    const LIVE_SEND_HEARTBEAT_MS = 30000;
+    const LIVE_MAX_ACCURACY_M = 5000;
+    const LIVE_SEND_HEARTBEAT_MS = 5000;
 
     const streamStabilizer =
         window.AttendifyLocationStabilizer &&
         typeof window.AttendifyLocationStabilizer.create === "function"
             ? window.AttendifyLocationStabilizer.create({
-                  minMoveMeters: 3,
-                  accuracyRatio: 0.3,
-                  emaAlpha: 0.35,
+                  minMoveMeters: 1,
+                  accuracyRatio: 0.15,
+                  emaAlpha: 0.55,
                   heartbeatMs: LIVE_SEND_HEARTBEAT_MS,
-                  bufferSize: 12
+                  bufferSize: 8
               })
             : null;
 
@@ -285,6 +285,15 @@ document.addEventListener("DOMContentLoaded", function () {
         liveSamples.push(position);
         pruneSamples();
 
+        // If the device achieves a high-accuracy fix (like Google Maps does), 
+        // trust it completely and stop dragging it backwards with old samples.
+        const currentAcc = Number(position.coords.accuracy || 9999);
+        if (currentAcc <= 10) {
+            // We have a solid fix. Keep only recent high-acc samples.
+            liveSamples = liveSamples.filter(s => Number(s.coords.accuracy) <= 15);
+            return position;
+        }
+
         if (liveSamples.length < 3) {
             return position;
         }
@@ -296,7 +305,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return position;
         }
 
-        const threshold = Math.max(Number(best.coords.accuracy || 0) * 2.5, 35);
+        const threshold = Math.max(Number(best.coords.accuracy || 0) * 4, 20);
         const filtered = liveSamples.filter(function (sample) {
             const d = distanceM(
                 Number(sample.coords.latitude),
@@ -390,18 +399,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (streamStabilizer) {
             const stable = streamStabilizer.update(sendLat, sendLon, sendAccuracy);
-
-            if (!stable.moved && !stable.isFirst) {
-                return;
+            
+            // Bypass the EMA stabilizer dragging if we have a very accurate fix (like Google Maps does).
+            // We still called update() so the stabilizer tracks the true position.
+            if (sendAccuracy > 10) {
+                if (!stable.moved && !stable.isFirst) {
+                    return;
+                }
+                sendLat = stable.lat;
+                sendLon = stable.lon;
             }
-
-            sendLat = stable.lat;
-            sendLon = stable.lon;
         }
 
         if (lastSentLat !== null && lastSentLon !== null) {
             const sinceLastSend = distanceM(lastSentLat, lastSentLon, sendLat, sendLon);
-            const sendThreshold = Math.max(4, sendAccuracy * 0.35);
+            // If accuracy is high, send almost every micro-move (1m). Otherwise, smooth it (4m+).
+            const sendThreshold = sendAccuracy <= 10 ? 1 : Math.max(4, sendAccuracy * 0.35);
             const heartbeatDue = now - lastSentAt >= LIVE_SEND_HEARTBEAT_MS;
 
             if (sinceLastSend < sendThreshold && !heartbeatDue) {
@@ -422,7 +435,17 @@ document.addEventListener("DOMContentLoaded", function () {
             accuracy: sendAccuracy,
             heading: smoothedPosition.coords.heading,
             speed: smoothedPosition.coords.speed,
-            locationMeta: smoothedPosition.meta || null
+            locationMeta: Object.assign(
+                {},
+                smoothedPosition.meta || {},
+                {
+                    network:
+                        window.AttendifyGeo &&
+                        typeof window.AttendifyGeo.getConnectionMeta === "function"
+                            ? window.AttendifyGeo.getConnectionMeta()
+                            : null
+                }
+            )
         };
 
         if (isSocketMode) {
@@ -437,7 +460,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function sendOfflineUpdate() {
         if (!activeSessionId) return;
-        
+
         const payload = {
             sessionId: activeSessionId,
             deviceId: deviceId,
@@ -445,13 +468,36 @@ document.addEventListener("DOMContentLoaded", function () {
             online: false,
             updatedAt: new Date()
         };
-        
-        if (isSocketMode && socket && socket.connected) {
-            socket.emit("student:location:update", payload);
-        } else if (!isSocketMode && navigator.sendBeacon) {
-            const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-            navigator.sendBeacon("/student/live-location", blob);
+
+        if (lastSentLat !== null && lastSentLon !== null) {
+            payload.latitude = lastSentLat;
+            payload.longitude = lastSentLon;
+            payload.accuracy = 1;
         }
+
+        if (isSocketMode && socket && socket.connected) {
+            if (Number.isFinite(payload.latitude) && Number.isFinite(payload.longitude)) {
+                socket.emit("student:location:update", payload);
+            }
+            return;
+        }
+
+        if (!isPollingMode || !Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude)) {
+            return;
+        }
+
+        fetch("/student/live-location/update", {
+            method: "POST",
+            credentials: "same-origin",
+            keepalive: true,
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        }).catch(function () {
+            // ignore
+        });
     }
 
     window.addEventListener("visibilitychange", function() {
@@ -520,7 +566,21 @@ document.addEventListener("DOMContentLoaded", function () {
                     { minCollectionMs: 6000, maxWaitMs: 15000 }
                 ).then(function (best) {
                     sendLocation(best);
-                    startContinuousWatch();
+
+                    function startWhenGeoIdle() {
+                        if (
+                            window.AttendifyGeo &&
+                            typeof window.AttendifyGeo.isGeoCollectionActive === "function" &&
+                            window.AttendifyGeo.isGeoCollectionActive()
+                        ) {
+                            setTimeout(startWhenGeoIdle, 250);
+                            return;
+                        }
+
+                        startContinuousWatch();
+                    }
+
+                    startWhenGeoIdle();
                 }).catch(function () {
                     startContinuousWatch();
                 });

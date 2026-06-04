@@ -150,6 +150,13 @@ function isTeacher(req, res, next) {
         return res.redirect("/");
     }
 
+    if (req.user.isBlocked) {
+        req.logout(function () {
+            return res.redirect("/teacher/login?error=blocked");
+        });
+        return;
+    }
+
     next();
 }
 
@@ -242,22 +249,10 @@ function findSessionForSchedule(sessions, schedule) {
     return null;
 }
 
+const { escapeCsvValue } = require("../utils/csv");
+
 function teacherCsvEscape(value) {
-    if (value === undefined || value === null) {
-        return "";
-    }
-
-    const text = value.toString();
-
-    if (
-        text.includes(",") ||
-        text.includes('"') ||
-        text.includes("\n")
-    ) {
-        return '"' + text.replace(/"/g, '""') + '"';
-    }
-
-    return text;
+    return escapeCsvValue(value);
 }
 
 function teacherSendCsvResponse(res, filename, rows) {
@@ -582,7 +577,8 @@ router.get("/dashboard", isTeacher, async (req, res) => {
             realtimeMode: realtimeConfig.getRealtimeMode(),
             realtimePollIntervalMs: realtimeConfig.getPollIntervalMs(),
             message: getSuccessMessage(req.query.message),
-            error: getErrorMessage(req.query.error)
+            error: getErrorMessage(req.query.error),
+            vapidPublicKey: process.env.VAPID_PUBLIC_KEY
         });
 
     } catch (err) {
@@ -590,7 +586,7 @@ router.get("/dashboard", isTeacher, async (req, res) => {
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Teacher dashboard error: " + err.message);
+        res.send("Something went wrong. Please try again.");
     }
 });
 
@@ -620,7 +616,7 @@ router.get("/notifications", isTeacher, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Teacher notifications error: " + err.message);
+        res.status(500).send("Teacher notifications error: " + "An internal server error occurred.");
     }
 });
 
@@ -905,7 +901,7 @@ router.get("/live-map/global", isTeacher, async function (req, res) {
             .lean();
 
         const now = Date.now();
-        const OFFLINE_THRESHOLD_MS = 15000;
+        const OFFLINE_THRESHOLD_MS = 45000;
 
         const snapshot = students.map(student => {
             const hasLocation = student.lastLocation && student.lastLocation.latitude;
@@ -956,7 +952,9 @@ router.get("/live-map/global", isTeacher, async function (req, res) {
 
 router.post("/attendance/start", isTeacher, async (req, res) => {
     try {
-        const durationMinutes = Number(req.body.durationMinutes) || 5;
+        let durationMinutes = Number(req.body.durationMinutes);
+        if (!Number.isFinite(durationMinutes) || durationMinutes < 1) durationMinutes = 1;
+        if (durationMinutes > 15) durationMinutes = 15;
 
         const teacherLatitude = req.body.teacherLatitude;
         const teacherLongitude = req.body.teacherLongitude;
@@ -995,7 +993,13 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
             return res.redirect("/teacher/dashboard?error=invalid_teacher_location");
         }
 
-        if (!isUsableAccuracy(teacherAccuracy)) {
+        const hasClassroomPreset = scheduleItem.classroom &&
+            scheduleItem.classroom.latitude &&
+            scheduleItem.classroom.longitude &&
+            scheduleItem.classroom.latitude !== 0 &&
+            scheduleItem.classroom.longitude !== 0;
+
+        if (!hasClassroomPreset && !isUsableAccuracy(teacherAccuracy)) {
             return res.redirect("/teacher/dashboard?error=teacher_location_accuracy_low");
         }
 
@@ -1019,6 +1023,21 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
             return res.redirect("/teacher/dashboard?error=outside_window");
         }
 
+        // Close any expired sessions that are stuck in ACTIVE state (e.g. cron job failed)
+        await AttendanceSession.updateMany({
+            schedule: scheduleItem._id,
+            status: "ACTIVE",
+            isActive: true,
+            endTime: { $lt: new Date() }
+        }, {
+            $set: {
+                status: "CLOSED",
+                isActive: false,
+                closedBy: "SYSTEM_AUTO_FIX",
+                closedAt: new Date()
+            }
+        });
+
         const alreadyActive = await AttendanceSession.findOne({
             schedule: scheduleItem._id,
             teacher: req.user._id,
@@ -1038,6 +1057,11 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
             req.user.college
         );
 
+        // Prevent double-click race conditions from triggering "Attendance Restarted"
+        if (previousSession && (Date.now() - previousSession.createdAt.getTime() < 15000)) {
+            return res.redirect("/teacher/dashboard?message=live_started");
+        }
+
         const classEndTime = getScheduleDateTimeForToday(scheduleItem.endTime);
         const requestedEndTime = new Date(Date.now() + durationMinutes * 60 * 1000);
 
@@ -1045,6 +1069,12 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
 
         if (classEndTime && requestedEndTime > classEndTime) {
             sessionEndTime = classEndTime;
+        }
+
+        // Ensure the session is active for at least 1 minute, even if the class has formally ended
+        // This prevents the session from being immediately closed by cron or hidden from the UI.
+        if (sessionEndTime.getTime() - Date.now() < 60000) {
+            sessionEndTime = new Date(Date.now() + 60000);
         }
 
         let attendanceSession;
@@ -1086,37 +1116,93 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
             previousSession.closedAt = undefined;
 
             attendanceSession = await previousSession.save();
-
         } else {
-            attendanceSession = await AttendanceSession.create({
-                schedule: scheduleItem._id,
-                teacher: req.user._id,
-                subject: scheduleItem.subject._id,
-                college: req.user.college,
-                classGroup: scheduleItem.classGroup._id,
-                classroom: scheduleItem.classroom._id,
+            const rawResult = await AttendanceSession.findOneAndUpdate(
+                {
+                    schedule: scheduleItem._id,
+                    status: "ACTIVE",
+                    isActive: true
+                },
+                {
+                    $setOnInsert: {
+                        schedule: scheduleItem._id,
+                        teacher: req.user._id,
+                        subject: scheduleItem._id ? scheduleItem.subject._id : scheduleItem.subject, // ensure object ID
+                        college: req.user.college,
+                        classGroup: scheduleItem.classGroup._id,
+                        classroom: scheduleItem.classroom._id,
 
-                latitude: finalLatitude,
-                longitude: finalLongitude,
-                teacherGpsAccuracy: Number(teacherAccuracy),
-                locationSource: finalLocationSource,
-                locationMeta: locationMeta,
-                radius: scheduleItem.classroom.radius || 100,
+                        latitude: finalLatitude,
+                        longitude: finalLongitude,
+                        teacherGpsAccuracy: Number(teacherAccuracy),
+                        locationSource: finalLocationSource,
+                        locationMeta: locationMeta,
+                        radius: scheduleItem.classroom.radius || 100,
 
-                startTime: new Date(),
-                endTime: sessionEndTime,
-                scheduledEndTime: classEndTime || sessionEndTime,
-                status: "ACTIVE",
-                isActive: true
-            });
+                        startTime: new Date(),
+                        endTime: sessionEndTime,
+                        scheduledEndTime: classEndTime || sessionEndTime,
+                        status: "ACTIVE",
+                        isActive: true
+                    }
+                },
+                { upsert: true, new: true, rawResult: true }
+            );
+            
+            attendanceSession = rawResult.value || rawResult;
         }
 
         if (previousSession) {
             socketManager.emitAttendanceReopened(attendanceSession, scheduleItem);
+        } else {
+            socketManager.emitAttendanceStarted(attendanceSession, scheduleItem);
+        }
+
+        setTimeout(async () => {
+            try {
+                const webpush = require("web-push");
+                if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+                    webpush.setVapidDetails(
+                        process.env.VAPID_SUBJECT || "mailto:admin@attendify.com",
+                        process.env.VAPID_PUBLIC_KEY,
+                        process.env.VAPID_PRIVATE_KEY
+                    );
+
+                    const subjectName = scheduleItem.subject ? scheduleItem.subject.subjectName : "a subject";
+                    const isRestart = !!previousSession;
+                    const payload = JSON.stringify({
+                        title: isRestart ? "Attendance Restarted" : "Attendance Started",
+                        body: isRestart 
+                            ? `Your teacher has restarted attendance for ${subjectName}. If you missed it, mark it now.` 
+                            : `Your teacher has started attendance for ${subjectName}. Click here to mark it now.`,
+                        url: "/student/dashboard"
+                    });
+
+                    const Student = require("../models/studentSchema");
+                    const studentsToPush = await Student.find({
+                        classGroup: scheduleItem.classGroup._id,
+                        isDeleted: { $ne: true }
+                    });
+
+                    studentsToPush.forEach(student => {
+                        if (student.pushSubscriptions && student.pushSubscriptions.length > 0) {
+                            student.pushSubscriptions.forEach(sub => {
+                                webpush.sendNotification(sub, payload).catch(err => {
+                                    console.log("Push error for student", student.email, err.message);
+                                });
+                            });
+                        }
+                    });
+                }
+            } catch(e) {
+                console.log("Push trigger error", e);
+            }
+        }, 0);
+
+        if (previousSession) {
             return res.redirect("/teacher/dashboard?message=live_restarted");
         }
 
-        socketManager.emitAttendanceStarted(attendanceSession, scheduleItem);
         res.redirect("/teacher/dashboard?message=live_started");
 
     } catch (err) {
@@ -1124,7 +1210,7 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Could not start attendance: " + err.message);
+        res.send("Something went wrong. Please try again.");
     }
 });
 
@@ -1189,7 +1275,7 @@ router.post("/attendance/end/:id", isTeacher, async (req, res) => {
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Could not end attendance: " + err.message);
+        res.send("Something went wrong. Please try again.");
     }
 });
 
@@ -1205,6 +1291,7 @@ router.get("/reports", isTeacher, async function (req, res) {
             toDate: req.query.toDate || todayInput,
             classGroupId: req.query.classGroupId || "all",
             subjectId: req.query.subjectId || "all",
+            classroomId: req.query.classroomId || "all",
             status: req.query.status || "all"
         };
 
@@ -1213,6 +1300,7 @@ router.get("/reports", isTeacher, async function (req, res) {
 
         const classGroupId = teacherSafeObjectId(filters.classGroupId);
         const subjectId = teacherSafeObjectId(filters.subjectId);
+        const classroomId = teacherSafeObjectId(filters.classroomId);
 
         const teacherSchedules = await Schedule.find({
             college: collegeId,
@@ -1227,6 +1315,7 @@ router.get("/reports", isTeacher, async function (req, res) {
 
         const classGroupIdMap = {};
         const subjectIdMap = {};
+        const classroomIdMap = {};
 
         teacherSchedules.forEach(function (schedule) {
             if (schedule.classGroup) {
@@ -1235,6 +1324,10 @@ router.get("/reports", isTeacher, async function (req, res) {
 
             if (schedule.subject) {
                 subjectIdMap[schedule.subject._id.toString()] = true;
+            }
+
+            if (schedule.classroom) {
+                classroomIdMap[schedule.classroom._id.toString()] = true;
             }
         });
 
@@ -1256,6 +1349,13 @@ router.get("/reports", isTeacher, async function (req, res) {
                 subjectName: 1
             });
 
+        const classrooms = await Classroom.find({
+            _id: { $in: Object.keys(classroomIdMap) },
+            college: collegeId
+        }).sort({
+            classroomName: 1
+        });
+
         const sessionQuery = {
             college: collegeId,
             teacher: teacherId,
@@ -1271,6 +1371,10 @@ router.get("/reports", isTeacher, async function (req, res) {
 
         if (subjectId) {
             sessionQuery.subject = subjectId;
+        }
+
+        if (classroomId) {
+            sessionQuery.classroom = classroomId;
         }
 
         const sessions = await AttendanceSession.find(sessionQuery)
@@ -1439,6 +1543,10 @@ router.get("/reports", isTeacher, async function (req, res) {
             attemptQuery.subject = subjectId;
         }
 
+        if (classroomId) {
+            attemptQuery.classroom = classroomId;
+        }
+
         const suspiciousAttempts = await AttendanceAttempt.find(attemptQuery)
             .populate("student")
             .populate("subject")
@@ -1464,6 +1572,7 @@ router.get("/reports", isTeacher, async function (req, res) {
             filters: filters,
             classGroups: classGroups,
             subjects: subjects,
+            classrooms: classrooms,
             sessions: sessions,
             attendanceRecords: attendanceRecords,
             suspiciousAttempts: suspiciousAttempts,
@@ -1478,7 +1587,90 @@ router.get("/reports", isTeacher, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Teacher reports error: " + err.message);
+        res.status(500).send("Teacher reports error: " + "An internal server error occurred.");
+    }
+});
+
+router.get("/attendance/export/:sessionId", isTeacher, async function (req, res) {
+    try {
+        const teacherId = req.user._id || req.user.id;
+        const sessionId = req.params.sessionId;
+
+        const session = await AttendanceSession.findOne({
+            _id: sessionId,
+            teacher: teacherId
+        })
+        .populate("schedule")
+        .populate("subject")
+        .populate("classGroup")
+        .populate("classroom");
+
+        if (!session) {
+            return res.status(404).send("Session not found.");
+        }
+
+        const attendanceRecords = await AttendanceRecord.find({
+            attendanceSession: sessionId
+        })
+        .populate("student")
+        .populate("subject")
+        .populate("classGroup")
+        .populate("classroom")
+        .sort({
+            createdAt: -1
+        });
+
+        const rows = [];
+
+        rows.push([
+            "Date",
+            "Time",
+            "Student Name",
+            "Enrollment Number",
+            "Student Email",
+            "Status",
+            "Verification Method",
+            "GPS Accuracy (m)",
+            "Marked At"
+        ]);
+
+        attendanceRecords.forEach(function (record) {
+            const sessionDate = session.startTime || record.createdAt;
+
+            rows.push([
+                sessionDate ? new Date(sessionDate).toLocaleDateString() : "",
+                sessionDate ? new Date(sessionDate).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }) : "",
+
+                record.student ? record.student.fullName : "Student Missing",
+                record.student && record.student.enrollmentNumber ? record.student.enrollmentNumber : "",
+                record.student && record.student.email ? record.student.email : "",
+
+                record.status || "",
+                record.verificationMethod || "",
+
+                record.deviceInfo && record.deviceInfo.gpsAccuracy
+                    ? Math.round(record.deviceInfo.gpsAccuracy)
+                    : "",
+
+                record.createdAt ? new Date(record.createdAt).toLocaleString() : ""
+            ]);
+        });
+
+        const safeSubject = session.subject ? session.subject.subjectName.replace(/[^a-zA-Z0-9]/g, "-") : "Session";
+        const sessionDate = session.startTime ? new Date(session.startTime).toLocaleDateString().replace(/\//g, "-") : "Date";
+        
+        const filename = "Attendance-" + safeSubject + "-" + sessionDate + ".csv";
+
+        teacherSendCsvResponse(res, filename, rows);
+
+    } catch (err) {
+        console.log("TEACHER EXPORT SINGLE SESSION ERROR:");
+        console.log(err.message);
+        console.log(err.stack);
+        res.status(500).send("Unable to export session.");
     }
 });
 
@@ -1494,6 +1686,7 @@ router.get("/reports/export-attendance", isTeacher, async function (req, res) {
             toDate: req.query.toDate || todayInput,
             classGroupId: req.query.classGroupId || "all",
             subjectId: req.query.subjectId || "all",
+            classroomId: req.query.classroomId || "all",
             status: req.query.status || "all"
         };
 
@@ -1502,6 +1695,7 @@ router.get("/reports/export-attendance", isTeacher, async function (req, res) {
 
         const classGroupId = teacherSafeObjectId(filters.classGroupId);
         const subjectId = teacherSafeObjectId(filters.subjectId);
+        const classroomId = teacherSafeObjectId(filters.classroomId);
 
         const sessionQuery = {
             college: collegeId,
@@ -1518,6 +1712,10 @@ router.get("/reports/export-attendance", isTeacher, async function (req, res) {
 
         if (subjectId) {
             sessionQuery.subject = subjectId;
+        }
+
+        if (classroomId) {
+            sessionQuery.classroom = classroomId;
         }
 
         const sessions = await AttendanceSession.find(sessionQuery).select("_id");
@@ -1641,7 +1839,8 @@ router.get("/reports/export-suspicious", isTeacher, async function (req, res) {
             fromDate: req.query.fromDate || todayInput,
             toDate: req.query.toDate || todayInput,
             classGroupId: req.query.classGroupId || "all",
-            subjectId: req.query.subjectId || "all"
+            subjectId: req.query.subjectId || "all",
+            classroomId: req.query.classroomId || "all"
         };
 
         const fromDate = teacherGetStartOfDate(filters.fromDate);
@@ -1649,6 +1848,7 @@ router.get("/reports/export-suspicious", isTeacher, async function (req, res) {
 
         const classGroupId = teacherSafeObjectId(filters.classGroupId);
         const subjectId = teacherSafeObjectId(filters.subjectId);
+        const classroomId = teacherSafeObjectId(filters.classroomId);
 
         const attemptQuery = {
             college: collegeId,
@@ -1668,6 +1868,10 @@ router.get("/reports/export-suspicious", isTeacher, async function (req, res) {
 
         if (subjectId) {
             attemptQuery.subject = subjectId;
+        }
+
+        if (classroomId) {
+            attemptQuery.classroom = classroomId;
         }
 
         const suspiciousAttempts = await AttendanceAttempt.find(attemptQuery)
@@ -1912,7 +2116,7 @@ router.get("/manual-attendance", isTeacher, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Manual attendance page error: " + err.message);
+        res.send("Something went wrong. Please try again.");
     }
 });
 
@@ -2024,7 +2228,7 @@ router.get("/manual-attendance/:scheduleId", isTeacher, async function (req, res
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Manual attendance detail page error: " + err.message);
+        res.send("Something went wrong. Please try again.");
     }
 });
 
@@ -2253,7 +2457,7 @@ router.post("/manual-attendance/:scheduleId", isTeacher, async function (req, re
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Could not save manual attendance: " + err.message);
+        res.send("Something went wrong. Please try again.");
     }
 });
 
@@ -2261,7 +2465,7 @@ router.post("/manual-attendance/:scheduleId", isTeacher, async function (req, re
 // ── REALTIME POLLING FALLBACK ────────────────────────────────────────────────
 router.get("/realtime/poll", isTeacher, async function (req, res) {
     try {
-        const unreadCount = await getUnreadCount(req.user._id.toString(), "TEACHER");
+        const unreadCount = await getUnreadCount(getTeacherNotificationFilter(req.user));
 
         // Fetch recent suspicious attempts if any
         let recentSuspiciousAttempts = null;
@@ -2336,6 +2540,39 @@ router.get("/realtime/poll", isTeacher, async function (req, res) {
         });
     } catch (err) {
         res.json({ success: false });
+    }
+});
+
+router.post("/push/subscribe", isTeacher, async function(req, res) {
+    try {
+        const teacherId = req.user._id || req.user.id;
+        const teacher = await Teacher.findById(teacherId);
+        
+        if (!teacher) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const subscription = req.body;
+        
+        if (!subscription || !subscription.endpoint) {
+            return res.status(400).json({ success: false, message: "Invalid subscription" });
+        }
+        
+        if (!teacher.pushSubscriptions) {
+            teacher.pushSubscriptions = [];
+        }
+        
+        // Check if already subscribed
+        const existing = teacher.pushSubscriptions.find(sub => sub.endpoint === subscription.endpoint);
+        if (!existing) {
+            teacher.pushSubscriptions.push(subscription);
+            await teacher.save();
+        }
+        
+        res.json({ success: true, message: "Push subscription saved" });
+    } catch(err) {
+        console.log("TEACHER PUSH SUBSCRIBE ERROR:", err.message);
+        res.status(500).json({ success: false });
     }
 });
 

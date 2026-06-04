@@ -1,11 +1,18 @@
-const CACHE_NAME = 'attendify-v4';
+const CACHE_NAME = 'attendify-v9';
 const OFFLINE_URL = '/';
 
 const ASSETS_TO_CACHE = [
     '/',
     '/css/style.css',
+    '/css/uiShell.css',
+    '/css/finalUiFix.css',
+    '/css/adminTheme.css',
+    '/css/teacherDashboard.css',
+    '/css/studentSchedule.css',
+    '/css/home.css',
     '/js/geoAccuracy.js',
     '/js/locationStabilizer.js',
+    '/js/uiShell.js',
     '/manifest.json',
     '/icon-192.png',
     '/icon-512.png',
@@ -37,25 +44,7 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Phase 2: Offline Attendance Interception
-    if (event.request.url.includes('/student/attendance/mark') && event.request.method === 'POST') {
-        event.respondWith(
-            fetch(event.request.clone()).catch(async (error) => {
-                // If network fails (offline), intercept and save to IndexedDB
-                console.log('[ServiceWorker] Offline, queuing attendance request...');
-                const formData = await event.request.clone().text(); // URL Encoded or JSON depending on app
-                await queueAttendanceRequest(formData);
-                
-                // Return a fake successful response so the frontend thinks it succeeded
-                return new Response(JSON.stringify({
-                    success: true,
-                    message: "Offline mode: Attendance saved locally. Will sync when internet returns!"
-                }), { headers: { 'Content-Type': 'application/json' } });
-            })
-        );
-        return;
-    }
-
+    // Handle network-first explicitly in client via fetch catch block
     // Network-First strategy for GET requests (always get latest if online)
     if (event.request.method === 'GET') {
         const url = new URL(event.request.url);
@@ -77,76 +66,38 @@ self.addEventListener('fetch', (event) => {
     }
 });
 
-// IndexedDB Queue Logic
-function openDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open('AttendifyOfflineDB', 1);
-        request.onupgradeneeded = (e) => {
-            e.target.result.createObjectStore('attendance_queue', { autoIncrement: true });
-        };
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function queueAttendanceRequest(data) {
-    const db = await openDB();
-    const tx = db.transaction('attendance_queue', 'readwrite');
-    tx.objectStore('attendance_queue').add({
-        data: data,
-        timestamp: Date.now()
-    });
-    return new Promise((resolve) => {
-        tx.oncomplete = resolve;
-    });
-}
-
-async function syncOfflineAttendance() {
-    const db = await openDB();
-    const tx = db.transaction('attendance_queue', 'readonly');
-    const store = tx.objectStore('attendance_queue');
-    const request = store.getAll();
+self.addEventListener('push', (event) => {
+    let data = { title: "Attendify", body: "New notification", url: "/" };
     
-    request.onsuccess = async () => {
-        const items = request.result;
-        for (let item of items) {
-            try {
-                // Determine Content-Type based on the saved data format
-                let contentType = 'application/json';
-                if (typeof item.data === 'string' && item.data.includes('=')) {
-                     contentType = 'application/x-www-form-urlencoded';
-                }
-
-                await fetch('/student/attendance/mark', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': contentType
-                    },
-                    body: item.data
-                });
-                
-                // If successful, delete from DB
-                const delTx = db.transaction('attendance_queue', 'readwrite');
-                delTx.objectStore('attendance_queue').delete(item.id || item.timestamp);
-                console.log('[ServiceWorker] Successfully synced offline attendance!');
-            } catch (err) {
-                console.log('[ServiceWorker] Sync failed, will try again later.', err);
-            }
+    if (event.data) {
+        try {
+            data = event.data.json();
+        } catch (e) {
+            data.body = event.data.text();
+        }
+    }
+    
+    const options = {
+        body: data.body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        vibrate: [200, 100, 200],
+        data: {
+            url: data.url || '/'
         }
     };
-}
+    
+    event.waitUntil(
+        self.registration.showNotification(data.title, options)
+    );
+});
 
-// Background Sync (Triggered when internet returns)
-self.addEventListener('sync', (event) => {
-    if (event.tag === 'sync-attendance') {
-        event.waitUntil(syncOfflineAttendance());
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    if (event.notification.data && event.notification.data.url) {
+        event.waitUntil(
+            clients.openWindow(event.notification.data.url)
+        );
     }
 });
 
-// If Background Sync API is not supported (e.g. Safari), 
-// we listen for message from the client window when it detects online
-self.addEventListener('message', (event) => {
-    if (event.data === 'trigger-sync') {
-        syncOfflineAttendance();
-    }
-});

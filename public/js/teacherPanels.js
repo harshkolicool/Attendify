@@ -69,7 +69,7 @@
                 var visibleCount = 0;
 
                 items.forEach(function (item) {
-                    var textMatch = item.innerText.toLowerCase().includes(query);
+                    var textMatch = item.textContent.toLowerCase().includes(query);
                     var roomMatch = !selectedRoom || item.getAttribute("data-filter-room") === selectedRoom;
                     var stateMatch = !selectedState || item.getAttribute("data-filter-state") === selectedState;
                     var shouldShow = groupMatch && textMatch && roomMatch && stateMatch;
@@ -263,7 +263,7 @@
                 var visibleCount = 0;
 
                 items.forEach(function (item) {
-                    var textMatch = item.innerText.toLowerCase().includes(query);
+                    var textMatch = item.textContent.toLowerCase().includes(query);
                     var statusMatch = !selectedStatus || item.getAttribute("data-filter-status") === selectedStatus;
                     var shouldShow = groupMatch && textMatch && statusMatch;
 
@@ -392,7 +392,7 @@
                 var visibleCount = 0;
 
                 items.forEach(function (item) {
-                    var textMatch = item.innerText.toLowerCase().includes(query);
+                    var textMatch = item.textContent.toLowerCase().includes(query);
                     var shouldShow = reasonMatch && textMatch;
 
                     if (shouldShow) {

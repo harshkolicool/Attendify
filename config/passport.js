@@ -98,7 +98,7 @@ passport.deserializeUser(async (user, done) => {
             const studentId = user._id || user.id;
             const student = await Student.findById(studentId).select("-password");
 
-            if (!student || student.isDeleted) {
+            if (!student || student.isDeleted || student.isBlocked) {
                 return done(null, false);
             }
 
@@ -112,7 +112,7 @@ passport.deserializeUser(async (user, done) => {
             const teacherId = user._id || user.id;
             const teacher = await Teacher.findById(teacherId).select("-password");
 
-            if (!teacher || teacher.isDeleted) {
+            if (!teacher || teacher.isDeleted || teacher.isBlocked) {
                 return done(null, false);
             }
 

@@ -1,8 +1,19 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const rateLimit = require("express-rate-limit");
+
+const authLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 30,
+    message: "Too many attempts from this IP, please try again after a minute.",
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
 const router = express.Router();
 
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 const PlatformAdmin = require("../models/platformAdminSchema");
 const CollegeRegistrationRequest = require("../models/collegeRegistrationRequestSchema");
@@ -140,6 +151,30 @@ function getPlatformNotificationFilter() {
     };
 }
 
+function regenerateSession(req) {
+    return new Promise(function (resolve, reject) {
+        req.session.regenerate(function (err) {
+            if (err) {
+                return reject(err);
+            }
+
+            resolve();
+        });
+    });
+}
+
+function saveSession(req) {
+    return new Promise(function (resolve, reject) {
+        req.session.save(function (err) {
+            if (err) {
+                return reject(err);
+            }
+
+            resolve();
+        });
+    });
+}
+
 async function generateCollegeCode(collegeName) {
     const baseCode = getCollegeBaseCode(collegeName);
 
@@ -178,7 +213,7 @@ async function generateAdminEmployeeId(collegeId, collegeCode) {
 }
 
 function generateApprovalTemporaryPassword(collegeCode) {
-    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const randomPart = crypto.randomBytes(3).toString("base64url").slice(0, 4).toUpperCase();
     return collegeCode + "@Admin" + randomPart;
 }
 
@@ -192,21 +227,25 @@ function generateResetTemporaryPassword() {
 
     let password = "";
 
-    password += upper[Math.floor(Math.random() * upper.length)];
-    password += lower[Math.floor(Math.random() * lower.length)];
-    password += numbers[Math.floor(Math.random() * numbers.length)];
-    password += symbols[Math.floor(Math.random() * symbols.length)];
+    password += upper[crypto.randomInt(0, upper.length)];
+    password += lower[crypto.randomInt(0, lower.length)];
+    password += numbers[crypto.randomInt(0, numbers.length)];
+    password += symbols[crypto.randomInt(0, symbols.length)];
 
     for (let i = password.length; i < 12; i++) {
-        password += all[Math.floor(Math.random() * all.length)];
+        password += all[crypto.randomInt(0, all.length)];
     }
 
-    return password
-        .split("")
-        .sort(function () {
-            return 0.5 - Math.random();
-        })
-        .join("");
+    const chars = password.split("");
+
+    for (let i = chars.length - 1; i > 0; i--) {
+        const swapIndex = crypto.randomInt(0, i + 1);
+        const tmp = chars[i];
+        chars[i] = chars[swapIndex];
+        chars[swapIndex] = tmp;
+    }
+
+    return chars.join("");
 }
 
 async function resetCollegeAdminPassword(req, collegeAdmin, collegeName) {
@@ -254,7 +293,7 @@ router.get("/platform-admin/login", function (req, res) {
     });
 });
 
-router.post("/platform-admin/login", async function (req, res) {
+router.post("/platform-admin/login", authLimiter, async function (req, res) {
     try {
         const email = cleanEmail(req.body.email);
         const password = cleanText(req.body.password);
@@ -284,7 +323,9 @@ router.post("/platform-admin/login", async function (req, res) {
         platformAdmin.lastLogin = new Date();
         await platformAdmin.save();
 
+        await regenerateSession(req);
         req.session.platformAdminId = platformAdmin._id.toString();
+        await saveSession(req);
 
         res.redirect("/platform-admin/dashboard");
 
@@ -298,8 +339,14 @@ router.post("/platform-admin/login", async function (req, res) {
 });
 
 router.post("/platform-admin/logout", function (req, res) {
-    req.session.platformAdminId = null;
-    res.redirect("/platform-admin/login?message=logout");
+    if (!req.session) {
+        return res.redirect("/platform-admin/login?message=logout");
+    }
+
+    req.session.destroy(function () {
+        res.clearCookie("attendance.sid");
+        res.redirect("/platform-admin/login?message=logout");
+    });
 });
 
 router.get("/platform-admin/dashboard", isPlatformAdmin, async function (req, res) {
@@ -343,7 +390,7 @@ router.get("/platform-admin/dashboard", isPlatformAdmin, async function (req, re
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Dashboard error: " + err.message);
+        res.status(500).send("Dashboard error: " + "An internal server error occurred.");
     }
 });
 
@@ -367,7 +414,7 @@ router.get("/platform-admin/notifications", isPlatformAdmin, async function (req
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Platform notifications error: " + err.message);
+        res.status(500).send("Platform notifications error: " + "An internal server error occurred.");
     }
 });
 
@@ -501,7 +548,7 @@ router.get("/platform-admin/requests", isPlatformAdmin, async function (req, res
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Requests error: " + err.message);
+        res.status(500).send("Requests error: " + "An internal server error occurred.");
     }
 });
 
@@ -661,7 +708,7 @@ router.post("/platform-admin/requests/:id/approve", isPlatformAdmin, async funct
             req,
             "error",
             "Approval Failed",
-            "Approval error: " + err.message
+            "Approval failed. Please try again."
         );
 
         res.redirect("/platform-admin/requests?status=PENDING");
@@ -725,7 +772,7 @@ router.post("/platform-admin/requests/:id/reject", isPlatformAdmin, async functi
             req,
             "error",
             "Reject Failed",
-            "Reject error: " + err.message
+            "Reject action failed. Please try again."
         );
 
         res.redirect("/platform-admin/requests?status=PENDING");
@@ -821,7 +868,7 @@ router.post("/platform-admin/requests/:id/reset-admin-password", isPlatformAdmin
             req,
             "error",
             "Reset Failed",
-            "Password reset error: " + err.message
+            "Password reset failed. Please try again."
         );
 
         res.redirect("/platform-admin/dashboard");
@@ -889,7 +936,7 @@ router.post("/platform-admin/colleges/:collegeId/reset-admin-password", isPlatfo
             req,
             "error",
             "Reset Failed",
-            "Password reset error: " + err.message
+            "Password reset failed. Please try again."
         );
 
         res.redirect("/platform-admin/dashboard");
@@ -900,8 +947,8 @@ router.post("/platform-admin/colleges/:collegeId/reset-admin-password", isPlatfo
 router.get("/realtime/poll", isPlatformAdmin, async function (req, res) {
     try {
         const platformAdminId = req.session.platformAdminId;
-        const { getPlatformAdminUnreadCount } = require("../utils/notificationManager");
-        const unreadCount = await getPlatformAdminUnreadCount(platformAdminId);
+        const { getUnreadCount } = require("../utils/notificationService");
+        const unreadCount = await getUnreadCount(getPlatformNotificationFilter());
 
         const since = Number(req.query.since) || 0;
         let needsReload = false;

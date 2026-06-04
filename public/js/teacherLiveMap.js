@@ -15,7 +15,7 @@ function initTeacherLiveMap() {
     }
 
     if (mode === "disabled" || (!isSocketMode && !isPollingMode)) {
-        mapEl.innerHTML = '<div style="display:flex;height:100%;align-items:center;justify-content:center;color:#64748b;background:#f8fafc;padding:20px;text-align:center;border-radius:12px;"><div><i class="fa-solid fa-satellite" style="font-size:32px;margin-bottom:12px;opacity:0.5;"></i><p>Live map updates are disabled.</p></div></div>';
+        mapEl.innerHTML = '<div class="teacher-map-disabled"><div class="teacher-map-disabled-inner"><i class="fa-solid fa-satellite" aria-hidden="true"></i><p>Live map updates are disabled.</p></div></div>';
         const rosterEl = document.getElementById("teacherMapRoster");
         if (rosterEl) {
             rosterEl.innerHTML = '<div class="teacher-map-roster-empty">Live location tracking is disabled.</div>';
@@ -98,9 +98,8 @@ function initTeacherLiveMap() {
             markerStabilizers.set(
                 markerKey,
                 window.AttendifyLocationStabilizer.create({
-                    minMoveMeters: 3,
-                    accuracyRatio: 0.3,
-                    emaAlpha: 0.16,
+                    minMoveMeters: 8,
+                    accuracyRatio: 0.6,
                     heartbeatMs: 30000,
                     bufferSize: 10
                 })
@@ -117,7 +116,15 @@ function initTeacherLiveMap() {
             return { lat: lat, lon: lon, moved: true, isFirst: true };
         }
 
-        return stabilizer.update(lat, lon, accuracy);
+        const stable = stabilizer.update(lat, lon, accuracy);
+
+        // If accuracy is highly precise (like Google Maps), bypass the EMA dragging effect
+        // and instantly track the true physical location.
+        if (accuracy && accuracy <= 10) {
+            return { lat: lat, lon: lon, moved: true, isFirst: stable.isFirst };
+        }
+
+        return stable;
     }
 
     function readBootstrap() {
@@ -426,7 +433,7 @@ function initTeacherLiveMap() {
         } else {
             const teacherIcon = L.divIcon({
                 className: "custom-teacher-marker",
-                html: '<div style="width: 20px; height: 20px; background: #0f172a; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-chalkboard-user" style="color:white; font-size: 10px;"></i></div>',
+                html: '<div class="teacher-map-center-marker"><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i></div>',
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
             });
@@ -514,12 +521,12 @@ function initTeacherLiveMap() {
     }
 
     function getStatusColors(status) {
-        if (status === "INSIDE") return { bg: "#dcfce7", color: "#16a34a", border: "#bbf7d0", text: "Inside" };
-        if (status === "NEAR") return { bg: "#fef3c7", color: "#d97706", border: "#fde68a", text: "Near Boundary" };
-        if (status === "OUTSIDE") return { bg: "#e0e7ff", color: "#4f46e5", border: "#c7d2fe", text: "Outside" };
-        if (status === "POOR_ACCURACY") return { bg: "#f1f5f9", color: "#64748b", border: "#e2e8f0", text: "Poor GPS" };
-        if (status === "GLOBAL_TRACKING") return { bg: "#f0fdf4", color: "#22c55e", border: "#bbf7d0", text: "Online" };
-        return { bg: "#f1f5f9", color: "#64748b", border: "#e2e8f0", text: "Unknown" };
+        if (status === "INSIDE") return { key: "inside", color: "#16a34a", text: "Inside" };
+        if (status === "NEAR") return { key: "near", color: "#d97706", text: "Near Boundary" };
+        if (status === "OUTSIDE") return { key: "outside", color: "#4f46e5", text: "Outside" };
+        if (status === "POOR_ACCURACY") return { key: "poor", color: "#64748b", text: "Poor GPS" };
+        if (status === "GLOBAL_TRACKING") return { key: "online", color: "#22c55e", text: "Online" };
+        return { key: "unknown", color: "#64748b", text: "Unknown" };
     }
 
     function renderRoster() {
@@ -592,34 +599,52 @@ function initTeacherLiveMap() {
             const escapedEnrollment = escapeHtml(row.meta.enrollmentNumber || "—");
             const initial = escapedName.charAt(0).toUpperCase();
             
-            const c = isOnline ? getStatusColors(row.status) : { bg: "#f1f5f9", color: "#94a3b8", border: "#e2e8f0", text: "Offline" };
+            const c = isOnline ? getStatusColors(row.status) : { key: "offline", color: "#94a3b8", text: "Offline" };
             const markerAttr = row.latest && isOnline
                 ? ' data-marker-key="' + escapeHtml(row.latest.markerKey || "") + '" tabindex="0" role="button"'
                 : "";
             
             let details = "";
             if (row.latest && isOnline) {
+                const dist = row.latest.distance;
+                const acc = Math.round(row.latest.accuracy || 0);
+                const status = row.latest.status;
+
+                // When Inside or Near, the raw GPS-to-GPS distance is misleading:
+                // two devices at the same physical spot can differ by 20-50m indoors.
+                // Show GPS drift context instead of a bare distance number.
+                let distanceText;
+                if (status === "INSIDE") {
+                    distanceText = acc > 0
+                        ? `GPS drift ~${Math.round(dist)}m <span style="opacity:0.6;font-size:11px">(GPS ±${acc}m)</span>`
+                        : "Inside zone ✓";
+                } else if (status === "NEAR") {
+                    distanceText = `~${Math.round(dist)}m <span style="opacity:0.6;font-size:11px">(near boundary, GPS ±${acc}m)</span>`;
+                } else {
+                    distanceText = formatDistance(dist);
+                }
+
                 details = `
-                    <div style="display:flex; justify-content:space-between; margin-top: 6px; font-size: 0.8rem; color: #64748b;">
-                        <span><i class="fa-solid fa-location-arrow"></i> ${formatDistance(row.latest.distance)}</span>
-                        <span><i class="fa-solid fa-satellite-dish"></i> ±${Math.round(row.latest.accuracy || 0)}m</span>
+                    <div class="teacher-map-device-metrics">
+                        <span class="teacher-map-distance-row"><i class="fa-solid fa-location-arrow" aria-hidden="true"></i> ${distanceText}</span>
+                        <span class="teacher-map-accuracy-row"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i> ±${acc}m GPS</span>
                     </div>
-                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">Last: ${escapeHtml(formatTime(row.latest.updatedAt))}</div>
+                    <div class="teacher-map-last-seen">Last: ${escapeHtml(formatTime(row.latest.updatedAt))}</div>
                 `;
             }
 
             return `
-                <article class="teacher-map-student-card ${isOnline ? "is-live" : ""}"${markerAttr} style="border: 1px solid ${c.border}; background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 8px;">
-                    <div style="display: flex; gap: 12px; align-items: flex-start;">
-                        <div style="width: 36px; height: 36px; border-radius: 50%; background: ${c.bg}; color: ${c.color}; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; border: 2px solid ${c.border};">
+                <article class="teacher-map-student-card teacher-map-status-${c.key} ${isOnline ? "is-live" : ""}"${markerAttr}>
+                    <div class="teacher-map-student-top">
+                        <div class="teacher-map-avatar teacher-map-avatar-${c.key}">
                             ${initial}
                         </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                <strong style="font-size: 0.9rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 120px;">${escapedName}</strong>
-                                <span style="font-size: 0.7rem; font-weight: 800; padding: 2px 6px; border-radius: 99px; background: ${c.bg}; color: ${c.color}; border: 1px solid ${c.border};">${c.text}</span>
+                        <div class="teacher-map-student-copy">
+                            <div class="teacher-map-student-head">
+                                <strong>${escapedName}</strong>
+                                <span class="teacher-map-device-status teacher-map-device-status-${c.key}">${c.text}</span>
                             </div>
-                            <p style="font-size: 0.75rem; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapedEnrollment}</p>
+                            <p>${escapedEnrollment}</p>
                             ${details}
                         </div>
                     </div>
@@ -736,14 +761,15 @@ function initTeacherLiveMap() {
             // Custom circular div icon
             const markerIcon = L.divIcon({
                 className: "custom-student-marker",
-                html: `
-                    <div style="width: 28px; height: 28px; background: #fff; border-radius: 50%; border: 3px solid ${colors.color}; box-shadow: 0 3px 8px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; color: ${colors.color}; font-family: sans-serif;">
-                        ${initial}
-                    </div>
-                `,
+                html: `<div class="teacher-map-device-marker teacher-map-device-marker-${colors.key}">${initial}</div>`,
                 iconSize: [28, 28],
                 iconAnchor: [14, 14]
             });
+
+            // Determine z-index: Teacher is 1000, Inside is 500, Near is 400, Outside/Poor is 300
+            let zIndex = 300;
+            if (status === "INSIDE") zIndex = 500;
+            else if (status === "NEAR") zIndex = 400;
 
             let marker = deviceMarkers.get(markerKey);
 
@@ -753,10 +779,12 @@ function initTeacherLiveMap() {
                 }
 
                 marker.setIcon(markerIcon);
+                marker.setZIndexOffset(zIndex);
             } else {
                 marker = L.marker([drawLat, drawLon], {
                     icon: markerIcon,
-                    title: fullName
+                    title: fullName,
+                    zIndexOffset: zIndex
                 }).addTo(map);
                 deviceMarkers.set(markerKey, marker);
             }
@@ -788,35 +816,35 @@ function initTeacherLiveMap() {
             }
 
             const popupContent = `
-                <div style="font-family: var(--shell-font, sans-serif); min-width: 180px;">
-                    <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 8px;">
-                        <strong style="display: block; font-size: 15px; color: #0f172a;">${escapeHtml(fullName)}</strong>
-                        <span style="font-size: 12px; color: #64748b;">${escapeHtml(enrollment || "No ID")}</span>
+                <div class="teacher-map-popup">
+                    <div class="teacher-map-popup-head">
+                        <strong>${escapeHtml(fullName)}</strong>
+                        <span>${escapeHtml(enrollment || "No ID")}</span>
                     </div>
-                    <div style="display: grid; gap: 6px; font-size: 13px; color: #334155;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Status:</span> <strong style="color: ${colors.color};">${colors.text}</strong>
+                    <div class="teacher-map-popup-grid">
+                        <div class="teacher-map-popup-row">
+                            <span>Status:</span> <strong class="teacher-map-popup-status teacher-map-popup-status-${colors.key}">${colors.text}</strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between;">
+                        <div class="teacher-map-popup-row">
                             <span>GPS Accuracy:</span> <strong>±${Math.round(accuracy || 0)}m</strong>
                         </div>
                         ${sessionId !== "global" ? `
-                        <div style="display: flex; justify-content: space-between;">
+                        <div class="teacher-map-popup-row">
                             <span>Distance:</span> <strong>${formatDistance(distance)}</strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between;">
+                        <div class="teacher-map-popup-row">
                             <span>Base Radius:</span> <strong>${configuredRadius}m</strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between;">
+                        <div class="teacher-map-popup-row">
                             <span>Effective Radius:</span> <strong>${effectiveRadius}m</strong>
                         </div>` : ""}
                     </div>
                         ${
                             payload.gpsCorrected
-                                ? '<div style="margin-top:6px;font-size:11px;color:#0369a1;">GPS aligned with nearby verified devices (same location cluster).</div>'
+                                ? '<div class="teacher-map-popup-gps-note">GPS aligned with nearby verified devices (same location cluster).</div>'
                                 : ""
                         }
-                        <div style="margin-top: 8px; font-size: 11px; color: #94a3b8; text-align: right;">
+                        <div class="teacher-map-popup-updated">
                         Updated ${formatTime(payload.updatedAt || new Date())}
                     </div>
                 </div>

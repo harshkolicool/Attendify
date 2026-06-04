@@ -1,4 +1,14 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
+
+const authLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 30,
+    message: "Too many attempts from this IP, please try again after a minute.",
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
 const router = express.Router();
 const passport = require("passport");
 const mongoose = require("mongoose");
@@ -135,7 +145,7 @@ function isValidSemester(value) {
 
 function isValidRadius(value) {
     const radius = Number(value);
-    return !Number.isNaN(radius) && radius >= 1 && radius <= 10000;
+    return !Number.isNaN(radius) && radius >= 50 && radius <= 10000;
 }
 
 function isValidLatitude(value) {
@@ -146,6 +156,46 @@ function isValidLatitude(value) {
 function isValidLongitude(value) {
     const longitude = Number(value);
     return !Number.isNaN(longitude) && longitude >= -180 && longitude <= 180;
+}
+
+function regenerateSession(req) {
+    return new Promise(function (resolve, reject) {
+        req.session.regenerate(function (err) {
+            if (err) {
+                return reject(err);
+            }
+
+            resolve();
+        });
+    });
+}
+
+function saveSession(req) {
+    return new Promise(function (resolve, reject) {
+        req.session.save(function (err) {
+            if (err) {
+                return reject(err);
+            }
+
+            resolve();
+        });
+    });
+}
+
+async function loginWithFreshSession(req, user) {
+    await regenerateSession(req);
+
+    await new Promise(function (resolve, reject) {
+        req.logIn(user, function (err) {
+            if (err) {
+                return reject(err);
+            }
+
+            resolve();
+        });
+    });
+
+    await saveSession(req);
 }
 
 async function notifyTeacher(teacherId, collegeId, title, message, category, link, metadata) {
@@ -313,22 +363,10 @@ function csvIsValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+const { escapeCsvValue } = require("../utils/csv");
+
 function csvEscape(value) {
-    if (value === undefined || value === null) {
-        return "";
-    }
-
-    const text = value.toString();
-
-    if (
-        text.includes(",") ||
-        text.includes('"') ||
-        text.includes("\n")
-    ) {
-        return '"' + text.replace(/"/g, '""') + '"';
-    }
-
-    return text;
+    return escapeCsvValue(value);
 }
 
 function sendCsvResponse(res, filename, rows) {
@@ -1424,7 +1462,7 @@ router.get("/reports", isCollegeAdmin, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Admin reports page error: " + err.message);
+        res.status(500).send("Admin reports page error: " + "An internal server error occurred.");
     }
 });
 
@@ -1855,7 +1893,7 @@ router.post("/change-password", isCollegeAdmin, async function (req, res) {
         return res.render("admin/change-password", {
             admin: req.user,
             activePage: "change-password",
-            message: "Something went wrong while changing password: " + err.message,
+            message: "Something went wrong while changing password: "  + " Please try again.",
             messageType: "error"
         });
     }
@@ -1876,7 +1914,7 @@ router.get("/login", function (req, res) {
     });
 });
 
-router.post("/login", function (req, res, next) {
+router.post("/login", authLimiter, function (req, res, next) {
     passport.authenticate("teacher-local", function (err, user, info) {
         if (err) {
             console.log("ADMIN LOGIN ERROR:", err.message);
@@ -1889,13 +1927,10 @@ router.post("/login", function (req, res, next) {
             });
         }
 
-        req.logIn(user, function (loginErr) {
-            if (loginErr) {
-                console.log("ADMIN LOGIN SESSION ERROR:", loginErr.message);
-                return next(loginErr);
-            }
+        loginWithFreshSession(req, user)
+            .then(async function () {
+                const teacher = await Teacher.findById(user.id);
 
-            Teacher.findById(user.id).then(function (teacher) {
                 if (!teacher || teacher.role !== "ADMIN") {
                     req.logout(function () {
                         return res.render("admin/login", {
@@ -1905,9 +1940,12 @@ router.post("/login", function (req, res, next) {
                     return;
                 }
 
-                res.redirect("/admin/dashboard");
+                return res.redirect("/admin/dashboard");
+            })
+            .catch(function (loginErr) {
+                console.log("ADMIN LOGIN SESSION ERROR:", loginErr.message);
+                return next(loginErr);
             });
-        });
     })(req, res, next);
 });
 
@@ -1944,7 +1982,8 @@ router.get("/dashboard", isCollegeAdmin, async function (req, res) {
             counts: counts,
             message: getFlashMessage(req.query.message),
             error: null,
-            activePage: "dashboard"
+            activePage: "dashboard",
+            vapidPublicKey: process.env.VAPID_PUBLIC_KEY
         });
 
     } catch (err) {
@@ -1952,7 +1991,7 @@ router.get("/dashboard", isCollegeAdmin, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Admin dashboard error: " + err.message);
+        res.send("Admin dashboard error: "  + " Please try again.");
     }
 });
 
@@ -1996,7 +2035,7 @@ router.get("/notifications", isCollegeAdmin, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Admin notifications error: " + err.message);
+        res.status(500).send("Admin notifications error: " + "An internal server error occurred.");
     }
 });
 
@@ -2141,7 +2180,7 @@ router.get("/class-groups", isCollegeAdmin, async function (req, res) {
     } catch (err) {
         console.log("ADMIN CLASS GROUPS ERROR:");
         console.log(err.message);
-        res.send("Class groups error: " + err.message);
+        res.send("Class groups error: "  + " Please try again.");
     }
 });
 
@@ -2230,6 +2269,8 @@ router.post("/classrooms/:id/update", isCollegeAdmin, async function (req, res) 
         const buildingName = cleanText(req.body.buildingName);
         const floorNumber = Number(req.body.floorNumber);
         const radius = Number(req.body.radius) || 100;
+        const latitude = req.body.latitude ? Number(req.body.latitude) : 0;
+        const longitude = req.body.longitude ? Number(req.body.longitude) : 0;
 
         if (
             !classroomName ||
@@ -2271,7 +2312,9 @@ router.post("/classrooms/:id/update", isCollegeAdmin, async function (req, res) 
                     classroomName: classroomName,
                     buildingName: buildingName,
                     floorNumber: floorNumber,
-                    radius: radius
+                    radius: radius,
+                    latitude: latitude,
+                    longitude: longitude
                 }
             }
         );
@@ -2465,7 +2508,7 @@ router.get("/classrooms", isCollegeAdmin, async function (req, res) {
     } catch (err) {
         console.log("ADMIN CLASSROOMS ERROR:");
         console.log(err.message);
-        res.send("Classrooms error: " + err.message);
+        res.send("Classrooms error: "  + " Please try again.");
     }
 });
 
@@ -2477,12 +2520,16 @@ router.post("/classrooms/create", isCollegeAdmin, async function (req, res) {
         const buildingName = cleanText(req.body.buildingName);
         const floorNumber = Number(req.body.floorNumber);
         const radius = Number(req.body.radius) || 100;
+        const latitude = req.body.latitude ? Number(req.body.latitude) : 0;
+        const longitude = req.body.longitude ? Number(req.body.longitude) : 0;
 
         if (
             !classroomName ||
             !buildingName ||
             !Number.isInteger(floorNumber) ||
-            !isValidRadius(radius)
+            !isValidRadius(radius) ||
+            !isValidLatitude(latitude) ||
+            !isValidLongitude(longitude)
         ) {
             return res.redirect("/admin/classrooms?message=invalid_input");
         }
@@ -2507,6 +2554,8 @@ router.post("/classrooms/create", isCollegeAdmin, async function (req, res) {
                             buildingName: buildingName,
                             floorNumber: floorNumber,
                             radius: radius,
+                            latitude: latitude,
+                            longitude: longitude,
                             students: [],
                             attendanceSessions: [],
                             isDeleted: false
@@ -2528,6 +2577,8 @@ router.post("/classrooms/create", isCollegeAdmin, async function (req, res) {
             buildingName: buildingName,
             floorNumber: floorNumber,
             radius: radius,
+            latitude: latitude,
+            longitude: longitude,
             college: collegeId,
             students: [],
             attendanceSessions: []
@@ -2640,7 +2691,7 @@ router.get("/subjects", isCollegeAdmin, async function (req, res) {
     } catch (err) {
         console.log("ADMIN SUBJECTS ERROR:");
         console.log(err.message);
-        res.send("Subjects error: " + err.message);
+        res.send("Subjects error: "  + " Please try again.");
     }
 });
 
@@ -3058,7 +3109,7 @@ router.get("/teachers", isCollegeAdmin, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Teachers page error: " + err.message);
+        res.status(500).send("Teachers page error: " + "An internal server error occurred.");
     }
 });
 
@@ -3348,9 +3399,25 @@ router.get("/students/pending", isCollegeAdmin, async function (req, res) {
     }
 });
 
+router.get("/students/pending/json", isCollegeAdmin, async function (req, res) {
+    try {
+        const collegeId = getCollegeId(req);
+        
+        const pendingStudents = await Student.find({
+            college: collegeId,
+            isApproved: false,
+            isDeleted: { $ne: true }
+        }).sort({ createdAt: -1 }).lean();
+
+        res.json({ success: true, pendingStudents });
+    } catch (err) {
+        console.error("ADMIN GET PENDING STUDENTS JSON ERROR:", err);
+        res.status(500).json({ success: false, error: "Server error" });
+    }
+});
+
 router.post("/students/approve/:id", isCollegeAdmin, async function (req, res) {
     try {
-        const crypto = require("crypto");
         const collegeId = getCollegeId(req);
         const studentId = req.params.id;
 
@@ -3358,11 +3425,9 @@ router.post("/students/approve/:id", isCollegeAdmin, async function (req, res) {
             return res.redirect("/admin/students/pending?message=invalid_id");
         }
 
-        const autoToken = crypto.randomBytes(32).toString("hex");
-
         const student = await Student.findOneAndUpdate(
             { _id: studentId, college: collegeId, isDeleted: { $ne: true } },
-            { $set: { isApproved: true, autoLoginToken: autoToken } },
+            { $set: { isApproved: true, autoLoginToken: null } },
             { new: true }
         );
 
@@ -3370,12 +3435,18 @@ router.post("/students/approve/:id", isCollegeAdmin, async function (req, res) {
             return res.redirect("/admin/students/pending?message=invalid_student");
         }
 
-        socketManager.emitStudentApproved(studentId, autoToken);
+        socketManager.emitStudentApproved(studentId, collegeId);
 
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.json({ success: true, message: "Student approved successfully" });
+        }
         res.redirect("/admin/students/pending?message=student_approved_successfully");
 
     } catch (err) {
         console.error("ADMIN APPROVE STUDENT ERROR:", err);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({ success: false, error: "Server error" });
+        }
         res.redirect("/admin/students/pending?message=error");
     }
 });
@@ -3457,7 +3528,7 @@ router.get("/students", isCollegeAdmin, async function (req, res) {
     } catch (err) {
         console.log("ADMIN STUDENTS ERROR:");
         console.log(err.message);
-        res.send("Students error: " + err.message);
+        res.send("Students error: "  + " Please try again.");
     }
 });
 
@@ -4237,6 +4308,12 @@ router.post("/students/:id/delete", isCollegeAdmin, async function (req, res) {
         }
 
         const result = await deleteStudentRecord(collegeId, studentId);
+        
+        socketManager.emitStudentRejected(studentId, collegeId);
+
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.json({ success: result.code === "deleted", message: result.code });
+        }
         res.redirect("/admin/students?message=" + result.code);
 
     } catch (err) {
@@ -4244,6 +4321,9 @@ router.post("/students/:id/delete", isCollegeAdmin, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({ success: false, error: "Server error" });
+        }
         res.redirect("/admin/students?message=error");
     }
 });
@@ -4350,7 +4430,7 @@ router.get("/schedules", isCollegeAdmin, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Schedules error: " + err.message);
+        res.send("Schedules error: "  + " Please try again.");
     }
 });
 
@@ -4389,12 +4469,12 @@ router.post("/schedules/create", isCollegeAdmin, async function (req, res) {
         const startMinutes = timeToMinutes(startTime);
         const endMinutes = timeToMinutes(endTime);
 
-        if (
-            startMinutes === null ||
-            endMinutes === null ||
-            endMinutes <= startMinutes
-        ) {
+        if (startMinutes === null || endMinutes === null) {
             return res.redirect("/admin/schedules?message=invalid_time");
+        }
+
+        if (endMinutes <= startMinutes) {
+            return res.redirect("/admin/schedules?message=overnight_schedule_not_supported");
         }
 
         const classGroup = await ClassGroup.findOne({
@@ -4528,6 +4608,70 @@ router.post("/schedules/create", isCollegeAdmin, async function (req, res) {
                 classroomId: classroomId.toString()
             }
         );
+
+        setTimeout(async () => {
+            try {
+                const webpush = require("web-push");
+                if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+                    webpush.setVapidDetails(
+                        process.env.VAPID_SUBJECT || "mailto:admin@attendify.com",
+                        process.env.VAPID_PUBLIC_KEY,
+                        process.env.VAPID_PRIVATE_KEY
+                    );
+
+                    const subjName = subject.subjectName || "a subject";
+                    
+                    // 1. Notify Students
+                    const Student = require("../models/studentSchema");
+                    const studentsToPush = await Student.find({
+                        classGroup: classGroupId,
+                        isDeleted: { $ne: true }
+                    });
+                    
+                    const studentPayload = JSON.stringify({
+                        title: "New Class Schedule Added",
+                        body: `A new schedule for ${subjName} on ${day} has been added.`,
+                        url: "/student/dashboard"
+                    });
+                    
+                    studentsToPush.forEach(student => {
+                        if (student.pushSubscriptions && student.pushSubscriptions.length > 0) {
+                            student.pushSubscriptions.forEach(sub => {
+                                webpush.sendNotification(sub, studentPayload).catch(() => {});
+                            });
+                        }
+                    });
+
+                    // 2. Notify Teacher
+                    const teacher = await Teacher.findById(teacherId);
+                    if (teacher && teacher.pushSubscriptions && teacher.pushSubscriptions.length > 0) {
+                        const teacherPayload = JSON.stringify({
+                            title: "New Schedule Assigned",
+                            body: `You have been assigned to teach ${subjName} for ${classGroup.name} on ${day}.`,
+                            url: "/teacher/dashboard"
+                        });
+                        teacher.pushSubscriptions.forEach(sub => {
+                            webpush.sendNotification(sub, teacherPayload).catch(() => {});
+                        });
+                    }
+
+                    // 3. Notify Admin (Creator)
+                    const adminUser = await Teacher.findById(req.user._id);
+                    if (adminUser && adminUser.pushSubscriptions && adminUser.pushSubscriptions.length > 0) {
+                        const adminPayload = JSON.stringify({
+                            title: "Schedule Created Successfully",
+                            body: `You have successfully scheduled ${subjName} for ${classGroup.name}.`,
+                            url: "/admin/schedules"
+                        });
+                        adminUser.pushSubscriptions.forEach(sub => {
+                            webpush.sendNotification(sub, adminPayload).catch(() => {});
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log("Schedule Push trigger error", e);
+            }
+        }, 0);
 
         res.redirect("/admin/schedules?message=created");
 
@@ -4904,7 +5048,7 @@ router.post(
             setStudentImportResult(req, {
                 type: "error",
                 title: "Import Failed",
-                message: "Import error: " + err.message,
+                message: "Import error: "  + " Please try again.",
                 errors: []
             });
 
@@ -4955,12 +5099,12 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
         const startMinutes = timeToMinutes(startTime);
         const endMinutes = timeToMinutes(endTime);
 
-        if (
-            startMinutes === null ||
-            endMinutes === null ||
-            endMinutes <= startMinutes
-        ) {
+        if (startMinutes === null || endMinutes === null) {
             return res.redirect("/admin/schedules?message=invalid_time");
+        }
+
+        if (endMinutes <= startMinutes) {
+            return res.redirect("/admin/schedules?message=overnight_schedule_not_supported");
         }
 
         const schedule = await Schedule.findOne({
@@ -5206,6 +5350,71 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
             }
         );
 
+        setTimeout(async () => {
+            try {
+                const webpush = require("web-push");
+                if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+                    webpush.setVapidDetails(
+                        process.env.VAPID_SUBJECT || "mailto:admin@attendify.com",
+                        process.env.VAPID_PUBLIC_KEY,
+                        process.env.VAPID_PRIVATE_KEY
+                    );
+
+                    const subjName = subject.subjectName || "a subject";
+                    const className = classGroup ? classGroup.name : "your class";
+                    
+                    // 1. Notify Students
+                    const Student = require("../models/studentSchema");
+                    const studentsToPush = await Student.find({
+                        classGroup: classGroupId,
+                        isDeleted: { $ne: true }
+                    });
+                    
+                    const studentPayload = JSON.stringify({
+                        title: "Class Rescheduled",
+                        body: `The schedule for ${subjName} has been updated to ${day} (${startTime} - ${endTime}).`,
+                        url: "/student/dashboard"
+                    });
+                    
+                    studentsToPush.forEach(student => {
+                        if (student.pushSubscriptions && student.pushSubscriptions.length > 0) {
+                            student.pushSubscriptions.forEach(sub => {
+                                webpush.sendNotification(sub, studentPayload).catch(() => {});
+                            });
+                        }
+                    });
+
+                    // 2. Notify Teacher
+                    const teacher = await Teacher.findById(teacherId);
+                    if (teacher && teacher.pushSubscriptions && teacher.pushSubscriptions.length > 0) {
+                        const teacherPayload = JSON.stringify({
+                            title: "Schedule Updated",
+                            body: `Your schedule for ${subjName} (${className}) has been changed to ${day} (${startTime} - ${endTime}).`,
+                            url: "/teacher/dashboard"
+                        });
+                        teacher.pushSubscriptions.forEach(sub => {
+                            webpush.sendNotification(sub, teacherPayload).catch(() => {});
+                        });
+                    }
+
+                    // 3. Notify Admin (Creator)
+                    const adminUser = await Teacher.findById(req.user._id);
+                    if (adminUser && adminUser.pushSubscriptions && adminUser.pushSubscriptions.length > 0) {
+                        const adminPayload = JSON.stringify({
+                            title: "Schedule Updated Successfully",
+                            body: `You have successfully rescheduled ${subjName} for ${className}.`,
+                            url: "/admin/schedules"
+                        });
+                        adminUser.pushSubscriptions.forEach(sub => {
+                            webpush.sendNotification(sub, adminPayload).catch(() => {});
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log("Schedule Update Push trigger error", e);
+            }
+        }, 0);
+
         res.redirect("/admin/schedules?message=updated");
 
     } catch (err) {
@@ -5309,8 +5518,8 @@ router.get("/realtime/poll", isCollegeAdmin, async function (req, res) {
         const adminId = req.user._id || req.user.id;
         const collegeId = req.user.college;
 
-        const { getUnreadCount } = require("../utils/notificationManager");
-        const unreadCount = await getUnreadCount(adminId.toString(), "ADMIN");
+        const { getUnreadCount } = require("../utils/notificationService");
+        const unreadCount = await getUnreadCount({ recipientRole: "ADMIN", recipientUserId: adminId, college: collegeId });
 
         const since = Number(req.query.since) || 0;
         let needsReload = false;

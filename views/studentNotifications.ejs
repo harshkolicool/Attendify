@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications | Student</title>
 
-    <link rel="stylesheet" href="/css/studentSchedule.css">
     <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/studentSchedule.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
     <link
@@ -30,6 +30,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -134,6 +144,26 @@
     </main>
 </div>
 
+<script type="application/json" id="studentLiveSessionBootstrap"><%- typeof studentLiveBootstrap !== "undefined" ? JSON.stringify(studentLiveBootstrap).replace(/</g, "\\u003c") : "[]" %></script>
+
+<script>
+    window.AttendifyRealtimeConfig = {
+        mode: "<%= typeof realtimeMode !== 'undefined' ? realtimeMode : 'auto' %>",
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== 'undefined' ? realtimePollIntervalMs : 5000 %>
+    };
+</script>
+
+<% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>
+<script src="/socket.io/socket.io.js"></script>
+<% } %>
+<script src="/js/kalmanFilter.js"></script>
+<script src="/js/locationStabilizer.js"></script>
+<script src="/js/geoAccuracy.js"></script>
+<script src="/js/studentRealtime.js"></script>
+<script src="/js/studentLiveLocation.js"></script>
 <script src="/js/uiShell.js"></script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

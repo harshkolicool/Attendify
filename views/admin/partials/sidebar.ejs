@@ -9,7 +9,14 @@
 
         <div class="admin-brand-text">
             <h2>Attendify</h2>
-            <p>Admin Panel</p>
+            <% if (typeof currentCollege !== "undefined" && currentCollege && currentCollege.collegeCode) { %>
+                <p>
+                    Admin Panel
+                    <span class="admin-college-code-badge"><%= currentCollege.collegeCode %></span>
+                </p>
+            <% } else { %>
+                <p>Admin Panel</p>
+            <% } %>
         </div>
     </a>
 

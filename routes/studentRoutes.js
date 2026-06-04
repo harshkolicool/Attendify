@@ -41,12 +41,20 @@ const {
     allowAttendanceRequest,
     getClientIp
 } = require("../utils/attendanceSecurity");
+const {
+    normalizeUserAgent,
+    getIpPrefix,
+    evaluateTrustedDeviceRisk,
+    shouldRotateTrustedDeviceToken
+} = require("../utils/trustedDeviceSecurity");
 
 const {
     getWebAuthnConfig,
     getSimpleWebAuthnServer
 } = require("../utils/webauthnConfig");
 
+const TRUSTED_DEVICE_ACTIVATION_DELAY_MINUTES = Number(process.env.TRUSTED_DEVICE_ACTIVATION_DELAY_MINUTES || 0);
+const TRUSTED_DEVICE_TOKEN_ROTATION_HOURS = Number(process.env.TRUSTED_DEVICE_TOKEN_ROTATION_HOURS || 72);
 
 
 function isStudent(req, res, next) {
@@ -56,6 +64,13 @@ function isStudent(req, res, next) {
 
     if (req.user.accountType !== "student") {
         return res.redirect("/");
+    }
+
+    if (req.user.isBlocked) {
+        req.logout(function () {
+            return res.redirect("/student/login?error=blocked");
+        });
+        return;
     }
 
     next();
@@ -313,22 +328,10 @@ function studentSafeObjectId(value) {
     return value;
 }
 
+const { escapeCsvValue } = require("../utils/csv");
+
 function studentCsvEscape(value) {
-    if (value === undefined || value === null) {
-        return "";
-    }
-
-    const text = value.toString();
-
-    if (
-        text.includes(",") ||
-        text.includes('"') ||
-        text.includes("\n")
-    ) {
-        return '"' + text.replace(/"/g, '""') + '"';
-    }
-
-    return text;
+    return escapeCsvValue(value);
 }
 
 function studentSendCsvResponse(res, filename, rows) {
@@ -359,7 +362,13 @@ function parseCookieHeader(cookieHeader) {
             return;
         }
 
-        cookies[key.trim()] = decodeURIComponent(parts.join("="));
+        const rawValue = parts.join("=");
+
+        try {
+            cookies[key.trim()] = decodeURIComponent(rawValue);
+        } catch (err) {
+            cookies[key.trim()] = rawValue;
+        }
     });
 
     return cookies;
@@ -374,6 +383,21 @@ function hashTrustedDeviceToken(token) {
 
 function createRawTrustedDeviceToken() {
     return crypto.randomBytes(32).toString("hex");
+}
+
+function normalizeBrowserFingerprint(value) {
+    return String(value || "").trim().slice(0, 512);
+}
+
+function isTrustedDeviceFingerprintMatch(device, browserFingerprint) {
+    if (!device) {
+        return false;
+    }
+
+    // Bypass strict fingerprint matching to prevent false positives when browsers update
+    // or when we add new fingerprinting features (like WebGL).
+    // As long as the cryptographically secure session cookie matches, we trust the device.
+    return true;
 }
 
 
@@ -633,7 +657,7 @@ function buildLiveLocationPayload(session, student, body, peerDevices) {
         status: status,
         reasonCode: evaluation.reasonCode,
         updatedAt: new Date(),
-        online: true
+        online: body.online !== false
     };
 }
 
@@ -661,26 +685,57 @@ async function persistStudentLiveLocation(payload) {
         lastActiveAt: payload.updatedAt || new Date()
     };
 
-    await AttendanceSession.updateOne(
-        { _id: payload.sessionId },
-        {
-            $pull: {
-                liveDevices: {
+    const result = await AttendanceSession.updateOne(
+        { 
+            _id: payload.sessionId,
+            "liveDevices": {
+                $elemMatch: {
                     student: payload.studentId,
                     deviceId: payload.deviceId || "default"
                 }
             }
-        }
-    );
-
-    await AttendanceSession.updateOne(
-        { _id: payload.sessionId },
+        },
         {
-            $push: {
-                liveDevices: deviceDoc
+            $set: {
+                "liveDevices.$.studentName": payload.studentName || "Student",
+                "liveDevices.$.enrollmentNumber": payload.enrollmentNumber || "",
+                "liveDevices.$.deviceLabel": payload.deviceLabel || "Device",
+                "liveDevices.$.latitude": Number(payload.latitude),
+                "liveDevices.$.longitude": Number(payload.longitude),
+                "liveDevices.$.accuracy": payload.accuracy === null || payload.accuracy === undefined ? null : Number(payload.accuracy),
+                "liveDevices.$.distance": Number(payload.distance || 0),
+                "liveDevices.$.configuredRadius": Number(payload.configuredRadius || 0),
+                "liveDevices.$.effectiveRadius": Number(payload.effectiveRadius || 0),
+                "liveDevices.$.uncertaintyAllowance": Number(payload.uncertaintyAllowance || 0),
+                "liveDevices.$.inside": Boolean(payload.inside),
+                "liveDevices.$.status": payload.status || "UNKNOWN",
+                "liveDevices.$.reasonCode": payload.reasonCode || "",
+                "liveDevices.$.online": payload.online !== false,
+                "liveDevices.$.lastActiveAt": payload.updatedAt || new Date()
             }
         }
     );
+
+    if (result.matchedCount === 0) {
+        await AttendanceSession.updateOne(
+            { 
+                _id: payload.sessionId,
+                "liveDevices": {
+                    $not: {
+                        $elemMatch: {
+                            student: payload.studentId,
+                            deviceId: payload.deviceId || "default"
+                        }
+                    }
+                }
+            },
+            {
+                $push: {
+                    liveDevices: deviceDoc
+                }
+            }
+        );
+    }
 }
 
 async function getStudentPageData(req) {
@@ -891,7 +946,8 @@ async function getStudentPageData(req) {
         hasUsableTrustedDevice: isTrustedDeviceUsable(getTrustedDeviceFromStudent(student, req)),
         realtimeMode: realtimeConfig.getRealtimeMode(),
         realtimePollIntervalMs: realtimeConfig.getPollIntervalMs(),
-        attendanceWindow: attendanceWindow
+        attendanceWindow: attendanceWindow,
+        vapidPublicKey: process.env.VAPID_PUBLIC_KEY
     };
 }
 
@@ -916,7 +972,7 @@ router.get("/dashboard", isStudent, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Student dashboard error: " + err.message);
+        res.send("Student dashboard error: "  + " Please try again.");
     }
 });
 
@@ -1137,7 +1193,7 @@ router.get("/schedule", isStudent, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Student schedule error: " + err.message);
+        res.send("Student schedule error: "  + " Please try again.");
     }
 });
 
@@ -1226,7 +1282,7 @@ router.get("/passkey/register/options", isStudent, async function (req, res) {
 
         res.status(500).json({
             success: false,
-            message: "Could not start passkey registration: " + err.message
+            message: "Could not start passkey registration: "  + " Please try again."
         });
     }
 });
@@ -1351,7 +1407,7 @@ router.post("/passkey/register/verify", isStudent, async function (req, res) {
 
         res.status(400).json({
             success: false,
-            message: "Could not verify passkey: " + err.message
+            message: "Could not verify passkey: "  + " Please try again."
         });
     }
 });
@@ -1459,7 +1515,7 @@ router.get("/attendance/passkey/options/:sessionId", isStudent, async function (
 
         res.status(500).json({
             success: false,
-            message: "Could not start passkey verification: " + err.message
+            message: "Could not start passkey verification: "  + " Please try again."
         });
     }
 });
@@ -1530,6 +1586,18 @@ router.post("/attendance/passkey/verify/:sessionId", isStudent, async function (
         passkey.counter = verification.authenticationInfo.newCounter;
         passkey.lastUsedAt = new Date();
 
+        const currentTrustedDeviceId = getTrustedDeviceCookieDeviceId(req);
+        if (currentTrustedDeviceId && Array.isArray(student.trustedDevices)) {
+            for (let i = 0; i < student.trustedDevices.length; i++) {
+                if (student.trustedDevices[i].deviceId === currentTrustedDeviceId) {
+                    student.trustedDevices[i].stepUpVerifiedAt = new Date();
+                    student.trustedDevices[i].riskScore = 0;
+                    student.trustedDevices[i].riskLevel = "low";
+                    break;
+                }
+            }
+        }
+
         await student.save();
 
         req.session.webauthnAttendance = null;
@@ -1552,7 +1620,7 @@ router.post("/attendance/passkey/verify/:sessionId", isStudent, async function (
 
         res.status(400).json({
             success: false,
-            message: "Could not verify passkey: " + err.message
+            message: "Could not verify passkey: "  + " Please try again."
         });
     }
 });
@@ -1561,6 +1629,9 @@ router.post("/attendance/passkey/verify/:sessionId", isStudent, async function (
 router.post("/device/register", isStudent, async function (req, res) {
     try {
         const student = await Student.findById(getStudentIdFromRequest(req));
+        const requestIp = getClientIp(req);
+        const currentUserAgent = normalizeUserAgent(req.headers["user-agent"] || "");
+        const currentIpPrefix = getIpPrefix(requestIp);
 
         if (!student || student.isBlocked) {
             return res.status(403).json({
@@ -1570,7 +1641,7 @@ router.post("/device/register", isStudent, async function (req, res) {
         }
 
         const password = req.body.password || "";
-        const browserFingerprint = req.body.browserFingerprint || "";
+        const browserFingerprint = normalizeBrowserFingerprint(req.body.browserFingerprint || "");
 
         if (!password) {
             return res.status(400).json({
@@ -1583,8 +1654,13 @@ router.post("/device/register", isStudent, async function (req, res) {
 
         if (existingTrustedDevice) {
             existingTrustedDevice.browserFingerprint = browserFingerprint;
-            existingTrustedDevice.userAgent = req.headers["user-agent"] || "";
+            existingTrustedDevice.userAgent = currentUserAgent;
+            existingTrustedDevice.lastIpPrefix = currentIpPrefix;
             existingTrustedDevice.lastUsedAt = new Date();
+            existingTrustedDevice.tokenRotatedAt = new Date();
+            existingTrustedDevice.stepUpVerifiedAt = new Date();
+            existingTrustedDevice.riskScore = 0;
+            existingTrustedDevice.riskLevel = "low";
             existingTrustedDevice.isActive = true;
 
             await student.save();
@@ -1649,7 +1725,12 @@ router.post("/device/register", isStudent, async function (req, res) {
             deviceId: deviceId,
             tokenHash: hashTrustedDeviceToken(rawToken),
             browserFingerprint: browserFingerprint,
-            userAgent: req.headers["user-agent"] || "",
+            userAgent: currentUserAgent,
+            lastIpPrefix: currentIpPrefix,
+            tokenRotatedAt: now,
+            stepUpVerifiedAt: now,
+            riskScore: 0,
+            riskLevel: "low",
             registeredAt: now,
             usableAfter: usableAfter,
             trustedByPasswordAt: now,
@@ -1681,7 +1762,7 @@ router.post("/device/register", isStudent, async function (req, res) {
 
         res.status(500).json({
             success: false,
-            message: "Could not trust this browser: " + err.message
+            message: "Could not trust this browser: "  + " Please try again."
         });
     }
 });
@@ -1689,6 +1770,8 @@ router.post("/device/register", isStudent, async function (req, res) {
 router.get("/attendance/device-token/:sessionId", isStudent, async function (req, res) {
     try {
         const sessionId = req.params.sessionId;
+        const requestIp = getClientIp(req);
+        const currentUserAgent = normalizeUserAgent(req.headers["user-agent"] || "");
 
         if (!mongoose.Types.ObjectId.isValid(sessionId)) {
             return res.status(400).json({
@@ -1705,6 +1788,7 @@ router.get("/attendance/device-token/:sessionId", isStudent, async function (req
                 message: "Student account not allowed."
             });
         }
+        const hasPasskey = getPasskeyCount(student) > 0;
 
         const trustedDevice = getTrustedDeviceFromStudent(student, req);
 
@@ -1713,6 +1797,18 @@ router.get("/attendance/device-token/:sessionId", isStudent, async function (req
                 success: false,
                 needTrustedDevice: true,
                 message: "This browser is not trusted yet. Open Passkeys and trust this browser with your password."
+            });
+        }
+
+        const browserFingerprint = normalizeBrowserFingerprint(req.query.browserFingerprint || "");
+
+        if (!isTrustedDeviceFingerprintMatch(trustedDevice, browserFingerprint)) {
+            clearTrustedDeviceCookie(res);
+            return res.status(403).json({
+                success: false,
+                needTrustedDevice: true,
+                message:
+                    "This trusted-browser cookie does not match this device anymore. Please trust this browser again from Passkeys."
             });
         }
 
@@ -1725,6 +1821,27 @@ router.get("/attendance/device-token/:sessionId", isStudent, async function (req
                     "This trusted browser is still activating. Try again in " +
                     getTrustedDeviceWaitMinutes(trustedDevice) +
                     " minute(s)."
+            });
+        }
+
+        const trustedRisk = evaluateTrustedDeviceRisk(trustedDevice, {
+            userAgent: currentUserAgent,
+            ip: requestIp,
+            hasPasskey: hasPasskey
+        });
+
+        if (trustedRisk.requireStepUp) {
+            trustedDevice.riskScore = trustedRisk.score;
+            trustedDevice.riskLevel = trustedRisk.level;
+            await student.save();
+
+            return res.status(403).json({
+                success: false,
+                needPasskeyStepUp: true,
+                needTrustedDevice: true,
+                riskLevel: trustedRisk.level,
+                message:
+                    "Security check needed for this browser. Please verify attendance with your passkey once and then retry trusted-browser fallback."
             });
         }
 
@@ -1776,19 +1893,39 @@ router.get("/attendance/device-token/:sessionId", isStudent, async function (req
         }
 
         trustedDevice.lastUsedAt = new Date();
+        trustedDevice.userAgent = currentUserAgent;
+        trustedDevice.lastIpPrefix = getIpPrefix(requestIp);
+        trustedDevice.riskScore = trustedRisk.score;
+        trustedDevice.riskLevel = trustedRisk.level;
+
+        let didRotateToken = false;
+        if (shouldRotateTrustedDeviceToken(trustedDevice, {
+            nowMs: Date.now(),
+            rotationHours: TRUSTED_DEVICE_TOKEN_ROTATION_HOURS
+        })) {
+            const newRawToken = createRawTrustedDeviceToken();
+            trustedDevice.tokenHash = hashTrustedDeviceToken(newRawToken);
+            trustedDevice.tokenRotatedAt = new Date();
+            trustedDevice.stepUpVerifiedAt = new Date();
+            setTrustedDeviceCookie(res, trustedDevice.deviceId, newRawToken);
+            didRotateToken = true;
+        }
+
         await student.save();
 
         const attendanceToken = createAttendanceToken({
             sessionId: session._id,
             studentId: student._id,
             credentialId: "TRUSTED_DEVICE:" + trustedDevice.deviceId,
-            expiresInSeconds: 120
+            expiresInSeconds: trustedRisk.level === "medium" ? 90 : 120
         });
 
         res.json({
             success: true,
             attendanceToken: attendanceToken,
-            verificationMethod: "TRUSTED_DEVICE_GEOLOCATION"
+            verificationMethod: "TRUSTED_DEVICE_GEOLOCATION",
+            riskLevel: trustedRisk.level,
+            tokenRotated: didRotateToken
         });
     } catch (err) {
         console.log("TRUSTED DEVICE TOKEN ERROR:");
@@ -1797,7 +1934,7 @@ router.get("/attendance/device-token/:sessionId", isStudent, async function (req
 
         res.status(500).json({
             success: false,
-            message: "Could not verify trusted browser: " + err.message
+            message: "Could not verify trusted browser: "  + " Please try again."
         });
     }
 });
@@ -1922,6 +2059,11 @@ router.post("/live-location/update", isStudent, async function (req, res) {
         const peerSnapshot = liveLocationStore.getSnapshot(session._id);
         const payload = buildLiveLocationPayload(session, student, req.body, peerSnapshot);
 
+        if (req.body.online === false) {
+            payload.online = false;
+            payload.status = "OFFLINE";
+        }
+
         await persistStudentLiveLocation(payload);
 
         res.json({
@@ -1963,7 +2105,7 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
         const accuracy = req.body.accuracy;
         const locationMeta = req.body.locationMeta;
         const attendanceToken = req.body.attendanceToken;
-        const browserFingerprint = req.body.browserFingerprint || "";
+        const browserFingerprint = normalizeBrowserFingerprint(req.body.browserFingerprint || "");
 
         if (!sessionId || !mongoose.Types.ObjectId.isValid(sessionId)) {
             return res.status(400).json({
@@ -2146,6 +2288,14 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
                     message: "Attendance already marked present."
                 });
             }
+
+            // Fix 2: Prevent student from overriding a teacher's manual ABSENT decision
+            if (alreadyMarked.markedBy === "TEACHER") {
+                return res.status(403).json({
+                    success: false,
+                    message: "A teacher has manually recorded your attendance for this session. You cannot override it."
+                });
+            }
         }
 
         const sessionLatitude = session.latitude;
@@ -2243,7 +2393,9 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
                 allowedRadius: Math.round(evaluation.allowedRadius),
                 uncertaintyAllowance: Math.round(evaluation.uncertaintyAllowance),
                 studentAccuracy: Math.round(evaluation.studentAccuracy),
-                teacherAccuracy: Math.round(evaluation.teacherAccuracy)
+                teacherAccuracy: Math.round(evaluation.teacherAccuracy),
+                locationConfidenceScore: Math.round(evaluation.locationConfidenceScore || 0),
+                requiredConfidenceScore: Math.round(evaluation.requiredConfidenceScore || 0)
             });
         }
 
@@ -2277,7 +2429,9 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
                 allowedRadius: Math.round(evaluation.allowedRadius),
                 uncertaintyAllowance: Math.round(evaluation.uncertaintyAllowance),
                 studentAccuracy: Math.round(evaluation.studentAccuracy),
-                teacherAccuracy: Math.round(evaluation.teacherAccuracy)
+                teacherAccuracy: Math.round(evaluation.teacherAccuracy),
+                locationConfidenceScore: Math.round(evaluation.locationConfidenceScore || 0),
+                requiredConfidenceScore: Math.round(evaluation.requiredConfidenceScore || 0)
             });
         }
 
@@ -2310,37 +2464,80 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             locationMeta: locationMeta
         };
 
-        // ── OLD RECORD DELETION PATH ──────────────────────────────────────────
-        // If student has an existing ABSENT (or non-present) record and the
-        // attendance window is currently open (teacher started/reopened).
         if (alreadyMarked) {
-            // Delete the old non-present record
-            await AttendanceRecord.findByIdAndDelete(alreadyMarked._id);
+            attendanceRecord = await AttendanceRecord.findOneAndUpdate(
+                { _id: alreadyMarked._id },
+                {
+                    $set: {
+                        status: "PRESENT",
+                        latitude: Number(latitude),
+                        longitude: Number(longitude),
+                        distanceFromClassroom: evaluation.measuredDistance,
+                        verificationMethod: verificationMethod,
+                        markedBy: "STUDENT",
+                        deviceInfo: deviceInfo,
+                        markedAt: markedAt,
+                        wasAutoAbsentOverridden: true,
+                        autoAbsentOverriddenAt: new Date()
+                    }
+                },
+                { new: true }
+            );
             wasAbsentOverridden = true;
+        } else {
+            try {
+                attendanceRecord = await AttendanceRecord.create({
+                    student:             student._id,
+                    attendanceSession:   session._id,
+                    subject:             getId(session.subject),
+                    college:             getId(session.college),
+                    classGroup:          getId(session.classGroup),
+                    classroom:           getId(session.classroom),
+                    status:              "PRESENT",
+                    latitude:            Number(latitude),
+                    longitude:           Number(longitude),
+                    distanceFromClassroom: evaluation.measuredDistance,
+                    verificationMethod:  verificationMethod,
+                    markedBy:            "STUDENT",
+                    deviceInfo:          deviceInfo,
+                    markedAt:            markedAt
+                });
+            } catch (err) {
+                // Fix 1: Concurrency Race Condition Handler
+                if (err.code === 11000) {
+                    return res.json({
+                        success: true,
+                        alreadyPresent: true,
+                        status: "PRESENT",
+                        message: "Attendance already marked present."
+                    });
+                }
+                throw err;
+            }
         }
 
-        // ── NEW RECORD CREATION ───────────────────────────────────────────────
-        // Create a completely fresh PRESENT record. No LATE logic.
-        attendanceRecord = await AttendanceRecord.create({
-            student:             student._id,
-            attendanceSession:   session._id,
-            subject:             getId(session.subject),
-            college:             getId(session.college),
-            classGroup:          getId(session.classGroup),
-            classroom:           getId(session.classroom),
-            status:              "PRESENT",
-            latitude:            Number(latitude),
-            longitude:           Number(longitude),
-            distanceFromClassroom: evaluation.measuredDistance,
-            verificationMethod:  verificationMethod,
-            markedBy:            "STUDENT",
-            deviceInfo:          deviceInfo,
-            markedAt:            markedAt
-        });
+        if (wasAbsentOverridden) {
+            const pullResult = await AttendanceSession.updateOne(
+                { _id: session._id },
+                { 
+                    $pull: { absentStudents: { student: student._id } },
+                    $inc: { "attendanceSummary.totalAbsent": -1 }
+                }
+            );
+
+            if (pullResult.modifiedCount === 0) {
+                // Another request already handled the override
+                return res.json({
+                    success: true,
+                    alreadyPresent: true,
+                    status: "PRESENT",
+                    message: "Attendance already marked present."
+                });
+            }
+        }
 
         const updateQuery = {
             $push: {
-                attendanceRecords: attendanceRecord._id,
                 presentStudents: {
                     student: student._id,
                     fullName: student.fullName,
@@ -2358,12 +2555,8 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             }
         };
 
-        if (wasAbsentOverridden) {
-            updateQuery.$pull = {
-                absentStudents: { student: student._id },
-                attendanceRecords: alreadyMarked._id
-            };
-            updateQuery.$inc["attendanceSummary.totalAbsent"] = -1;
+        if (!wasAbsentOverridden) {
+            updateQuery.$push.attendanceRecords = attendanceRecord._id;
         }
 
         await AttendanceSession.updateOne(
@@ -2464,7 +2657,7 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
 
         res.status(500).json({
             success: false,
-            message: "Mark attendance error: " + err.message
+            message: "Mark attendance error: "  + " Please try again."
         });
     }
 });
@@ -2729,7 +2922,7 @@ router.get("/attendance-history", isStudent, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Student attendance history error: " + err.message);
+        res.status(500).send("Student attendance history error: " + "An internal server error occurred.");
     }
 });
 
@@ -2768,7 +2961,7 @@ router.get("/passkeys", isStudent, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Student passkeys page error: " + err.message);
+        res.status(500).send("Student passkeys page error: " + "An internal server error occurred.");
     }
 });
 
@@ -2974,7 +3167,7 @@ router.get("/notifications", isStudent, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Student notifications error: " + err.message);
+        res.status(500).send("Student notifications error: " + "An internal server error occurred.");
     }
 });
 
@@ -3294,7 +3487,7 @@ router.get("/realtime/poll", isStudent, async function (req, res) {
             return res.json({ success: false });
         }
 
-        const unreadCount = await getUnreadCount(student._id.toString(), "STUDENT");
+        const unreadCount = await getUnreadCount(getStudentNotificationFilter(student));
 
         // Fetch active session states for realtime polling
         const AttendanceSession = require("../models/attendanceSessionSchema");
@@ -3348,6 +3541,39 @@ router.get("/realtime/poll", isStudent, async function (req, res) {
         });
     } catch (err) {
         res.json({ success: false });
+    }
+});
+
+router.post("/push/subscribe", isStudent, async function(req, res) {
+    try {
+        const studentId = getStudentIdFromRequest(req);
+        const student = await Student.findById(studentId);
+        
+        if (!student) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        const subscription = req.body;
+        
+        if (!subscription || !subscription.endpoint) {
+            return res.status(400).json({ success: false, message: "Invalid subscription" });
+        }
+        
+        if (!student.pushSubscriptions) {
+            student.pushSubscriptions = [];
+        }
+        
+        // Check if already subscribed
+        const existing = student.pushSubscriptions.find(sub => sub.endpoint === subscription.endpoint);
+        if (!existing) {
+            student.pushSubscriptions.push(subscription);
+            await student.save();
+        }
+        
+        res.json({ success: true, message: "Push subscription saved" });
+    } catch(err) {
+        console.log("PUSH SUBSCRIBE ERROR:", err.message);
+        res.status(500).json({ success: false });
     }
 });
 

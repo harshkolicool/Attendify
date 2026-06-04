@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Attendify</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="/css/adminTheme.css">
-
     <link rel="stylesheet" href="/css/uiShell.css">
+
+    <link rel="stylesheet" href="/css/adminTheme.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
     <link rel="icon" type="image/png" href="/favicon.png">
 
@@ -26,6 +26,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -145,5 +155,56 @@
 
 <script src="/js/adminValidation.js"></script>
 <script src="/js/uiShell.js"></script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/adminRealtime.js"></script>
+
+<script>
+const vapidPublicKey = "<%= typeof vapidPublicKey !== 'undefined' ? vapidPublicKey : '' %>";
+
+function urlB64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
+    navigator.serviceWorker.ready.then(function(registration) {
+        registration.pushManager.getSubscription().then(function(subscription) {
+            if (!subscription) {
+                if (Notification.permission === 'granted' || Notification.permission === 'default') {
+                    registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlB64ToUint8Array(vapidPublicKey)
+                    }).then(function(newSubscription) {
+                        fetch('/teacher/push/subscribe', { // Admin shares the teacher push endpoint because they use the same schema
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newSubscription)
+                        });
+                    }).catch(function(err) {
+                        console.error('Failed to subscribe to push', err);
+                    });
+                }
+            } else {
+                fetch('/teacher/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(subscription)
+                });
+            }
+        });
+    });
+}
+</script>
+
 </body>
 </html>

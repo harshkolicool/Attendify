@@ -67,7 +67,7 @@ async function isCollegeAdmin(req, res, next) {
         console.log(err.message);
         console.log(err.stack);
 
-        res.status(500).send("Admin authorization error: " + err.message);
+        res.status(500).send("Admin authorization error. Please try again.");
     }
 }
 

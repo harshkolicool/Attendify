@@ -1,5 +1,15 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
+
 const router = express.Router();
+
+const authLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 30, // Strict limit for auth routes
+    message: "Too many attempts from this IP, please try again after a minute.",
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 const College = require("../models/collegeSchema");
 const Teacher = require("../models/teacherSchema");
@@ -69,7 +79,7 @@ router.get("/college/register", function (req, res) {
     });
 });
 
-router.post("/college/register", async function (req, res) {
+router.post("/college/register", authLimiter, async function (req, res) {
     try {
         const collegeName = cleanText(req.body.collegeName);
         const address = cleanText(req.body.address);

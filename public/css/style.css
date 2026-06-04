@@ -23,10 +23,9 @@
     --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
     --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     
-    /* Glassmorphism Defaults */
-    --glass-bg: rgba(255, 255, 255, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.8);
-    --glass-blur: blur(16px);
+    --glass-bg: #ffffff;
+    --glass-border: #e2e8f0;
+    --glass-blur: none;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -38,8 +37,8 @@
         --text-muted: #94a3b8;
         --border: #334155;
         
-        --glass-bg: rgba(30, 41, 59, 0.75);
-        --glass-border: rgba(255, 255, 255, 0.1);
+        --glass-bg: #1e293b;
+        --glass-border: #334155;
         
         --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
         --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
@@ -661,6 +660,15 @@ a { text-decoration: none; color: inherit; }
 
 .auth-card { padding: 0; }
 
+.auth-card-scroll {
+    max-height: 95vh;
+    overflow-y: auto;
+}
+
+.auth-submit-btn {
+    margin-top: 15px;
+}
+
 .auth-header.compact {
     padding: 32px 32px 8px;
     text-align: center;
@@ -769,6 +777,30 @@ a { text-decoration: none; color: inherit; }
 }
 
 .auth-footer span { color: var(--text-muted); }
+
+.waiting-auth-card {
+    max-width: 480px;
+    width: 100%;
+}
+
+.waiting-status-title {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: var(--text);
+}
+
+.waiting-status-copy {
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.waiting-status-text {
+    margin-top: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}
 
 /* ─── Teacher Dashboard ─── */
 

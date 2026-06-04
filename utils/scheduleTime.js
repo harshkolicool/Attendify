@@ -167,6 +167,8 @@ function getScheduleTimeStatus(startTime, endTime, currentDate) {
     }
 
     if (endMinutes <= startMinutes) {
+        // Overnight schedules (e.g. 11:00 PM to 02:00 AM) are currently not supported
+        // as they span across multiple days and break the single-day schedule logic.
         return "invalid";
     }
 

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Class Groups | Admin</title>
 
-    <link rel="stylesheet" href="/css/adminTheme.css">
-
     <link rel="stylesheet" href="/css/uiShell.css">
+
+    <link rel="stylesheet" href="/css/adminTheme.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
     <link
@@ -31,6 +31,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -262,8 +272,12 @@
 
 </div>
 
-<script src="/js/adminSearch.js"></script>
+<script src="/js/adminSearch.js?v=1780440263"></script>
 <script src="/js/adminValidation.js"></script>
 <script src="/js/uiShell.js"></script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/adminRealtime.js"></script>
 </body>
 </html>

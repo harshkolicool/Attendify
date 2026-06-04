@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Waiting for Approval | Attendify</title>
+    <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/finalUiFix.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         .waiting-card {
@@ -51,22 +53,32 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
 <div class="auth-page">
-    <div class="auth-card" style="max-width: 480px; width: 100%;">
+    <div class="auth-card waiting-auth-card">
         <div class="waiting-card">
-            <i class="fa-solid fa-clock-rotate-left waiting-icon"></i>
-            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 12px; color: var(--text);">Waiting for Admin Approval</h2>
-            <p style="color: var(--text-muted); font-size: 15px; line-height: 1.6;">
+            <i id="waiting-status-icon" class="fa-solid fa-clock-rotate-left waiting-icon"></i>
+            <h2 id="waiting-status-title" class="waiting-status-title">Waiting for Admin Approval</h2>
+            <p class="waiting-status-copy">
                 Hi <strong><%= student.fullName %></strong>, your registration was successful! 
                 Please keep this page open. You will be automatically redirected to the login screen as soon as your college admin approves your account.
             </p>
             
             <div class="waiting-spinner"></div>
             
-            <p id="status-text" style="margin-top: 24px; font-weight: 600; color: var(--primary);">Connecting to live server...</p>
+            <p id="status-text" class="waiting-status-text">Connecting to live server...</p>
         </div>
     </div>
 </div>
@@ -76,31 +88,32 @@
     document.addEventListener("DOMContentLoaded", function() {
         var studentId = "<%= student._id %>";
         var statusText = document.getElementById("status-text");
+        var statusIcon = document.getElementById("waiting-status-icon");
+        var statusTitle = document.getElementById("waiting-status-title");
         var redirecting = false;
 
-        function doRedirect(token) {
+        function doRedirect(redirectUrl) {
             if (redirecting) return;
             redirecting = true;
-
-            // Stop the spinner
+            if (typeof pollTimer !== 'undefined' && pollTimer) clearInterval(pollTimer);
+            
             var spinner = document.querySelector(".waiting-spinner");
             if (spinner) spinner.style.display = "none";
-
-            // Show success checkmark
-            var icon = document.querySelector(".waiting-icon");
-            if (icon) {
-                icon.className = "fa-solid fa-circle-check waiting-icon";
-                icon.style.color = "var(--success)";
-                icon.style.animation = "none";
+            
+            if (statusIcon) {
+                statusIcon.className = "fa-solid fa-circle-check waiting-icon";
+                statusIcon.style.color = "var(--success)";
+                statusIcon.style.animation = "none";
             }
 
-            statusText.textContent = "Approved! Redirecting...";
+            if (statusTitle) {
+                statusTitle.textContent = "Registration Approved!";
+            }
+            statusText.textContent = "Redirecting to login...";
             statusText.style.color = "var(--success)";
 
             // Build redirect URL
-            var url = token
-                ? "/student/auto-login?token=" + token
-                : "/student/login?message=approved";
+            var url = redirectUrl ? redirectUrl : "/student/login?message=approved";
 
             // Redirect immediately
             window.location.href = url;
@@ -118,7 +131,7 @@
             });
 
             socket.on("student:approved", function(data) {
-                doRedirect(data && data.token ? data.token : null);
+                doRedirect(data && data.redirectUrl ? data.redirectUrl : null);
             });
 
             socket.on("disconnect", function() {
@@ -132,14 +145,18 @@
         }
 
         // === Strategy 2: HTTP Polling (reliable fallback) ===
+        var pollInterval = 5000;
+
         function checkApproval() {
             if (redirecting) return;
+            // Skip HTTP poll if socket is actively connected
+            if (typeof socket !== "undefined" && socket.connected) return;
 
             fetch("/student/check-approval/" + studentId)
                 .then(function(res) { return res.json(); })
                 .then(function(data) {
                     if (data && data.approved) {
-                        doRedirect(data.token || null);
+                        doRedirect(data.redirectUrl || null);
                     }
                 })
                 .catch(function(err) {
@@ -147,12 +164,15 @@
                 });
         }
 
-        // Start polling every 3 seconds
-        setInterval(checkApproval, 3000);
+        // Start polling every 5 seconds
+        var pollTimer = setInterval(checkApproval, pollInterval);
 
-        // Also check immediately on page load (in case already approved)
+        // Also check immediately on page load
         checkApproval();
     });
 </script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

@@ -9,9 +9,6 @@ const app = require("./app");
 const connectDB = require("./config/db");
 const socketManager = require("./utils/socketManager");
 const realtimeConfig = require("./utils/realtimeConfig");
-const { createAdapter } = require("@socket.io/cluster-adapter");
-const { setupWorker } = require("@socket.io/sticky");
-const cluster = require("cluster");
 
 let startAttendanceExpiryJob = null;
 
@@ -208,14 +205,6 @@ async function startServer() {
                 io.engine.use(sessionMiddleware);
             }
 
-            // Enable cluster mode adapter
-            io.adapter(createAdapter());
-            
-            // If running as a cluster worker, attach the sticky session setup
-            if (!cluster.isPrimary && !cluster.isMaster) {
-                setupWorker(io);
-            }
-
             socketManager.initializeSocket(io);
         } else {
             console.log(
@@ -257,12 +246,9 @@ async function startServer() {
             process.exit(1);
         });
 
-        // In cluster worker mode with sticky sessions, the master handles the listening
-        if (cluster.isPrimary || cluster.isMaster) {
-            server.listen(PORT, function () {
-                console.log("Server running on http://localhost:" + PORT);
-            });
-        }
+        server.listen(PORT, function () {
+            console.log("Server running on http://localhost:" + PORT);
+        });
     } catch (err) {
         console.error("SERVER STARTUP FAILED:");
         console.error(err.message);

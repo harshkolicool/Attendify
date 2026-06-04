@@ -102,6 +102,29 @@ const trustedDeviceSchema = new mongoose.Schema(
             type: String
         },
 
+        lastIpPrefix: {
+            type: String
+        },
+
+        tokenRotatedAt: {
+            type: Date
+        },
+
+        stepUpVerifiedAt: {
+            type: Date
+        },
+
+        riskScore: {
+            type: Number,
+            default: 0
+        },
+
+        riskLevel: {
+            type: String,
+            enum: ["low", "medium", "high"],
+            default: "low"
+        },
+
         registeredAt: {
             type: Date,
             default: Date.now
@@ -245,7 +268,18 @@ const studentSchema = new mongoose.Schema({
 
     lastLogin: {
         type: Date
-    }
+    },
+
+    pushSubscriptions: [
+        {
+            endpoint: { type: String, required: true },
+            expirationTime: { type: Date },
+            keys: {
+                p256dh: { type: String, required: true },
+                auth: { type: String, required: true }
+            }
+        }
+    ]
 
 }, {
     timestamps: true

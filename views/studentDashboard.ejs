@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard | Attendify</title>
 
-    <link rel="stylesheet" href="/css/studentSchedule.css">
-
     <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/studentSchedule.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
 
     <link
@@ -31,6 +30,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
@@ -239,6 +248,39 @@
         <section class="dashboard-panel">
             <div class="dashboard-panel-head">
                 <div>
+                    <h3>Verification Preference</h3>
+                    <p>Choose your preferred method for marking attendance on this device.</p>
+                </div>
+            </div>
+            
+            <div class="student-auth-preference-wrap">
+                <label class="student-auth-option" id="studentAuthPasskeyLabel">
+                    <input type="radio" name="auth_preference" value="passkey">
+                    <div class="student-auth-content">
+                        <i class="fa-solid fa-fingerprint"></i>
+                        <div>
+                            <strong>Use Passkey (Recommended)</strong>
+                            <p>Verify attendance securely using biometrics (Face ID/Touch ID).</p>
+                        </div>
+                    </div>
+                </label>
+                
+                <label class="student-auth-option" id="studentAuthTrustedLabel">
+                    <input type="radio" name="auth_preference" value="trusted_browser">
+                    <div class="student-auth-content">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <div>
+                            <strong>Use Trusted Browser</strong>
+                            <p>Verify instantly using browser trust (Skip Passkey).</p>
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </section>
+
+        <section class="dashboard-panel">
+            <div class="dashboard-panel-head">
+                <div>
                     <h3>Today's Schedule</h3>
                     <p>Your classes for <%= typeof today !== "undefined" ? today : "" %></p>
                 </div>
@@ -268,8 +310,8 @@
                     <p>Your schedule is clear for today.</p>
                 </div>
             <% } else { %>
-                <div class="gps-help-banner" style="margin-bottom: 15px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 4px; font-size: 0.9rem;">
-                    <i class="fa-solid fa-circle-info" style="color: #3b82f6; margin-right: 6px;"></i>
+                <div class="gps-help-banner">
+                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
                     <strong>GPS Tip:</strong> For best accuracy, use mobile Chrome, enable precise location, turn off battery saver, and wait 5–10 seconds.
                 </div>
                 <div class="schedule-list">
@@ -544,6 +586,71 @@
     </aside>
 </div>
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const radios = document.querySelectorAll('input[name="auth_preference"]');
+    const savedPref = localStorage.getItem('attendify_auth_pref') || 'passkey';
+    
+    radios.forEach(r => {
+        if (r.value === savedPref) {
+            r.checked = true;
+        }
+        r.addEventListener('change', function() {
+            if (this.checked) {
+                localStorage.setItem('attendify_auth_pref', this.value);
+            }
+        });
+    });
+});
+
+const vapidPublicKey = "<%= typeof vapidPublicKey !== 'undefined' ? vapidPublicKey : '' %>";
+
+function urlB64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
+    navigator.serviceWorker.ready.then(function(registration) {
+        registration.pushManager.getSubscription().then(function(subscription) {
+            if (!subscription) {
+                // Subscribe automatically if we already have permission, or ask if not asked yet
+                if (Notification.permission === 'granted' || Notification.permission === 'default') {
+                    registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlB64ToUint8Array(vapidPublicKey)
+                    }).then(function(newSubscription) {
+                        // Send subscription to server
+                        fetch('/student/push/subscribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newSubscription)
+                        });
+                    }).catch(function(err) {
+                        console.error('Failed to subscribe to push', err);
+                    });
+                }
+            } else {
+                // Already subscribed, optionally send to server to ensure it is saved
+                fetch('/student/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(subscription)
+                });
+            }
+        });
+    });
+}
+</script>
+
 <script type="application/json" id="studentLiveSessionBootstrap"><%- JSON.stringify(studentLiveBootstrap).replace(/</g, "\\u003c") %></script>
 
 <script>
@@ -565,5 +672,8 @@
 <script src="/js/studentRealtime.js"></script>
 <script src="/js/studentLiveLocation.js"></script>
 <script src="/js/uiShell.js"></script>
+
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

@@ -14,11 +14,52 @@ const authLimiter = rateLimit({
 
 const Student = require("../models/studentSchema");
 const ClassGroup = require("../models/classGroupSchema");
+const College = require("../models/collegeSchema");
 const socketManager = require("../utils/socketManager");
 
 // Generate short random hex string
 function generateRandomHex(length = 4) {
     return Math.random().toString(16).slice(2, 2 + length).toUpperCase();
+}
+
+function regenerateSession(req) {
+    return new Promise(function (resolve, reject) {
+        req.session.regenerate(function (err) {
+            if (err) {
+                return reject(err);
+            }
+
+            resolve();
+        });
+    });
+}
+
+function saveSession(req) {
+    return new Promise(function (resolve, reject) {
+        req.session.save(function (err) {
+            if (err) {
+                return reject(err);
+            }
+
+            resolve();
+        });
+    });
+}
+
+async function loginWithFreshSession(req, user) {
+    await regenerateSession(req);
+
+    await new Promise(function (resolve, reject) {
+        req.logIn(user, function (err) {
+            if (err) {
+                return reject(err);
+            }
+
+            resolve();
+        });
+    });
+
+    await saveSession(req);
 }
 
 router.get("/", (req, res) => {
@@ -49,33 +90,74 @@ router.get("/student/login", (req, res) => {
 
 router.get("/student/register", async (req, res) => {
     try {
-        const classGroups = await ClassGroup.find({ isActive: true }).select("name department semester section").lean();
+        const collegeCode = req.query.collegeCode;
+        let classGroups = [];
+        let college = null;
+        let collegeFound = false;
+
+        if (collegeCode) {
+            college = await College.findOne({ collegeCode: collegeCode.toUpperCase(), isActive: true });
+            if (college) {
+                collegeFound = true;
+                classGroups = await ClassGroup.find({ college: college._id, isActive: true }).select("name department semester section").lean();
+            }
+        }
+
         res.render("studentRegister", {
-            error: null,
-            classGroups: classGroups
+            error: collegeCode && !collegeFound ? "Invalid College Code." : null,
+            classGroups: classGroups,
+            collegeCode: collegeCode || "",
+            collegeFound: collegeFound
         });
     } catch (err) {
         console.error("Register page error:", err);
-        res.render("studentRegister", { error: "Failed to load registration data", classGroups: [] });
+        res.render("studentRegister", { error: "Failed to load registration data", classGroups: [], collegeCode: "", collegeFound: false });
     }
 });
 
 router.post("/student/register", authLimiter, async (req, res) => {
     try {
-        const { fullName, email, password, classGroupId } = req.body;
+        const { fullName, email, password, classGroupId, collegeCode } = req.body;
         
-        if (!fullName || !email || !password || !classGroupId) {
-            return res.render("studentRegister", { error: "All fields are required.", classGroups: await ClassGroup.find({ isActive: true }).lean() });
+        const renderError = async (msg) => {
+            let classGroups = [];
+            let collegeFound = false;
+            if (collegeCode) {
+                const college = await College.findOne({ collegeCode: collegeCode.toUpperCase(), isActive: true });
+                if (college) {
+                    collegeFound = true;
+                    classGroups = await ClassGroup.find({ college: college._id, isActive: true }).select("name department semester section").lean();
+                }
+            }
+            return res.render("studentRegister", { error: msg, classGroups, collegeCode: collegeCode || "", collegeFound });
+        };
+
+        if (!fullName || !email || !password || !classGroupId || !collegeCode) {
+            return await renderError("All fields are required.");
         }
 
         const existingUser = await Student.findOne({ email: email.toLowerCase() });
         if (existingUser) {
-            return res.render("studentRegister", { error: "Email is already registered.", classGroups: await ClassGroup.find({ isActive: true }).lean() });
+            return await renderError("Email is already registered.");
         }
 
-        const classGroup = await ClassGroup.findById(classGroupId);
+        const college = await College.findOne({
+            collegeCode: collegeCode.toUpperCase(),
+            isActive: true
+        });
+
+        if (!college) {
+            return await renderError("Invalid college code.");
+        }
+
+        const classGroup = await ClassGroup.findOne({
+            _id: classGroupId,
+            college: college._id,
+            isActive: true
+        });
+
         if (!classGroup) {
-            return res.render("studentRegister", { error: "Selected class group is invalid.", classGroups: await ClassGroup.find({ isActive: true }).lean() });
+            return await renderError("Selected class group is invalid for this college.");
         }
 
         // Generate enrollment number: [DEPT][SEM][SECTION]-[RANDOM]
@@ -102,15 +184,21 @@ router.post("/student/register", authLimiter, async (req, res) => {
         
         socketManager.emitNewRegistration(classGroup.college, newStudent);
         
+        req.session.pendingRegistrationId = newStudent._id.toString();
         res.redirect(`/student/waiting/${newStudent._id}`);
     } catch (err) {
         console.error("Registration submit error:", err);
-        res.render("studentRegister", { error: "An error occurred during registration.", classGroups: await ClassGroup.find({ isActive: true }).lean() });
+        // Do NOT leak all class groups in catch block
+        res.render("studentRegister", { error: "An error occurred during registration.", classGroups: [], collegeCode: "", collegeFound: false });
     }
 });
 
 router.get("/student/waiting/:id", async (req, res) => {
     try {
+        if (req.session.pendingRegistrationId !== req.params.id) {
+            return res.redirect("/student/login");
+        }
+
         const student = await Student.findById(req.params.id);
         if (!student) {
             return res.redirect("/student/login");
@@ -130,8 +218,12 @@ router.get("/student/waiting/:id", async (req, res) => {
 // Lightweight JSON endpoint for the waiting page to poll
 router.get("/student/check-approval/:id", async (req, res) => {
     try {
+        if (req.session.pendingRegistrationId !== req.params.id) {
+            return res.json({ approved: false, error: "unauthorized" });
+        }
+
         const student = await Student.findById(req.params.id)
-            .select("isApproved autoLoginToken")
+            .select("isApproved")
             .lean();
 
         if (!student) {
@@ -141,7 +233,7 @@ router.get("/student/check-approval/:id", async (req, res) => {
         if (student.isApproved) {
             return res.json({
                 approved: true,
-                token: student.autoLoginToken || null
+                redirectUrl: "/student/login?approved=1"
             });
         }
 
@@ -149,49 +241,6 @@ router.get("/student/check-approval/:id", async (req, res) => {
     } catch (err) {
         console.error("Check approval error:", err);
         return res.json({ approved: false, error: "server_error" });
-    }
-});
-
-router.get("/student/auto-login", async (req, res) => {
-    try {
-        const token = req.query.token;
-        if (!token) {
-            return res.redirect("/student/login?error=invalid_token");
-        }
-
-        const student = await Student.findOne({ autoLoginToken: token });
-        if (!student) {
-            return res.redirect("/student/login?error=invalid_token");
-        }
-
-        // Clear the one-time token
-        student.autoLoginToken = null;
-        await student.save();
-
-        // Log the user in
-        const userObj = {
-            _id: student._id,
-            id: student._id.toString(),
-            accountType: "student"
-        };
-        
-        req.login(userObj, (err) => {
-            if (err) {
-                console.error("Auto login error:", err);
-                return res.redirect("/student/login?error=login_failed");
-            }
-            
-            // Force save the session before redirecting to prevent race condition
-            req.session.save((saveErr) => {
-                if (saveErr) {
-                    console.error("Session save error during auto-login:", saveErr);
-                }
-                res.redirect("/student/dashboard");
-            });
-        });
-    } catch (err) {
-        console.error("Auto login system error:", err);
-        res.redirect("/student/login?error=system_error");
     }
 });
 
@@ -213,18 +262,18 @@ router.post("/student/login", authLimiter, (req, res, next) => {
             });
         }
 
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
-            }
-
-            return res.redirect("/student/dashboard");
-        });
+        loginWithFreshSession(req, user)
+            .then(function () {
+                return res.redirect("/student/dashboard");
+            })
+            .catch(function (loginErr) {
+                return next(loginErr);
+            });
 
     })(req, res, next);
 });
 
-router.post("/teacher/login", (req, res, next) => {
+router.post("/teacher/login", authLimiter, (req, res, next) => {
     passport.authenticate("teacher-local", (err, user, info) => {
         if (err) {
             return next(err);
@@ -242,13 +291,13 @@ router.post("/teacher/login", (req, res, next) => {
             });
         }
 
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
-            }
-
-            return res.redirect("/teacher/dashboard");
-        });
+        loginWithFreshSession(req, user)
+            .then(function () {
+                return res.redirect("/teacher/dashboard");
+            })
+            .catch(function (loginErr) {
+                return next(loginErr);
+            });
 
     })(req, res, next);
 });
@@ -259,7 +308,18 @@ router.post("/logout", (req, res, next) => {
             return next(err);
         }
 
-        res.redirect("/");
+        if (!req.session) {
+            return res.redirect("/");
+        }
+
+        req.session.destroy(function (destroyErr) {
+            if (destroyErr) {
+                return next(destroyErr);
+            }
+
+            res.clearCookie("attendance.sid");
+            return res.redirect("/");
+        });
     });
 });
 

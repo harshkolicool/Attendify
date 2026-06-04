@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pending Approvals | Admin</title>
 
-    <link rel="stylesheet" href="/css/adminTheme.css">
     <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/adminTheme.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -27,6 +27,16 @@
         }
     </script>
 
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 
 <body>
@@ -57,54 +67,54 @@
             </header>
 
             <% if (!pendingStudents || pendingStudents.length === 0) { %>
-                <div class="empty-state" id="empty-state-container" style="margin-top: 32px; padding: 80px 24px; border: 2px dashed #cbd5e1; background: transparent; box-shadow: none; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <div class="empty-icon" style="width: 80px; height: 80px; font-size: 36px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-user-clock"></i></div>
-                    <h3 style="font-size: 20px; margin-top: 16px;">No pending approvals</h3>
-                    <p style="font-size: 15px;">You're all caught up! New student registrations will appear here in real-time.</p>
+                <div class="empty-state pending-empty-state js-empty-state-container">
+                    <div class="empty-icon pending-empty-icon"><i class="fa-solid fa-user-clock" aria-hidden="true"></i></div>
+                    <h3 class="pending-empty-title">No pending approvals</h3>
+                    <p class="pending-empty-copy">You're all caught up! New student registrations will appear here in real-time.</p>
                 </div>
-                <div class="admin-grid" id="pending-grid" style="display: none; margin-top: 32px;"></div>
+                <div class="admin-grid pending-students-grid is-hidden" id="pending-grid"></div>
             <% } else { %>
-                <div class="empty-state" id="empty-state-container" style="display: none;">
-                    <div class="empty-icon" style="width: 80px; height: 80px; font-size: 36px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-user-clock"></i></div>
-                    <h3 style="font-size: 20px; margin-top: 16px;">No pending approvals</h3>
-                    <p style="font-size: 15px;">You're all caught up! New student registrations will appear here in real-time.</p>
+                <div class="empty-state pending-empty-state js-empty-state-container is-hidden">
+                    <div class="empty-icon pending-empty-icon"><i class="fa-solid fa-user-clock" aria-hidden="true"></i></div>
+                    <h3 class="pending-empty-title">No pending approvals</h3>
+                    <p class="pending-empty-copy">You're all caught up! New student registrations will appear here in real-time.</p>
                 </div>
                 
-                <div class="admin-grid" id="pending-grid" style="margin-top: 32px;">
+                <div class="admin-grid pending-students-grid" id="pending-grid">
                     <% pendingStudents.forEach(function(student) { %>
                         <article class="admin-item-card admin-student-card" id="student-card-<%= student._id %>">
-                            <div class="admin-item-top" style="align-items: flex-start; padding: 20px; border-bottom: 1px solid var(--admin-border);">
-                                <div style="display: flex; gap: 16px; align-items: center;">
-                                    <img src="https://ui-avatars.com/api/?name=<%= encodeURIComponent(student.fullName) %>&background=random&color=fff&rounded=true&bold=true" alt="<%= student.fullName %>" style="width: 52px; height: 52px; border-radius: 50%; box-shadow: var(--shadow-sm);">
+                            <div class="admin-item-top pending-student-top">
+                                <div class="pending-student-profile">
+                                    <img src="https://ui-avatars.com/api/?name=<%= encodeURIComponent(student.fullName) %>&background=random&color=fff&rounded=true&bold=true" alt="<%= student.fullName %>" class="pending-student-avatar">
                                     <div>
-                                        <h4 style="font-size: 16px; font-weight: 700; color: var(--admin-text); margin-bottom: 4px;"><%= student.fullName %></h4>
-                                        <p style="font-size: 13px; color: var(--admin-muted); margin: 0;"><%= student.email %></p>
+                                        <h4 class="pending-student-name"><%= student.fullName %></h4>
+                                        <p class="pending-student-email"><%= student.email %></p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="admin-student-body" style="padding: 20px;">
-                                <div class="admin-meta admin-student-meta" style="margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 8px;">
-                                    <span class="admin-badge" style="background: #f1f5f9; color: #475569; font-weight: 600;">
+                            <div class="admin-student-body pending-student-body">
+                                <div class="admin-meta admin-student-meta pending-student-meta">
+                                    <span class="admin-badge pending-badge-muted">
                                         <i class="fa-solid fa-hashtag"></i> <%= student.enrollmentNumber %>
                                     </span>
                                     <span class="admin-badge">
                                         <i class="fa-solid fa-building"></i> <%= student.department %>
                                     </span>
-                                    <span class="admin-badge" style="background: #e0f2fe; color: #0369a1;">
+                                    <span class="admin-badge pending-badge-semester">
                                         <i class="fa-solid fa-layer-group"></i> Sem <%= student.semester %>
                                     </span>
                                 </div>
 
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                    <form action="/admin/students/approve/<%= student._id %>" method="POST" style="margin: 0;">
-                                        <button type="submit" class="admin-primary-btn" style="width: 100%; justify-content: center; padding: 10px;">
+                                <div class="pending-student-actions">
+                                    <form action="/admin/students/approve/<%= student._id %>" method="POST" class="pending-student-action-form">
+                                        <button type="submit" class="admin-primary-btn pending-student-action-btn">
                                             <i class="fa-solid fa-check"></i> Approve
                                         </button>
                                     </form>
-                                    <form action="/admin/students/<%= student._id %>/delete" method="POST" style="margin: 0;" onsubmit="return uiConfirm(event, 'Are you sure you want to reject and delete this registration?')">
+                                    <form action="/admin/students/<%= student._id %>/delete" method="POST" class="pending-student-action-form reject-form">
                                         <input type="hidden" name="returnTo" value="/admin/students/pending">
-                                        <button type="submit" class="admin-secondary-btn danger" style="width: 100%; justify-content: center; padding: 10px;">
+                                        <button type="button" class="admin-secondary-btn danger pending-student-action-btn js-reject-btn">
                                             <i class="fa-solid fa-xmark"></i> Reject
                                         </button>
                                     </form>
@@ -120,90 +130,10 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const socket = io();
-        const grid = document.getElementById("pending-grid");
-        const emptyStateContainers = document.querySelectorAll("#empty-state-container");
-        const countHeader = document.querySelector(".admin-card-header h2");
-        let currentCount = parseInt(countHeader.textContent.match(/\d+/)[0]) || 0;
-
-        socket.on("admin:newRegistration", function(student) {
-            // Hide empty states, show grid
-            emptyStateContainers.forEach(container => container.style.display = "none");
-            grid.style.display = "grid";
-
-            // Create new card
-            const card = document.createElement("article");
-            card.className = "admin-item-card admin-student-card";
-            card.id = `student-card-${student._id}`;
-            
-            // Initial styling for slide-in animation
-            card.style.opacity = "0";
-            card.style.transform = "translateY(-20px)";
-            card.style.transition = "opacity 0.4s ease-out, transform 0.4s ease-out, box-shadow 1.5s ease-out";
-            
-            card.innerHTML = `
-                <div class="admin-item-top" style="align-items: flex-start; padding: 20px; border-bottom: 1px solid var(--admin-border);">
-                    <div style="display: flex; gap: 16px; align-items: center;">
-                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(student.fullName)}&background=random&color=fff&rounded=true&bold=true" alt="${student.fullName}" style="width: 52px; height: 52px; border-radius: 50%; box-shadow: var(--shadow-sm);">
-                        <div>
-                            <h4 style="font-size: 16px; font-weight: 700; color: var(--admin-text); margin-bottom: 4px;">${student.fullName}</h4>
-                            <p style="font-size: 13px; color: var(--admin-muted); margin: 0;">${student.email}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="admin-student-body" style="padding: 20px;">
-                    <div class="admin-meta admin-student-meta" style="margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 8px;">
-                        <span class="admin-badge" style="background: #f1f5f9; color: #475569; font-weight: 600;">
-                            <i class="fa-solid fa-hashtag"></i> ${student.enrollmentNumber}
-                        </span>
-                        <span class="admin-badge">
-                            <i class="fa-solid fa-building"></i> ${student.department}
-                        </span>
-                        <span class="admin-badge" style="background: #e0f2fe; color: #0369a1;">
-                            <i class="fa-solid fa-layer-group"></i> Sem ${student.semester}
-                        </span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <form action="/admin/students/approve/${student._id}" method="POST" style="margin: 0;">
-                            <button type="submit" class="admin-primary-btn" style="width: 100%; justify-content: center; padding: 10px;">
-                                <i class="fa-solid fa-check"></i> Approve
-                            </button>
-                        </form>
-                        <form action="/admin/students/${student._id}/delete" method="POST" style="margin: 0;" onsubmit="return uiConfirm(event, 'Are you sure you want to reject and delete this registration?')">
-                            <input type="hidden" name="returnTo" value="/admin/students/pending">
-                            <button type="submit" class="admin-secondary-btn danger" style="width: 100%; justify-content: center; padding: 10px;">
-                                <i class="fa-solid fa-xmark"></i> Reject
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            `;
-            
-            // Prepend to top of grid
-            grid.insertBefore(card, grid.firstChild);
-            
-            // Trigger animation
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    card.style.opacity = "1";
-                    card.style.transform = "translateY(0)";
-                    card.style.boxShadow = "0 0 0 4px rgba(37, 99, 235, 0.2)";
-                    
-                    setTimeout(() => {
-                        card.style.boxShadow = "var(--admin-shadow)";
-                    }, 1500);
-                });
-            });
-
-            // Update count
-            currentCount++;
-            countHeader.textContent = `Students Awaiting Approval (${currentCount})`;
-        });
-    });
-</script>
+    <script src="/js/uiShell.js"></script>
+    <script src="/js/adminPendingStudents.js" defer></script>
+    <script src="/js/csrfAuto.js" defer></script>
+    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/adminRealtime.js"></script>
 </body>
 </html>

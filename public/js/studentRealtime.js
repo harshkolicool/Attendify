@@ -69,6 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     socket.on("connect", function () {
+        connectErrorShown = false;
         joinStudentRealtime();
 
         // Re-fetch state on reconnect to recover missed events
@@ -103,8 +104,12 @@ document.addEventListener("DOMContentLoaded", function () {
         showRealtimeMessage(payload.message, "error");
     });
 
+    let connectErrorShown = false;
     socket.on("connect_error", function () {
-        showRealtimeMessage("Realtime temporarily unavailable. The page will keep updating automatically.", "error");
+        if (!connectErrorShown) {
+            showRealtimeMessage("Realtime temporarily unavailable. The page will keep updating automatically.", "error");
+            connectErrorShown = true;
+        }
     });
 
     function getScheduleCard(scheduleId) {

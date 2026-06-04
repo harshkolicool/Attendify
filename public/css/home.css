@@ -32,6 +32,10 @@ body {
     color: var(--home-dark);
 }
 
+body.home-nav-open {
+    overflow: hidden;
+}
+
 a {
     text-decoration: none;
     color: inherit;
@@ -50,15 +54,18 @@ button {
         linear-gradient(180deg, #f8fbff 0%, #eef3fb 100%);
 }
 
+.home-page.home-nav-open {
+    overflow: hidden;
+}
+
 .home-navbar {
     width: min(1180px, calc(100% - 36px));
     margin: 22px auto 0;
     padding: 14px 16px;
     border: 1px solid rgba(226, 232, 240, 0.9);
     border-radius: 24px;
-    background: rgba(255, 255, 255, 0.78);
-    backdrop-filter: blur(18px);
-    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.06);
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -129,6 +136,10 @@ button {
     color: var(--home-blue);
     font-size: 18px;
     cursor: pointer;
+}
+
+.home-nav-overlay {
+    display: none;
 }
 
 .hero-section {
@@ -281,8 +292,7 @@ button {
 }
 
 .dashboard-card {
-    background: rgba(255, 255, 255, 0.86);
-    backdrop-filter: blur(18px);
+    background: #ffffff;
     border: 1px solid rgba(226, 232, 240, 0.9);
     border-radius: 32px;
     box-shadow: var(--home-shadow);
@@ -561,7 +571,13 @@ button {
 }
 
 .role-card.highlight {
-    background: linear-gradient(135deg, #eff6ff, #ffffff);
+    background: #f8fbff;
+    border-color: #dbeafe;
+}
+
+.role-card-student-register {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
 }
 
 .role-icon {
@@ -856,22 +872,55 @@ button {
     .home-navbar {
         align-items: flex-start;
         flex-wrap: wrap;
+        position: sticky;
+        top: 12px;
     }
 
     .home-nav-links {
-        display: none;
-        width: 100%;
-        padding-top: 14px;
+        position: fixed;
+        top: 84px;
+        left: 12px;
+        right: 12px;
+        z-index: 65;
+        display: flex;
+        padding: 14px;
+        border-radius: 20px;
+        border: 1px solid rgba(203, 213, 225, 0.86);
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 24px 56px rgba(15, 23, 42, 0.16);
         flex-direction: column;
         align-items: stretch;
+        gap: 8px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-8px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
     }
 
     .home-nav-links.open {
-        display: flex;
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
     }
 
     .home-nav-links a {
         width: 100%;
+        padding: 12px 14px;
+    }
+
+    .home-nav-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        background: rgba(15, 23, 42, 0.48);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .home-nav-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
     }
 
     .hero-section {
@@ -912,6 +961,22 @@ button {
     .cta-section,
     .home-footer {
         width: min(100% - 24px, 1180px);
+    }
+
+    .home-navbar {
+        margin-top: 14px;
+        border-radius: 20px;
+        padding: 12px 13px;
+    }
+
+    .home-brand {
+        font-size: 19px;
+    }
+
+    .home-brand span {
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
     }
 
     .hero-actions,
