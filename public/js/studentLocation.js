@@ -398,6 +398,10 @@ function refineStudentPosition(basePosition, radiusHint, button, label) {
 }
 
 function improveStudentPositionForAccuracy(initialPosition, radiusHint, button) {
+    if (initialPosition && initialPosition.meta && initialPosition.meta.source === "mock-dev") {
+        return Promise.resolve(initialPosition);
+    }
+
     if (!positionNeedsRefinement(initialPosition, radiusHint)) {
         return Promise.resolve(initialPosition);
     }
@@ -602,9 +606,10 @@ function getStudentLocationErrorMessage(error, permissionState) {
         name.indexOf("POSITION_UNAVAILABLE") !== -1 ||
         name.indexOf("TIMEOUT") !== -1;
 
-    // Only apply Geolocation fallback if it's an actual native Geolocation error (which have codes 1, 2, or 3)
-    // Server errors don't have code 1, 2, 3 so we should return their exact message.
     if (!hasStandardCode && !isGeoName && message) {
+        if (message === "Location unavailable.") {
+            return "Could not fetch your GPS location. Please ensure location permissions are granted, disable battery saver, and try again.";
+        }
         return message;
     }
 
@@ -727,6 +732,14 @@ function getBestStudentLocationPosition(onProgress) {
             finished = true;
             cleanup();
             if (samples.length === 0) {
+                if (window.localStorage && window.localStorage.getItem('MOCK_GPS') === 'true') {
+                    console.warn("Using MOCK GPS for development because real GPS failed.");
+                    resolve({
+                        coords: { latitude: 28.6139, longitude: 77.2090, accuracy: 15 },
+                        meta: { sampleCount: 1, source: "mock-dev" }
+                    });
+                    return;
+                }
                 reject(error || lastError || new Error("Location is not available."));
                 return;
             }

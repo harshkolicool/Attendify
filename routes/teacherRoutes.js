@@ -1408,13 +1408,7 @@ router.get("/reports", isTeacher, async function (req, res) {
             .populate("classroom")
             .populate({
                 path: "attendanceSession",
-                populate: [
-                    { path: "teacher" },
-                    { path: "schedule" },
-                    { path: "subject" },
-                    { path: "classGroup" },
-                    { path: "classroom" }
-                ]
+                select: "startTime"
             })
             .sort({
                 createdAt: -1

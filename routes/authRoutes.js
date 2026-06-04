@@ -150,6 +150,11 @@ router.post("/student/register", authLimiter, async (req, res) => {
             return await renderError("Invalid college code.");
         }
 
+        const mongoose = require("mongoose");
+        if (!mongoose.Types.ObjectId.isValid(classGroupId)) {
+            return await renderError("Invalid class group selected.");
+        }
+
         const classGroup = await ClassGroup.findOne({
             _id: classGroupId,
             college: college._id,

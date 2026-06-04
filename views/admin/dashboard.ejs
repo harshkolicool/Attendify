@@ -187,7 +187,10 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                     }).then(function(newSubscription) {
                         fetch('/teacher/push/subscribe', { // Admin shares the teacher push endpoint because they use the same schema
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'CSRF-Token': '<%= csrfToken %>'
+                            },
                             body: JSON.stringify(newSubscription)
                         });
                     }).catch(function(err) {
@@ -197,7 +200,10 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
             } else {
                 fetch('/teacher/push/subscribe', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': '<%= csrfToken %>'
+                    },
                     body: JSON.stringify(subscription)
                 });
             }

@@ -282,8 +282,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const currentState = card.getAttribute("data-attendance-state");
 
-        // Only PRESENT is truly final — all other states can transition
-        if (currentState === "present" || currentState === "live") {
+        // Only PRESENT and ABSENT are truly final — all other states can transition
+        if (currentState === "present" || currentState === "live" || currentState === "absent") {
             return;
         }
 
@@ -332,8 +332,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const currentState = card.getAttribute("data-attendance-state");
 
-        // Only PRESENT and active live states are truly final
-        if (currentState === "present" || currentState === "live") {
+        // Only PRESENT, ABSENT, and active live states are truly final
+        if (currentState === "present" || currentState === "live" || currentState === "absent") {
             return;
         }
 
@@ -354,8 +354,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const currentState = card.getAttribute("data-attendance-state");
 
-        // Only PRESENT is truly final
-        if (currentState === "present" || currentState === "live") {
+        // Only PRESENT, ABSENT, and LIVE are truly final
+        if (currentState === "present" || currentState === "live" || currentState === "absent") {
             return;
         }
 
@@ -398,7 +398,8 @@ document.addEventListener("DOMContentLoaded", function () {
             if (
                 currentState === "present" ||
                 currentState === "live" ||
-                currentState === "pending"
+                currentState === "pending" ||
+                currentState === "absent"
             ) {
                 return;
             }

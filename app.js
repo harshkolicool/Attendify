@@ -168,8 +168,8 @@ app.use(async function ensureDatabaseConnection(req, res, next) {
 
 app.use(
     rateLimit({
-        windowMs: 60 * 1000,
-        limit: 3000,
+        windowMs: 15 * 60 * 1000,
+        limit: 2000,
         standardHeaders: true,
         legacyHeaders: false
     })

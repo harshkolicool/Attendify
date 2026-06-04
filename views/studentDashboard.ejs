@@ -631,7 +631,10 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                         // Send subscription to server
                         fetch('/student/push/subscribe', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'CSRF-Token': '<%= csrfToken %>'
+                            },
                             body: JSON.stringify(newSubscription)
                         });
                     }).catch(function(err) {
@@ -642,7 +645,10 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                 // Already subscribed, optionally send to server to ensure it is saved
                 fetch('/student/push/subscribe', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': '<%= csrfToken %>'
+                    },
                     body: JSON.stringify(subscription)
                 });
             }

@@ -17,7 +17,7 @@
     var MIN_SAMPLES = 4;
     var MAX_SAMPLES = 20;
     var MIN_COLLECTION_MS = 1500;
-    var MAX_WAIT_MS = 8000;
+    var MAX_WAIT_MS = 25000;
 
     var OUTLIER_SIGMA = 2.5;
     var MAX_SPEED_KMH = 120;
@@ -358,6 +358,12 @@
             maxWaitMs = minCollectionMs + 3000;
         }
 
+        // Fast timeout for local development testing
+        if (window.localStorage && window.localStorage.getItem('MOCK_GPS') === 'true') {
+            minCollectionMs = 1000;
+            maxWaitMs = 4000;
+        }
+
         return new Promise(function (resolve, reject) {
             var rawSamples = [];
             var finished = false;
@@ -482,6 +488,14 @@
                 cleanup();
 
                 if (rawSamples.length === 0) {
+                    if (window.localStorage && window.localStorage.getItem('MOCK_GPS') === 'true') {
+                        console.warn("Using MOCK GPS for development because real GPS failed.");
+                        resolve({
+                            coords: { latitude: 28.6139, longitude: 77.2090, accuracy: 15 },
+                            meta: { sampleCount: 1, source: "mock-dev" }
+                        });
+                        return;
+                    }
                     reject(error || new Error("Location unavailable."));
                     return;
                 }
@@ -660,15 +674,20 @@
 
             var optionsPrimary = {
                 enableHighAccuracy: true,
-                timeout: 18000,
+                timeout: 25000,
                 maximumAge: 0
             };
 
             startWatch(optionsPrimary, false);
 
+            var fallbackDelay = 8000;
+            if (window.localStorage && window.localStorage.getItem('MOCK_GPS') === 'true') {
+                fallbackDelay = 2000;
+            }
+
             fallbackTimeoutId = setTimeout(function () {
                 switchToFallbackMode();
-            }, 4000);
+            }, fallbackDelay);
 
             timeoutId = setTimeout(function () {
                 done();

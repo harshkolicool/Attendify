@@ -19,10 +19,23 @@
     --shell-shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     --shell-font: "Manrope", "Segoe UI", "Trebuchet MS", sans-serif;
     --shell-heading-font: "Sora", "Manrope", "Segoe UI", sans-serif;
+    
+    --shell-gray-200: #e2e8f0;
+    --shell-gray-500: #64748b;
+    --shell-gray-600: #4b5563;
+    
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
 }
 
 * {
     box-sizing: border-box;
+}
+
+*:focus-visible {
+    outline: 2px solid var(--shell-primary);
+    outline-offset: 2px;
 }
 
 html {

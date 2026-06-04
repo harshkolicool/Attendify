@@ -565,7 +565,7 @@
 
                                                 <% } else if (card.todaySession) { %>
 
-                                                    <div style="display:flex; gap:10px; align-items:center;">
+                                                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                                                         <span class="status-badge done">
                                                             <i class="fa-solid fa-circle-check"></i>
                                                             Recorded
@@ -943,7 +943,10 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                     }).then(function(newSubscription) {
                         fetch('/teacher/push/subscribe', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'CSRF-Token': '<%= csrfToken %>'
+                            },
                             body: JSON.stringify(newSubscription)
                         });
                     }).catch(function(err) {
@@ -953,7 +956,10 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
             } else {
                 fetch('/teacher/push/subscribe', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': '<%= csrfToken %>'
+                    },
                     body: JSON.stringify(subscription)
                 });
             }

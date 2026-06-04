@@ -1216,12 +1216,7 @@ router.get("/passkey/register/options", isStudent, async function (req, res) {
             });
         }
 
-        if (student.passkeys && student.passkeys.length > 0) {
-            return res.status(403).json({
-                success: false,
-                message: "You already have a passkey. Ask admin to reset/allow setup before adding a new one."
-            });
-        }
+        // Removed one-passkey limit to allow multiple passkeys if admin allows setup.
 
         if (!isPasskeySetupAllowed(student)) {
             return res.status(403).json({
@@ -1323,12 +1318,7 @@ router.post("/passkey/register/verify", isStudent, async function (req, res) {
             });
         }
 
-        if (student.passkeys && student.passkeys.length > 0) {
-            return res.status(403).json({
-                success: false,
-                message: "You already have a passkey. Ask admin to reset/allow setup before adding a new one."
-            });
-        }
+        // Removed one-passkey limit to allow multiple passkeys if admin allows setup.
 
         if (!isPasskeySetupAllowed(student)) {
             return res.status(403).json({
@@ -1376,6 +1366,8 @@ router.post("/passkey/register/verify", isStudent, async function (req, res) {
             });
         }
 
+        const passkeyIndex = student.passkeys.length + 1;
+
         student.passkeys.push({
             credentialId: credential.id,
             credentialPublicKey: Buffer.from(credential.publicKey),
@@ -1383,7 +1375,7 @@ router.post("/passkey/register/verify", isStudent, async function (req, res) {
             transports: credential.transports || (req.body.response && req.body.response.transports) || [],
             deviceType: verification.registrationInfo.credentialDeviceType,
             backedUp: verification.registrationInfo.credentialBackedUp || false,
-            name: "Passkey 1",
+            name: "Passkey " + passkeyIndex,
             registeredAt: new Date()
         });
 

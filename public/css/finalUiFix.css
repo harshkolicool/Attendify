@@ -532,11 +532,12 @@ textarea {
         gap: 12px;
     }
 
-    .teacher-header > div,
-    .student-header > div,
-    .admin-header > div,
-    .platform-header > div {
-        width: 100%;
+    .teacher-header > div:first-child,
+    .student-header > div:first-child,
+    .admin-header > div:first-child,
+    .platform-header > div:first-child {
+        flex: 1;
+        min-width: 0;
     }
 
     .student-history-table,
@@ -1264,8 +1265,10 @@ textarea {
     .admin-header,
     .student-header,
     .teacher-header {
+        display: flex !important;
         flex-direction: column !important;
         align-items: flex-start !important;
+        gap: 16px !important;
     }
     
     .schedule-header {

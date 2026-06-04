@@ -51,7 +51,7 @@ test("boundary-ambiguous low-confidence fix requests retry", function () {
     const evaluation = evaluateLocationRange(
         12.9716,
         77.5946,
-        12.97214,
+        12.97241,
         77.5946,
         50,
         8,

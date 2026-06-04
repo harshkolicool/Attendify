@@ -336,6 +336,11 @@ function evaluateLocationRange(
         shouldRetry = true;
         userMessage =
             "Location signal is unstable on this network near the classroom boundary. Keep precise location on, stay still for a few seconds, and try again.";
+    } else if (process.env.MOCK_GPS === "true") {
+        // Developer Bypass: Force PASS in development mode
+        decision = "PASS";
+        reasonCode = "OK_DEV_BYPASS";
+        userMessage = "Inside allowed range (Development Bypass). Attendance accepted.";
     } else if (clearlyOutside || minimumPossibleDistance > verificationRadius) {
         // PRIORITY 2: Student is clearly outside — reject regardless of accuracy.
         decision = "FAIL";

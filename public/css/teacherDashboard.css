@@ -11,7 +11,7 @@
 body {
     font-family: "Manrope", "Segoe UI", "Trebuchet MS", sans-serif;
     background: #f5f7fb;
-    color: #0f172a;
+    color: var(--shell-text);
     -webkit-font-smoothing: antialiased;
 }
 
@@ -70,7 +70,7 @@ button {
 
 .teacher-header h1 {
     margin-top: 6px;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 34px;
     font-weight: 950;
     letter-spacing: -0.03em;
@@ -78,13 +78,13 @@ button {
 
 .teacher-header p {
     margin-top: 8px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 15px;
     font-weight: 700;
 }
 
 .teacher-kicker {
-    color: #2563eb;
+    color: var(--shell-primary);
     font-size: 12px;
     font-weight: 900;
     letter-spacing: 0.12em;
@@ -95,7 +95,7 @@ button {
     min-width: 52px;
     height: 52px;
     border-radius: 10px;
-    background: #2563eb;
+    background: var(--shell-primary);
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -126,7 +126,7 @@ button {
 
 .stats-row {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 18px;
     margin-bottom: 24px;
     padding: 0;
@@ -134,7 +134,7 @@ button {
 
 .stat-box {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     border-radius: 22px;
     padding: 20px;
     box-shadow: 0 14px 38px rgba(15, 23, 42, 0.06);
@@ -143,13 +143,13 @@ button {
 .stat-box span {
     font-size: 14px;
     font-weight: 800;
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .stat-box h3 {
     font-size: 34px;
     margin-top: 8px;
-    color: #2563eb;
+    color: var(--shell-primary);
     font-weight: 950;
     line-height: 1;
 }
@@ -162,8 +162,14 @@ button {
     padding: 0;
 }
 
+@media (max-width: 1300px) {
+    .content-area {
+        grid-template-columns: 1fr;
+    }
+}
+
 .panel-box {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     border-radius: 24px;
     padding: 22px;
     background: #ffffff;
@@ -184,7 +190,7 @@ button {
 
 .class-card {
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     border-radius: 18px;
     padding: 16px;
     margin-bottom: 14px;
@@ -215,7 +221,7 @@ button {
 }
 
 .start-btn {
-    background: #2563eb;
+    background: var(--shell-primary);
     color: #ffffff;
     border: none;
     border-radius: 8px;
@@ -226,6 +232,11 @@ button {
 
 .start-btn:hover {
     background: #1d4ed8;
+}
+
+.start-btn:focus-visible {
+    outline: 2px solid var(--shell-primary);
+    outline-offset: 2px;
 }
 
 .start-btn:disabled {
@@ -279,7 +290,7 @@ button {
 
 .status-badge.ended {
     background: #e5e7eb;
-    color: #4b5563;
+    color: var(--shell-gray-600);
 }
 
 .section-label {
@@ -323,7 +334,7 @@ button {
 
 .manual-help {
     font-size: 13px;
-    color: #4b5563;
+    color: var(--shell-gray-600);
     margin-bottom: 10px;
 }
 
@@ -436,7 +447,7 @@ button {
 .live-top h4 {
     font-size: 20px;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--shell-text);
     margin: 0 0 6px 0;
     text-transform: uppercase;
     letter-spacing: -0.02em;
@@ -445,7 +456,7 @@ button {
 
 .live-top p {
     font-size: 15px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     margin: 0;
     font-weight: 600;
     letter-spacing: 0.01em;
@@ -531,7 +542,7 @@ button {
     display: flex;
     align-items: center;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     padding: 12px 16px;
     border-radius: 12px;
     transition: all 0.2s ease;
@@ -571,7 +582,7 @@ button {
 .student-info strong {
     font-size: 15px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--shell-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -579,7 +590,7 @@ button {
 
 .student-info span {
     font-size: 13px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-weight: 500;
 }
 
@@ -601,7 +612,7 @@ button {
     text-align: center;
     padding: 20px;
     border-radius: 12px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 14px;
     display: block;
 }
@@ -631,6 +642,11 @@ button {
 
 .end-btn:active {
     transform: translateY(1px);
+}
+
+.end-btn:focus-visible {
+    outline: 2px solid #ef4444;
+    outline-offset: 2px;
 }
 
 .empty-box {
@@ -670,7 +686,7 @@ button {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    background: #2563eb;
+    background: var(--shell-primary);
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -686,7 +702,7 @@ button {
 
 .profile-card p {
     font-size: 13px;
-    color: #2563eb;
+    color: var(--shell-primary);
 }
 
 .info-card {
@@ -711,7 +727,7 @@ button {
 
 .info-icon.blue {
     background: #dbeafe;
-    color: #2563eb;
+    color: var(--shell-primary);
 }
 
 .info-icon.green {
@@ -756,7 +772,7 @@ button {
     padding: 18px;
     border-radius: 24px;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     box-shadow: 0 14px 38px rgba(15, 23, 42, 0.06);
 }
 
@@ -773,7 +789,7 @@ button {
     margin: 0;
     font-size: 16px;
     font-weight: 950;
-    color: #0f172a;
+    color: var(--shell-text);
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -781,7 +797,7 @@ button {
 
 .teacher-map-subtitle {
     margin: 6px 0 0;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 800;
     line-height: 1.5;
@@ -834,8 +850,8 @@ button {
 
 .teacher-map-pill-poor {
     background: #f1f5f9;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
+    color: var(--shell-gray-500);
+    border: 1px solid var(--shell-border);
 }
 
 .teacher-map-toolbar {
@@ -861,7 +877,7 @@ button {
     background: #fff;
     font-size: 14px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--shell-text);
 }
 
 .teacher-map-toolbar .select-shell {
@@ -881,7 +897,7 @@ button {
     border-radius: 12px;
     border: 1px solid #dbe3ef;
     background: #ffffff;
-    color: #0f172a;
+    color: var(--shell-text);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -891,7 +907,7 @@ button {
 
 .teacher-map-icon-button:hover,
 .teacher-map-icon-button:focus-visible {
-    border-color: #2563eb;
+    border-color: var(--shell-primary);
     color: #1d4ed8;
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
     outline: none;
@@ -910,7 +926,7 @@ button {
     height: 420px;
     border-radius: 18px;
     overflow: hidden;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     flex-shrink: 0;
 }
 
@@ -940,18 +956,18 @@ button {
 }
 
 .teacher-map-overlay-inner strong {
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 1.1rem;
 }
 
 .teacher-map-overlay-icon {
     font-size: 2rem;
-    color: #2563eb;
+    color: var(--shell-primary);
     margin-bottom: 10px;
 }
 
 .teacher-map-roster-wrap {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     border-radius: 18px;
     background: #f8fafc;
     padding: 14px;
@@ -973,7 +989,7 @@ button {
     margin: 0;
     font-size: 14px;
     font-weight: 950;
-    color: #0f172a;
+    color: var(--shell-text);
 }
 
 .teacher-map-roster {
@@ -987,7 +1003,7 @@ button {
 }
 
 .teacher-map-roster-empty {
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 700;
     line-height: 1.5;
@@ -1000,7 +1016,7 @@ button {
 }
 
 .teacher-map-student-card {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     border-radius: 12px;
     background: #ffffff;
     padding: 12px;
@@ -1027,7 +1043,7 @@ button {
 .teacher-map-student-head strong {
     font-size: 14px;
     font-weight: 900;
-    color: #0f172a;
+    color: var(--shell-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1037,7 +1053,7 @@ button {
 .teacher-map-student-copy p {
     margin-top: 2px;
     font-size: 12px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1053,7 +1069,7 @@ button {
     font-size: 14px;
     font-weight: 900;
     flex-shrink: 0;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--shell-border);
 }
 
 .teacher-map-avatar-inside {
@@ -1078,8 +1094,8 @@ button {
 .teacher-map-avatar-offline,
 .teacher-map-avatar-unknown {
     background: #f1f5f9;
-    color: #64748b;
-    border-color: #e2e8f0;
+    color: var(--shell-gray-500);
+    border-color: var(--shell-border);
 }
 
 .teacher-map-avatar-online {
@@ -1093,7 +1109,7 @@ button {
     font-weight: 900;
     padding: 2px 8px;
     border-radius: 999px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     white-space: nowrap;
 }
 
@@ -1119,8 +1135,8 @@ button {
 .teacher-map-device-status-offline,
 .teacher-map-device-status-unknown {
     background: #f1f5f9;
-    color: #64748b;
-    border-color: #e2e8f0;
+    color: var(--shell-gray-500);
+    border-color: var(--shell-border);
 }
 
 .teacher-map-device-status-online {
@@ -1134,7 +1150,7 @@ button {
     justify-content: space-between;
     margin-top: 6px;
     font-size: 12px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     gap: 10px;
 }
 
@@ -1156,7 +1172,7 @@ button {
     height: 100%;
     align-items: center;
     justify-content: center;
-    color: #64748b;
+    color: var(--shell-gray-500);
     background: #f8fafc;
     padding: 20px;
     text-align: center;
@@ -1172,7 +1188,7 @@ button {
 .teacher-map-center-marker {
     width: 20px;
     height: 20px;
-    background: #0f172a;
+    background: var(--shell-text);
     border-radius: 50%;
     border: 3px solid #ffffff;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
@@ -1191,14 +1207,14 @@ button {
     height: 28px;
     background: #ffffff;
     border-radius: 50%;
-    border: 3px solid #64748b;
+    border: 3px solid var(--shell-gray-500);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-weight: 900;
     font-size: 12px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-family: "Manrope", "Segoe UI", sans-serif;
 }
 
@@ -1220,8 +1236,8 @@ button {
 .teacher-map-device-marker-poor,
 .teacher-map-device-marker-offline,
 .teacher-map-device-marker-unknown {
-    border-color: #64748b;
-    color: #64748b;
+    border-color: var(--shell-gray-500);
+    color: var(--shell-gray-500);
 }
 
 .teacher-map-device-marker-online {
@@ -1235,7 +1251,7 @@ button {
 }
 
 .teacher-map-popup-head {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--shell-border);
     padding-bottom: 8px;
     margin-bottom: 8px;
 }
@@ -1243,12 +1259,12 @@ button {
 .teacher-map-popup-head strong {
     display: block;
     font-size: 15px;
-    color: #0f172a;
+    color: var(--shell-text);
 }
 
 .teacher-map-popup-head span {
     font-size: 12px;
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .teacher-map-popup-grid {
@@ -1279,7 +1295,7 @@ button {
 .teacher-map-popup-status-poor,
 .teacher-map-popup-status-offline,
 .teacher-map-popup-status-unknown {
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .teacher-map-popup-status-online {
@@ -1305,7 +1321,7 @@ button {
 
 .teacher-map-student-card.is-live:hover,
 .teacher-map-student-card.is-live:focus-visible {
-    border-color: #2563eb !important;
+    border-color: var(--shell-primary) !important;
     box-shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
     outline: none;
     transform: translateY(-1px);
@@ -1327,7 +1343,7 @@ button {
 }
 
 .teacher-map-hint {
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 800;
 }
@@ -1376,14 +1392,14 @@ button {
 
 .teacher-card-header h3 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 20px;
     font-weight: 950;
 }
 
 .teacher-card-header p {
     margin: 6px 0 0;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 800;
 }
@@ -1402,7 +1418,7 @@ button {
     min-height: 110px;
     border: 1px dashed #cbd5e1;
     border-radius: 18px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1451,7 +1467,7 @@ button {
 
 .suspicious-attempt-top strong {
     display: block;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 15px;
     font-weight: 950;
 }
@@ -1459,7 +1475,7 @@ button {
 .suspicious-attempt-top small {
     display: block;
     margin-top: 3px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 12px;
     font-weight: 850;
 }
@@ -1526,14 +1542,14 @@ button {
 
 .teacher-report-overview-top h3 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 20px;
     font-weight: 950;
 }
 
 .teacher-report-overview-top p {
     margin-top: 6px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 14px;
     font-weight: 800;
 }
@@ -1594,12 +1610,12 @@ button {
 }
 
 .teacher-report-nav-link:hover {
-    border-color: #2563eb;
+    border-color: var(--shell-primary);
     background: #eff6ff;
 }
 
 .teacher-report-nav-link.is-active {
-    border-color: #2563eb;
+    border-color: var(--shell-primary);
     background: #eaf2ff;
     color: #1d4ed8;
     box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.16);
@@ -1660,7 +1676,7 @@ button {
     border: 1px solid #dbe3ef;
     border-radius: 16px;
     padding: 0 14px;
-    color: #0f172a;
+    color: var(--shell-text);
     background: #ffffff;
     font-size: 14px;
     font-weight: 800;
@@ -1673,7 +1689,7 @@ button {
 
 .teacher-field input:focus,
 .teacher-field select:focus {
-    border-color: #2563eb;
+    border-color: var(--shell-primary);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
 }
 
@@ -1681,7 +1697,7 @@ button {
     width: 100%;
     border-radius: 16px;
     background: #f1f5f9;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     color: #1e293b;
     font-size: 14px;
     font-weight: 950;
@@ -1703,7 +1719,7 @@ button {
     padding: 20px;
     border-radius: 24px;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
     display: flex;
     align-items: center;
@@ -1712,7 +1728,7 @@ button {
 }
 
 .teacher-report-stat span {
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 900;
 }
@@ -1720,7 +1736,7 @@ button {
 .teacher-report-stat strong {
     display: block;
     margin-top: 8px;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 30px;
     font-weight: 950;
     letter-spacing: -0.05em;
@@ -1738,7 +1754,7 @@ button {
 
 .teacher-report-stat.blue i {
     background: #dbeafe;
-    color: #2563eb;
+    color: var(--shell-primary);
 }
 
 .teacher-report-stat.green i {
@@ -1784,12 +1800,12 @@ button {
 
 .teacher-report-table th {
     padding: 14px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 12px;
     font-weight: 950;
     text-transform: uppercase;
     text-align: left;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--shell-border);
 }
 
 .teacher-report-table th:first-child,
@@ -1806,7 +1822,7 @@ button {
 .teacher-report-table tbody td:first-child {
     z-index: 1;
     background: #ffffff;
-    box-shadow: 1px 0 0 #e2e8f0;
+    box-shadow: 1px 0 0 var(--shell-border);
 }
 
 .teacher-report-table td {
@@ -1819,12 +1835,12 @@ button {
 }
 
 .teacher-report-table td strong {
-    color: #0f172a;
+    color: var(--shell-text);
     font-weight: 950;
 }
 
 .teacher-report-table td small {
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 12px;
     font-weight: 800;
 }
@@ -1880,7 +1896,7 @@ button {
     padding: 8px 12px;
     border-radius: 999px;
     background: #eff6ff;
-    color: #2563eb;
+    color: var(--shell-primary);
     font-size: 13px;
     font-weight: 950;
     white-space: nowrap;
@@ -1895,7 +1911,7 @@ button {
     min-height: 100px;
     border: 1px dashed #cbd5e1;
     border-radius: 18px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1909,7 +1925,7 @@ button {
 .live-card,
 .manual-card {
     border-radius: 24px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
 }
 
@@ -1937,7 +1953,7 @@ button {
     min-height: 52px;
     border: none;
     border-radius: 16px;
-    background: #2563eb;
+    background: var(--shell-primary);
     color: #ffffff;
     font-size: 14px;
     font-weight: 950;
@@ -1974,14 +1990,14 @@ button {
 
 .teacher-export-content h3 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 20px;
     font-weight: 950;
 }
 
 .teacher-export-content p {
     margin: 6px 0 0;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 14px;
     font-weight: 800;
 }
@@ -2105,7 +2121,7 @@ button {
 }
 
 .manual-date-nav-btn.disabled {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     background: #f8fafc;
     color: #94a3b8;
     cursor: not-allowed;
@@ -2122,7 +2138,7 @@ button {
 
 .manual-date-helper {
     margin-top: 10px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 750;
 }
@@ -2162,22 +2178,22 @@ button {
 .manual-date-chip span {
     font-size: 12px;
     font-weight: 800;
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .manual-date-chip strong {
     font-size: 13px;
     font-weight: 900;
-    color: #0f172a;
+    color: var(--shell-text);
 }
 
 .manual-date-chip:hover {
-    border-color: #2563eb;
+    border-color: var(--shell-primary);
     background: #eff6ff;
 }
 
 .manual-date-chip.active {
-    border-color: #2563eb;
+    border-color: var(--shell-primary);
     background: #eaf1ff;
     box-shadow: 0 10px 20px rgba(37, 99, 235, 0.12);
 }
@@ -2192,7 +2208,7 @@ button {
 
 .manual-date-heading h4 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 18px;
     font-weight: 950;
 }
@@ -2233,7 +2249,7 @@ button {
 }
 
 .manual-summary-pill strong {
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 16px;
     font-weight: 950;
 }
@@ -2254,7 +2270,7 @@ button {
     padding: 18px;
     border-radius: 22px;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -2272,21 +2288,21 @@ button {
     padding: 7px 10px;
     border-radius: 999px;
     background: #eff6ff;
-    color: #2563eb;
+    color: var(--shell-primary);
     font-size: 12px;
     font-weight: 950;
 }
 
 .manual-schedule-card h3 {
     margin: 0 0 8px;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 18px;
     font-weight: 950;
 }
 
 .manual-schedule-card p {
     margin: 6px 0 0;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 800;
     display: flex;
@@ -2311,14 +2327,14 @@ button {
 }
 
 .manual-mark-link {
-    background: #2563eb;
+    background: var(--shell-primary);
     color: #ffffff;
 }
 
 .manual-edit-link {
     background: #f1f5f9;
-    color: #0f172a;
-    border: 1px solid #e2e8f0;
+    color: var(--shell-text);
+    border: 1px solid var(--shell-border);
 }
 
 .manual-back-btn {
@@ -2332,7 +2348,7 @@ button {
     padding: 16px;
     border-radius: 18px;
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2341,14 +2357,14 @@ button {
 
 .manual-toolbar h4 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 17px;
     font-weight: 950;
 }
 
 .manual-toolbar p {
     margin: 5px 0 0;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 800;
 }
@@ -2386,7 +2402,7 @@ button {
     padding: 14px;
     border-radius: 18px;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -2395,7 +2411,7 @@ button {
 }
 
 .manual-student-card:hover {
-    border-color: #2563eb;
+    border-color: var(--shell-primary);
     box-shadow: 0 12px 24px rgba(37, 99, 235, 0.08);
 }
 
@@ -2415,13 +2431,13 @@ button {
 }
 
 .manual-student-card input:checked + .manual-student-check {
-    background: #2563eb;
+    background: var(--shell-primary);
     color: #ffffff;
 }
 
 .manual-student-card strong {
     display: block;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 14px;
     font-weight: 950;
 }
@@ -2429,7 +2445,7 @@ button {
 .manual-student-card small {
     display: block;
     margin-top: 3px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 12px;
     font-weight: 800;
 }
@@ -2443,7 +2459,7 @@ button {
 .teacher-notifications-page {
     padding: 32px;
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     border-radius: 28px;
     box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
 }
@@ -2458,7 +2474,7 @@ button {
 
 .teacher-notifications-header h1 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 42px;
     line-height: 1.05;
     font-weight: 900;
@@ -2467,7 +2483,7 @@ button {
 
 .teacher-notifications-header p {
     margin: 8px 0 0;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 17px;
     font-weight: 700;
 }
@@ -2508,8 +2524,8 @@ button {
 
 .teacher-notification-tool-btn.neutral {
     background: #f8fafc;
-    color: #0f172a;
-    border: 1px solid #e2e8f0;
+    color: var(--shell-text);
+    border: 1px solid var(--shell-border);
     cursor: pointer;
 }
 
@@ -2527,7 +2543,7 @@ button {
 
 .teacher-notification-card {
     border-radius: 24px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     background: #ffffff;
     padding: 22px;
     box-shadow: 0 16px 42px rgba(15, 23, 42, 0.05);
@@ -2553,7 +2569,7 @@ button {
     align-items: center;
     justify-content: center;
     background: #eff6ff;
-    color: #2563eb;
+    color: var(--shell-primary);
     font-size: 22px;
 }
 
@@ -2578,14 +2594,14 @@ button {
 
 .teacher-notification-title-row h3 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 22px;
     font-weight: 900;
     line-height: 1.25;
 }
 
 .teacher-notification-title-row span {
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 14px;
     font-weight: 800;
     white-space: nowrap;
@@ -2603,7 +2619,7 @@ button {
 .teacher-notification-actions {
     margin-top: 18px;
     padding-top: 16px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--shell-border);
     display: flex;
     align-items: center;
     flex-wrap: wrap;
@@ -2648,14 +2664,14 @@ button {
 
 .teacher-notification-action.open {
     background: #f8fafc;
-    color: #0f172a;
-    border: 1px solid #e2e8f0;
+    color: var(--shell-text);
+    border: 1px solid var(--shell-border);
 }
 
 .teacher-notification-action.read {
-    background: #2563eb;
+    background: var(--shell-primary);
     color: #ffffff;
-    border: 1px solid #2563eb;
+    border: 1px solid var(--shell-primary);
 }
 
 .teacher-notification-action.delete {
@@ -2670,13 +2686,13 @@ button {
     background: #ffffff;
     padding: 46px;
     text-align: center;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-weight: 800;
 }
 
 .teacher-notifications-empty i {
     font-size: 42px;
-    color: #2563eb;
+    color: var(--shell-primary);
     margin-bottom: 16px;
 }
 
@@ -2860,6 +2876,7 @@ button {
 @media (max-width: 700px) {
     .teacher-card-header {
         flex-direction: column;
+        gap: 14px;
     }
 
     .suspicious-count-pill {
@@ -2879,7 +2896,7 @@ button {
     }
 
     .teacher-header {
-        flex-direction: column;
+        /* Flex row layout is preserved */
     }
 
     .teacher-header h1 {
@@ -2915,7 +2932,7 @@ button {
 .teacher-dashboard-page .live-card,
 .teacher-dashboard-page .profile-card,
 .teacher-dashboard-page .info-card {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shell-border);
     box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
 }
 
@@ -3014,7 +3031,7 @@ html {
 }
 
 .teacher-search-box i {
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .teacher-search-box input {
@@ -3023,7 +3040,7 @@ html {
     border: none;
     outline: none;
     background: transparent;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 14px;
     font-weight: 800;
 }
@@ -3049,7 +3066,7 @@ html {
     border-radius: 14px;
     border: 1px solid #dbe3ef;
     background: #ffffff;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 13px;
     font-weight: 750;
     padding: 0 12px;
@@ -3057,7 +3074,7 @@ html {
 }
 
 .teacher-schedule-filter-field select:focus {
-    border-color: #2563eb;
+    border-color: var(--shell-primary);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
@@ -3129,14 +3146,14 @@ html {
 
 .teacher-schedule-group-summary h4 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 18px;
     font-weight: 950;
 }
 
 .teacher-schedule-group-summary p {
     margin: 4px 0 0;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 800;
 }
@@ -3165,7 +3182,7 @@ html {
 .teacher-room-chip.muted {
     border-color: #d7dee8;
     background: #f2f5f9;
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .teacher-schedule-group-list {
@@ -3264,14 +3281,14 @@ html {
 
 .teacher-report-group-summary h4 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 17px;
     font-weight: 950;
 }
 
 .teacher-report-group-summary p {
     margin: 4px 0 0;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 800;
 }
@@ -3342,7 +3359,7 @@ html {
 
 .teacher-notification-toolbar-btn.neutral {
     background: #ffffff;
-    color: #0f172a;
+    color: var(--shell-text);
     border: 1px solid #dbe3ef;
 }
 
@@ -3395,7 +3412,7 @@ html {
     width: 4px;
     height: 44px;
     border-radius: 0 999px 999px 0;
-    background: #2563eb;
+    background: var(--shell-primary);
 }
 
 .teacher-notification-icon {
@@ -3403,7 +3420,7 @@ html {
     height: 58px;
     border-radius: 18px;
     background: #eff6ff;
-    color: #2563eb;
+    color: var(--shell-primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3412,7 +3429,7 @@ html {
 
 .teacher-notification-item.is-read .teacher-notification-icon {
     background: #f1f5f9;
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .teacher-notification-content {
@@ -3429,7 +3446,7 @@ html {
 
 .teacher-notification-title-row h3 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: clamp(19px, 1.5vw, 24px);
     line-height: 1.22;
     font-weight: 950;
@@ -3437,7 +3454,7 @@ html {
 
 .teacher-notification-title-row time {
     flex: 0 0 auto;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 13px;
     font-weight: 900;
     white-space: nowrap;
@@ -3473,7 +3490,7 @@ html {
 .teacher-notification-actions {
     margin-top: 18px;
     padding-top: 16px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--shell-border);
     display: flex;
     align-items: center;
     flex-wrap: wrap;
@@ -3502,14 +3519,14 @@ html {
 
 .teacher-notification-action.open {
     background: #f8fafc;
-    color: #0f172a;
+    color: var(--shell-text);
     border: 1px solid #dbe3ef;
 }
 
 .teacher-notification-action.read {
-    background: #2563eb;
+    background: var(--shell-primary);
     color: #ffffff;
-    border: 1px solid #2563eb;
+    border: 1px solid var(--shell-primary);
 }
 
 .teacher-notification-action.delete {
@@ -3538,7 +3555,7 @@ html {
     display: grid;
     place-items: center;
     align-content: center;
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .teacher-notifications-empty-icon {
@@ -3546,7 +3563,7 @@ html {
     height: 76px;
     border-radius: 24px;
     background: #eff6ff;
-    color: #2563eb;
+    color: var(--shell-primary);
     display: grid;
     place-items: center;
     font-size: 30px;
@@ -3555,7 +3572,7 @@ html {
 
 .teacher-notifications-empty h3 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 24px;
     font-weight: 950;
 }
@@ -3587,7 +3604,7 @@ html {
 
 .teacher-schedule-panel .panel-title {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 26px;
     line-height: 1.15;
     font-weight: 950;
@@ -3596,7 +3613,7 @@ html {
 
 .teacher-schedule-panel .panel-subtitle {
     margin-top: 8px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 15px;
     line-height: 1.5;
     font-weight: 750;
@@ -3637,7 +3654,7 @@ html {
 }
 
 .teacher-schedule-search-row .teacher-search-box i {
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 18px;
 }
 
@@ -3647,7 +3664,7 @@ html {
     border: none;
     outline: none;
     background: transparent;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 15px;
     font-weight: 800;
 }
@@ -3675,7 +3692,7 @@ html {
     border-radius: 16px;
     border: 1px solid #dbe3ef;
     background: #ffffff;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 14px;
     font-weight: 850;
     padding: 0 14px;
@@ -3684,7 +3701,7 @@ html {
 
 .teacher-schedule-filter-field select:focus,
 .teacher-schedule-search-row .teacher-search-box:focus-within {
-    border-color: #2563eb;
+    border-color: var(--shell-primary);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
 }
 
@@ -3693,7 +3710,7 @@ html {
     min-height: 48px;
     border-radius: 16px;
     background: #f1f5f9;
-    color: #0f172a;
+    color: var(--shell-text);
     border: 1px solid #dbe3ef;
     font-weight: 900;
 }
@@ -3736,7 +3753,7 @@ html {
 
 .teacher-schedule-group-summary h4 {
     margin: 0;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 24px;
     line-height: 1.15;
     font-weight: 950;
@@ -3745,7 +3762,7 @@ html {
 
 .teacher-schedule-group-summary p {
     margin: 8px 0 0;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 15px;
     font-weight: 800;
 }
@@ -3776,7 +3793,7 @@ html {
     padding: 0 18px;
     border-radius: 999px;
     background: #eff6ff;
-    color: #2563eb;
+    color: var(--shell-primary);
     border: 1px solid #dbeafe;
     display: inline-flex;
     align-items: center;
@@ -3796,7 +3813,7 @@ html {
     margin: 0 !important;
     padding: 22px !important;
     border-radius: 24px !important;
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid var(--shell-border) !important;
     background: #ffffff !important;
     box-shadow: 0 12px 34px rgba(15, 23, 42, 0.045) !important;
     display: flex !important;
@@ -3812,7 +3829,7 @@ html {
 
 .teacher-schedule-time strong {
     display: block;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: 20px;
     line-height: 1.15;
     font-weight: 950;
@@ -3822,7 +3839,7 @@ html {
 .teacher-schedule-time span {
     display: block;
     margin-top: 8px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 15px;
     font-weight: 750;
     white-space: nowrap;
@@ -3836,7 +3853,7 @@ html {
 .teacher-dashboard-page .teacher-schedule-class-info h4 {
     margin: 0;
     max-width: 100%;
-    color: #0f172a;
+    color: var(--shell-text);
     font-size: clamp(18px, 1.8vw, 24px);
     line-height: 1.25;
     font-weight: 950;
@@ -3849,7 +3866,7 @@ html {
     display: flex;
     flex-wrap: wrap;
     gap: 8px 16px;
-    color: #64748b;
+    color: var(--shell-gray-500);
     font-size: 14px;
     font-weight: 800;
 }
@@ -3862,7 +3879,7 @@ html {
 }
 
 .teacher-dashboard-page .teacher-schedule-class-info p i {
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .teacher-schedule-card-action {
@@ -3900,7 +3917,7 @@ html {
 
 .teacher-schedule-card-action .status-badge.upcoming {
     background: #f1f5f9;
-    color: #64748b;
+    color: var(--shell-gray-500);
 }
 
 .teacher-schedule-card-action .status-badge.ended {
@@ -3915,7 +3932,7 @@ html {
 
 .teacher-schedule-card-action .start-btn {
     border: none;
-    background: #2563eb;
+    background: var(--shell-primary);
     color: #ffffff;
 }
 
