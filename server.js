@@ -37,11 +37,17 @@ function normalizeOrigin(origin) {
         return "";
     }
 
+    let originStr = String(origin).trim().replace(/\/+$/, "").toLowerCase();
+
+    if (!originStr.startsWith("http://") && !originStr.startsWith("https://")) {
+        originStr = "https://" + originStr;
+    }
+
     try {
-        const parsed = new URL(origin);
-        return (parsed.protocol + "//" + parsed.host).toLowerCase();
+        const parsed = new URL(originStr);
+        return parsed.protocol + "//" + parsed.host;
     } catch (err) {
-        return String(origin).trim().replace(/\/+$/, "").toLowerCase();
+        return originStr;
     }
 }
 

@@ -684,6 +684,8 @@ a { text-decoration: none; color: inherit; }
     background: var(--primary-light);
     color: var(--primary);
     font-size: 22px;
+    display: grid;
+    place-items: center;
 }
 
 .auth-header.student.compact .auth-icon {
