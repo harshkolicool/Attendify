@@ -563,7 +563,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     function (acc, best) {
                         if (best) sendLocation(best);
                     },
-                    { minCollectionMs: 6000, maxWaitMs: 15000 }
+                    { minCollectionMs: 1500, maxWaitMs: 8000 }
                 ).then(function (best) {
                     sendLocation(best);
 

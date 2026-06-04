@@ -16,8 +16,8 @@
 
     var MIN_SAMPLES = 4;
     var MAX_SAMPLES = 20;
-    var MIN_COLLECTION_MS = 5000;
-    var MAX_WAIT_MS = 30000;
+    var MIN_COLLECTION_MS = 1500;
+    var MAX_WAIT_MS = 8000;
 
     var OUTLIER_SIGMA = 2.5;
     var MAX_SPEED_KMH = 120;
