@@ -165,25 +165,21 @@ function isOriginAllowed(origin) {
         return true;
     }
 
-    if (!isProduction) {
-        try {
-            const parsed = new URL(normalizedOrigin);
-            const host = parsed.hostname.toLowerCase();
+    try {
+        const parsed = new URL(normalizedOrigin);
+        const host = parsed.hostname.toLowerCase();
 
-            if (isDevFriendlyHost(host)) {
-                return true;
-            }
-
-            if (
-                host.endsWith(".ngrok-free.dev") ||
-                host.endsWith(".trycloudflare.com") ||
-                host.endsWith(".onrender.com")
-            ) {
-                return true;
-            }
-        } catch (err) {
-            return false;
+        if (host.endsWith(".onrender.com") || host.endsWith(".trycloudflare.com")) {
+            return true;
         }
+
+        if (!isProduction) {
+            if (isDevFriendlyHost(host) || host.endsWith(".ngrok-free.dev")) {
+                return true;
+            }
+        }
+    } catch (err) {
+        // ignore invalid URL parsing
     }
 
     return false;
