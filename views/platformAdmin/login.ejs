@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Platform Admin Login | Attendify</title>
-
     <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/platformAdmin.css">
 
     <link
@@ -41,60 +41,69 @@
     </script>
     <% } %>
 </head>
-<body>
+<body class="auth-bg-dark">
 
-<div class="platform-login-page">
+<div class="auth-page">
+    <div class="auth-split">
+        <aside class="auth-brand-panel" style="background: linear-gradient(135deg, #0f172a, #1e293b);">
+            <a href="/" class="brand-logo light">
+                <span><i class="fa-solid fa-shield-halved"></i></span>
+                Attendify
+            </a>
+            <h2>Platform Admin</h2>
+            <p>Review and approve new college registrations securely.</p>
+            <ul class="auth-perks">
+                <li><i class="fa-solid fa-check"></i> Manage registration requests</li>
+                <li><i class="fa-solid fa-check"></i> Oversee all colleges</li>
+                <li><i class="fa-solid fa-check"></i> System-wide controls</li>
+            </ul>
+        </aside>
 
-    <form action="/platform-admin/login" method="POST" class="platform-login-card">
-
-        <div class="platform-brand-icon">
-            <i class="fa-solid fa-shield-halved"></i>
-        </div>
-
-        <h1>Platform Admin</h1>
-        <p>Login to approve college registration requests.</p>
-
-        <% if (typeof message !== "undefined" && message) { %>
-            <div class="platform-alert error">
-                <%= typeof message !== "undefined" ? message : "" %>
+        <div class="auth-card">
+            <div class="auth-header compact">
+                <div class="auth-icon" style="background: #e2e8f0; color: #0f172a;"><i class="fa-solid fa-shield-halved"></i></div>
+                <h2>Superadmin Login</h2>
+                <p>Enter your platform credentials</p>
             </div>
-        <% } %>
 
-        <div class="platform-field">
-            <label>Email</label>
-            <input
-                type="email"
-                name="email"
-                placeholder="superadmin@attendify.com"
-                required
-            >
+            <% if (typeof message !== "undefined" && message) { %>
+                <div class="error-box auth-alert">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <%= typeof message !== "undefined" ? message : "" %>
+                </div>
+            <% } %>
+
+            <form action="/platform-admin/login" method="POST" class="auth-form">
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" name="email" placeholder="superadmin@attendify.com" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" name="password" placeholder="Enter password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    Login
+                </button>
+            </form>
+
+            <div class="auth-footer" style="justify-content: center;">
+                <a href="/college/register">College registration page</a>
+            </div>
         </div>
-
-        <div class="platform-field">
-            <label>Password</label>
-            <input
-                type="password"
-                name="password"
-                placeholder="Enter password"
-                required
-            >
-        </div>
-
-        <button class="platform-primary-btn" type="submit">
-            <i class="fa-solid fa-right-to-bracket"></i>
-            Login
-        </button>
-
-        <a class="platform-link" href="/college/register">
-            College registration page
-        </a>
-
-    </form>
-
+    </div>
 </div>
 
-
-    <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

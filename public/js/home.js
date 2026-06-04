@@ -77,4 +77,41 @@ document.addEventListener("DOMContentLoaded", function () {
             closeMenu();
         }
     });
+
+    const scrollObserverOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.15
+    };
+
+    const scrollObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('in-view');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, scrollObserverOptions);
+
+    document.querySelectorAll('.scroll-animate').forEach(el => {
+        scrollObserver.observe(el);
+    });
+
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    function updateScrollState() {
+        document.documentElement.style.setProperty('--scroll-y', `${lastScrollY}px`);
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+        lastScrollY = window.scrollY;
+        if (!ticking) {
+            window.requestAnimationFrame(updateScrollState);
+            ticking = true;
+        }
+    }, { passive: true });
+    
+    updateScrollState();
 });

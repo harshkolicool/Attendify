@@ -45,6 +45,39 @@ button {
     font-family: inherit;
 }
 
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+@keyframes floatReverse {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(12px); }
+}
+
+.animate-fade-up {
+    animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+}
+
+.scroll-animate {
+    opacity: 0;
+}
+
+.scroll-animate.in-view {
+    animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+
 .home-page {
     min-height: 100vh;
     overflow-x: hidden;
@@ -62,10 +95,12 @@ button {
     width: min(1180px, calc(100% - 36px));
     margin: 22px auto 0;
     padding: 14px 16px;
-    border: 1px solid rgba(226, 232, 240, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 24px;
-    background: #ffffff;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -289,6 +324,23 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    transform: perspective(1200px) rotateY(-6deg) rotateX(calc(2deg + (var(--scroll-y, 0px) * 0.015))) translateY(calc(var(--scroll-y, 0px) * -0.15));
+    transform-style: preserve-3d;
+    transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-dashboard::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateZ(-50px);
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(37, 99, 235, 0.2), transparent 70%);
+    filter: blur(40px);
+    z-index: -1;
 }
 
 .dashboard-card {
@@ -302,6 +354,7 @@ button {
     width: min(470px, 100%);
     padding: 26px;
     position: relative;
+    animation: float 6s ease-in-out infinite;
 }
 
 .preview-header {
@@ -473,6 +526,7 @@ button {
 .teacher-card {
     top: 38px;
     right: 0;
+    animation: floatReverse 7s ease-in-out infinite;
 }
 
 .teacher-card i {
@@ -483,6 +537,7 @@ button {
 .student-card {
     left: 0;
     bottom: 44px;
+    animation: float 8s ease-in-out infinite;
 }
 
 .student-card i {
@@ -544,9 +599,9 @@ button {
 }
 
 .role-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
     justify-content: center;
 }
 
@@ -554,20 +609,58 @@ button {
 .feature-card,
 .workflow-step,
 .stat-card {
-    background: rgba(255, 255, 255, 0.86);
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    box-shadow: var(--home-soft-shadow);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
 }
 
 .role-card {
-    padding: 22px;
-    border-radius: 28px;
-    transition: 0.2s ease;
+    flex: 1 1 300px;
+    max-width: 350px;
+    padding: 30px 26px;
+    border-radius: 32px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.role-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(255,255,255,0.8), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
 
 .role-card:hover {
-    transform: translateY(-4px);
-    border-color: #bfdbfe;
+    transform: translateY(-8px) scale(1.02);
+}
+
+.role-card:hover::before {
+    opacity: 1;
+}
+
+.role-card:has(.role-icon.admin):hover {
+    border-color: rgba(37, 99, 235, 0.4);
+    box-shadow: 0 32px 64px rgba(37, 99, 235, 0.15);
+}
+
+.role-card:has(.role-icon.teacher):hover {
+    border-color: rgba(147, 51, 234, 0.4);
+    box-shadow: 0 32px 64px rgba(147, 51, 234, 0.15);
+}
+
+.role-card:has(.role-icon.student):hover {
+    border-color: rgba(22, 163, 74, 0.4);
+    box-shadow: 0 32px 64px rgba(22, 163, 74, 0.15);
+}
+
+.role-card:has(.role-icon.college):hover {
+    border-color: rgba(249, 115, 22, 0.4);
+    box-shadow: 0 32px 64px rgba(249, 115, 22, 0.15);
 }
 
 .role-card.highlight {
@@ -581,14 +674,21 @@ button {
 }
 
 .role-icon {
-    width: 54px;
-    height: 54px;
-    border-radius: 18px;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 21px;
-    margin-bottom: 18px;
+    font-size: 26px;
+    margin-bottom: 22px;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    z-index: 1;
+}
+
+.role-card:hover .role-icon {
+    transform: scale(1.12) rotate(-6deg);
 }
 
 .role-icon.admin {
@@ -649,6 +749,13 @@ button {
 .feature-card {
     padding: 24px;
     border-radius: 28px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 32px 64px rgba(37, 99, 235, 0.12);
+    border-color: rgba(56, 189, 248, 0.3);
 }
 
 .feature-card i {
@@ -750,17 +857,35 @@ button {
 }
 
 .cta-card {
-    padding: 38px;
-    border-radius: 34px;
-    background:
-        radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.22), transparent 32%),
-        linear-gradient(135deg, #0f172a, #1e293b);
+    position: relative;
+    padding: 48px 56px;
+    border-radius: 40px;
+    background: #0b1120;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    box-shadow: var(--home-shadow);
+    box-shadow: 0 40px 100px rgba(15, 23, 42, 0.4);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 28px;
+    gap: 32px;
+}
+
+.cta-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.25), transparent 50%),
+        radial-gradient(circle at bottom right, rgba(139, 92, 246, 0.25), transparent 50%),
+        radial-gradient(circle at center, rgba(37, 99, 235, 0.1), transparent 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.cta-card > * {
+    position: relative;
+    z-index: 1;
 }
 
 .cta-card span {
@@ -790,9 +915,43 @@ button {
 
 .cta-actions {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     flex-wrap: wrap;
     flex-shrink: 0;
+}
+
+.cta-actions > a {
+    min-width: 200px;
+    justify-content: center;
+}
+
+.cta-actions .primary-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.35);
+    transition: all 0.3s ease;
+}
+
+.cta-actions .primary-btn:hover {
+    background: #2563eb;
+    box-shadow: 0 16px 36px rgba(59, 130, 246, 0.45);
+    transform: translateY(-2px);
+}
+
+.cta-actions .secondary-btn.light {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+}
+
+.cta-actions .secondary-btn.light:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
 }
 
 .home-footer {
@@ -835,7 +994,7 @@ button {
     color: var(--home-blue);
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1200px) {
     .hero-section {
         grid-template-columns: 1fr;
         min-height: auto;
@@ -846,7 +1005,6 @@ button {
         min-height: 430px;
     }
 
-    .role-grid,
     .workflow-grid,
     .stats-section {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -991,7 +1149,6 @@ button {
 
     .preview-class-info,
     .preview-students,
-    .role-grid,
     .features-grid,
     .workflow-grid,
     .stats-section {

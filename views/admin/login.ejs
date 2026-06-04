@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login | Attendify</title>
     <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="/css/adminTheme.css">
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <!-- SweetAlert2 for Custom UI Alerts -->
@@ -37,40 +37,72 @@
     </script>
     <% } %>
 </head>
-<body class="admin-login-page">
+<body class="auth-bg-dark">
 
-<div class="admin-login-card">
-    <div class="admin-login-head">
-        <i class="fa-solid fa-shield-halved"></i>
-        <h1>College Admin</h1>
-        <p>Manage your college setup</p>
+<div class="auth-page">
+    <div class="auth-split">
+
+        <aside class="auth-brand-panel" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
+            <a href="/" class="brand-logo light">
+                <span><i class="fa-solid fa-shield-halved"></i></span>
+                Attendify
+            </a>
+            <h2>College Admin</h2>
+            <p>Manage your college setup, add teachers, and oversee the entire institution.</p>
+            <ul class="auth-perks">
+                <li><i class="fa-solid fa-check"></i> Setup college structure</li>
+                <li><i class="fa-solid fa-check"></i> Manage users & schedules</li>
+                <li><i class="fa-solid fa-check"></i> Review attendance reports</li>
+            </ul>
+        </aside>
+
+        <div class="auth-card">
+            <div class="auth-header compact">
+                <div class="auth-icon" style="background: #eff6ff; color: #2563eb;"><i class="fa-solid fa-shield-halved"></i></div>
+                <h2>Admin Login</h2>
+                <p>Enter your admin credentials</p>
+            </div>
+
+            <% if (typeof error !== "undefined" && error) { %>
+                <div class="error-box auth-alert">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <%= typeof error !== "undefined" ? error : "" %>
+                </div>
+            <% } %>
+
+            <form action="/admin/login" method="POST" class="auth-form">
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" name="email" placeholder="admin@college.com" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" name="password" placeholder="Enter password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    Login as Admin
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <a href="/"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+                <span>·</span>
+                <a href="/teacher/login">Teacher login</a>
+            </div>
+        </div>
     </div>
-
-    <% if (typeof error !== "undefined" && error) { %>
-        <div class="alert error"><%= typeof error !== "undefined" ? error : "" %></div>
-    <% } %>
-
-    <form action="/admin/login" method="POST" class="admin-form">
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="email" placeholder="admin@college.com" required>
-        </div>
-
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" name="password" placeholder="Enter password" required>
-        </div>
-
-        <button type="submit" class="btn-primary">Login as Admin</button>
-    </form>
-
-    <p class="login-links">
-        <a href="/">Home</a> · <a href="/teacher/login">Teacher Login</a>
-    </p>
 </div>
 
-
-    <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>
