@@ -1104,7 +1104,7 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
             previousSession.isActive = true;
             previousSession.latitude = finalLatitude;
             previousSession.longitude = finalLongitude;
-            previousSession.teacherGpsAccuracy = Number(teacherAccuracy);
+            previousSession.teacherGpsAccuracy = Number(teacherAccuracy) || 0;
             previousSession.locationSource = finalLocationSource;
             previousSession.locationMeta = locationMeta;
             previousSession.radius = scheduleItem.classroom.radius || 100;
@@ -1127,14 +1127,14 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
                     $setOnInsert: {
                         schedule: scheduleItem._id,
                         teacher: req.user._id,
-                        subject: scheduleItem._id ? scheduleItem.subject._id : scheduleItem.subject, // ensure object ID
+                        subject: scheduleItem.subject ? scheduleItem.subject._id : scheduleItem.subject,
                         college: req.user.college,
-                        classGroup: scheduleItem.classGroup._id,
-                        classroom: scheduleItem.classroom._id,
+                        classGroup: scheduleItem.classGroup ? scheduleItem.classGroup._id : scheduleItem.classGroup,
+                        classroom: scheduleItem.classroom ? scheduleItem.classroom._id : scheduleItem.classroom,
 
                         latitude: finalLatitude,
                         longitude: finalLongitude,
-                        teacherGpsAccuracy: Number(teacherAccuracy),
+                        teacherGpsAccuracy: Number(teacherAccuracy) || 0,
                         locationSource: finalLocationSource,
                         locationMeta: locationMeta,
                         radius: scheduleItem.classroom.radius || 100,

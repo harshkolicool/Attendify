@@ -174,7 +174,11 @@ function isOriginAllowed(origin) {
                 return true;
             }
 
-            if (host.endsWith(".ngrok-free.dev")) {
+            if (
+                host.endsWith(".ngrok-free.dev") ||
+                host.endsWith(".trycloudflare.com") ||
+                host.endsWith(".onrender.com")
+            ) {
                 return true;
             }
         } catch (err) {
