@@ -1078,8 +1078,8 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
 
         let attendanceSession;
 
-        let finalLatitude = Number(teacherLatitude);
-        let finalLongitude = Number(teacherLongitude);
+        let finalLatitude = Number(teacherLatitude) || 0;
+        let finalLongitude = Number(teacherLongitude) || 0;
         let finalLocationSource = "TEACHER_GPS";
 
         // Prioritize Admin-verified classroom coordinates if they exist
