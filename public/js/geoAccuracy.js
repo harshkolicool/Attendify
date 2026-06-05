@@ -373,6 +373,8 @@
             var usingFallback = false;
             var errorRetryCount = 0;
             var startTime = Date.now();
+            var isLiveStreamActive = false;
+            var liveStreamUnsubscribe = null;
 
             root.__attendifyGeoActiveCount = Number(root.__attendifyGeoActiveCount || 0) + 1;
 
@@ -383,6 +385,12 @@
 
                 if (fallbackTimeoutId) {
                     clearTimeout(fallbackTimeoutId);
+                }
+
+                if (isLiveStreamActive && liveStreamUnsubscribe) {
+                    liveStreamUnsubscribe();
+                    liveStreamUnsubscribe = null;
+                    isLiveStreamActive = false;
                 }
 
                 if (watchId !== null && navigator.geolocation) {
@@ -661,8 +669,14 @@
             }
 
             function startWatch(options, isFallback) {
-                if (!navigator.geolocation || finished) {
+                if (finished) {
                     return;
+                }
+
+                if (isLiveStreamActive && liveStreamUnsubscribe) {
+                    liveStreamUnsubscribe();
+                    liveStreamUnsubscribe = null;
+                    isLiveStreamActive = false;
                 }
 
                 if (watchId !== null) {
@@ -675,6 +689,16 @@
                 }
 
                 usingFallback = Boolean(isFallback);
+
+                if (window.AttendifyLiveStream && !usingFallback) {
+                    isLiveStreamActive = true;
+                    liveStreamUnsubscribe = window.AttendifyLiveStream.subscribe(addSample);
+                    return;
+                }
+
+                if (!navigator.geolocation) {
+                    return;
+                }
 
                 try {
                     navigator.geolocation.getCurrentPosition(

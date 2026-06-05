@@ -452,10 +452,12 @@ document.addEventListener("DOMContentLoaded", function () {
             ensureStudentJoined(function () {
                 socket.emit("student:location:update", payload);
             });
+            if (window.AttendifyLiveStream) window.AttendifyLiveStream.push(smoothedPosition);
             return;
         }
 
         postLocation(payload);
+        if (window.AttendifyLiveStream) window.AttendifyLiveStream.push(smoothedPosition);
     }
 
     function sendOfflineUpdate() {
@@ -601,6 +603,26 @@ document.addEventListener("DOMContentLoaded", function () {
             stopWatch();
         }
     }
+
+    // EXPOSE GLOBAL LIVE STREAM FOR GEOACCURACY (Prevents collisions)
+    window.AttendifyLiveStream = {
+        subscribers: [],
+        cachedPosition: null,
+        subscribe: function(callback) {
+            this.subscribers.push(callback);
+            if (this.cachedPosition) {
+                callback(this.cachedPosition);
+            }
+            return function() {
+                const idx = window.AttendifyLiveStream.subscribers.indexOf(callback);
+                if (idx > -1) window.AttendifyLiveStream.subscribers.splice(idx, 1);
+            };
+        },
+        push: function(position) {
+            this.cachedPosition = position;
+            this.subscribers.forEach(function(cb) { cb(position); });
+        }
+    };
 
     function findFirstLiveSessionIdOnPage() {
         const liveCard =
