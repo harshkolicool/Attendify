@@ -560,45 +560,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         try {
-            if (window.AttendifyGeo && typeof window.AttendifyGeo.getBestPosition === "function") {
-                window.AttendifyGeo.getBestPosition(
-                    function (acc, best) {
-                        if (best) sendLocation(best);
-                    },
-                    { minCollectionMs: 1500, maxWaitMs: 8000 }
-                ).then(function (best) {
-                    sendLocation(best);
-
-                    function startWhenGeoIdle() {
-                        if (
-                            window.AttendifyGeo &&
-                            typeof window.AttendifyGeo.isGeoCollectionActive === "function" &&
-                            window.AttendifyGeo.isGeoCollectionActive()
-                        ) {
-                            setTimeout(startWhenGeoIdle, 250);
-                            return;
-                        }
-
-                        startContinuousWatch();
-                    }
-
-                    startWhenGeoIdle();
-                }).catch(function () {
-                    startContinuousWatch();
-                });
-            } else {
-                const initialOptions = {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,
-                    timeout: 20000
-                };
-                navigator.geolocation.getCurrentPosition(
-                    sendLocation,
-                    function () {},
-                    initialOptions
-                );
-                startContinuousWatch();
-            }
+            const initialOptions = {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 20000
+            };
+            navigator.geolocation.getCurrentPosition(
+                sendLocation,
+                function () {},
+                initialOptions
+            );
+            startContinuousWatch();
         } catch (e) {
             stopWatch();
         }
