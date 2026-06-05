@@ -498,26 +498,46 @@
                         return;
                     }
 
-                    // Production-Ready IP Geolocation Fallback
+                    // Production-Ready Ultra-Redundant IP Fallback
                     console.warn("Hardware GPS failed. Falling back to IP-based location.");
+                    
+                    function fetchSecondaryIp() {
+                        return fetch("https://ipapi.co/json/")
+                            .then(function(res) { return res.json(); })
+                            .then(function(data) {
+                                if (data && data.latitude && data.longitude) {
+                                    return {
+                                        coords: { latitude: Number(data.latitude), longitude: Number(data.longitude), accuracy: 8000 },
+                                        meta: { sampleCount: 1, source: "ip-fallback-secondary" }
+                                    };
+                                }
+                                throw new Error("Secondary IP fallback failed");
+                            });
+                    }
+
                     fetch("https://get.geojs.io/v1/ip/geo.json")
                         .then(function(res) { return res.json(); })
                         .then(function(data) {
                             if (data && data.latitude && data.longitude) {
                                 resolve({
-                                    coords: {
-                                        latitude: Number(data.latitude),
-                                        longitude: Number(data.longitude),
-                                        accuracy: 8000 // IP location is low accuracy
-                                    },
-                                    meta: { sampleCount: 1, source: "ip-fallback" }
+                                    coords: { latitude: Number(data.latitude), longitude: Number(data.longitude), accuracy: 8000 },
+                                    meta: { sampleCount: 1, source: "ip-fallback-primary" }
                                 });
                             } else {
-                                reject(error || new Error("Location unavailable."));
+                                throw new Error("Primary IP fallback returned no coordinates.");
                             }
                         })
                         .catch(function() {
-                            reject(error || new Error("Location unavailable."));
+                            return fetchSecondaryIp().then(resolve);
+                        })
+                        .catch(function() {
+                            // ULTIMATE FAILSAFE: If the user has zero hardware GPS, and zero IP location services working (e.g. adblocker strict mode),
+                            // we STILL resolve the promise with a massive accuracy so that the backend can successfully log the Attendance Attempt.
+                            // This ensures the button never hangs and the student never gets a cryptic crash error.
+                            resolve({
+                                coords: { latitude: 0, longitude: 0, accuracy: 9999999 },
+                                meta: { sampleCount: 1, source: "ultimate-failsafe" }
+                            });
                         });
                     return;
                 }
@@ -542,6 +562,14 @@
             }
 
             function shouldFinishEarly() {
+                var bestAcc = getBestAccuracy();
+
+                // INSTANT FAST-PATH: If we get a highly accurate lock (< 15 meters) from a real GPS chip instantly,
+                // do not make the user wait 10 seconds! Accept it immediately for lightning-fast attendance.
+                if (bestAcc <= TARGET_ACCURACY_M && rawSamples.length >= 1) {
+                    return true;
+                }
+
                 if (!minCollectionReached()) {
                     return false;
                 }
