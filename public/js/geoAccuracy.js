@@ -677,7 +677,11 @@
                 usingFallback = Boolean(isFallback);
 
                 try {
-                    navigator.geolocation.getCurrentPosition(addSample, handleError, options);
+                    navigator.geolocation.getCurrentPosition(
+                        addSample,
+                        function() { /* Ignore kickstart errors, rely on watchPosition */ },
+                        options
+                    );
                     watchId = navigator.geolocation.watchPosition(addSample, handleError, options);
                 } catch (e) {
                     // ignore
@@ -710,6 +714,11 @@
                 }
 
                 if (Number(error.code) === 2 || Number(error.code) === 3) {
+                    // Give the hardware at least a few seconds to acquire a lock before panicking
+                    if (elapsedMs() < 4000) {
+                        return;
+                    }
+
                     errorRetryCount += 1;
 
                     if (errorRetryCount <= 2) {
