@@ -12,7 +12,7 @@
     var TARGET_ACCURACY_M = 15;
     var ACCEPTABLE_ACCURACY_M = 35;
     var WEAK_ACCURACY_M = 80;
-    var MAX_ACCURACY_ALLOWED_M = 1500;
+    var MAX_ACCURACY_ALLOWED_M = 25000;
 
     var MIN_SAMPLES = 4;
     var MAX_SAMPLES = 20;
@@ -627,6 +627,7 @@
                 usingFallback = Boolean(isFallback);
 
                 try {
+                    navigator.geolocation.getCurrentPosition(addSample, handleError, options);
                     watchId = navigator.geolocation.watchPosition(addSample, handleError, options);
                 } catch (e) {
                     // ignore
@@ -668,6 +669,8 @@
 
                     if (rawSamples.length > 0) {
                         done();
+                    } else {
+                        done(error);
                     }
                 }
             }
