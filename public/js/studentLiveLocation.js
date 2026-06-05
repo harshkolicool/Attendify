@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function init() {
     const config = window.AttendifyRealtimeConfig || { mode: "socket", pollIntervalMs: 5000 };
     const mode = config.mode || "socket";
 
@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let socket = null;
 
     if (isSocketMode && typeof io === "undefined") {
+        setTimeout(init, 50);
         return;
     }
 

@@ -24,6 +24,7 @@ function initTeacherLiveMap() {
     }
 
     if (isSocketMode && typeof io === "undefined") {
+        setTimeout(initTeacherLiveMap, 50);
         return;
     }
 
