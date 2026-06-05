@@ -41,7 +41,13 @@ const studentAttendanceSnapshotSchema = new mongoose.Schema(
                 "PASSKEY_GEOLOCATION",
                 "TRUSTED_DEVICE_GEOLOCATION",
                 "MANUAL",
-                "AUTO_ABSENT"
+                "AUTO_ABSENT",
+                "AUTO_GPS",
+                "GPS_WEAK_AUTO",
+                "AUTO_GPS_REJECTED",
+                "GPS_WEAK_TEACHER_REVIEW",
+                "GPS_PERMISSION_TEACHER_REVIEW",
+                "TEACHER_APPROVAL"
             ],
             default: "GEOLOCATION"
         },

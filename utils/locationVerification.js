@@ -39,6 +39,16 @@ function normalizeGpsAccuracy(accuracy) {
     return num;
 }
 
+function isUsableAccuracy(accuracy) {
+    const acc = Number(accuracy);
+
+    if (!Number.isFinite(acc)) {
+        return false;
+    }
+
+    return acc > 0 && acc <= 3000;
+}
+
 function isValidCoordinate(lat, lon) {
     return (
         Number.isFinite(lat) &&
@@ -50,10 +60,6 @@ function isValidCoordinate(lat, lon) {
     );
 }
 
-function isUsableAccuracy(accuracy) {
-    const acc = Number(accuracy);
-    return Number.isFinite(acc) && acc > 0 && acc <= MAX_GPS_ACCURACY_METERS;
-}
 
 function clampAccuracyAllowance(studentAccuracy, teacherAccuracy) {
     return Math.min(

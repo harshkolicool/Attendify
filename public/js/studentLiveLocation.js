@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function init() {
     let studentJoined = !isSocketMode;
     let pollingRequestPending = false;
     const pendingAfterJoin = [];
-    const liveSamples = [];
+    let liveSamples = [];
 
     const LIVE_SAMPLE_MAX_AGE_MS = 25000;
     const LIVE_MAX_SAMPLES = 16;
@@ -195,7 +195,13 @@ document.addEventListener("DOMContentLoaded", function init() {
             }
         }
 
+        if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.stop === 'function') {
+            window.AttendifyLiveStream.stop();
+        }
+
         watchId = null;
+        pollingRequestPending = false;
+        liveSamples.length = 0;
     }
 
     function distanceM(lat1, lon1, lat2, lon2) {
@@ -531,6 +537,10 @@ document.addEventListener("DOMContentLoaded", function init() {
         lastSentLon = null;
         lastSentAt = 0;
 
+        if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.start === 'function') {
+            window.AttendifyLiveStream.start(activeSessionId);
+        }
+
         if (streamStabilizer && typeof streamStabilizer.reset === "function") {
             streamStabilizer.reset();
         }
@@ -577,25 +587,7 @@ document.addEventListener("DOMContentLoaded", function init() {
         }
     }
 
-    // EXPOSE GLOBAL LIVE STREAM FOR GEOACCURACY (Prevents collisions)
-    window.AttendifyLiveStream = {
-        subscribers: [],
-        cachedPosition: null,
-        subscribe: function(callback) {
-            this.subscribers.push(callback);
-            if (this.cachedPosition) {
-                callback(this.cachedPosition);
-            }
-            return function() {
-                const idx = window.AttendifyLiveStream.subscribers.indexOf(callback);
-                if (idx > -1) window.AttendifyLiveStream.subscribers.splice(idx, 1);
-            };
-        },
-        push: function(position) {
-            this.cachedPosition = position;
-            this.subscribers.forEach(function(cb) { cb(position); });
-        }
-    };
+    // AttendifyLiveStream is now provided by geoAccuracy.js
 
     function findFirstLiveSessionIdOnPage() {
         const liveCard =

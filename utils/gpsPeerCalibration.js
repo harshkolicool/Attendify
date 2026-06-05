@@ -20,6 +20,14 @@ function isValidPeerDevice(device) {
         return false;
     }
 
+    if (Number(device.accuracy) > 80) {
+        return false;
+    }
+
+    if (device.gpsCorrected === true || device.gpsCorrected === "true") {
+        return false;
+    }
+
     return true;
 }
 
@@ -34,7 +42,7 @@ function isInsidePeer(device) {
 
     const status = String(device.status || "").toUpperCase();
 
-    return status === "INSIDE" || status === "NEAR" || status === "POOR_ACCURACY";
+    return status === "INSIDE" || status === "PRESENT_AUTO" || status === "PRESENT_STRONG" || status === "PRESENT_WEAK_GPS" || status === "NEAR";
 }
 
 function weightedCentroid(devices) {
@@ -155,6 +163,10 @@ function getPeerMatchThreshold(studentAccuracy) {
 
 function shouldApplyPeerCalibration(evaluation, peerContext, studentAccuracy) {
     if (!evaluation || !peerContext || !peerContext.hasInsidePeers) {
+        return false;
+    }
+
+    if (peerContext.insidePeerCount < 2) {
         return false;
     }
 

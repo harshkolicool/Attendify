@@ -67,6 +67,35 @@ function initTeacherLiveMap() {
     const poorPill = document.getElementById("teacherMapPoorPill");
     
     const hintEl = document.getElementById("teacherMapHint");
+
+    // Live Analytics Chart
+    let analyticsChart = null;
+    const chartCanvas = document.getElementById("liveAnalyticsChart");
+    const chartStatus = document.getElementById("liveAnalyticsStatus");
+    if (chartCanvas && window.Chart) {
+        const ctx = chartCanvas.getContext('2d');
+        analyticsChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Inside / Present', 'Outside / Rejected', 'Poor GPS', 'Offline'],
+                datasets: [{
+                    data: [0, 0, 0, 0],
+                    backgroundColor: ['#16a34a', '#dc2626', '#d97706', '#64748b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                }
+            }
+        });
+    }
+
     const rosterEl = document.getElementById("teacherMapRoster");
     const sessionSelectEl = document.getElementById("teacherMapSessionSelect");
     const mapOverlay = document.getElementById("teacherMapOverlay");
@@ -193,6 +222,19 @@ function initTeacherLiveMap() {
         if (outsidePill) outsidePill.textContent = outside + " outside";
         if (poorPill) poorPill.textContent = poor + " poor GPS";
         if (trackingPill) trackingPill.textContent = onlineDevices + " live";
+
+        if (analyticsChart) {
+            analyticsChart.data.datasets[0].data = [inside + near, outside, poor, deviceState.size - onlineDevices];
+            analyticsChart.update();
+            if (chartStatus) {
+                if (deviceState.size > 0) {
+                    const pct = Math.round(((inside + near) / deviceState.size) * 100);
+                    chartStatus.textContent = pct + "% Present";
+                } else {
+                    chartStatus.textContent = "Waiting for data...";
+                }
+            }
+        }
     }
 
     // Always initialize map
@@ -522,12 +564,22 @@ function initTeacherLiveMap() {
     }
 
     function getStatusColors(status) {
-        if (status === "INSIDE") return { key: "inside", color: "#16a34a", text: "Inside" };
-        if (status === "NEAR") return { key: "near", color: "#d97706", text: "Near Boundary" };
-        if (status === "OUTSIDE") return { key: "outside", color: "#4f46e5", text: "Outside" };
-        if (status === "POOR_ACCURACY") return { key: "poor", color: "#64748b", text: "Poor GPS" };
-        if (status === "GLOBAL_TRACKING") return { key: "online", color: "#22c55e", text: "Online" };
-        return { key: "unknown", color: "#64748b", text: "Unknown" };
+        if (status === "PRESENT" || status === "PRESENT_STRONG" || status === "PRESENT_WEAK_GPS" || status === "PRESENT_AUTO" || status === "INSIDE" || status === "NEAR") {
+            return { key: "inside", color: "#16a34a", text: "PRESENT" };
+        }
+        if (status === "ABSENT") {
+            return { key: "offline", color: "#94a3b8", text: "ABSENT" };
+        }
+        if (status === "OUTSIDE_REJECTED" || status === "REJECTED" || status === "OUTSIDE") {
+            return { key: "outside", color: "#dc2626", text: "OUTSIDE REJECTED" };
+        }
+        if (status === "GPS_RETRY_REQUIRED" || status === "POOR_ACCURACY") {
+            return { key: "poor", color: "#d97706", text: "GPS RETRY REQUIRED" };
+        }
+        if (status === "STALE_OFFLINE" || status === "OFFLINE" || status === "NO_DATA") {
+            return { key: "offline", color: "#64748b", text: "STALE OFFLINE" };
+        }
+        return { key: "online", color: "#22c55e", text: "ONLINE" };
     }
 
     function renderRoster() {

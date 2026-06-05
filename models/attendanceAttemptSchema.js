@@ -126,6 +126,16 @@ const attendanceAttemptSchema = new mongoose.Schema({
     requestReview: {
         type: Boolean,
         default: false
+    },
+
+    recentLiveSnapshotUsed: {
+        type: Boolean,
+        default: false
+    },
+
+    gpsQuality: {
+        type: String,
+        default: "UNKNOWN"
     }
 
 }, {

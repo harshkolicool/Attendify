@@ -708,7 +708,7 @@ function initializeSocket(io) {
                     isActive: true,
                     status: "ACTIVE",
                     endTime: { $gt: locationGraceEnd }
-                }).select("_id teacher classGroup latitude longitude radius teacherGpsAccuracy endTime");
+                }).select("_id teacher classGroup latitude longitude radius teacherGpsAccuracy endTime locationMeta");
 
                 if (!session || !session.teacher || !session.classGroup) {
                     return;
@@ -774,31 +774,14 @@ function initializeSocket(io) {
                 let displayLat = calibrated.displayLatitude;
                 let displayLon = calibrated.displayLongitude;
                 const distance = evaluation.measuredDistance;
-                const inside = !evaluation.isOutside;
                 const studentStatus =
                     evaluation.isAccuracyPoor && !evaluation.isOutside
                         ? "POOR_ACCURACY"
                         : evaluation.status;
+                const inside = studentStatus === "INSIDE" || studentStatus === "PRESENT_AUTO" || studentStatus === "PRESENT_WEAK_GPS" || studentStatus === "PRESENT_STRONG";
 
-                // Visual snap: if they are physically verified as INSIDE the room, 
-                // their GPS difference from the teacher is purely noise.
-                // Snap them to the teacher's exact location to match physical reality.
-                if (studentStatus === "INSIDE") {
-                    // Add a tiny deterministic micro-jitter (~2m) based on their ID
-                    // so the markers form a tight cluster around the teacher instead 
-                    // of perfectly overlapping and hiding each other.
-                    const seed = socket.data.studentId || "default";
-                    let hash = 0;
-                    for (let i = 0; i < seed.length; i++) {
-                        hash = (hash << 5) - hash + seed.charCodeAt(i);
-                        hash |= 0;
-                    }
-                    const jitterLat = ((Math.abs(hash) % 100) / 100) * 0.00004 - 0.00002;
-                    const jitterLon = ((Math.abs(hash >> 3) % 100) / 100) * 0.00004 - 0.00002;
-
-                    displayLat = centerLat + jitterLat;
-                    displayLon = centerLon + jitterLon;
-                }
+                // Remove visual snap logic to allow teacher to see the actual raw coordinates of the student.
+                // displayLat and displayLon already initialized above.
 
                 const eventPayload = {
                     sessionId: session._id.toString(),
@@ -1351,6 +1334,7 @@ function emitAttendancePendingReview(session, student, record) {
     if (!io || !session || !student || !record) return;
 
     io.to(getSessionRoom(session._id)).emit("attendance:pending-review", {
+        sessionId: session._id.toString(),
         studentId: student._id.toString(),
         fullName: student.fullName,
         enrollmentNumber: student.enrollmentNumber,

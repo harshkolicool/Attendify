@@ -248,16 +248,20 @@ async function readJsonResponse(response, fallbackMessage) {
 }
 
 async function getAttendanceTokenWithTrustedDevice(sessionId) {
-    const fingerprint = encodeURIComponent(getBrowserFingerprint());
+    const fingerprint = getBrowserFingerprint();
 
     const response = await fetch(
-        "/student/attendance/device-token/" + sessionId + "?browserFingerprint=" + fingerprint,
+        "/student/attendance/device-token/" + sessionId,
         {
-            method: "GET",
+            method: "POST",
             credentials: "same-origin",
             headers: {
-                "Accept": "application/json"
-            }
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                browserFingerprint: fingerprint
+            })
         }
     );
 
@@ -422,19 +426,17 @@ function improveStudentPositionForAccuracy(initialPosition, radiusHint, button) 
 
 function getFastGpsPosition() {
     return new Promise(function(resolve, reject) {
-        // First try the warm stream cache (up to 15s old)
-        if (window.AttendifyLiveStream) {
+        if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.getBestFreshPosition === 'function') {
             const cached = window.AttendifyLiveStream.getBestFreshPosition(15000);
             if (cached) {
                 return resolve({ coords: cached });
             }
         }
 
-        // Fallback: ask browser but timeout quickly
         navigator.geolocation.getCurrentPosition(
             function(pos) { resolve(pos); },
             function(err) { reject(err); },
-            { enableHighAccuracy: true, timeout: 4500, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
         );
     });
 }
@@ -460,16 +462,17 @@ function markAttendance(sessionId, button) {
     button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Checking Location...';
 
     let finalPos = null;
-    let requestReview = false;
 
     getFastGpsPosition()
-        .then(function(pos) {
-            finalPos = pos;
-            return getBestAttendanceToken(sessionId, button);
-        })
         .catch(function(err) {
-            // If GPS failed or timed out, we switch to PENDING_REVIEW flow
-            requestReview = true;
+            // Proceed without GPS, let the backend handle the missing GPS explicitly
+            return null;
+        })
+        .then(function(pos) {
+            if (!pos) {
+                throw new Error("Could not detect your location. Please move near a window and try again.");
+            }
+            finalPos = pos;
             return getBestAttendanceToken(sessionId, button);
         })
         .then(function (attendanceToken) {
@@ -483,11 +486,11 @@ function markAttendance(sessionId, button) {
                 locationMeta: null,
                 attendanceToken: attendanceToken,
                 browserFingerprint: getBrowserFingerprint(),
-                requestReview: requestReview
+                requestReview: false
             };
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const timeoutId = setTimeout(() => controller.abort(), 4500);
 
             return fetch("/student/attendance/mark", {
                 method: "POST",
@@ -500,39 +503,17 @@ function markAttendance(sessionId, button) {
                 return res;
             }).catch(function(err) {
                 clearTimeout(timeoutId);
-                return saveToOfflineQueue(payloadObj).then(function() {
-                    return { queuedOffline: true };
-                });
+                throw new Error("Network error or timeout. Please check your connection and try again.");
             });
         })
         .then(function (response) {
-            if (response && response.queuedOffline) {
-                return { success: true, isOfflineQueue: true, message: "You are offline. Attendance request queued." };
-            }
             return readJsonResponse(response, "Could not mark attendance. Please refresh and try again.");
         })
         .then(function (data) {
             if (data.success) {
                 button.dataset.pending = "false";
                 
-                if (data.pendingReview) {
-                    showMessage(data.message || "Sent to teacher for review.", "success");
-                    button.classList.remove("teacher-primary-btn");
-                    button.classList.add("btn-warning");
-                    button.innerHTML = '<i class="fa-solid fa-clock"></i> Pending Review';
-                    button.disabled = true;
-                    return;
-                }
-
                 showMessage(data.message || "Attendance marked successfully.", "success");
-
-                if (data.isOfflineQueue) {
-                    button.classList.remove("teacher-primary-btn");
-                    button.classList.add("teacher-secondary-btn");
-                    button.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Queued (Offline)';
-                    return;
-                }
-
                 setAttendancePresentUI(button);
                 return;
             }
@@ -543,7 +524,7 @@ function markAttendance(sessionId, button) {
         })
         .catch(function (err) {
             console.log(err);
-            showMessage("An error occurred. Please try again.", "error");
+            showMessage(err.message || "An error occurred. Please try again.", "error");
             resetAttendanceButton(button, oldHtml);
         });
 }

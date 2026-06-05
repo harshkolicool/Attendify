@@ -162,6 +162,24 @@ function getStudentAttendanceAction({ record, session, schedule }) {
         };
     }
 
+    if (record.status === "PENDING_REVIEW") {
+        return {
+            action: "PENDING_REVIEW",
+            label: "Pending Review",
+            reason: "Your attendance request is waiting for teacher approval.",
+            canMark: false
+        };
+    }
+
+    if (record.status === "OUTSIDE_REJECTED" || record.status === "REJECTED") {
+        return {
+            action: "REJECTED",
+            label: "Rejected",
+            reason: "Your attendance request was rejected.",
+            canMark: false
+        };
+    }
+
     return {
         action: "UNKNOWN",
         label: "Check Attendance",

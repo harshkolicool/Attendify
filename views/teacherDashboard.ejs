@@ -481,6 +481,8 @@
                                             data-filter-group="<%= group.id %>"
                                             data-filter-room="<%= roomToken %>"
                                             data-filter-state="<%= stateKey %>"
+                                            data-start-time="<%= item.startTime %>"
+                                            data-end-time="<%= item.endTime %>"
                                         >
 
                                             <div class="time-box teacher-schedule-time">
@@ -702,12 +704,20 @@
                             <% } %>
                         </ul>
 
-                        <form action="/teacher/attendance/end/<%= session._id %>" method="POST">
-                            <button class="end-btn" type="submit">
-                                <i class="fa-solid fa-square"></i>
-                                End Session
-                            </button>
-                        </form>
+                        <div style="display: flex; gap: 8px;">
+                            <form action="/teacher/attendance/end/<%= session._id %>" method="POST" style="flex: 1;">
+                                <button class="end-btn" type="submit" style="width: 100%;">
+                                    <i class="fa-solid fa-square"></i>
+                                    End Early
+                                </button>
+                            </form>
+                            <form action="/teacher/attendance/force-end/<%= session._id %>" method="POST" style="flex: 1;" onsubmit="return confirm('Force ending will immediately mark all remaining students ABSENT. Are you sure?');">
+                                <button class="end-btn" type="submit" style="width: 100%; background-color: #dc2626; color: white;">
+                                    <i class="fa-solid fa-power-off"></i>
+                                    Force End
+                                </button>
+                            </form>
+                        </div>
 
                     </div>
 
@@ -752,25 +762,6 @@
             <ul class="suspicious-attempt-list" id="suspiciousAttemptList"></ul>
         </section>
 
-        <section class="teacher-map-card" style="margin-bottom: 24px;" aria-label="Pending Student Reviews">
-            <div class="teacher-map-head">
-                <div>
-                    <h3 class="teacher-map-title">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        Pending Reviews
-                    </h3>
-                    <p class="teacher-map-subtitle">
-                        Students waiting for your approval. Weak GPS signals and missing location permissions require manual teacher review.
-                    </p>
-                </div>
-                <div class="teacher-map-stats">
-                    <span class="teacher-map-pill neutral" id="pendingReviewCount">0 pending</span>
-                </div>
-            </div>
-            <ul class="suspicious-attempt-list" id="pendingReviewList">
-                <li class="suspicious-attempt-empty">No pending reviews at this time.</li>
-            </ul>
-        </section>
 
         <%
             const liveMapBootstrap = (activeSessions || []).map(function (session) {
@@ -883,6 +874,12 @@
             <div>
                 <h3><%= teacher.fullName %></h3>
                 <p>Teacher Account</p>
+                <form action="/auth/signout-all" method="POST" style="margin-top: 10px;">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="teacher-secondary-btn danger" style="padding: 4px 8px; font-size: 12px; width: 100%;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sign Out All Devices
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -897,14 +894,18 @@
             </div>
         </div>
 
-        <div class="info-card">
-            <div class="info-icon orange">
-                <i class="fa-solid fa-pen"></i>
+        <div class="info-card" style="display: flex; flex-direction: column; align-items: stretch; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="info-icon blue">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
+                <div>
+                    <h4>Live Analytics</h4>
+                    <p id="liveAnalyticsStatus">Waiting for session...</p>
+                </div>
             </div>
-
-            <div>
-                <h4>Manual Pending</h4>
-                <p><%= manualAttendanceList.length %> classes</p>
+            <div style="width: 100%; aspect-ratio: 1; position: relative;">
+                <canvas id="liveAnalyticsChart"></canvas>
             </div>
         </div>
 
@@ -991,12 +992,14 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>
 <script src="/socket.io/socket.io.js"></script>
 <% } %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="/js/teacherRealtime.js"></script>
 <script src="/js/teacherNav.js"></script>
 <script src="/js/teacherPanels.js"></script>
 <script src="/js/teacherLiveMap.js" defer></script>
 <script src="/js/uiShell.js"></script>
+<script src="/js/dashboardTimeSync.js"></script>
 
     <script src="/js/csrfAuto.js" defer></script>
     <script src="/js/selectEnhancer.js" defer></script>

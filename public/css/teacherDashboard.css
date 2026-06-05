@@ -2008,8 +2008,8 @@ button {
 }
 
 .teacher-export-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 12px;
     width: 100%;
     margin-left: 0;
@@ -2801,7 +2801,7 @@ button {
     }
 
     .teacher-export-actions {
-        grid-template-columns: 1fr;
+        flex-direction: column;
     }
 
     .teacher-export-actions .teacher-secondary-btn {

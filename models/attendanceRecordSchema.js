@@ -66,6 +66,8 @@ const attendanceRecordSchema = new mongoose.Schema({
             "MANUAL",
             "AUTO_ABSENT",
             "AUTO_GPS",
+            "GPS_WEAK_AUTO",
+            "AUTO_GPS_REJECTED",
             "GPS_WEAK_TEACHER_REVIEW",
             "GPS_PERMISSION_TEACHER_REVIEW",
             "TEACHER_APPROVAL"

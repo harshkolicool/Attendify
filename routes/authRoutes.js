@@ -328,4 +328,27 @@ router.post("/logout", (req, res, next) => {
     });
 });
 
+router.post("/auth/signout-all", async (req, res, next) => {
+    if (!req.isAuthenticated() || !req.user) {
+        return res.redirect("/");
+    }
+
+    try {
+        const mongoose = require("mongoose");
+        const userId = req.user._id.toString();
+        
+        // Find all sessions containing this user ID in the session string
+        await mongoose.connection.collection("sessions").deleteMany({
+            "session": { $regex: userId }
+        });
+
+        // The current session was just destroyed from DB, clear it from client
+        res.clearCookie("attendance.sid");
+        return res.redirect("/");
+    } catch (err) {
+        console.error("Signout All Error:", err);
+        return res.redirect("/");
+    }
+});
+
 module.exports = router;

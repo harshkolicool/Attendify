@@ -763,13 +763,17 @@ router.get("/suspicious-attempts/recent", isTeacher, async function (req, res) {
     try {
         const teacherId = req.user._id || req.user.id;
 
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+        const activeSessions = await AttendanceSession.find({
+            teacher: teacherId,
+            isActive: true,
+            status: "ACTIVE"
+        }).select("_id");
+
+        const activeSessionIds = activeSessions.map(s => s._id);
 
         const attempts = await AttendanceAttempt.find({
-            teacher: teacherId,
-            result: { $ne: "SUCCESS" },
-            createdAt: { $gte: todayStart }
+            attendanceSession: { $in: activeSessionIds },
+            result: { $ne: "SUCCESS" }
         })
             .sort({ createdAt: -1 })
             .limit(10)
@@ -1004,12 +1008,12 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
         }
 
         logGpsDecision("teacher-start-attendance", {
-            teacherId: (req.user._id || req.user.id).toString(),
-            scheduleId: scheduleItem._id.toString(),
+            teacherId: (req.user._id || req.user.id || "").toString(),
+            scheduleId: (scheduleItem._id || "").toString(),
             teacherLatitude: Number(teacherLatitude),
             teacherLongitude: Number(teacherLongitude),
             teacherAccuracy: Number(teacherAccuracy),
-            classroomRadius: Number(scheduleItem.classroom.radius || 100),
+            classroomRadius: scheduleItem.classroom ? Number(scheduleItem.classroom.radius || 100) : 100,
             locationMeta: locationMeta || null
         });
 
@@ -1211,7 +1215,7 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
         console.log(err.message);
         console.log(err.stack);
 
-        res.send("Something went wrong. Please try again.");
+        res.send("Something went wrong. Please try again. ERROR: " + err.message + " | " + err.stack);
     }
 });
 
@@ -1280,156 +1284,46 @@ router.post("/attendance/end/:id", isTeacher, async (req, res) => {
     }
 });
 
-// --- PENDING REVIEW ROUTES ---
-
-router.post("/attendance/:sessionId/review/:studentId/approve", isTeacher, async function (req, res) {
+router.post("/attendance/force-end/:id", isTeacher, async (req, res) => {
     try {
-        const { sessionId, studentId } = req.params;
-
         const session = await AttendanceSession.findOne({
-            _id: sessionId,
+            _id: req.params.id,
             teacher: req.user._id,
             college: req.user.college
-        });
+        })
+        .populate("schedule")
+        .populate("subject")
+        .populate("classGroup")
+        .populate("classroom");
 
         if (!session) {
-            return res.status(404).json({ success: false, message: "Session not found or unauthorized." });
+            return res.send("Attendance session not found");
         }
 
-        const record = await AttendanceRecord.findOneAndUpdate(
-            { attendanceSession: sessionId, student: studentId },
-            {
-                $set: {
-                    status: "PRESENT",
-                    verificationMethod: "TEACHER_APPROVAL",
-                    markedBy: "TEACHER",
-                    approvedBy: req.user._id,
-                    approvedAt: new Date()
-                }
-            },
-            { new: true }
-        ).populate("student", "fullName enrollmentNumber");
-
-        if (!record) {
-            return res.status(404).json({ success: false, message: "Attendance record not found." });
-        }
-
-        // Add to presentStudents array if not already there
-        const alreadyPresent = session.presentStudents.some(s => s.student.toString() === studentId);
-        if (!alreadyPresent) {
-            await AttendanceSession.updateOne(
-                { _id: session._id },
-                {
-                    $push: {
-                        presentStudents: {
-                            student: record.student._id,
-                            fullName: record.student.fullName,
-                            enrollmentNumber: record.student.enrollmentNumber,
-                            status: "PRESENT",
-                            attendanceRecord: record._id,
-                            markedAt: record.markedAt,
-                            verificationMethod: "TEACHER_APPROVAL",
-                            distanceFromClassroom: record.distanceFromClassroom
-                        }
-                    },
-                    $inc: { "attendanceSummary.totalPresent": 1 }
-                }
-            );
-        }
-
-        socketManager.emitAttendanceReviewDecision(session, record.student, { decision: "APPROVED", record });
-        socketManager.emitAttendanceRecordUpdated(session, record.student, record);
-
-        res.json({ success: true, message: "Student approved." });
-
-    } catch (err) {
-        console.error("TEACHER APPROVE PENDING ERROR:", err);
-        res.status(500).json({ success: false, message: "Server error." });
-    }
-});
-
-router.post("/attendance/:sessionId/review/:studentId/reject", isTeacher, async function (req, res) {
-    try {
-        const { sessionId, studentId } = req.params;
-        const reason = req.body.reason || "Teacher rejected attendance request.";
-
-        const session = await AttendanceSession.findOne({
-            _id: sessionId,
-            teacher: req.user._id,
-            college: req.user.college
+        // Force auto-mark absents unconditionally
+        await finalizeAbsencesForSession(session, {
+            userAgent: req.headers["user-agent"],
+            ip: req.ip,
+            emit: false
         });
 
-        if (!session) {
-            return res.status(404).json({ success: false, message: "Session not found or unauthorized." });
-        }
+        session.isActive = false;
+        session.status = "CLOSED";
+        session.closedAt = new Date();
+        session.closedBy = req.user._id;
 
-        const record = await AttendanceRecord.findOneAndUpdate(
-            { attendanceSession: sessionId, student: studentId },
-            {
-                $set: {
-                    status: "OUTSIDE_REJECTED",
-                    markedBy: "TEACHER",
-                    reviewReason: reason
-                }
-            },
-            { new: true }
-        ).populate("student", "fullName enrollmentNumber");
+        await session.save();
 
-        if (!record) {
-            return res.status(404).json({ success: false, message: "Attendance record not found." });
-        }
+        socketManager.emitAttendanceEnded(session);
 
-        socketManager.emitAttendanceReviewDecision(session, record.student, { decision: "REJECTED", reason, record });
-        socketManager.emitAttendanceRecordUpdated(session, record.student, record);
-
-        res.json({ success: true, message: "Student rejected." });
+        res.redirect("/teacher/dashboard");
 
     } catch (err) {
-        console.error("TEACHER REJECT PENDING ERROR:", err);
-        res.status(500).json({ success: false, message: "Server error." });
-    }
-});
+        console.log("TEACHER FORCE END ATTENDANCE ERROR:");
+        console.log(err.message);
+        console.log(err.stack);
 
-router.post("/attendance/:sessionId/review/:studentId/ask-retry", isTeacher, async function (req, res) {
-    try {
-        const { sessionId, studentId } = req.params;
-
-        const session = await AttendanceSession.findOne({
-            _id: sessionId,
-            teacher: req.user._id,
-            college: req.user.college
-        });
-
-        if (!session) {
-            return res.status(404).json({ success: false, message: "Session not found or unauthorized." });
-        }
-
-        const record = await AttendanceRecord.findOne({
-            attendanceSession: sessionId,
-            student: studentId
-        });
-
-        // Delete the pending record so the student can try marking again
-        if (record && record.status === "PENDING_REVIEW") {
-            await AttendanceRecord.deleteOne({ _id: record._id });
-            
-            await AttendanceSession.updateOne(
-                { _id: session._id },
-                {
-                    $pull: { attendanceRecords: record._id },
-                    $inc: { "attendanceSummary.totalMarked": -1 }
-                }
-            );
-        }
-
-        // Notify student they need to retry
-        socketManager.emitRetryRequested(sessionId, studentId);
-
-        res.json({ success: true, message: "Retry requested. Student will be notified." });
-
-    } catch (err) {
-        console.error("TEACHER ASK RETRY ERROR:", err);
-        res.status(500).json({ success: false, message: "Server error." });
+        res.send("Something went wrong. Please try again.");
     }
 });
 
@@ -2615,12 +2509,29 @@ router.get("/realtime/poll", isTeacher, async function (req, res) {
     try {
         const unreadCount = await getUnreadCount(getTeacherNotificationFilter(req.user));
 
+        // Fetch active session states for realtime polling
+        const activeSessions = await AttendanceSession.find({
+            teacher: req.user._id,
+            isActive: true,
+            status: "ACTIVE"
+        }).select("_id presentStudents");
+
+        const sessionStates = activeSessions.map(function(s) {
+            return {
+                sessionId: s._id.toString(),
+                presentCount: s.presentStudents ? s.presentStudents.length : 0,
+                presentStudents: s.presentStudents || []
+            };
+        });
+
         // Fetch recent suspicious attempts if any
         let recentSuspiciousAttempts = null;
         if (req.query.includeSuspicious === "true") {
             const AttendanceAttempt = require("../models/attendanceAttemptSchema");
+            const activeSessionIds = activeSessions.map(s => s._id);
+            
             const recentAttempts = await AttendanceAttempt.find({
-                "session.teacher": req.user._id,
+                attendanceSession: { $in: activeSessionIds },
                 result: "REJECTED"
             })
             .sort({ createdAt: -1 })
@@ -2639,21 +2550,6 @@ router.get("/realtime/poll", isTeacher, async function (req, res) {
                 createdAt: attempt.createdAt
             }));
         }
-
-        // Fetch active session states for realtime polling
-        const activeSessions = await AttendanceSession.find({
-            teacher: req.user._id,
-            isActive: true,
-            status: "ACTIVE"
-        }).select("_id presentStudents");
-
-        const sessionStates = activeSessions.map(function(s) {
-            return {
-                sessionId: s._id.toString(),
-                presentCount: s.presentStudents ? s.presentStudents.length : 0,
-                presentStudents: s.presentStudents || []
-            };
-        });
 
         const since = Number(req.query.since) || 0;
         let needsReload = false;

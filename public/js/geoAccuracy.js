@@ -67,6 +67,7 @@
     }
 
     var AttendifyLiveStream = {
+        subscribers: [],
         start: function (sessionId) {
             if (state.isRunning) return;
 
@@ -80,7 +81,13 @@
 
             // Warm up the GPS
             state.watchId = navigator.geolocation.watchPosition(
-                handleSuccess,
+                function(position) {
+                    handleSuccess(position);
+                    AttendifyLiveStream.push({
+                        coords: position.coords,
+                        timestamp: position.timestamp || Date.now()
+                    });
+                },
                 handleError,
                 {
                     enableHighAccuracy: true,
@@ -133,6 +140,25 @@
         clearCache: function() {
             state.recentSamples = [];
             state.cachedPosition = null;
+        },
+
+        subscribe: function(callback) {
+            this.subscribers.push(callback);
+            if (state.cachedPosition) {
+                callback({
+                    coords: state.cachedPosition,
+                    timestamp: state.cachedPosition.timestamp
+                });
+            }
+            var self = this;
+            return function() {
+                var idx = self.subscribers.indexOf(callback);
+                if (idx > -1) self.subscribers.splice(idx, 1);
+            };
+        },
+
+        push: function(position) {
+            this.subscribers.forEach(function(cb) { cb(position); });
         }
     };
 

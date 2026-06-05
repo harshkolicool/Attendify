@@ -531,6 +531,12 @@
             <div>
                 <h3><%= typeof student !== "undefined" && student.fullName %></h3>
                 <a href="/student/dashboard">Open Profile</a>
+                <form action="/auth/signout-all" method="POST" style="margin-top: 10px;">
+                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                    <button type="submit" class="danger-btn" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #dc2626; color: #dc2626; background: transparent; cursor: pointer; width: 100%;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sign Out All Devices
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -665,12 +671,6 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
         pollIntervalMs: <%= typeof realtimePollIntervalMs !== 'undefined' ? realtimePollIntervalMs : 5000 %>
     };
 
-    // Keep GPS warm for the fast Mark Attendance feature
-    document.addEventListener("DOMContentLoaded", function() {
-        if (typeof window.AttendifyLiveStream !== "undefined") {
-            window.AttendifyLiveStream.start("global");
-        }
-    });
 </script>
 
 <% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>
@@ -684,6 +684,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <script src="/js/studentLocation.js"></script>
 <script src="/js/studentRealtime.js"></script>
 <script src="/js/studentLiveLocation.js"></script>
+<script src="/js/dashboardTimeSync.js"></script>
 <script src="/js/uiShell.js"></script>
 
     <script src="/js/csrfAuto.js" defer></script>

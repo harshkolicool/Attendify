@@ -23,6 +23,8 @@ const {
 const liveLocationStore = require("../utils/liveLocationStore");
 const gpsPeerCalibration = require("../utils/gpsPeerCalibration");
 const socketManager = require("../utils/socketManager");
+const { verifyStudentAttendanceLocation } = require("../utils/locationVerificationEngine");
+const { scoreToDecision } = require("../utils/attendanceConfidence");
 const realtimeConfig = require("../utils/realtimeConfig");
 const crypto = require("crypto");
 const {
@@ -562,6 +564,8 @@ function isValidLiveCoordinate(latitude, longitude) {
     return (
         Number.isFinite(lat) &&
         Number.isFinite(lon) &&
+        lat !== 0 &&
+        lon !== 0 &&
         lat >= -90 &&
         lat <= 90 &&
         lon >= -180 &&
@@ -590,6 +594,7 @@ function evaluateStudentLocation(session, student, body, peerDevices) {
             {
                 studentLocationMeta: body.locationMeta || null,
                 teacherLocationMeta: session.locationMeta || null,
+                locationAgeMs: body.locationAgeMs || 0,
                 logContext: "student-location"
             }
         );
@@ -1759,7 +1764,7 @@ router.post("/device/register", isStudent, async function (req, res) {
     }
 });
 
-router.get("/attendance/device-token/:sessionId", isStudent, async function (req, res) {
+router.post("/attendance/device-token/:sessionId", isStudent, async function (req, res) {
     try {
         const sessionId = req.params.sessionId;
         const requestIp = getClientIp(req);
@@ -1792,7 +1797,7 @@ router.get("/attendance/device-token/:sessionId", isStudent, async function (req
             });
         }
 
-        const browserFingerprint = normalizeBrowserFingerprint(req.query.browserFingerprint || "");
+        const browserFingerprint = normalizeBrowserFingerprint(req.body.browserFingerprint || "");
 
         if (!isTrustedDeviceFingerprintMatch(trustedDevice, browserFingerprint)) {
             clearTrustedDeviceCookie(res);
@@ -2003,6 +2008,22 @@ router.post("/live-location/update", isStudent, async function (req, res) {
             });
         }
 
+        let locationMeta = null;
+        if (req.body.locationMeta) {
+            try {
+                locationMeta = typeof req.body.locationMeta === 'string' ? JSON.parse(req.body.locationMeta) : req.body.locationMeta;
+                const source = String(locationMeta.source || "");
+                if (source === "mock-dev" || source === "ip-api" || source.indexOf("ip") !== -1) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Mock or IP-based locations are not allowed."
+                    });
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
+
         const student = await Student.findOne({
             _id: studentId,
             isDeleted: { $ne: true },
@@ -2099,6 +2120,8 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
         const attendanceToken = req.body.attendanceToken;
         const browserFingerprint = normalizeBrowserFingerprint(req.body.browserFingerprint || "");
         const requestReview = req.body.requestReview === true || req.body.requestReview === "true";
+        const timestamp = req.body.timestamp ? Number(req.body.timestamp) : Date.now();
+        const locationAgeMs = Math.max(0, Date.now() - timestamp);
 
         // Reject fake/mock/IP location sources
         const locationSource = locationMeta && locationMeta.source ? String(locationMeta.source) : "";
@@ -2415,175 +2438,68 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
         }
 
         const peerSnapshot = liveLocationStore.getSnapshot(session._id);
-        const locationResult = evaluateStudentLocation(
+        const recentLiveSnapshot = peerSnapshot.find(s => s.studentId === student._id.toString());
+        
+        const decisionResult = verifyStudentAttendanceLocation({
             session,
             student,
-            {
-                latitude: latitude,
-                longitude: longitude,
-                accuracy: studentGpsAccuracy,
-                locationMeta: locationMeta
-            },
-            peerSnapshot
-        );
-        const evaluation = locationResult.evaluation;
-
-        logGpsDecision("mark-attendance-result", {
-            studentId: student._id.toString(),
-            sessionId: session._id.toString(),
-            decision: evaluation.decision,
-            reasonCode: evaluation.reasonCode,
-            measuredDistance: evaluation.measuredDistance,
-            rawMeasuredDistance: evaluation.rawMeasuredDistance,
-            minimumPossibleDistance: evaluation.minimumPossibleDistance,
-            combinedAccuracy: evaluation.combinedAccuracy,
-            allowedRadius: evaluation.allowedRadius,
-            studentAccuracy: evaluation.studentAccuracy,
-            teacherAccuracy: evaluation.teacherAccuracy,
-            clearlyOutside: evaluation.clearlyOutside,
-            gpsCorrected: Boolean(locationResult.gpsCorrected),
-            peerInsideCount: evaluation.peerInsideCount
+            latitude,
+            longitude,
+            accuracy: studentGpsAccuracy,
+            timestamp,
+            attendanceTokenValid: tokenCheck.valid,
+            browserFingerprintValid: true,
+            recentLiveSnapshot,
+            gpsUnavailable: !hasLocation,
+            locationMeta
         });
 
-        // We map the new decision logic here. If confidence is in PENDING_REVIEW range,
-        // or if the old system said "shouldRetry" (which means weak GPS), we send it to teacher review.
-        const decision = scoreToDecision(evaluation.attendanceConfidenceScore || 0);
+        // Save Attempt
+        await saveAttendanceAttempt({
+            req,
+            student,
+            session,
+            result: decisionResult.shouldReject ? "REJECTED" : "SUCCESS",
+            reasonCode: decisionResult.reasonCode,
+            reasonMessage: decisionResult.reasonMessage,
+            latitude,
+            longitude,
+            distance: decisionResult.distanceFromTeacher,
+            allowedRadius: decisionResult.allowedRadius,
+            effectiveRadius: decisionResult.allowedRadius,
+            accuracy: decisionResult.finalAccuracy,
+            teacherAccuracy: session.teacherGpsAccuracy,
+            browserFingerprint,
+            passkeyCredentialId: tokenCheck.payload ? tokenCheck.payload.cid : null,
+            locationMeta,
+            decisionStatus: decisionResult.decision,
+            confidenceScore: decisionResult.confidenceScore,
+            recentLiveSnapshotUsed: decisionResult.recentLiveSnapshotUsed,
+            gpsQuality: (decisionResult.finalAccuracy <= 50) ? "GOOD" : "WEAK"
+        });
 
-        if (decision === "PENDING_REVIEW" || evaluation.shouldRetry) {
-            const pendingRecord = alreadyMarked
-                ? await AttendanceRecord.findOneAndUpdate(
-                    { _id: alreadyMarked._id },
-                    {
-                        $set: {
-                            status: "PENDING_REVIEW",
-                            latitude: Number(latitude),
-                            longitude: Number(longitude),
-                            verificationMethod: "GPS_WEAK_TEACHER_REVIEW",
-                            markedBy: "STUDENT",
-                            markedAt: new Date(),
-                            confidenceScore: evaluation.attendanceConfidenceScore || 0,
-                            finalDistance: evaluation.measuredDistance,
-                            finalAccuracy: evaluation.studentAccuracy
-                        }
-                    },
-                    { new: true }
-                )
-                : await AttendanceRecord.create({
-                    student: student._id,
-                    attendanceSession: session._id,
-                    subject: getId(session.subject),
-                    college: getId(session.college),
-                    classGroup: getId(session.classGroup),
-                    classroom: getId(session.classroom),
-                    status: "PENDING_REVIEW",
-                    latitude: Number(latitude),
-                    longitude: Number(longitude),
-                    verificationMethod: "GPS_WEAK_TEACHER_REVIEW",
-                    markedBy: "STUDENT",
-                    markedAt: new Date(),
-                    confidenceScore: evaluation.attendanceConfidenceScore || 0,
-                    finalDistance: evaluation.measuredDistance,
-                    finalAccuracy: evaluation.studentAccuracy,
-                    deviceInfo: {
-                        userAgent: req.headers["user-agent"],
-                        ip: getClientIp(req),
-                        browserFingerprint: browserFingerprint,
-                        passkeyCredentialId: tokenCheck.payload.cid,
-                        gpsAccuracy: evaluation.studentAccuracy,
-                        teacherGpsAccuracy: evaluation.teacherAccuracy,
-                        measuredDistanceFromClassroom: evaluation.measuredDistance,
-                        allowedRadius: evaluation.configuredRadius
-                    }
-                });
-
-            if (!alreadyMarked) {
-                await AttendanceSession.updateOne(
-                    { _id: session._id },
-                    {
-                        $push: { attendanceRecords: pendingRecord._id },
-                        $inc: { "attendanceSummary.totalMarked": 1 }
-                    }
-                );
-            }
-
-            await saveAttendanceAttempt({
-                req, student, session,
-                result: "SUCCESS",
-                reasonCode: "PENDING_REVIEW_WEAK_GPS",
-                reasonMessage: "GPS signal weak. Sent to teacher for review.",
-                latitude, longitude,
-                teacherLatitude: sessionLatitude,
-                teacherLongitude: sessionLongitude,
-                distance: evaluation.measuredDistance,
-                allowedRadius: evaluation.configuredRadius,
-                effectiveRadius: evaluation.allowedRadius,
-                accuracy: evaluation.studentAccuracy,
-                browserFingerprint,
-                passkeyCredentialId: tokenCheck.payload.cid,
-                locationMeta,
-                decisionStatus: "PENDING_REVIEW",
-                confidenceScore: evaluation.attendanceConfidenceScore || 0
-            });
-
-            socketManager.emitAttendancePendingReview(session, student, pendingRecord);
-
-            return res.json({
-                success: true,
-                status: "PENDING_REVIEW",
-                pendingReview: true,
-                message: "Your GPS accuracy is weak, but your attendance request has been sent to the teacher for review.",
-                distance: evaluation.measuredDistance,
-                accuracy: evaluation.studentAccuracy,
-                confidenceScore: evaluation.attendanceConfidenceScore || 0
+        if (decisionResult.shouldRetryGps) {
+            return res.status(400).json({
+                success: false,
+                status: decisionResult.attendanceStatus,
+                retryGps: true,
+                message: decisionResult.reasonMessage
             });
         }
 
-        if (evaluation.isOutside) {
-            await saveAttendanceAttempt({
-                req,
-                student,
-                session,
-                result: "REJECTED",
-                reasonCode: evaluation.reasonCode || "OUTSIDE_RADIUS",
-                reasonMessage: evaluation.userMessage || getLocationDecisionMessage(evaluation),
-                latitude,
-                longitude,
-                teacherLatitude: sessionLatitude,
-                teacherLongitude: sessionLongitude,
-                distance: evaluation.measuredDistance,
-                allowedRadius: evaluation.configuredRadius,
-                effectiveRadius: evaluation.allowedRadius,
-                accuracy: evaluation.studentAccuracy,
-                browserFingerprint,
-                passkeyCredentialId: tokenCheck.payload.cid,
-                locationMeta
-            });
-
+        if (decisionResult.shouldReject) {
             return res.status(403).json({
                 success: false,
-                message: evaluation.userMessage || getLocationDecisionMessage(evaluation),
-                distance: evaluation.measuredDistance,
-                minimumPossibleDistance: evaluation.minimumPossibleDistance,
-                configuredRadius: evaluation.configuredRadius,
-                allowedRadius: Math.round(evaluation.allowedRadius),
-                uncertaintyAllowance: Math.round(evaluation.uncertaintyAllowance),
-                studentAccuracy: Math.round(evaluation.studentAccuracy),
-                teacherAccuracy: Math.round(evaluation.teacherAccuracy),
-                locationConfidenceScore: Math.round(evaluation.locationConfidenceScore || 0),
-                requiredConfidenceScore: Math.round(evaluation.requiredConfidenceScore || 0)
+                status: decisionResult.attendanceStatus,
+                message: decisionResult.reasonMessage,
+                distance: decisionResult.distanceFromTeacher,
+                allowedRadius: decisionResult.allowedRadius,
+                studentAccuracy: decisionResult.finalAccuracy
             });
         }
 
-
-        const isTrustedDeviceToken =
-            tokenCheck.payload &&
-            tokenCheck.payload.cid &&
-            tokenCheck.payload.cid.startsWith("TRUSTED_DEVICE:");
-
-        const verificationMethod = isTrustedDeviceToken
-            ? "TRUSTED_DEVICE_GEOLOCATION"
-            : "PASSKEY_GEOLOCATION";
         const markedAt = new Date();
+        const verificationMethod = decisionResult.verificationMethod;
 
         let attendanceRecord;
         let wasAbsentOverridden = false;
@@ -2592,14 +2508,10 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             userAgent: req.headers["user-agent"],
             ip: getClientIp(req),
             browserFingerprint: browserFingerprint,
-            gpsAccuracy: evaluation.studentAccuracy,
-            teacherGpsAccuracy: evaluation.teacherAccuracy,
-            measuredDistanceFromClassroom: evaluation.measuredDistance,
-            verifiedDistanceFromClassroom: evaluation.measuredDistance,
-            allowedRadius: evaluation.configuredRadius,
-            radiusUncertaintyAllowance: evaluation.uncertaintyAllowance,
-            minimumPossibleDistance: evaluation.minimumPossibleDistance || 0,
-            passkeyCredentialId: tokenCheck.payload.cid,
+            gpsAccuracy: decisionResult.finalAccuracy,
+            teacherGpsAccuracy: session.teacherGpsAccuracy,
+            measuredDistanceFromClassroom: decisionResult.distanceFromTeacher,
+            allowedRadius: decisionResult.allowedRadius,
             locationMeta: locationMeta
         };
 
@@ -2611,14 +2523,15 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
                         status: "PRESENT",
                         latitude: Number(latitude),
                         longitude: Number(longitude),
-                        distanceFromClassroom: evaluation.measuredDistance,
+                        distanceFromClassroom: decisionResult.distanceFromTeacher,
                         verificationMethod: verificationMethod,
                         markedBy: "STUDENT",
                         deviceInfo: deviceInfo,
                         markedAt: markedAt,
-                        confidenceScore: evaluation.attendanceConfidenceScore || 0,
-                        finalDistance: evaluation.measuredDistance,
-                        finalAccuracy: evaluation.studentAccuracy,
+                        confidenceScore: decisionResult.confidenceScore,
+                        finalDistance: decisionResult.distanceFromTeacher,
+                        finalAccuracy: decisionResult.finalAccuracy,
+                        gpsQuality: (decisionResult.finalAccuracy <= 50) ? "GOOD" : "WEAK",
                         wasAutoAbsentOverridden: true,
                         autoAbsentOverriddenAt: new Date()
                     }
@@ -2638,17 +2551,17 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
                     status:              "PRESENT",
                     latitude:            Number(latitude),
                     longitude:           Number(longitude),
-                    distanceFromClassroom: evaluation.measuredDistance,
+                    distanceFromClassroom: decisionResult.distanceFromTeacher,
                     verificationMethod:  verificationMethod,
                     markedBy:            "STUDENT",
                     deviceInfo:          deviceInfo,
                     markedAt:            markedAt,
-                    confidenceScore:     evaluation.attendanceConfidenceScore || 0,
-                    finalDistance:       evaluation.measuredDistance,
-                    finalAccuracy:       evaluation.studentAccuracy
+                    confidenceScore:     decisionResult.confidenceScore,
+                    finalDistance:       decisionResult.distanceFromTeacher,
+                    finalAccuracy:       decisionResult.finalAccuracy,
+                    gpsQuality:          (decisionResult.finalAccuracy <= 50) ? "GOOD" : "WEAK"
                 });
             } catch (err) {
-                // Fix 1: Concurrency Race Condition Handler
                 if (err.code === 11000) {
                     return res.json({
                         success: true,
@@ -2671,7 +2584,6 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             );
 
             if (pullResult.modifiedCount === 0) {
-                // Another request already handled the override
                 return res.json({
                     success: true,
                     alreadyPresent: true,
@@ -2682,7 +2594,7 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
         }
 
         const updateQuery = {
-            $push: {
+            $addToSet: {
                 presentStudents: {
                     student: student._id,
                     fullName: student.fullName,
@@ -2691,7 +2603,7 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
                     attendanceRecord: attendanceRecord._id,
                     markedAt: markedAt,
                     verificationMethod: verificationMethod,
-                    distanceFromClassroom: evaluation.measuredDistance
+                    distanceFromClassroom: decisionResult.distanceFromTeacher
                 }
             },
             $inc: {
@@ -2701,7 +2613,7 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
         };
 
         if (!wasAbsentOverridden) {
-            updateQuery.$push.attendanceRecords = attendanceRecord._id;
+            updateQuery.$push = { attendanceRecords: attendanceRecord._id };
         }
 
         await AttendanceSession.updateOne(
@@ -2709,56 +2621,23 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             updateQuery
         );
 
-        // Always emit record-updated when an absent record was overridden to present.
-        // This updates the teacher live map and student sidebar counts in real time.
         if (wasAbsentOverridden) {
             socketManager.emitAttendanceRecordUpdated(session, student, attendanceRecord);
+        } else {
+            socketManager.emitAttendanceMarked(session, student, attendanceRecord, decisionResult.distanceFromTeacher);
         }
-
-        await saveAttendanceAttempt({
-            req,
-            student,
-            session,
-            result: "SUCCESS",
-            reasonCode: "ATTENDANCE_MARKED",
-            reasonMessage:
-                "Attendance marked successfully with passkey and geolocation. " +
-                "Measured " +
-                Math.round(evaluation.measuredDistance) +
-                "m, allowed " +
-                Math.round(evaluation.configuredRadius) +
-                "m, effective " +
-                Math.round(evaluation.effectiveRadius) +
-                "m.",
-            latitude,
-            longitude,
-            teacherLatitude: sessionLatitude,
-            teacherLongitude: sessionLongitude,
-            distance: evaluation.measuredDistance,
-            allowedRadius: evaluation.configuredRadius,
-            effectiveRadius: evaluation.effectiveRadius,
-            accuracy: evaluation.studentAccuracy,
-            teacherAccuracy: evaluation.teacherAccuracy,
-            browserFingerprint,
-            passkeyCredentialId: tokenCheck.payload.cid,
-            decisionStatus: "PRESENT_AUTO",
-            confidenceScore: evaluation.attendanceConfidenceScore || 0
-        });
-
-        socketManager.emitAttendanceMarked(session, student, attendanceRecord, evaluation.measuredDistance);
 
         res.json({
             success: true,
-            message: wasAbsentOverridden
-                ? "Attendance marked. Your record has been updated to present."
-                : "Attendance marked successfully.",
-            status: attendanceRecord.status,
-            distance: Math.round(evaluation.measuredDistance),
-            measuredDistance: Math.round(evaluation.measuredDistance),
-            allowedRadius: Math.round(evaluation.configuredRadius),
-            effectiveRadius: Math.round(evaluation.effectiveRadius),
-            uncertaintyAllowance: Math.round(evaluation.uncertaintyAllowance),
-            accuracy: Math.round(evaluation.studentAccuracy)
+            status: "PRESENT",
+            gpsQuality: (decisionResult.finalAccuracy <= 50) ? "GOOD" : "WEAK",
+            message: decisionResult.reasonMessage,
+            distance: Math.round(decisionResult.distanceFromTeacher),
+            measuredDistance: Math.round(decisionResult.distanceFromTeacher),
+            allowedRadius: Math.round(decisionResult.allowedRadius),
+            effectiveRadius: Math.round(decisionResult.allowedRadius),
+            accuracy: Math.round(decisionResult.finalAccuracy),
+            confidenceScore: decisionResult.confidenceScore
         });
     } catch (err) {
         if (err.code === 11000) {
