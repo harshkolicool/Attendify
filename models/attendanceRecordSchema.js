@@ -40,18 +40,16 @@ const attendanceRecordSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ["PRESENT", "PENDING", "LATE", "ABSENT", "EXCUSED"],
+        enum: ["PRESENT", "PENDING", "PENDING_REVIEW", "LATE", "ABSENT", "EXCUSED", "OUTSIDE_REJECTED", "REJECTED"],
         default: "PRESENT"
     },
 
     latitude: {
-        type: Number,
-        required: true
+        type: Number
     },
 
     longitude: {
-        type: Number,
-        required: true
+        type: Number
     },
 
     distanceFromClassroom: {
@@ -66,7 +64,11 @@ const attendanceRecordSchema = new mongoose.Schema({
             "PASSKEY_GEOLOCATION",
             "TRUSTED_DEVICE_GEOLOCATION",
             "MANUAL",
-            "AUTO_ABSENT"
+            "AUTO_ABSENT",
+            "AUTO_GPS",
+            "GPS_WEAK_TEACHER_REVIEW",
+            "GPS_PERMISSION_TEACHER_REVIEW",
+            "TEACHER_APPROVAL"
         ],
         default: "GEOLOCATION"
     },
@@ -146,6 +148,36 @@ const attendanceRecordSchema = new mongoose.Schema({
 
     overrideReason: {
         type: String
+    },
+
+    finalDistance: {
+        type: Number
+    },
+
+    finalAccuracy: {
+        type: Number
+    },
+
+    confidenceScore: {
+        type: Number
+    },
+
+    approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Teacher"
+    },
+
+    approvedAt: {
+        type: Date
+    },
+
+    reviewReason: {
+        type: String
+    },
+
+    requestReview: {
+        type: Boolean,
+        default: false
     }
 
 }, {

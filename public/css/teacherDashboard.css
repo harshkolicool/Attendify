@@ -1010,6 +1010,11 @@ button {
     padding: 8px 2px;
 }
 
+.pending-review-item {
+    border-left: 4px solid #f59e0b !important;
+    background: #fffbeb !important;
+}
+
 .teacher-map-student-card.is-live {
     cursor: pointer;
     transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;

@@ -586,6 +586,28 @@ document.addEventListener("DOMContentLoaded", function init() {
         }
     });
 
+    socket.on("attendance:review-decision", function(data) {
+        const decision = data.decision;
+        const msg = decision === "APPROVED" 
+            ? "Your attendance was APPROVED by the teacher."
+            : "Your attendance was REJECTED by the teacher.";
+        const type = decision === "APPROVED" ? "success" : "error";
+        
+        showRealtimeMessage(msg, type);
+
+        setTimeout(function() {
+            window.location.reload();
+        }, 2000);
+    });
+
+    socket.on("attendance:retry-requested", function(data) {
+        showRealtimeMessage("The teacher asked you to retry marking attendance. Please try again now.", "warning");
+        
+        setTimeout(function() {
+            window.location.reload();
+        }, 2500);
+    });
+
     syncOngoingCardsByClock();
     setInterval(syncOngoingCardsByClock, 30000);
 });

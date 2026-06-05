@@ -420,99 +420,86 @@ function improveStudentPositionForAccuracy(initialPosition, radiusHint, button) 
         });
 }
 
-function markAttendance(sessionId, button) {
-    if (!button || !sessionId) {
-        return;
-    }
+function getFastGpsPosition() {
+    return new Promise(function(resolve, reject) {
+        // First try the warm stream cache (up to 15s old)
+        if (window.AttendifyLiveStream) {
+            const cached = window.AttendifyLiveStream.getBestFreshPosition(15000);
+            if (cached) {
+                return resolve({ coords: cached });
+            }
+        }
 
-    if (button.dataset.pending === "true") {
-        return;
-    }
+        // Fallback: ask browser but timeout quickly
+        navigator.geolocation.getCurrentPosition(
+            function(pos) { resolve(pos); },
+            function(err) { reject(err); },
+            { enableHighAccuracy: true, timeout: 4500, maximumAge: 0 }
+        );
+    });
+}
+
+function markAttendance(sessionId, button) {
+    if (!button || !sessionId) return;
+    if (button.dataset.pending === "true") return;
 
     if (!navigator.geolocation) {
         showMessage("Your browser does not support location access.", "error");
         return;
     }
 
-    if (
-        !window.isSecureContext &&
-        window.location.hostname !== "localhost" &&
-        window.location.hostname !== "127.0.0.1"
-    ) {
-        showMessage(
-            "Location and passkeys work only on HTTPS or localhost. Open the secure URL and try again.",
-            "error"
-        );
+    if (!window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+        showMessage("Location works only on HTTPS or localhost. Open the secure URL and try again.", "error");
         return;
     }
 
     const oldHtml = button.innerHTML;
-
     button.dataset.pending = "true";
     button.disabled = true;
 
-    if (typeof window.__attendifyStopGpsWarmup === "function") {
-        window.__attendifyStopGpsWarmup();
-    }
+    button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Checking Location...';
 
-    let lastTipAt = 0;
-    const radiusHint = getActiveSessionRadiusHint();
+    let finalPos = null;
+    let requestReview = false;
 
-    button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Getting Location...';
-
-    getBestStudentLocationPosition(function(currentAccuracy, bestSample, sampleCountRaw) {
-        const bestAcc = bestSample && bestSample.coords ? Math.round(bestSample.coords.accuracy) : Math.round(currentAccuracy);
-        const sampleCount = Number(sampleCountRaw) || (bestSample && bestSample.meta ? bestSample.meta.sampleCount : 0) || 0;
-        
-        let text = '<i class="fa-solid fa-spinner fa-spin"></i> GPS: ±' + bestAcc + 'm';
-        if (sampleCount > 0) text += ' (' + sampleCount + ' samples)';
-        
-        button.innerHTML = text;
-
-        // Show tip if accuracy is stuck high
-        if (bestAcc > 100 && Date.now() - lastTipAt > 10000) {
-            lastTipAt = Date.now();
-            showMessage(
-                "GPS accuracy is weak. Please turn on precise location, move near a window, wait a few seconds, and try again.",
-                "error"
-            );
-        }
-    }).then(function (position) {
-        return improveStudentPositionForAccuracy(position, radiusHint, button);
-    }).then(function (position) {
-        return getBestAttendanceToken(sessionId, button).then(function (attendanceToken) {
-            return {
-                position: position,
-                attendanceToken: attendanceToken
-            };
-        });
-    })
-        .then(function (payload) {
-            const position = payload.position;
-            const attendanceToken = payload.attendanceToken;
-
+    getFastGpsPosition()
+        .then(function(pos) {
+            finalPos = pos;
+            return getBestAttendanceToken(sessionId, button);
+        })
+        .catch(function(err) {
+            // If GPS failed or timed out, we switch to PENDING_REVIEW flow
+            requestReview = true;
+            return getBestAttendanceToken(sessionId, button);
+        })
+        .then(function (attendanceToken) {
             button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Marking...';
 
             const payloadObj = {
                 sessionId: sessionId,
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-                accuracy: position.coords.accuracy,
-                locationMeta: position.meta || null,
+                latitude: finalPos ? finalPos.coords.latitude : null,
+                longitude: finalPos ? finalPos.coords.longitude : null,
+                accuracy: finalPos ? finalPos.coords.accuracy : null,
+                locationMeta: null,
                 attendanceToken: attendanceToken,
-                browserFingerprint: getBrowserFingerprint()
+                browserFingerprint: getBrowserFingerprint(),
+                requestReview: requestReview
             };
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
 
             return fetch("/student/attendance/mark", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
                 credentials: "same-origin",
-                body: JSON.stringify(payloadObj)
+                body: JSON.stringify(payloadObj),
+                signal: controller.signal
+            }).then(res => {
+                clearTimeout(timeoutId);
+                return res;
             }).catch(function(err) {
-                // Network error (offline)
+                clearTimeout(timeoutId);
                 return saveToOfflineQueue(payloadObj).then(function() {
                     return { queuedOffline: true };
                 });
@@ -520,13 +507,23 @@ function markAttendance(sessionId, button) {
         })
         .then(function (response) {
             if (response && response.queuedOffline) {
-                return { success: true, isOfflineQueue: true, message: "You are offline. Attendance request has been queued and will automatically sync when connection returns." };
+                return { success: true, isOfflineQueue: true, message: "You are offline. Attendance request queued." };
             }
             return readJsonResponse(response, "Could not mark attendance. Please refresh and try again.");
         })
         .then(function (data) {
             if (data.success) {
                 button.dataset.pending = "false";
+                
+                if (data.pendingReview) {
+                    showMessage(data.message || "Sent to teacher for review.", "success");
+                    button.classList.remove("teacher-primary-btn");
+                    button.classList.add("btn-warning");
+                    button.innerHTML = '<i class="fa-solid fa-clock"></i> Pending Review';
+                    button.disabled = true;
+                    return;
+                }
+
                 showMessage(data.message || "Attendance marked successfully.", "success");
 
                 if (data.isOfflineQueue) {
@@ -536,40 +533,18 @@ function markAttendance(sessionId, button) {
                     return;
                 }
 
-                if (data.alreadyPresent) {
-                    setAttendancePresentUI(button);
-                    return;
-                }
-
                 setAttendancePresentUI(button);
                 return;
             }
 
-            const failMessage =
-                data.retryGps || (data.message && data.message.toLowerCase().indexOf("gps") !== -1)
-                    ? data.message ||
-                      "GPS accuracy is weak. Please turn on precise location, move near a window, wait a few seconds, and try again."
-                    : data.message || "Could not mark attendance.";
-
+            const failMessage = data.message || "Could not mark attendance.";
             showMessage(failMessage, "error");
             resetAttendanceButton(button, oldHtml);
         })
         .catch(function (err) {
             console.log(err);
-
-            getStudentGeolocationPermissionState()
-                .then(function (permissionState) {
-                    showMessage(
-                        getStudentLocationErrorMessage(err, permissionState),
-                        "error"
-                    );
-                })
-                .catch(function () {
-                    showMessage(getStudentLocationErrorMessage(err), "error");
-                })
-                .then(function () {
-                    resetAttendanceButton(button, oldHtml);
-                });
+            showMessage("An error occurred. Please try again.", "error");
+            resetAttendanceButton(button, oldHtml);
         });
 }
 

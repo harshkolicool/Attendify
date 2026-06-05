@@ -1346,6 +1346,46 @@ function emitNewRegistration(collegeId, studentData) {
     io.to(getAdminCollegeRoom(collegeId)).emit("admin:newRegistration", studentData);
 }
 
+function emitAttendancePendingReview(session, student, record) {
+    const io = getIO();
+    if (!io || !session || !student || !record) return;
+
+    io.to(getSessionRoom(session._id)).emit("attendance:pending-review", {
+        studentId: student._id.toString(),
+        fullName: student.fullName,
+        enrollmentNumber: student.enrollmentNumber,
+        recordId: record._id.toString(),
+        confidenceScore: record.confidenceScore || 0,
+        distance: record.finalDistance || null,
+        accuracy: record.finalAccuracy || null,
+        verificationMethod: record.verificationMethod
+    });
+}
+
+function emitAttendanceReviewDecision(session, student, payload) {
+    const io = getIO();
+    if (!io || !session || !student) return;
+
+    const data = {
+        studentId: student._id.toString(),
+        decision: payload.decision,
+        reason: payload.reason || "",
+        recordId: payload.record ? payload.record._id.toString() : null
+    };
+
+    io.to(getStudentRoom(student._id)).emit("attendance:review-decision", data);
+    io.to(getSessionRoom(session._id)).emit("attendance:review-decision", data);
+}
+
+function emitRetryRequested(sessionId, studentId) {
+    const io = getIO();
+    if (!io || !sessionId || !studentId) return;
+
+    io.to(getStudentRoom(studentId)).emit("attendance:retry-requested", {
+        sessionId: sessionId.toString()
+    });
+}
+
 module.exports = {
     initializeSocket,
     getIO,
@@ -1361,5 +1401,8 @@ module.exports = {
     emitPasskeyStateChanged,
     emitStudentApproved,
     emitStudentRejected,
-    emitNewRegistration
+    emitNewRegistration,
+    emitAttendancePendingReview,
+    emitAttendanceReviewDecision,
+    emitRetryRequested
 };

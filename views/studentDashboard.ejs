@@ -664,6 +664,13 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
         mode: "<%= typeof realtimeMode !== 'undefined' ? realtimeMode : 'auto' %>",
         pollIntervalMs: <%= typeof realtimePollIntervalMs !== 'undefined' ? realtimePollIntervalMs : 5000 %>
     };
+
+    // Keep GPS warm for the fast Mark Attendance feature
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof window.AttendifyLiveStream !== "undefined") {
+            window.AttendifyLiveStream.start("global");
+        }
+    });
 </script>
 
 <% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>

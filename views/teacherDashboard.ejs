@@ -752,6 +752,26 @@
             <ul class="suspicious-attempt-list" id="suspiciousAttemptList"></ul>
         </section>
 
+        <section class="teacher-map-card" style="margin-bottom: 24px;" aria-label="Pending Student Reviews">
+            <div class="teacher-map-head">
+                <div>
+                    <h3 class="teacher-map-title">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Pending Reviews
+                    </h3>
+                    <p class="teacher-map-subtitle">
+                        Students waiting for your approval. Weak GPS signals and missing location permissions require manual teacher review.
+                    </p>
+                </div>
+                <div class="teacher-map-stats">
+                    <span class="teacher-map-pill neutral" id="pendingReviewCount">0 pending</span>
+                </div>
+            </div>
+            <ul class="suspicious-attempt-list" id="pendingReviewList">
+                <li class="suspicious-attempt-empty">No pending reviews at this time.</li>
+            </ul>
+        </section>
+
         <%
             const liveMapBootstrap = (activeSessions || []).map(function (session) {
                 return {

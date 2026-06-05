@@ -111,7 +111,22 @@ const attendanceAttemptSchema = new mongoose.Schema({
     browserFingerprint: String,
     userAgent: String,
     ip: String,
-    locationMeta: mongoose.Schema.Types.Mixed
+    locationMeta: mongoose.Schema.Types.Mixed,
+
+    confidenceScore: {
+        type: Number,
+        default: 0
+    },
+
+    decisionStatus: {
+        type: String,
+        default: ""
+    },
+
+    requestReview: {
+        type: Boolean,
+        default: false
+    }
 
 }, {
     timestamps: true

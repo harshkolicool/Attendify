@@ -20,7 +20,7 @@ const studentAttendanceSnapshotSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["PRESENT", "PENDING", "LATE", "ABSENT"],
+            enum: ["PRESENT", "PENDING", "PENDING_REVIEW", "LATE", "ABSENT"],
             required: true
         },
 
@@ -94,7 +94,7 @@ const liveDeviceSnapshotSchema = new mongoose.Schema(
         inside: Boolean,
         status: {
             type: String,
-            enum: ["INSIDE", "NEAR", "OUTSIDE", "POOR_ACCURACY", "UNKNOWN"],
+            enum: ["INSIDE", "NEAR", "OUTSIDE", "POOR_ACCURACY", "WEAK_GPS", "STALE", "PENDING_REVIEW", "UNKNOWN"],
             default: "UNKNOWN"
         },
         reasonCode: {
@@ -109,6 +109,11 @@ const liveDeviceSnapshotSchema = new mongoose.Schema(
         lastActiveAt: {
             type: Date,
             default: Date.now
+        },
+
+        confidenceScore: {
+            type: Number,
+            default: 0
         }
     },
     {
@@ -172,6 +177,16 @@ const attendanceSessionSchema = new mongoose.Schema({
     },
 
     locationMeta: mongoose.Schema.Types.Mixed,
+
+    teacherLocationQuality: {
+        type: String,
+        enum: ["GOOD", "WEAK"],
+        default: "GOOD"
+    },
+
+    teacherLocationCapturedAt: {
+        type: Date
+    },
 
     radius: {
         type: Number,

@@ -2098,6 +2098,17 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
         const locationMeta = req.body.locationMeta;
         const attendanceToken = req.body.attendanceToken;
         const browserFingerprint = normalizeBrowserFingerprint(req.body.browserFingerprint || "");
+        const requestReview = req.body.requestReview === true || req.body.requestReview === "true";
+
+        // Reject fake/mock/IP location sources
+        const locationSource = locationMeta && locationMeta.source ? String(locationMeta.source) : "";
+        const BLOCKED_SOURCES = ["mock-dev", "ip-fallback-primary", "ip-fallback-secondary", "ultimate-failsafe"];
+        if (BLOCKED_SOURCES.indexOf(locationSource) !== -1) {
+            return res.status(403).json({
+                success: false,
+                message: "Fake or simulated GPS location is not accepted for attendance."
+            });
+        }
 
         if (!sessionId || !mongoose.Types.ObjectId.isValid(sessionId)) {
             return res.status(400).json({
@@ -2106,35 +2117,41 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             });
         }
 
-        if (
-            latitude === undefined ||
-            latitude === null ||
-            latitude === "" ||
-            longitude === undefined ||
-            longitude === null ||
-            longitude === ""
-        ) {
+        // Check if location is present
+        const hasLocation = latitude !== undefined && latitude !== null && latitude !== "" &&
+            longitude !== undefined && longitude !== null && longitude !== "";
+
+        // Reject 0,0 coordinates
+        if (hasLocation && Number(latitude) === 0 && Number(longitude) === 0) {
+            return res.status(403).json({
+                success: false,
+                message: "Invalid GPS coordinates. Please enable real GPS and try again."
+            });
+        }
+
+        // If no location and not requesting review, reject
+        if (!hasLocation && !requestReview) {
             return res.status(400).json({
                 success: false,
                 message: "Location is required."
             });
         }
 
-        if (!Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) {
+        if (hasLocation && (!Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude)))) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid location coordinates."
             });
         }
 
-        if (accuracy === undefined || accuracy === null || accuracy === "") {
+        if (hasLocation && (accuracy === undefined || accuracy === null || accuracy === "")) {
             return res.status(400).json({
                 success: false,
                 message: "GPS accuracy is required. Please refresh and try again."
             });
         }
 
-        if (!Number.isFinite(Number(accuracy)) || Number(accuracy) <= 0) {
+        if (hasLocation && (!Number.isFinite(Number(accuracy)) || Number(accuracy) <= 0)) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid GPS accuracy."
@@ -2294,7 +2311,7 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
         const sessionLongitude = session.longitude;
         const sessionRadius = Number(session.radius || 100);
         const teacherGpsAccuracy = Number(session.teacherGpsAccuracy || 0);
-        const studentGpsAccuracy = Number(accuracy);
+        const studentGpsAccuracy = hasLocation ? Number(accuracy) : 0;
 
         if (
             sessionLatitude === undefined ||
@@ -2320,6 +2337,80 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             return res.status(400).json({
                 success: false,
                 message: "Attendance location is missing. Teacher must start attendance with location enabled."
+            });
+        }
+
+        // ── NO GPS + requestReview → PENDING_REVIEW immediately ──
+        if (!hasLocation && requestReview) {
+            const pendingRecord = alreadyMarked
+                ? await AttendanceRecord.findOneAndUpdate(
+                    { _id: alreadyMarked._id },
+                    {
+                        $set: {
+                            status: "PENDING_REVIEW",
+                            verificationMethod: "GPS_PERMISSION_TEACHER_REVIEW",
+                            markedBy: "STUDENT",
+                            markedAt: new Date(),
+                            requestReview: true,
+                            confidenceScore: 0,
+                            finalDistance: null,
+                            finalAccuracy: null
+                        }
+                    },
+                    { new: true }
+                )
+                : await AttendanceRecord.create({
+                    student: student._id,
+                    attendanceSession: session._id,
+                    subject: getId(session.subject),
+                    college: getId(session.college),
+                    classGroup: getId(session.classGroup),
+                    classroom: getId(session.classroom),
+                    status: "PENDING_REVIEW",
+                    verificationMethod: "GPS_PERMISSION_TEACHER_REVIEW",
+                    markedBy: "STUDENT",
+                    markedAt: new Date(),
+                    requestReview: true,
+                    confidenceScore: 0,
+                    deviceInfo: {
+                        userAgent: req.headers["user-agent"],
+                        ip: getClientIp(req),
+                        browserFingerprint: browserFingerprint,
+                        passkeyCredentialId: tokenCheck.payload.cid
+                    }
+                });
+
+            if (!alreadyMarked) {
+                await AttendanceSession.updateOne(
+                    { _id: session._id },
+                    {
+                        $push: { attendanceRecords: pendingRecord._id },
+                        $inc: { "attendanceSummary.totalMarked": 1 }
+                    }
+                );
+            }
+
+            await saveAttendanceAttempt({
+                req, student, session,
+                result: "SUCCESS",
+                reasonCode: "PENDING_REVIEW_NO_GPS",
+                reasonMessage: "Student requested review without GPS.",
+                latitude: null, longitude: null, accuracy: 0,
+                browserFingerprint,
+                passkeyCredentialId: tokenCheck.payload.cid,
+                locationMeta,
+                requestReview: true,
+                decisionStatus: "PENDING_REVIEW",
+                confidenceScore: 0
+            });
+
+            socketManager.emitAttendancePendingReview(session, student, pendingRecord);
+
+            return res.json({
+                success: true,
+                status: "PENDING_REVIEW",
+                pendingReview: true,
+                message: "Your GPS is not available, but your attendance request has been sent to the teacher for review."
             });
         }
 
@@ -2354,16 +2445,73 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             peerInsideCount: evaluation.peerInsideCount
         });
 
-        if (evaluation.shouldRetry) {
+        // We map the new decision logic here. If confidence is in PENDING_REVIEW range,
+        // or if the old system said "shouldRetry" (which means weak GPS), we send it to teacher review.
+        const decision = scoreToDecision(evaluation.attendanceConfidenceScore || 0);
+
+        if (decision === "PENDING_REVIEW" || evaluation.shouldRetry) {
+            const pendingRecord = alreadyMarked
+                ? await AttendanceRecord.findOneAndUpdate(
+                    { _id: alreadyMarked._id },
+                    {
+                        $set: {
+                            status: "PENDING_REVIEW",
+                            latitude: Number(latitude),
+                            longitude: Number(longitude),
+                            verificationMethod: "GPS_WEAK_TEACHER_REVIEW",
+                            markedBy: "STUDENT",
+                            markedAt: new Date(),
+                            confidenceScore: evaluation.attendanceConfidenceScore || 0,
+                            finalDistance: evaluation.measuredDistance,
+                            finalAccuracy: evaluation.studentAccuracy
+                        }
+                    },
+                    { new: true }
+                )
+                : await AttendanceRecord.create({
+                    student: student._id,
+                    attendanceSession: session._id,
+                    subject: getId(session.subject),
+                    college: getId(session.college),
+                    classGroup: getId(session.classGroup),
+                    classroom: getId(session.classroom),
+                    status: "PENDING_REVIEW",
+                    latitude: Number(latitude),
+                    longitude: Number(longitude),
+                    verificationMethod: "GPS_WEAK_TEACHER_REVIEW",
+                    markedBy: "STUDENT",
+                    markedAt: new Date(),
+                    confidenceScore: evaluation.attendanceConfidenceScore || 0,
+                    finalDistance: evaluation.measuredDistance,
+                    finalAccuracy: evaluation.studentAccuracy,
+                    deviceInfo: {
+                        userAgent: req.headers["user-agent"],
+                        ip: getClientIp(req),
+                        browserFingerprint: browserFingerprint,
+                        passkeyCredentialId: tokenCheck.payload.cid,
+                        gpsAccuracy: evaluation.studentAccuracy,
+                        teacherGpsAccuracy: evaluation.teacherAccuracy,
+                        measuredDistanceFromClassroom: evaluation.measuredDistance,
+                        allowedRadius: evaluation.configuredRadius
+                    }
+                });
+
+            if (!alreadyMarked) {
+                await AttendanceSession.updateOne(
+                    { _id: session._id },
+                    {
+                        $push: { attendanceRecords: pendingRecord._id },
+                        $inc: { "attendanceSummary.totalMarked": 1 }
+                    }
+                );
+            }
+
             await saveAttendanceAttempt({
-                req,
-                student,
-                session,
-                result: "REJECTED",
-                reasonCode: evaluation.reasonCode,
-                reasonMessage: evaluation.userMessage,
-                latitude,
-                longitude,
+                req, student, session,
+                result: "SUCCESS",
+                reasonCode: "PENDING_REVIEW_WEAK_GPS",
+                reasonMessage: "GPS signal weak. Sent to teacher for review.",
+                latitude, longitude,
                 teacherLatitude: sessionLatitude,
                 teacherLongitude: sessionLongitude,
                 distance: evaluation.measuredDistance,
@@ -2372,22 +2520,21 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
                 accuracy: evaluation.studentAccuracy,
                 browserFingerprint,
                 passkeyCredentialId: tokenCheck.payload.cid,
-                locationMeta
+                locationMeta,
+                decisionStatus: "PENDING_REVIEW",
+                confidenceScore: evaluation.attendanceConfidenceScore || 0
             });
 
-            return res.status(403).json({
-                success: false,
-                retryGps: true,
-                message: evaluation.userMessage || getWeakGpsUserMessage(),
+            socketManager.emitAttendancePendingReview(session, student, pendingRecord);
+
+            return res.json({
+                success: true,
+                status: "PENDING_REVIEW",
+                pendingReview: true,
+                message: "Your GPS accuracy is weak, but your attendance request has been sent to the teacher for review.",
                 distance: evaluation.measuredDistance,
-                minimumPossibleDistance: evaluation.minimumPossibleDistance,
-                configuredRadius: evaluation.configuredRadius,
-                allowedRadius: Math.round(evaluation.allowedRadius),
-                uncertaintyAllowance: Math.round(evaluation.uncertaintyAllowance),
-                studentAccuracy: Math.round(evaluation.studentAccuracy),
-                teacherAccuracy: Math.round(evaluation.teacherAccuracy),
-                locationConfidenceScore: Math.round(evaluation.locationConfidenceScore || 0),
-                requiredConfidenceScore: Math.round(evaluation.requiredConfidenceScore || 0)
+                accuracy: evaluation.studentAccuracy,
+                confidenceScore: evaluation.attendanceConfidenceScore || 0
             });
         }
 
@@ -2469,6 +2616,9 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
                         markedBy: "STUDENT",
                         deviceInfo: deviceInfo,
                         markedAt: markedAt,
+                        confidenceScore: evaluation.attendanceConfidenceScore || 0,
+                        finalDistance: evaluation.measuredDistance,
+                        finalAccuracy: evaluation.studentAccuracy,
                         wasAutoAbsentOverridden: true,
                         autoAbsentOverriddenAt: new Date()
                     }
@@ -2492,7 +2642,10 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
                     verificationMethod:  verificationMethod,
                     markedBy:            "STUDENT",
                     deviceInfo:          deviceInfo,
-                    markedAt:            markedAt
+                    markedAt:            markedAt,
+                    confidenceScore:     evaluation.attendanceConfidenceScore || 0,
+                    finalDistance:       evaluation.measuredDistance,
+                    finalAccuracy:       evaluation.studentAccuracy
                 });
             } catch (err) {
                 // Fix 1: Concurrency Race Condition Handler
@@ -2587,7 +2740,9 @@ router.post("/attendance/mark", isStudent, async function (req, res) {
             accuracy: evaluation.studentAccuracy,
             teacherAccuracy: evaluation.teacherAccuracy,
             browserFingerprint,
-            passkeyCredentialId: tokenCheck.payload.cid
+            passkeyCredentialId: tokenCheck.payload.cid,
+            decisionStatus: "PRESENT_AUTO",
+            confidenceScore: evaluation.attendanceConfidenceScore || 0
         });
 
         socketManager.emitAttendanceMarked(session, student, attendanceRecord, evaluation.measuredDistance);

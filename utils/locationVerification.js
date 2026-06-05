@@ -1,4 +1,5 @@
 const getDistanceInMeters = require("./geoDistance");
+const { calculateAttendanceConfidence } = require("./attendanceConfidence");
 
 const MAX_GPS_ACCURACY_METERS = Number(process.env.GPS_MAX_ACCEPTABLE_ACCURACY_METERS || 1000);
 const MAX_GPS_UNCERTAINTY_ALLOWANCE = Number(process.env.GPS_UNCERTAINTY_CAP_METERS || 250);
@@ -336,11 +337,6 @@ function evaluateLocationRange(
         shouldRetry = true;
         userMessage =
             "Location signal is unstable on this network near the classroom boundary. Keep precise location on, stay still for a few seconds, and try again.";
-    } else if (process.env.MOCK_GPS === "true") {
-        // Developer Bypass: Force PASS in development mode
-        decision = "PASS";
-        reasonCode = "OK_DEV_BYPASS";
-        userMessage = "Inside allowed range (Development Bypass). Attendance accepted.";
     } else if (clearlyOutside || minimumPossibleDistance > verificationRadius) {
         // PRIORITY 2: Student is clearly outside — reject regardless of accuracy.
         decision = "FAIL";
@@ -395,6 +391,15 @@ function evaluateLocationRange(
         status = "INSIDE";
     }
 
+    const attendanceConfScore = calculateAttendanceConfidence({
+        distance: distanceMeters,
+        radius: adminConfiguredRadius,
+        accuracy: sAcc,
+        locationAgeMs: opts.locationAgeMs || 0,
+        tokenValid: opts.tokenValid !== false,
+        suspicious: false
+    });
+
     const evaluation = {
         measuredDistance: distanceMeters,
         minimumPossibleDistance: minimumPossibleDistance,
@@ -417,6 +422,7 @@ function evaluateLocationRange(
         isLowConfidenceFix: isLowConfidenceFix,
         requiredConfidenceScore: requiredConfidence,
         locationConfidenceScore: Number.isFinite(confidenceScore) ? confidenceScore : 0,
+        attendanceConfidenceScore: attendanceConfScore,
         shouldRetry: shouldRetry,
         decision: decision,
         reasonCode: reasonCode,

@@ -1082,19 +1082,17 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
         let finalLongitude = Number(teacherLongitude) || 0;
         let finalLocationSource = "TEACHER_GPS";
 
-        // Prioritize Admin-verified classroom coordinates if they exist
-        // This permanently fixes the issue where a Teacher on a MacBook gets inaccurate Wi-Fi triangulation
-        if (
-            scheduleItem.classroom &&
-            scheduleItem.classroom.latitude &&
-            scheduleItem.classroom.longitude &&
-            scheduleItem.classroom.latitude !== 0 &&
-            scheduleItem.classroom.longitude !== 0
-        ) {
-            finalLatitude = scheduleItem.classroom.latitude;
-            finalLongitude = scheduleItem.classroom.longitude;
-            finalLocationSource = "CLASSROOM_PRESET";
+        // Block 0,0 coordinates — these are never valid teacher locations
+        if (finalLatitude === 0 && finalLongitude === 0) {
+            return res.redirect("/teacher/dashboard?error=invalid_teacher_location");
         }
+
+        // Teacher GPS is ALWAYS the session center.
+        // Classroom preset coordinates are NOT used as center anymore.
+
+        const teacherAccNum = Number(teacherAccuracy) || 0;
+        const teacherLocationQuality = teacherAccNum > 0 && teacherAccNum <= 50 ? "GOOD" : "WEAK";
+        const sessionRadius = Number(scheduleItem.classroom.radius) || 100;
 
         if (previousSession) {
             previousSession.endTime = sessionEndTime;
@@ -1103,10 +1101,12 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
             previousSession.isActive = true;
             previousSession.latitude = finalLatitude;
             previousSession.longitude = finalLongitude;
-            previousSession.teacherGpsAccuracy = Number(teacherAccuracy) || 0;
+            previousSession.teacherGpsAccuracy = teacherAccNum;
             previousSession.locationSource = finalLocationSource;
             previousSession.locationMeta = locationMeta;
-            previousSession.radius = scheduleItem.classroom.radius || 100;
+            previousSession.radius = sessionRadius;
+            previousSession.teacherLocationQuality = teacherLocationQuality;
+            previousSession.teacherLocationCapturedAt = new Date();
 
             // Clear finalization state so the reopened session behaves as open
             // Without this, canOverrideAbsent sees a "finalized" session and may block
@@ -1133,10 +1133,12 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
 
                         latitude: finalLatitude,
                         longitude: finalLongitude,
-                        teacherGpsAccuracy: Number(teacherAccuracy) || 0,
+                        teacherGpsAccuracy: teacherAccNum,
                         locationSource: finalLocationSource,
                         locationMeta: locationMeta,
-                        radius: scheduleItem.classroom.radius || 100,
+                        radius: sessionRadius,
+                        teacherLocationQuality: teacherLocationQuality,
+                        teacherLocationCapturedAt: new Date(),
 
                         startTime: new Date(),
                         endTime: sessionEndTime,
@@ -1275,6 +1277,159 @@ router.post("/attendance/end/:id", isTeacher, async (req, res) => {
         console.log(err.stack);
 
         res.send("Something went wrong. Please try again.");
+    }
+});
+
+// --- PENDING REVIEW ROUTES ---
+
+router.post("/attendance/:sessionId/review/:studentId/approve", isTeacher, async function (req, res) {
+    try {
+        const { sessionId, studentId } = req.params;
+
+        const session = await AttendanceSession.findOne({
+            _id: sessionId,
+            teacher: req.user._id,
+            college: req.user.college
+        });
+
+        if (!session) {
+            return res.status(404).json({ success: false, message: "Session not found or unauthorized." });
+        }
+
+        const record = await AttendanceRecord.findOneAndUpdate(
+            { attendanceSession: sessionId, student: studentId },
+            {
+                $set: {
+                    status: "PRESENT",
+                    verificationMethod: "TEACHER_APPROVAL",
+                    markedBy: "TEACHER",
+                    approvedBy: req.user._id,
+                    approvedAt: new Date()
+                }
+            },
+            { new: true }
+        ).populate("student", "fullName enrollmentNumber");
+
+        if (!record) {
+            return res.status(404).json({ success: false, message: "Attendance record not found." });
+        }
+
+        // Add to presentStudents array if not already there
+        const alreadyPresent = session.presentStudents.some(s => s.student.toString() === studentId);
+        if (!alreadyPresent) {
+            await AttendanceSession.updateOne(
+                { _id: session._id },
+                {
+                    $push: {
+                        presentStudents: {
+                            student: record.student._id,
+                            fullName: record.student.fullName,
+                            enrollmentNumber: record.student.enrollmentNumber,
+                            status: "PRESENT",
+                            attendanceRecord: record._id,
+                            markedAt: record.markedAt,
+                            verificationMethod: "TEACHER_APPROVAL",
+                            distanceFromClassroom: record.distanceFromClassroom
+                        }
+                    },
+                    $inc: { "attendanceSummary.totalPresent": 1 }
+                }
+            );
+        }
+
+        socketManager.emitAttendanceReviewDecision(session, record.student, { decision: "APPROVED", record });
+        socketManager.emitAttendanceRecordUpdated(session, record.student, record);
+
+        res.json({ success: true, message: "Student approved." });
+
+    } catch (err) {
+        console.error("TEACHER APPROVE PENDING ERROR:", err);
+        res.status(500).json({ success: false, message: "Server error." });
+    }
+});
+
+router.post("/attendance/:sessionId/review/:studentId/reject", isTeacher, async function (req, res) {
+    try {
+        const { sessionId, studentId } = req.params;
+        const reason = req.body.reason || "Teacher rejected attendance request.";
+
+        const session = await AttendanceSession.findOne({
+            _id: sessionId,
+            teacher: req.user._id,
+            college: req.user.college
+        });
+
+        if (!session) {
+            return res.status(404).json({ success: false, message: "Session not found or unauthorized." });
+        }
+
+        const record = await AttendanceRecord.findOneAndUpdate(
+            { attendanceSession: sessionId, student: studentId },
+            {
+                $set: {
+                    status: "OUTSIDE_REJECTED",
+                    markedBy: "TEACHER",
+                    reviewReason: reason
+                }
+            },
+            { new: true }
+        ).populate("student", "fullName enrollmentNumber");
+
+        if (!record) {
+            return res.status(404).json({ success: false, message: "Attendance record not found." });
+        }
+
+        socketManager.emitAttendanceReviewDecision(session, record.student, { decision: "REJECTED", reason, record });
+        socketManager.emitAttendanceRecordUpdated(session, record.student, record);
+
+        res.json({ success: true, message: "Student rejected." });
+
+    } catch (err) {
+        console.error("TEACHER REJECT PENDING ERROR:", err);
+        res.status(500).json({ success: false, message: "Server error." });
+    }
+});
+
+router.post("/attendance/:sessionId/review/:studentId/ask-retry", isTeacher, async function (req, res) {
+    try {
+        const { sessionId, studentId } = req.params;
+
+        const session = await AttendanceSession.findOne({
+            _id: sessionId,
+            teacher: req.user._id,
+            college: req.user.college
+        });
+
+        if (!session) {
+            return res.status(404).json({ success: false, message: "Session not found or unauthorized." });
+        }
+
+        const record = await AttendanceRecord.findOne({
+            attendanceSession: sessionId,
+            student: studentId
+        });
+
+        // Delete the pending record so the student can try marking again
+        if (record && record.status === "PENDING_REVIEW") {
+            await AttendanceRecord.deleteOne({ _id: record._id });
+            
+            await AttendanceSession.updateOne(
+                { _id: session._id },
+                {
+                    $pull: { attendanceRecords: record._id },
+                    $inc: { "attendanceSummary.totalMarked": -1 }
+                }
+            );
+        }
+
+        // Notify student they need to retry
+        socketManager.emitRetryRequested(sessionId, studentId);
+
+        res.json({ success: true, message: "Retry requested. Student will be notified." });
+
+    } catch (err) {
+        console.error("TEACHER ASK RETRY ERROR:", err);
+        res.status(500).json({ success: false, message: "Server error." });
     }
 });
 
