@@ -488,7 +488,8 @@
                 cleanup();
 
                 if (rawSamples.length === 0) {
-                    if (window.localStorage && window.localStorage.getItem('MOCK_GPS') === 'true') {
+                    var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    if (isLocal || (window.localStorage && window.localStorage.getItem('MOCK_GPS') === 'true')) {
                         console.warn("Using MOCK GPS for development because real GPS failed.");
                         resolve({
                             coords: { latitude: 28.6139, longitude: 77.2090, accuracy: 15 },
@@ -496,7 +497,28 @@
                         });
                         return;
                     }
-                    reject(error || new Error("Location unavailable."));
+
+                    // Production-Ready IP Geolocation Fallback
+                    console.warn("Hardware GPS failed. Falling back to IP-based location.");
+                    fetch("https://get.geojs.io/v1/ip/geo.json")
+                        .then(function(res) { return res.json(); })
+                        .then(function(data) {
+                            if (data && data.latitude && data.longitude) {
+                                resolve({
+                                    coords: {
+                                        latitude: Number(data.latitude),
+                                        longitude: Number(data.longitude),
+                                        accuracy: 8000 // IP location is low accuracy
+                                    },
+                                    meta: { sampleCount: 1, source: "ip-fallback" }
+                                });
+                            } else {
+                                reject(error || new Error("Location unavailable."));
+                            }
+                        })
+                        .catch(function() {
+                            reject(error || new Error("Location unavailable."));
+                        });
                     return;
                 }
 
@@ -643,7 +665,7 @@
                     {
                         enableHighAccuracy: false,
                         timeout: 15000,
-                        maximumAge: 0
+                        maximumAge: 60000
                     },
                     true
                 );
@@ -678,7 +700,7 @@
             var optionsPrimary = {
                 enableHighAccuracy: true,
                 timeout: 25000,
-                maximumAge: 0
+                maximumAge: 10000
             };
 
             startWatch(optionsPrimary, false);
