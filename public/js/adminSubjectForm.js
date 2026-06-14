@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const selectedOption = teacherSelect.options[teacherSelect.selectedIndex];
 
         if (selectedOption && selectedOption.disabled) {
-            teacherSelect.value = "";
+            Array.from(teacherSelect.options).forEach(opt => opt.selected = false);
         }
 
         const placeholder = teacherSelect.querySelector("option[value='']");
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!selectedOption || !selectedOption.value) {
             departmentInput.value = "";
             semesterInput.value = "";
-            teacherSelect.value = "";
+            Array.from(teacherSelect.options).forEach(opt => opt.selected = false);
             showAllTeachers(teacherSelect);
             return;
         }
@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const teacherSelect = form.querySelector(".js-subject-teacher");
 
             if (teacherSelect) {
-                teacherSelect.value = "";
+                Array.from(teacherSelect.options).forEach(opt => opt.selected = false);
             }
 
             updateSubjectForm(form);

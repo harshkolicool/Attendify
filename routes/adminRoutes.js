@@ -1962,7 +1962,7 @@ router.get("/dashboard", isCollegeAdmin, async function (req, res) {
                 role: { $in: ["TEACHER", "HOD"] },
                 isDeleted: { $ne: true }
             }),
-            students: await Student.countDocuments({ college: collegeId }),
+            students: await Student.countDocuments(studentAccountQuery({ college: collegeId })),
             schedules: await Schedule.countDocuments({ college: collegeId })
         };
 

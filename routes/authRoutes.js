@@ -210,7 +210,11 @@ router.get("/student/waiting/:id", async (req, res) => {
         }
         
         if (student.isApproved) {
-            return res.redirect("/student/login?message=approved");
+            student.accountType = "student";
+            return req.login(student, (err) => {
+                if (err) return res.redirect("/student/login?message=approved");
+                return res.redirect("/student/dashboard?welcome=1");
+            });
         }
 
         res.render("studentWaiting", { student });
@@ -236,9 +240,13 @@ router.get("/student/check-approval/:id", async (req, res) => {
         }
 
         if (student.isApproved) {
-            return res.json({
-                approved: true,
-                redirectUrl: "/student/login?approved=1"
+            student.accountType = "student";
+            return req.login(student, (err) => {
+                if (err) return res.json({ approved: false, error: "server_error" });
+                return res.json({
+                    approved: true,
+                    redirectUrl: "/student/dashboard?welcome=1"
+                });
             });
         }
 

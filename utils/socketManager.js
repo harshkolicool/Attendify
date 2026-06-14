@@ -505,7 +505,7 @@ function initializeSocket(io) {
                 }
 
                 const sessionId = payload && payload.sessionId ? String(payload.sessionId) : "";
-                if (!sessionId) {
+                if (!sessionId || sessionId === "global") {
                     return;
                 }
 
@@ -618,19 +618,22 @@ function initializeSocket(io) {
                             persistOfflineDevice(offlinePayload).catch(function () {
                                 // ignore persistence failures during disconnect cleanup
                             });
-                            AttendanceSession.findById(sessionId)
-                                .select("teacher")
-                                .then(function (sessionDoc) {
-                                    if (sessionDoc && sessionDoc.teacher) {
-                                        io.to(getTeacherRoom(sessionDoc.teacher)).emit(
-                                            "student:location:update",
-                                            offlinePayload
-                                        );
-                                    }
-                                })
-                                .catch(function () {
-                                    // ignore
-                                });
+
+                            if (sessionId !== "global") {
+                                AttendanceSession.findById(sessionId)
+                                    .select("teacher")
+                                    .then(function (sessionDoc) {
+                                        if (sessionDoc && sessionDoc.teacher) {
+                                            io.to(getTeacherRoom(sessionDoc.teacher)).emit(
+                                                "student:location:update",
+                                                offlinePayload
+                                            );
+                                        }
+                                    })
+                                    .catch(function () {
+                                        // ignore
+                                    });
+                            }
                         }
                     }
                 }

@@ -142,8 +142,8 @@
 
                 <div class="admin-field">
                     <label>Assign Teacher</label>
-                    <select name="teacherIds" class="js-subject-teacher" required>
-                        <option value="">Select Teacher</option>
+                    <select name="teacherIds" class="js-subject-teacher" multiple required>
+                        <option value="">Select Teachers</option>
 
                         <% if (teachers && teachers.length > 0) { %>
                             <% teachers.forEach(function(teacher) { %>
@@ -344,8 +344,8 @@
 
                                 <div class="admin-field">
                                     <label>Assign Teacher</label>
-                                    <select name="teacherIds" class="js-subject-teacher" required>
-                                        <option value="">Select Teacher</option>
+                                    <select name="teacherIds" class="js-subject-teacher" multiple required>
+                                        <option value="">Select Teachers</option>
 
                                         <% teachers.forEach(function(teacher) { %>
                                             <option
@@ -388,6 +388,7 @@
 
     <script src="/js/csrfAuto.js" defer></script>
     <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/multiSelectDropdown.js" defer></script>
     <script src="/js/adminRealtime.js"></script>
 </body>
 </html>
