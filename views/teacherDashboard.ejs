@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard | Attendify</title>
 
+    <!-- Preconnect to external CDNs for faster DNS resolution -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+
     <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/teacherDashboard.css">
     <link rel="stylesheet" href="/css/finalUiFix.css">
@@ -22,9 +29,9 @@
     >
     <link rel="icon" type="image/png" href="/favicon.png">
 
-    <!-- SweetAlert2 for Custom UI Alerts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="/js/customAlerts.js"></script>
+    <!-- SweetAlert2: defer so it doesn't block page render -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="/js/customAlerts.js" defer></script>
 
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4f46e5">

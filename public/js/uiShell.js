@@ -965,5 +965,47 @@
         wrapSelects();
         installRealtime();
         installThemeToggle();
+        installPageTransitions();
     });
+
+    // Smooth page-exit fade when navigating away
+    function installPageTransitions() {
+        // Only run on regular anchor clicks (not same-page hashes, not forms)
+        document.addEventListener('click', function(e) {
+            const anchor = e.target.closest('a[href]');
+            if (!anchor) return;
+
+            const href = anchor.getAttribute('href');
+            if (!href) return;
+
+            // Skip hash links, javascript: links, new-tab links
+            if (
+                href.startsWith('#') ||
+                href.startsWith('javascript') ||
+                anchor.target === '_blank' ||
+                e.metaKey || e.ctrlKey || e.shiftKey
+            ) return;
+
+            // Skip external links
+            try {
+                const url = new URL(href, window.location.origin);
+                if (url.origin !== window.location.origin) return;
+                // Skip same-page navigation
+                if (url.pathname === window.location.pathname && url.hash) return;
+            } catch (err) {
+                return;
+            }
+
+            e.preventDefault();
+            const destination = href;
+
+            // Fade out the body
+            document.body.style.transition = 'opacity 0.18s ease';
+            document.body.style.opacity = '0';
+
+            setTimeout(function() {
+                window.location.href = destination;
+            }, 180);
+        });
+    }
 })();

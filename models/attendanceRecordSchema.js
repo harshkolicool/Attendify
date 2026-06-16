@@ -198,6 +198,26 @@ attendanceRecordSchema.index({
     markedAt: 1
 });
 
+// Critical: speeds up the student dashboard history query
+attendanceRecordSchema.index({
+    student: 1,
+    college: 1,
+    createdAt: -1
+});
+
+// Speeds up teacher review queries
+attendanceRecordSchema.index({
+    attendanceSession: 1,
+    status: 1
+});
+
+// Speeds up pending-review queries
+attendanceRecordSchema.index({
+    college: 1,
+    requestReview: 1,
+    status: 1
+});
+
 const AttendanceRecord = mongoose.models.AttendanceRecord || mongoose.model(
     "AttendanceRecord",
     attendanceRecordSchema
