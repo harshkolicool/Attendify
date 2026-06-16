@@ -148,7 +148,7 @@
                 </div>
                 <div>
                     <span>Subjects</span>
-                    <h2><%= typeof student !== "undefined" && student.subjects ? student.subjects.length : 0 %></h2>
+                    <h2><%= Math.max((typeof student !== "undefined" && student.subjects ? student.subjects.length : 0), (typeof subjectSummary !== "undefined" ? subjectSummary.length : 0)) %></h2>
                 </div>
             </div>
 
@@ -409,7 +409,7 @@
 
                                 <% if (cardState === "live" || cardState === "ongoing") { %>
                                     <span class="status-badge live">
-                                        <i class="fa-solid fa-circle-dot"></i>
+                                        <span class="pulse-dot"></span>
                                         Live Class
                                     </span>
                                 <% } else if (cardState === "present") { %>
@@ -537,6 +537,9 @@
                         <i class="fa-solid fa-right-from-bracket"></i> Sign Out All Devices
                     </button>
                 </form>
+                <button id="enablePushBtn" class="primary-btn" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #4f46e5; color: #4f46e5; background: transparent; cursor: pointer; width: 100%; margin-top: 6px; display: none;">
+                    <i class="fa-solid fa-bell"></i> Enable Notifications
+                </button>
             </div>
         </div>
 
@@ -556,7 +559,7 @@
             </div>
             <div>
                 <span>Subjects</span>
-                <strong><%= typeof student !== "undefined" && student.subjects ? student.subjects.length : 0 %> Subjects</strong>
+                <strong><%= Math.max((typeof student !== "undefined" && student.subjects ? student.subjects.length : 0), (typeof subjectSummary !== "undefined" ? subjectSummary.length : 0)) %> Subjects</strong>
             </div>
         </div>
 
@@ -587,6 +590,15 @@
             <div>
                 <span>Absent Today</span>
                 <strong class="js-absent-count-today"><%= absentCountView %> Classes</strong>
+            </div>
+        </div>
+        <div class="dashboard-panel" style="margin-top: 18px; padding: 16px;">
+            <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #1e293b;">Overall Attendance</h4>
+            <div style="position: relative; height: 160px; display: flex; justify-content: center; align-items: center;">
+                <canvas id="studentAnalyticsChart"></canvas>
+                <div style="position: absolute; text-align: center; pointer-events: none;">
+                    <span style="display: block; font-size: 24px; font-weight: 700; color: #1e293b;"><%= typeof attendancePercentage !== 'undefined' ? attendancePercentage : 0 %>%</span>
+                </div>
             </div>
         </div>
     </aside>
@@ -685,7 +697,68 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <script src="/js/studentRealtime.js"></script>
 <script src="/js/studentLiveLocation.js"></script>
 <script src="/js/dashboardTimeSync.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const ctx = document.getElementById('studentAnalyticsChart');
+    if (ctx) {
+        const percentage = <%= typeof attendancePercentage !== 'undefined' ? attendancePercentage : 0 %>;
+        new Chart(ctx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Absent'],
+                datasets: [{
+                    data: [percentage, 100 - percentage],
+                    backgroundColor: ['#16a34a', '#e2e8f0'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.raw + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 <script src="/js/uiShell.js"></script>
+<script src="/js/pushManager.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const btn = document.getElementById("enablePushBtn");
+    if (!btn || !window.PushManagerHelper) return;
+    
+    const status = await window.PushManagerHelper.init("student");
+    if (status.supported && !status.subscribed) {
+        btn.style.display = "block";
+        btn.addEventListener("click", async () => {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
+            btn.disabled = true;
+            try {
+                await window.PushManagerHelper.subscribe("student");
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
+                setTimeout(() => btn.style.display = "none", 2000);
+            } catch (err) {
+                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+            }
+        });
+    }
+});
+</script>
 
     <script src="/js/csrfAuto.js" defer></script>
     <script src="/js/selectEnhancer.js" defer></script>

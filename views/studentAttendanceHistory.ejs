@@ -346,8 +346,7 @@
                                                         ? deviceInfo.measuredDistanceFromClassroom
                                                         : null;
                                             %>
-
-                                            <tr>
+                                             <tr>
                                                 <td>
                                                     <%= new Date(sessionDate).toLocaleDateString() %>
                                                     <br>
@@ -365,14 +364,29 @@
                                                 </td>
 
                                                 <td>
-                                                    <span class="student-status <%= record.status === 'PRESENT' ? 'present' : 'absent' %>">
-                                                        <%= record.status %>
+                                                    <span class="student-status <%= record.status === 'PRESENT' ? 'present' : (record.status === 'PENDING_REVIEW' ? 'review' : 'absent') %>">
+                                                        <%= record.status === 'PENDING_REVIEW' ? 'Under Review' : record.status %>
                                                     </span>
+                                                    <% if (record.status === 'ABSENT' && !record.isFinalLocked) { %>
+                                                        <button
+                                                            class="student-review-request-btn"
+                                                            type="button"
+                                                            data-record-id="<%= record._id %>"
+                                                        >
+                                                            <i class="fa-solid fa-flag"></i>
+                                                            Request Review
+                                                        </button>
+                                                    <% } else if (record.status === 'PENDING_REVIEW') { %>
+                                                        <span class="student-review-pending-badge">
+                                                            <i class="fa-solid fa-clock"></i> Pending
+                                                        </span>
+                                                    <% } %>
                                                 </td>
 
                                                 <td>
                                                     <%= record.verificationMethod || "-" %>
                                                 </td>
+
 
                                                 <td>
                                                     <% if (verifiedDistance !== undefined && verifiedDistance !== null) { %>
@@ -492,5 +506,115 @@
 
     <script src="/js/csrfAuto.js" defer></script>
     <script src="/js/selectEnhancer.js" defer></script>
+
+<style>
+.student-review-request-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1.5px solid #fb923c;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.student-review-request-btn:hover { background: #ffedd5; }
+.student-review-pending-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 8px;
+}
+.student-status.review {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fde68a;
+}
+</style>
+
+<script>
+(function() {
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.student-review-request-btn');
+        if (!btn) return;
+
+        const recordId = btn.getAttribute('data-record-id');
+        if (!recordId) return;
+
+        Swal.fire({
+            title: 'Request Attendance Review',
+            text: 'Briefly explain why you should be marked Present. Your teacher will be notified.',
+            input: 'textarea',
+            inputLabel: 'Your reason',
+            inputPlaceholder: 'e.g. I was present but GPS failed to detect my location',
+            inputAttributes: { maxlength: 500 },
+            showCancelButton: true,
+            confirmButtonText: 'Submit Request',
+            confirmButtonColor: '#f59e0b',
+            inputValidator: function(value) {
+                if (!value || !value.trim()) return 'Please provide a reason.';
+            }
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+
+            fetch('/student/attendance-history/request-review/' + recordId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': getCsrfToken()
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ reason: result.value })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Review Requested!',
+                        text: data.message,
+                        icon: 'success',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                    // Update the UI in-place
+                    const td = btn.closest('td');
+                    if (td) {
+                        const statusSpan = td.querySelector('.student-status');
+                        if (statusSpan) {
+                            statusSpan.className = 'student-status review';
+                            statusSpan.textContent = 'Under Review';
+                        }
+                        btn.replaceWith(Object.assign(document.createElement('span'), {
+                            className: 'student-review-pending-badge',
+                            innerHTML: '<i class="fa-solid fa-clock"></i> Pending'
+                        }));
+                    }
+                } else {
+                    Swal.fire('Not Submitted', data.message || 'Could not submit review.', 'warning');
+                }
+            })
+            .catch(function() {
+                Swal.fire('Error', 'Network error. Please try again.', 'error');
+            });
+        });
+    });
+})();
+</script>
 </body>
 </html>

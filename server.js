@@ -9,6 +9,7 @@ const app = require("./app");
 const connectDB = require("./config/db");
 const socketManager = require("./utils/socketManager");
 const realtimeConfig = require("./utils/realtimeConfig");
+const logger = require("./utils/logger");
 
 let startAttendanceExpiryJob = null;
 
@@ -16,7 +17,7 @@ try {
     const attendanceExpiryJob = require("./utils/attendanceExpiryJob");
     startAttendanceExpiryJob = attendanceExpiryJob.startAttendanceExpiryJob;
 } catch (err) {
-    console.log("Attendance expiry job not loaded:", err.message);
+    logger.warn("Attendance expiry job not loaded", { msg: err.message });
 }
 
 const PORT = process.env.PORT || 3000;
@@ -213,11 +214,7 @@ async function startServer() {
 
             socketManager.initializeSocket(io);
         } else {
-            console.log(
-                "Realtime mode: " +
-                    realtimeConfig.getRealtimeMode() +
-                    " — Socket.IO is disabled."
-            );
+            logger.info("Realtime mode: " + realtimeConfig.getRealtimeMode() + " — Socket.IO is disabled.");
         }
 
         /*
@@ -228,36 +225,33 @@ async function startServer() {
             startAttendanceExpiryJob();
         }
 
+        try {
+            const { startTeacherRemindersJob } = require("./utils/teacherReminders");
+            startTeacherRemindersJob();
+        } catch (err) {
+            logger.warn("Teacher reminders job not loaded", { msg: err.message });
+        }
+
         server.on("error", function (err) {
             if (err && err.code === "EADDRINUSE") {
-                console.error(
-                    "Port " +
-                        PORT +
-                        " is already in use. Stop the existing server or choose another PORT."
-                );
+                logger.error("Port " + PORT + " is already in use. Stop the existing server or choose another PORT.");
                 process.exit(1);
             }
 
             if (err && err.code === "EPERM") {
-                console.error(
-                    "Server cannot bind to port " +
-                        PORT +
-                        ". Check local permissions or sandbox restrictions."
-                );
+                logger.error("Server cannot bind to port " + PORT + ". Check local permissions or sandbox restrictions.");
                 process.exit(1);
             }
 
-            console.error("SERVER START ERROR:");
-            console.error(err);
+            logger.error("SERVER START ERROR", { err });
             process.exit(1);
         });
 
         server.listen(PORT, function () {
-            console.log("Server running on http://localhost:" + PORT);
+            logger.info("Server running", { url: "http://localhost:" + PORT });
         });
     } catch (err) {
-        console.error("SERVER STARTUP FAILED:");
-        console.error(err.message);
+        logger.error("SERVER STARTUP FAILED", { msg: err.message });
         process.exit(1);
     }
 }
@@ -267,11 +261,11 @@ if (require.main === module) {
 }
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    logger.error('Unhandled Rejection', { promise, reason });
 });
 
 process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
+    logger.error('Uncaught Exception', { error });
 });
 
 module.exports = { startServer };

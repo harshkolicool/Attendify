@@ -13,6 +13,8 @@
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
     >
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
 
     <link
         rel="stylesheet"
@@ -525,7 +527,7 @@
                                                 <% if (card.liveSession) { %>
 
                                                     <span class="status-badge live">
-                                                        <span class="live-dot" aria-hidden="true"></span>
+                                                        <span class="pulse-dot" aria-hidden="true"></span>
                                                         Live Class
                                                     </span>
 
@@ -762,6 +764,21 @@
             <ul class="suspicious-attempt-list" id="suspiciousAttemptList"></ul>
         </section>
 
+        <section class="teacher-card" id="pendingReviewsSection" style="display:none;">
+            <div class="teacher-card-header">
+                <div>
+                    <h3><i class="fa-solid fa-flag" style="color:#f59e0b;"></i> Pending Attendance Reviews</h3>
+                    <p>Students who have requested a review of their absent record.</p>
+                </div>
+                <span class="suspicious-count-pill" id="pendingReviewCount" style="background:#fef3c7;color:#92400e;">0 Pending</span>
+            </div>
+            <div id="pendingReviewsEmpty" class="suspicious-empty" style="display:none;">
+                <i class="fa-solid fa-circle-check" style="color:#22c55e;"></i>
+                <p>No pending reviews.</p>
+            </div>
+            <div id="pendingReviewsList"></div>
+        </section>
+
 
         <%
             const liveMapBootstrap = (activeSessions || []).map(function (session) {
@@ -880,6 +897,9 @@
                         <i class="fa-solid fa-right-from-bracket"></i> Sign Out All Devices
                     </button>
                 </form>
+                <button id="enablePushBtn" class="teacher-primary-btn" style="padding: 4px 8px; font-size: 12px; width: 100%; margin-top: 6px; display: none;">
+                    <i class="fa-solid fa-bell"></i> Enable Notifications
+                </button>
             </div>
         </div>
 
@@ -994,6 +1014,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <% } %>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="/js/teacherRealtime.js"></script>
 <script src="/js/teacherNav.js"></script>
 <script src="/js/teacherPanels.js"></script>
@@ -1003,5 +1024,184 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 
     <script src="/js/csrfAuto.js" defer></script>
     <script src="/js/selectEnhancer.js" defer></script>
-</body>
+
+<script>
+// ---- Pending Attendance Reviews ----
+(function() {
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function renderReviews(reviews) {
+        const section = document.getElementById('pendingReviewsSection');
+        const list = document.getElementById('pendingReviewsList');
+        const empty = document.getElementById('pendingReviewsEmpty');
+        const count = document.getElementById('pendingReviewCount');
+
+        if (!section || !list || !empty || !count) return;
+
+        count.textContent = reviews.length + ' Pending';
+
+        if (reviews.length === 0) {
+            section.style.display = '';
+            empty.style.display = '';
+            list.innerHTML = '';
+            return;
+        }
+
+        section.style.display = '';
+        empty.style.display = 'none';
+
+        list.innerHTML = reviews.map(function(record) {
+            const student = record.student || {};
+            const subject = record.subject || {};
+            const session = record.attendanceSession || {};
+            const classGroup = record.classGroup || {};
+
+            return '<div class="teacher-review-item" data-record-id="' + record._id + '">' +
+                '<div class="review-header-row">' +
+                    '<div class="review-student-info">' +
+                        '<div class="review-student-name-row">' +
+                            '<strong class="review-student-name">' + (student.fullName || 'Student') + '</strong>' +
+                            '<span class="review-enrollment-pill">' + (student.enrollmentNumber || '') + '</span>' +
+                        '</div>' +
+                        '<div class="review-class-details">' +
+                            '<i class="fa-solid fa-book fa-fw"></i> ' + (subject.subjectName || 'Subject') + ' &middot; ' + (classGroup.name || '') +
+                        '</div>' +
+                        '<div class="review-date">' +
+                            '<i class="fa-solid fa-clock fa-fw"></i> ' + formatDate(session.startTime) +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="review-actions">' +
+                        '<button class="teacher-primary-btn review-approve-btn" data-record-id="' + record._id + '">' +
+                            '<i class="fa-solid fa-check"></i> Approve' +
+                        '</button>' +
+                        '<button class="teacher-secondary-btn review-reject-btn" data-record-id="' + record._id + '">' +
+                            '<i class="fa-solid fa-xmark"></i> Reject' +
+                        '</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="review-reason-box">' +
+                    '<i class="fa-solid fa-quote-left"></i>' +
+                    '<span>' + (record.reviewReason || 'No reason provided.') + '</span>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+
+        // Attach approve handlers
+        list.querySelectorAll('.review-approve-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const recordId = btn.getAttribute('data-record-id');
+                Swal.fire({
+                    title: 'Approve Review?',
+                    text: 'This will mark the student as PRESENT.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Approve',
+                    confirmButtonColor: '#22c55e'
+                }).then(function(result) {
+                    if (!result.isConfirmed) return;
+                    fetch('/teacher/reviews/' + recordId + '/approve', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({})
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            Swal.fire({ title: 'Approved!', text: data.message, icon: 'success', timer: 2000, showConfirmButton: false });
+                            loadPendingReviews();
+                        } else {
+                            Swal.fire('Error', data.message || 'Could not approve.', 'error');
+                        }
+                    })
+                    .catch(function() { Swal.fire('Error', 'Network error.', 'error'); });
+                });
+            });
+        });
+
+        // Attach reject handlers
+        list.querySelectorAll('.review-reject-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const recordId = btn.getAttribute('data-record-id');
+                Swal.fire({
+                    title: 'Reject Review?',
+                    text: 'Student will remain marked ABSENT.',
+                    input: 'textarea',
+                    inputLabel: 'Reason for rejection (optional)',
+                    inputPlaceholder: 'e.g. Insufficient proof provided',
+                    showCancelButton: true,
+                    confirmButtonText: 'Reject',
+                    confirmButtonColor: '#dc2626'
+                }).then(function(result) {
+                    if (!result.isConfirmed) return;
+                    fetch('/teacher/reviews/' + recordId + '/reject', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ rejectReason: result.value || '' })
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            Swal.fire({ title: 'Rejected', text: data.message, icon: 'info', timer: 2000, showConfirmButton: false });
+                            loadPendingReviews();
+                        } else {
+                            Swal.fire('Error', data.message || 'Could not reject.', 'error');
+                        }
+                    })
+                    .catch(function() { Swal.fire('Error', 'Network error.', 'error'); });
+                });
+            });
+        });
+    }
+
+    function loadPendingReviews() {
+        fetch('/teacher/reviews/pending', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    renderReviews(data.pendingReviews || []);
+                }
+            })
+            .catch(function() {
+                // silently fail — non-critical
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPendingReviews);
+})();
+</script>
+<script src="/js/pushManager.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const btn = document.getElementById("enablePushBtn");
+    if (!btn || !window.PushManagerHelper) return;
+    
+    const status = await window.PushManagerHelper.init("teacher");
+    if (status.supported && !status.subscribed) {
+        btn.style.display = "block";
+        btn.addEventListener("click", async () => {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
+            btn.disabled = true;
+            try {
+                await window.PushManagerHelper.subscribe("teacher");
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
+                setTimeout(() => btn.style.display = "none", 2000);
+            } catch (err) {
+                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+            }
+        });
+    }
+});
+</script>
 </html>

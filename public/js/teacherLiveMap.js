@@ -118,6 +118,7 @@ function initTeacherLiveMap() {
     const deviceState = new Map();
     const rosterByStudent = new Map();
     const markerStabilizers = new Map();
+    let studentClusterGroup = null;
 
     function getMarkerStabilizer(markerKey) {
         if (!window.AttendifyLocationStabilizer) {
@@ -249,6 +250,16 @@ function initTeacherLiveMap() {
             attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
         
+        if (typeof L.markerClusterGroup !== "undefined") {
+            studentClusterGroup = L.markerClusterGroup({
+                maxClusterRadius: 40,
+                disableClusteringAtZoom: 20,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false
+            });
+            map.addLayer(studentClusterGroup);
+        }
+
         mapInitialized = true;
         
         setTimeout(function() {
@@ -264,6 +275,9 @@ function initTeacherLiveMap() {
     }
 
     function removeDeviceLayers() {
+        if (studentClusterGroup) {
+            studentClusterGroup.clearLayers();
+        }
         deviceMarkers.forEach(function (marker) {
             try { marker.remove(); } catch (e) {}
         });
@@ -838,7 +852,14 @@ function initTeacherLiveMap() {
                     icon: markerIcon,
                     title: fullName,
                     zIndexOffset: zIndex
-                }).addTo(map);
+                });
+                
+                if (studentClusterGroup) {
+                    studentClusterGroup.addLayer(marker);
+                } else {
+                    marker.addTo(map);
+                }
+                
                 deviceMarkers.set(markerKey, marker);
             }
 
@@ -906,6 +927,9 @@ function initTeacherLiveMap() {
         } else {
             let marker = deviceMarkers.get(markerKey);
             if (marker) {
+                if (studentClusterGroup) {
+                    studentClusterGroup.removeLayer(marker);
+                }
                 marker.remove();
                 deviceMarkers.delete(markerKey);
             }

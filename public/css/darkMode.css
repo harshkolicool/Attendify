@@ -1,0 +1,1410 @@
+/* Dark Mode Overrides (Slate/Zinc Palette) */
+[data-theme="dark"] {
+    /* Legacy Shell Overrides */
+    --shell-bg: #0f172a;
+    --shell-bg-accent: #1e293b;
+    --shell-border: #334155;
+    --shell-text: #f8fafc;
+    --shell-muted: #94a3b8;
+    
+    --card-bg: #1e293b;
+    --card-border: #334155;
+
+    /* Global Theme Tokens Overrides */
+    --theme-bg-main: #0f172a;
+    --theme-bg-card: #1e293b;
+    --theme-bg-hover: #334155;
+    --theme-text-main: #f8fafc;
+    --theme-text-muted: #94a3b8;
+    --theme-border: #334155;
+    --theme-input-bg: #1e293b;
+    
+    /* Specific Element Overrides */
+    background-color: var(--shell-bg);
+    color: var(--shell-text);
+}
+
+[data-theme="dark"] .ui-sidebar,
+[data-theme="dark"] .shell-sidebar-nav,
+[data-theme="dark"] .profile-panel,
+[data-theme="dark"] .schedule-layout,
+[data-theme="dark"] .schedule-main,
+[data-theme="dark"] .admin-layout,
+[data-theme="dark"] .admin-main,
+[data-theme="dark"] .student-layout,
+[data-theme="dark"] .student-main,
+[data-theme="dark"] .teacher-layout,
+[data-theme="dark"] .teacher-main,
+[data-theme="dark"] .platform-layout,
+[data-theme="dark"] .platform-main {
+    background: #0f172a !important;
+    background-color: #0f172a !important;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .menu-item {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .menu-item:hover,
+[data-theme="dark"] .menu-item.active {
+    background-color: #1e293b;
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .dashboard-panel,
+[data-theme="dark"] .teacher-card,
+[data-theme="dark"] .dashboard-stat-card,
+[data-theme="dark"] .student-history-card,
+[data-theme="dark"] .profile-card,
+[data-theme="dark"] .side-card,
+[data-theme="dark"] .side-stat,
+[data-theme="dark"] .student-history-profile-card,
+[data-theme="dark"] .student-history-filter-card,
+[data-theme="dark"] .student-history-stat,
+[data-theme="dark"] .student-history-subject-block,
+[data-theme="dark"] .notification-card,
+[data-theme="dark"] .student-passkey-hero,
+[data-theme="dark"] .student-passkey-card,
+[data-theme="dark"] .schedule-list .class-card,
+[data-theme="dark"] .teacher-card,
+[data-theme="dark"] .teacher-map-card,
+[data-theme="dark"] .teacher-map-student-card,
+[data-theme="dark"] .teacher-report-overview-card,
+[data-theme="dark"] .teacher-report-nav-card,
+[data-theme="dark"] .teacher-report-filter-card,
+[data-theme="dark"] .teacher-export-card,
+[data-theme="dark"] .teacher-notification-card,
+[data-theme="dark"] .teacher-schedule-toolbar-card,
+[data-theme="dark"] .teacher-schedule-class-card,
+[data-theme="dark"] .admin-card,
+[data-theme="dark"] .admin-item-card,
+[data-theme="dark"] .admin-entity-card,
+[data-theme="dark"] .admin-classroom-card,
+[data-theme="dark"] .admin-student-card,
+[data-theme="dark"] .admin-students-overview-pill,
+[data-theme="dark"] .admin-csv-card,
+[data-theme="dark"] .admin-password-card,
+[data-theme="dark"] .admin-class-group-card,
+[data-theme="dark"] .platform-card,
+[data-theme="dark"] .platform-stat-card,
+[data-theme="dark"] .platform-request-card,
+[data-theme="dark"] .platform-login-card,
+[data-theme="dark"] .platform-admin-temp-password-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .schedule-list .class-card {
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .class-time strong,
+[data-theme="dark"] .class-info h4 {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .class-time span,
+[data-theme="dark"] .class-info p {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .student-welcome h2,
+[data-theme="dark"] .dashboard-kicker,
+[data-theme="dark"] .dashboard-header h1 {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .dashboard-header p {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .gps-help-banner {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+/* Fix Attendance UI widget in sidebar */
+[data-theme="dark"] .student-welcome + div[style*="background: #f1f5f9"] {
+    background: #1e293b !important;
+}
+[data-theme="dark"] .student-welcome + div[style*="background: #f1f5f9"] div[style*="color: #475569"] {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .student-history-empty,
+[data-theme="dark"] .suspicious-empty {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .table-wrapper {
+    background-color: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+[data-theme="dark"] .ui-table th {
+    background-color: #0f172a;
+    color: #94a3b8;
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .ui-table td {
+    color: #f8fafc;
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .ui-table tbody tr:hover {
+    background-color: #1e293b;
+}
+
+[data-theme="dark"] .teacher-review-item {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .teacher-review-item strong {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-review-item span {
+    color: #94a3b8 !important;
+}
+
+/* Modals and general inputs */
+[data-theme="dark"] .swal2-popup {
+    background-color: #1e293b;
+    color: #f8fafc;
+}
+[data-theme="dark"] .swal2-title, [data-theme="dark"] .swal2-html-container {
+    color: #f8fafc;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.theme-toggle-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+[data-theme="dark"] .teacher-map-filter-group label {
+    color: #cbd5e1;
+}
+
+/* Teacher Live Session Card Dark Mode */
+[data-theme="dark"] .live-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .live-card .live-course-info h4 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .live-card .live-course-info p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .live-card .live-meta {
+    background: #0f172a !important;
+}
+
+[data-theme="dark"] .live-card .live-meta p {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .live-card .empty-student-card {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .live-card .empty-student-card p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .theme-toggle-btn {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .theme-toggle-btn:hover {
+    background: #334155;
+    color: #f8fafc;
+}
+
+/* Text & Headings Overrides */
+[data-theme="dark"] .dashboard-stat-card h2,
+[data-theme="dark"] .student-history-card-head h3,
+[data-theme="dark"] .dashboard-panel-head h3,
+[data-theme="dark"] .profile-card h3,
+[data-theme="dark"] .side-card p,
+[data-theme="dark"] .side-stat strong,
+[data-theme="dark"] .student-auth-content strong,
+[data-theme="dark"] .passkey-security-card h3,
+[data-theme="dark"] .student-history-profile-card h3,
+[data-theme="dark"] .student-history-stat strong,
+[data-theme="dark"] .student-export-content h3,
+[data-theme="dark"] .student-history-subject-head h4,
+[data-theme="dark"] .class-info h4,
+[data-theme="dark"] .class-time strong,
+[data-theme="dark"] .notification-top h4,
+[data-theme="dark"] .student-passkey-hero h3,
+[data-theme="dark"] .student-passkey-card h4,
+[data-theme="dark"] .student-passkey-meta strong,
+[data-theme="dark"] .student-header h1,
+[data-theme="dark"] .teacher-card-header h3,
+[data-theme="dark"] .teacher-map-student-card strong,
+[data-theme="dark"] .teacher-card h3,
+[data-theme="dark"] .teacher-card h2,
+[data-theme="dark"] .teacher-schedule-class-card h4,
+[data-theme="dark"] .admin-card-head h3,
+[data-theme="dark"] .admin-entity-card h4,
+[data-theme="dark"] .admin-student-card h4,
+[data-theme="dark"] .admin-classroom-card h4,
+[data-theme="dark"] .admin-students-overview-pill strong,
+[data-theme="dark"] .platform-card-head h2,
+[data-theme="dark"] .platform-stat-card h3,
+[data-theme="dark"] .platform-login-card h1,
+[data-theme="dark"] .platform-admin-temp-password-card h3 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .dashboard-stat-card span,
+[data-theme="dark"] .student-history-card-head p,
+[data-theme="dark"] .dashboard-panel-head p,
+[data-theme="dark"] .side-card h4,
+[data-theme="dark"] .side-stat span,
+[data-theme="dark"] .student-auth-content p,
+[data-theme="dark"] .passkey-security-card p,
+[data-theme="dark"] .student-history-profile-card p,
+[data-theme="dark"] .student-history-stat span,
+[data-theme="dark"] .student-export-content p,
+[data-theme="dark"] .student-history-subject-head p,
+[data-theme="dark"] .class-info p,
+[data-theme="dark"] .class-time span,
+[data-theme="dark"] .schedule-empty,
+[data-theme="dark"] .notification-card p,
+[data-theme="dark"] .notification-top span,
+[data-theme="dark"] .student-passkey-hero p,
+[data-theme="dark"] .student-passkey-meta p,
+[data-theme="dark"] .student-header p,
+[data-theme="dark"] .student-field label,
+[data-theme="dark"] .teacher-card-header p,
+[data-theme="dark"] .teacher-map-student-card p,
+[data-theme="dark"] .teacher-card p,
+[data-theme="dark"] .teacher-schedule-class-card p,
+[data-theme="dark"] .admin-card-head p,
+[data-theme="dark"] .admin-entity-card p,
+[data-theme="dark"] .admin-student-card p,
+[data-theme="dark"] .admin-classroom-card p,
+[data-theme="dark"] .admin-students-overview-pill span,
+[data-theme="dark"] .platform-card-head p,
+[data-theme="dark"] .platform-stat-card p,
+[data-theme="dark"] .platform-login-card p,
+[data-theme="dark"] .platform-admin-temp-password-card p {
+    color: #94a3b8 !important;
+}
+
+/* History Table Overrides */
+[data-theme="dark"] .student-history-table th,
+[data-theme="dark"] .admin-table th,
+[data-theme="dark"] .teacher-report-table th,
+[data-theme="dark"] .report-table th {
+    background-color: #0f172a;
+    color: #94a3b8;
+    border-bottom: 1px solid #334155;
+}
+
+[data-theme="dark"] .student-history-table td,
+[data-theme="dark"] .admin-table td,
+[data-theme="dark"] .teacher-report-table td,
+[data-theme="dark"] .report-table td {
+    color: #f8fafc;
+    border-bottom: 1px solid #334155;
+}
+
+[data-theme="dark"] .student-history-table td strong,
+[data-theme="dark"] .admin-table td strong,
+[data-theme="dark"] .teacher-report-table td strong,
+[data-theme="dark"] .report-table td strong {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .student-history-table tr:hover td,
+[data-theme="dark"] .admin-table tr:hover td,
+[data-theme="dark"] .teacher-report-table tr:hover td,
+[data-theme="dark"] .report-table tr:hover td {
+    background-color: #1e293b;
+}
+
+[data-theme="dark"] .student-history-table-wrap {
+    border-color: #334155;
+}
+
+/* Misc Card Backgrounds */
+[data-theme="dark"] .passkey-security-card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .schedule-day-name {
+    color: #94a3b8;
+}
+
+/* Button Overrides */
+[data-theme="dark"] .view-btn:not(.live):not(.marked):not(.unmarked):not(.pending):not(.late) {
+    background-color: #1e293b !important;
+    color: #38bdf8 !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .view-btn:not(.live):not(.marked):not(.unmarked):not(.pending):not(.late):hover {
+    background-color: #334155 !important;
+    color: #f0f9ff !important;
+}
+/* Auth Preference Cards */
+[data-theme="dark"] .student-auth-content {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+/* Form Element Overrides */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+    border-color: #38bdf8 !important;
+    outline: none;
+}
+
+[data-theme="dark"] ::placeholder {
+    color: #64748b !important;
+}
+[data-theme="dark"] #studentAuthPasskeyLabel input:checked + .student-auth-content {
+    background: #0f172a !important;
+    border-color: #38bdf8 !important;
+}
+
+[data-theme="dark"] #studentAuthTrustedLabel input:checked + .student-auth-content {
+    background: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+[data-theme="dark"] .dashboard-action-btn {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* ================= SPECIFIC ADMIN UI FIXES ================= */
+[data-theme="dark"] .admin-search-box {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .admin-search-box input {
+    color: #f8fafc !important;
+    background: transparent !important;
+}
+
+[data-theme="dark"] .admin-count-pill {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .admin-secondary-btn {
+    background: #334155 !important;
+    color: #f8fafc !important;
+    border-color: #475569 !important;
+}
+
+[data-theme="dark"] .admin-secondary-btn:hover {
+    background: #475569 !important;
+}
+
+[data-theme="dark"] .admin-secondary-btn.danger,
+[data-theme="dark"] .admin-delete-btn {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+[data-theme="dark"] .admin-secondary-btn.danger:hover,
+[data-theme="dark"] .admin-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+}
+
+[data-theme="dark"] .admin-badge {
+    background: rgba(56, 189, 248, 0.1) !important;
+    color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.2) !important;
+}
+
+[data-theme="dark"] .admin-edit-box summary,
+[data-theme="dark"] .admin-student-edit summary {
+    background: #0f172a !important;
+    color: #38bdf8 !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .admin-edit-box summary:hover,
+[data-theme="dark"] .admin-student-edit summary:hover {
+    background: #1e293b !important;
+}
+
+[data-theme="dark"] .admin-edit-form {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* ================= MULTI SELECT & FILE UPLOAD ================= */
+[data-theme="dark"] .custom-multi-select-trigger {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+[data-theme="dark"] .custom-multi-select-trigger:hover {
+    border-color: #38bdf8 !important;
+}
+[data-theme="dark"] .custom-multi-select-menu {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+[data-theme="dark"] .custom-multi-select-menu div {
+    border-bottom-color: #334155 !important;
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .custom-multi-select-menu div span {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .custom-multi-select-menu div:hover {
+    background: #334155 !important;
+}
+
+[data-theme="dark"] .admin-file-icon {
+    background: #334155 !important;
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .admin-file-browse {
+    background: #334155 !important;
+    color: #f8fafc !important;
+    border-color: #475569 !important;
+}
+[data-theme="dark"] .admin-file-text strong {
+    color: #f8fafc !important;
+}
+
+/* ================= COMPREHENSIVE DARK MODE SWEEP ================= */
+/* Backgrounds */
+[data-theme="dark"] .stat-box,
+[data-theme="dark"] .panel-box,
+[data-theme="dark"] .info-card,
+[data-theme="dark"] .manual-card,
+[data-theme="dark"] .teacher-report-stat,
+[data-theme="dark"] .teacher-map-select,
+[data-theme="dark"] .teacher-map-icon-button,
+[data-theme="dark"] .teacher-map-avatar-unknown,
+[data-theme="dark"] .teacher-map-avatar-offline,
+[data-theme="dark"] .suspicious-attempt-item,
+[data-theme="dark"] .manual-student-card,
+[data-theme="dark"] .admin-file-drop,
+[data-theme="dark"] .report-stat-card,
+[data-theme="dark"] .platform-request-item,
+[data-theme="dark"] .platform-detail-grid div,
+[data-theme="dark"] .platform-admin-password-box,
+[data-theme="dark"] .profile-card,
+[data-theme="dark"] .side-card,
+[data-theme="dark"] .panel-count,
+[data-theme="dark"] .dashboard-class-card,
+[data-theme="dark"] .gps-help-banner,
+[data-theme="dark"] .admin-password-rules,
+[data-theme="dark"] .admin-dynamic-hint,
+[data-theme="dark"] .admin-schedules-overview-pill,
+[data-theme="dark"] .teacher-report-chip,
+[data-theme="dark"] .teacher-room-chip,
+[data-theme="dark"] .teacher-notification-pill.blue {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* Primary Text */
+[data-theme="dark"] .stat-box h3,
+[data-theme="dark"] .panel-box h3,
+[data-theme="dark"] .info-card h4,
+[data-theme="dark"] .manual-card h3,
+[data-theme="dark"] .teacher-report-stat strong,
+[data-theme="dark"] .admin-schedules-overview-pill strong,
+[data-theme="dark"] .admin-student-group-summary h3,
+[data-theme="dark"] .admin-schedule-group-summary h3,
+[data-theme="dark"] .platform-request-item h4 {
+    color: #f8fafc !important;
+}
+
+/* Secondary / Muted Text */
+[data-theme="dark"] .stat-box p,
+[data-theme="dark"] .panel-box p,
+[data-theme="dark"] .info-card p,
+[data-theme="dark"] .admin-csv-help,
+[data-theme="dark"] .admin-password-rules,
+[data-theme="dark"] .admin-dynamic-hint,
+[data-theme="dark"] .gps-help-banner,
+[data-theme="dark"] .teacher-map-pill-poor,
+[data-theme="dark"] .manual-time,
+[data-theme="dark"] .manual-edit-link,
+[data-theme="dark"] .teacher-report-chip,
+[data-theme="dark"] .teacher-room-chip,
+[data-theme="dark"] .teacher-notification-pill.blue,
+[data-theme="dark"] .admin-schedules-overview-pill,
+[data-theme="dark"] .pending-badge-muted,
+[data-theme="dark"] .platform-detail-grid div span {
+    color: #94a3b8 !important;
+}
+
+/* ================= FINAL MISSING WHITE BACKGROUNDS ================= */
+
+/* Toolbars */
+[data-theme="dark"] .admin-student-org-toolbar,
+[data-theme="dark"] .admin-schedule-org-toolbar,
+[data-theme="dark"] .teacher-schedule-org-toolbar {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+/* CSV Help */
+[data-theme="dark"] .admin-csv-help {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+[data-theme="dark"] .admin-csv-help-title {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .admin-csv-help code {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+/* Panels & Group Wrappers */
+[data-theme="dark"] .admin-student-group-panel,
+[data-theme="dark"] .admin-schedule-group-panel,
+[data-theme="dark"] .teacher-schedule-group-panel,
+[data-theme="dark"] .teacher-report-group-panel {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .teacher-report-group-panel.danger {
+    background: #450a0a !important;
+    border-color: #ef4444 !important;
+}
+
+[data-theme="dark"] .admin-student-group-summary h3,
+[data-theme="dark"] .admin-schedule-group-summary h3,
+[data-theme="dark"] .teacher-schedule-group-summary h3,
+[data-theme="dark"] .teacher-report-group-summary h3 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .admin-student-group-summary p,
+[data-theme="dark"] .admin-schedule-group-summary p,
+[data-theme="dark"] .teacher-schedule-group-summary p,
+[data-theme="dark"] .teacher-report-group-summary p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .admin-student-group-summary:hover,
+[data-theme="dark"] .admin-schedule-group-summary:hover,
+[data-theme="dark"] .teacher-schedule-group-summary:hover,
+[data-theme="dark"] .teacher-report-group-summary:hover {
+    background: #1e293b !important;
+}
+
+[data-theme="dark"] .admin-student-group-panel[open] .admin-student-group-summary,
+[data-theme="dark"] .admin-schedule-group-panel[open] .admin-schedule-group-summary,
+[data-theme="dark"] .teacher-schedule-group-panel[open] .teacher-schedule-group-summary,
+[data-theme="dark"] .teacher-report-group-panel[open] .teacher-report-group-summary {
+    border-bottom-color: #334155 !important;
+}
+
+/* Missing Badges */
+[data-theme="dark"] .admin-room-badge,
+[data-theme="dark"] .admin-day-badge {
+    background: rgba(56, 189, 248, 0.1) !important;
+    color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.2) !important;
+}
+
+[data-theme="dark"] .admin-room-badge.muted {
+    background: rgba(148, 163, 184, 0.1) !important;
+    color: #94a3b8 !important;
+    border-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+/* Empty States */
+[data-theme="dark"] .admin-empty,
+[data-theme="dark"] .teacher-map-roster-empty,
+[data-theme="dark"] .empty-state {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .empty-state h3,
+[data-theme="dark"] .admin-empty h3 {
+    color: #f8fafc !important;
+}
+
+/* Specific button overrides that were failing due to CSS specificity */
+[data-theme="dark"] .admin-schedules-page .admin-schedule-card .admin-delete-btn {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+}
+[data-theme="dark"] .admin-schedules-page .admin-schedule-card .admin-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Dashboard & Info Cards */
+[data-theme="dark"] .admin-stat-card,
+[data-theme="dark"] .admin-setup-panel {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .admin-stat-card h3,
+[data-theme="dark"] .admin-setup-panel h2 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .admin-stat-card-top span,
+[data-theme="dark"] .admin-setup-panel p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .admin-setup-panel ol {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .admin-setup-panel li strong {
+    color: #38bdf8 !important;
+}
+
+/* Form Grid Labels */
+[data-theme="dark"] .admin-field label,
+[data-theme="dark"] .admin-student-filter-field label,
+[data-theme="dark"] .admin-schedule-filter-field label,
+[data-theme="dark"] .admin-button-field label {
+    color: #94a3b8 !important;
+}
+
+/* Stat Icons in Dark Mode */
+[data-theme="dark"] .admin-stat-icon.blue { background: rgba(59, 130, 246, 0.1) !important; color: #3b82f6 !important; }
+[data-theme="dark"] .admin-stat-icon.cyan { background: rgba(6, 182, 212, 0.1) !important; color: #06b6d4 !important; }
+[data-theme="dark"] .admin-stat-icon.purple { background: rgba(139, 92, 246, 0.1) !important; color: #8b5cf6 !important; }
+[data-theme="dark"] .admin-stat-icon.indigo { background: rgba(99, 102, 241, 0.1) !important; color: #6366f1 !important; }
+[data-theme="dark"] .admin-stat-icon.green { background: rgba(34, 197, 94, 0.1) !important; color: #22c55e !important; }
+[data-theme="dark"] .admin-stat-icon.orange { background: rgba(249, 115, 22, 0.1) !important; color: #f97316 !important; }
+[data-theme="dark"] .admin-stat-icon.rose { background: rgba(244, 63, 94, 0.1) !important; color: #f43f5e !important; }
+[data-theme="dark"] .admin-setup-panel-icon { background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; }
+
+/* SweetAlert / UI Confirm Modal */
+[data-theme="dark"] .shell-enhanced-alert {
+    background-color: #1e293b !important;
+}
+
+[data-theme="dark"] .shell-enhanced-title {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .shell-enhanced-text {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .shell-enhanced-cancel {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .shell-enhanced-cancel:hover {
+    background-color: #1e293b !important;
+}
+
+/* Password Change Fixes */
+[data-theme="dark"] .admin-password-toggle {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .admin-password-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .admin-password-rules {
+    border-color: #334155 !important;
+    background-color: rgba(15, 23, 42, 0.5) !important;
+}
+
+[data-theme="dark"] .admin-password-rules h4 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .admin-password-rules li {
+    color: #94a3b8 !important;
+}
+
+/* ================= SUPER ADMIN (PLATFORM ADMIN) DARK MODE ================= */
+
+[data-theme="dark"] body {
+    background-image: none !important;
+}
+
+[data-theme="dark"] .platform-login-page {
+    background-image: none !important;
+    background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .platform-login-card {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .platform-login-card p,
+[data-theme="dark"] .platform-field label,
+[data-theme="dark"] .platform-header p,
+[data-theme="dark"] .platform-stat-card p,
+[data-theme="dark"] .platform-card-head p,
+[data-theme="dark"] .platform-request-top p,
+[data-theme="dark"] .platform-request-item p,
+[data-theme="dark"] .platform-detail-grid span,
+[data-theme="dark"] .platform-empty {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .platform-login-card h1,
+[data-theme="dark"] .platform-header h1,
+[data-theme="dark"] .platform-stat-card h3,
+[data-theme="dark"] .platform-card-head h2,
+[data-theme="dark"] .platform-card-head h3,
+[data-theme="dark"] .platform-request-top h2,
+[data-theme="dark"] .platform-request-item h3,
+[data-theme="dark"] .platform-detail-grid p,
+[data-theme="dark"] .notification-card h4 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .notification-card span,
+[data-theme="dark"] .notification-card p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .platform-field input {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .platform-field input:focus {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12) !important;
+}
+
+[data-theme="dark"] .platform-link,
+[data-theme="dark"] .platform-small-link {
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .platform-main {
+    background-image: none !important;
+    background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .platform-generated-box {
+    background: rgba(30, 41, 59, 0.7) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .platform-stat-card,
+[data-theme="dark"] .platform-card,
+[data-theme="dark"] .platform-request-card {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: #334155 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .platform-empty {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .platform-request-item {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .platform-filter-tabs a {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .platform-filter-tabs a.active {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .platform-detail-grid div {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .platform-reject-box summary {
+    background: rgba(220, 38, 38, 0.15) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(220, 38, 38, 0.3) !important;
+}
+
+[data-theme="dark"] .platform-reject-box textarea {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .platform-admin-temp-password-card {
+    background: rgba(234, 88, 12, 0.1) !important;
+    border-color: rgba(234, 88, 12, 0.3) !important;
+}
+
+[data-theme="dark"] .platform-admin-temp-password-card h3,
+[data-theme="dark"] .platform-admin-temp-password-card small {
+    color: #fdba74 !important;
+}
+
+[data-theme="dark"] .platform-admin-temp-password-card p {
+    color: #fed7aa !important;
+}
+
+[data-theme="dark"] .platform-admin-password-box {
+    background: #0f172a !important;
+    border-color: rgba(234, 88, 12, 0.5) !important;
+}
+
+[data-theme="dark"] .platform-admin-password-box span {
+    color: #f8fafc !important;
+}
+
+/* ================= TEACHER DASHBOARD MISSING DARK MODE ================= */
+
+[data-theme="dark"] .stat-box,
+[data-theme="dark"] .panel-box,
+[data-theme="dark"] .student-card-item {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: #334155 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .stat-box span,
+[data-theme="dark"] .panel-subtitle,
+[data-theme="dark"] .student-card-item p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .stat-box h3,
+[data-theme="dark"] .panel-title,
+[data-theme="dark"] .student-card-item h3 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .live-student-list li.student-card-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .live-student-list li.student-card-item:hover {
+    border-color: #475569 !important;
+}
+
+/* ================= MORE FIXES FOR TEACHER AND AUTH ================= */
+
+[data-theme="dark"] .auth-card {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .auth-card h2,
+[data-theme="dark"] .auth-form label,
+[data-theme="dark"] .auth-header p {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .input-wrap input {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .input-wrap i {
+    color: #94a3b8 !important;
+}
+
+/* Fix Teacher Schedule Dashboard */
+[data-theme="dark"] .teacher-schedule-group-summary,
+[data-theme="dark"] .teacher-schedule-group-panel {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .teacher-schedule-group-summary h4 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-schedule-group-summary p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .teacher-schedule-class-card,
+[data-theme="dark"] .manual-schedule-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .teacher-schedule-class-card h3,
+[data-theme="dark"] .manual-schedule-card h3,
+[data-theme="dark"] .class-info h4 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-schedule-class-card p,
+[data-theme="dark"] .manual-schedule-card p,
+[data-theme="dark"] .teacher-schedule-class-info p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .teacher-schedule-class-info p i {
+    color: #64748b !important;
+}
+
+[data-theme="dark"] .class-time,
+[data-theme="dark"] .manual-time {
+    background: transparent !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-schedule-card-action {
+    background: transparent !important;
+}
+
+/* ================= ULTIMATE SPECIFICITY OVERRIDES FOR ALL TEACHER PAGES ================= */
+html[data-theme="dark"] body {
+    background-color: #0f172a !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-schedule-panel,
+html[data-theme="dark"] .teacher-main .teacher-attendance-panel,
+html[data-theme="dark"] .teacher-main .teacher-schedule-toolbar-card,
+html[data-theme="dark"] .teacher-main .panel-box,
+html[data-theme="dark"] .teacher-main .teacher-map-roster-wrap,
+html[data-theme="dark"] .teacher-main .teacher-card,
+html[data-theme="dark"] .teacher-main .teacher-export-card,
+html[data-theme="dark"] .teacher-main .teacher-report-filter-card,
+html[data-theme="dark"] .teacher-main .teacher-report-panel {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-header h1,
+html[data-theme="dark"] .teacher-main .print-only-header h1 {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-header p,
+html[data-theme="dark"] .teacher-main .print-only-header p {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .empty-box,
+html[data-theme="dark"] .teacher-main .teacher-empty,
+html[data-theme="dark"] .teacher-main .teacher-notifications-empty {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .empty-box p,
+html[data-theme="dark"] .teacher-main .teacher-empty,
+html[data-theme="dark"] .teacher-main .teacher-notifications-empty p {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-notifications-empty h3 {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-review-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    border-left-color: #f59e0b !important; /* Keep amber indicator visible in dark mode */
+}
+
+html[data-theme="dark"] .teacher-main .review-student-name {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .review-enrollment-pill {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+    border: 1px solid #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .review-class-details,
+html[data-theme="dark"] .teacher-main .review-date {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .review-class-details i,
+html[data-theme="dark"] .teacher-main .review-date i {
+    color: #475569 !important;
+}
+
+html[data-theme="dark"] .teacher-main .review-reason-box {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .teacher-main .review-reason-box i {
+    color: #475569 !important;
+}
+
+html[data-theme="dark"] .teacher-main .review-reason-box span {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-search-box {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-search-box input {
+    color: #f8fafc !important;
+    background: transparent !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-schedule-group-summary,
+html[data-theme="dark"] .teacher-main .teacher-schedule-group-panel {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-schedule-class-card,
+html[data-theme="dark"] .teacher-main .manual-schedule-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .class-time,
+html[data-theme="dark"] .teacher-main .manual-time {
+    background: #0f172a !important;
+    color: #38bdf8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-schedule-card-action {
+    background: transparent !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-map-roster-empty {
+    color: #94a3b8 !important;
+}
+
+/* New Teacher Buttons & Pills */
+html[data-theme="dark"] .teacher-main .teacher-secondary-btn,
+html[data-theme="dark"] .teacher-main .manual-date-nav-btn,
+html[data-theme="dark"] .teacher-main .manual-edit-link,
+html[data-theme="dark"] .teacher-main .manual-mark-link,
+html[data-theme="dark"] .teacher-main .teacher-report-nav-link {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-secondary-btn:hover,
+html[data-theme="dark"] .teacher-main .manual-date-nav-btn:hover,
+html[data-theme="dark"] .teacher-main .manual-edit-link:hover,
+html[data-theme="dark"] .teacher-main .manual-mark-link:hover,
+html[data-theme="dark"] .teacher-main .teacher-report-nav-link:hover,
+html[data-theme="dark"] .teacher-main .teacher-report-nav-link.is-active {
+    background: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-date-heading h4 {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-date-chip,
+html[data-theme="dark"] .teacher-main .teacher-report-chip {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-date-chip.active {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-summary-pill {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-summary-pill strong {
+    color: #f8fafc !important;
+}
+
+/* Reports Specific */
+html[data-theme="dark"] .teacher-main .teacher-report-table th {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-report-table td {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-report-table td strong {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-field label {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-field input,
+html[data-theme="dark"] .teacher-main .teacher-field select {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+/* Specific Text Fixes */
+html[data-theme="dark"] .teacher-main .panel-title,
+html[data-theme="dark"] .teacher-main .panel-title i,
+html[data-theme="dark"] .teacher-main .teacher-map-title,
+html[data-theme="dark"] .teacher-main .teacher-map-title i,
+html[data-theme="dark"] .teacher-main .teacher-map-roster-title {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .panel-subtitle,
+html[data-theme="dark"] .teacher-main .teacher-map-subtitle,
+html[data-theme="dark"] .teacher-main .teacher-map-hint {
+    color: #94a3b8 !important;
+}
+
+/* Map Toolbar & Icons */
+html[data-theme="dark"] .teacher-main .teacher-map-select-label {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-map-icon-button {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-map-icon-button:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-map-pill.neutral {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border: 1px solid #334155 !important;
+}
+
+/* ================= MANUAL ATTENDANCE FIXES ================= */
+html[data-theme="dark"] .teacher-main .manual-date-heading h4 {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-date-pill {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-date-chip {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-date-chip span {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-date-chip strong {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-date-chip.active {
+    background: #2563eb !important;
+    border-color: #3b82f6 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-date-chip.active span,
+html[data-theme="dark"] .teacher-main .manual-date-chip.active strong {
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-summary-pill {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-summary-pill strong {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-schedule-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-schedule-card h3 {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-schedule-card p {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-time {
+    color: #38bdf8 !important; /* cyan-400 */
+}
+
+/* Roster Section */
+html[data-theme="dark"] .teacher-main .manual-toolbar {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-toolbar h4 {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-toolbar p {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-student-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-student-card strong {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-student-card small {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-student-check {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+
+html[data-theme="dark"] .teacher-main .manual-student-card input:checked + .manual-student-check {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+html[data-theme="dark"] .teacher-main .time-box strong,
+html[data-theme="dark"] .teacher-main .time-box span {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-review-item strong {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-review-item span {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .teacher-main .teacher-review-item > div:nth-child(2) {
+    color: #cbd5e1 !important;
+}
+
+/* Schedule Filters */
+html[data-theme="dark"] .teacher-main .teacher-schedule-search-row label,
+html[data-theme="dark"] .teacher-main .teacher-schedule-filter-field label {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .select-shell select {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .select-shell option {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .teacher-main .select-shell i {
+    color: #94a3b8 !important;
+}
+
+/* Student Sidebar Attendance Card */
+html[data-theme="dark"] .student-sidebar-attendance-card {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .student-sidebar-attendance-title {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .student-sidebar-attendance-value.success,
+html[data-theme="dark"] .student-sidebar-attendance-status.success {
+    color: #4ade80 !important; /* brighter green */
+}
+
+html[data-theme="dark"] .student-sidebar-attendance-value.danger,
+html[data-theme="dark"] .student-sidebar-attendance-status.danger {
+    color: #f87171 !important; /* brighter red */
+}
+
+/* Fix for .class-time text visibility */
+html[data-theme="dark"] .class-time span {
+    color: #cbd5e1 !important; /* Brighter grey than #94a3b8 */
+}

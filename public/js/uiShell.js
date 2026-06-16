@@ -922,9 +922,48 @@
         }
     }
 
+    function installThemeToggle() {
+        const savedTheme = localStorage.getItem('attendifyTheme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+
+        const profileCardDiv = document.querySelector('.profile-card > div:last-child');
+        if (!profileCardDiv) return;
+
+        // Ensure we don't add multiple buttons
+        if (profileCardDiv.querySelector('.theme-toggle-btn')) return;
+
+        const btn = document.createElement('button');
+        btn.className = 'theme-toggle-btn secondary-btn';
+        btn.innerHTML = savedTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+        btn.title = 'Toggle Theme';
+        btn.style = 'padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #94a3b8; color: #475569; background: transparent; cursor: pointer; width: 100%; margin-top: 6px;';
+
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('attendifyTheme', newTheme);
+            
+            btn.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+        });
+
+        profileCardDiv.appendChild(btn);
+    }
+
+    // Apply theme as fast as possible
+    const initialTheme = localStorage.getItem('attendifyTheme');
+    if (initialTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         installShell();
         wrapSelects();
         installRealtime();
+        installThemeToggle();
     });
 })();

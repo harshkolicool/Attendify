@@ -29,6 +29,11 @@ const {
 const {
     finalizeAbsencesForSession
 } = require("../utils/attendanceExpiryJob");
+const {
+    getPendingReviewsForTeacher,
+    approveAttendanceReview,
+    rejectAttendanceReview
+} = require("../utils/attendanceReview");
 
 const {
     timeToMinutes,
@@ -1869,6 +1874,131 @@ router.get("/reports/export-attendance", isTeacher, async function (req, res) {
     }
 });
 
+router.get("/reports/export-excel", isTeacher, async function (req, res) {
+    try {
+        const exceljs = require('exceljs');
+        const teacherId = req.user._id || req.user.id;
+        const collegeId = req.user.college;
+
+        const todayInput = teacherGetDateInputValue(new Date());
+
+        const filters = {
+            fromDate: req.query.fromDate || todayInput,
+            toDate: req.query.toDate || todayInput,
+            classGroupId: req.query.classGroupId || "all",
+            subjectId: req.query.subjectId || "all",
+            classroomId: req.query.classroomId || "all",
+            status: req.query.status || "all"
+        };
+
+        const fromDate = teacherGetStartOfDate(filters.fromDate);
+        const toDate = teacherGetEndOfDate(filters.toDate);
+
+        const classGroupId = teacherSafeObjectId(filters.classGroupId);
+        const subjectId = teacherSafeObjectId(filters.subjectId);
+        const classroomId = teacherSafeObjectId(filters.classroomId);
+
+        const sessionQuery = {
+            college: collegeId,
+            teacher: teacherId,
+            startTime: {
+                $gte: fromDate,
+                $lte: toDate
+            }
+        };
+
+        if (classGroupId) sessionQuery.classGroup = classGroupId;
+        if (subjectId) sessionQuery.subject = subjectId;
+        if (classroomId) sessionQuery.classroom = classroomId;
+
+        const sessions = await AttendanceSession.find(sessionQuery).select("_id");
+        const sessionIds = sessions.map(s => s._id);
+
+        const recordQuery = {
+            college: collegeId,
+            attendanceSession: { $in: sessionIds }
+        };
+
+        if (filters.status !== "all") recordQuery.status = filters.status;
+
+        const attendanceRecords = await AttendanceRecord.find(recordQuery)
+            .populate("student")
+            .populate("subject")
+            .populate("classGroup")
+            .populate("classroom")
+            .populate({
+                path: "attendanceSession",
+                populate: [
+                    { path: "teacher" },
+                    { path: "schedule" },
+                    { path: "subject" },
+                    { path: "classGroup" },
+                    { path: "classroom" }
+                ]
+            })
+            .sort({ createdAt: -1 });
+
+        const workbook = new exceljs.Workbook();
+        const sheet = workbook.addWorksheet('Attendance');
+
+        sheet.columns = [
+            { header: 'Date', key: 'date', width: 15 },
+            { header: 'Time', key: 'time', width: 12 },
+            { header: 'Student Name', key: 'name', width: 25 },
+            { header: 'Enrollment Number', key: 'enrollment', width: 20 },
+            { header: 'Student Email', key: 'email', width: 30 },
+            { header: 'Class Group', key: 'classGroup', width: 15 },
+            { header: 'Subject', key: 'subject', width: 30 },
+            { header: 'Subject Code', key: 'subjectCode', width: 15 },
+            { header: 'Classroom', key: 'classroom', width: 20 },
+            { header: 'Status', key: 'status', width: 15 },
+            { header: 'Verification Method', key: 'method', width: 20 },
+            { header: 'Distance (m)', key: 'distance', width: 15 },
+            { header: 'GPS Accuracy (m)', key: 'accuracy', width: 15 },
+            { header: 'Marked At', key: 'markedAt', width: 25 }
+        ];
+
+        sheet.getRow(1).font = { bold: true };
+        sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+        sheet.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
+
+        attendanceRecords.forEach(function (record) {
+            const session = record.attendanceSession;
+            const sessionDate = session && session.startTime ? session.startTime : record.createdAt;
+
+            sheet.addRow({
+                date: sessionDate ? new Date(sessionDate).toLocaleDateString() : "",
+                time: sessionDate ? new Date(sessionDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "",
+                name: record.student ? record.student.fullName : "Student Missing",
+                enrollment: record.student && record.student.enrollmentNumber ? record.student.enrollmentNumber : "",
+                email: record.student && record.student.email ? record.student.email : "",
+                classGroup: record.classGroup ? record.classGroup.name : "",
+                subject: record.subject ? record.subject.subjectName : "",
+                subjectCode: record.subject && record.subject.subjectCode ? record.subject.subjectCode : "",
+                classroom: record.classroom ? record.classroom.classroomName : "",
+                status: record.status || "",
+                method: record.verificationMethod || "",
+                distance: record.distanceFromClassroom !== undefined && record.distanceFromClassroom !== null ? Math.round(record.distanceFromClassroom) : "",
+                accuracy: record.deviceInfo && record.deviceInfo.gpsAccuracy ? Math.round(record.deviceInfo.gpsAccuracy) : "",
+                markedAt: record.createdAt ? new Date(record.createdAt).toLocaleString() : ""
+            });
+        });
+
+        const filename = "teacher-attendance-report-" + filters.fromDate + "-to-" + filters.toDate + ".xlsx";
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=' + filename);
+
+        await workbook.xlsx.write(res);
+        res.end();
+
+    } catch (err) {
+        console.log("TEACHER EXPORT EXCEL ERROR:");
+        console.log(err.message);
+        res.redirect("/teacher/reports");
+    }
+});
+
 
 router.get("/reports/export-suspicious", isTeacher, async function (req, res) {
     try {
@@ -2587,6 +2717,10 @@ router.get("/realtime/poll", isTeacher, async function (req, res) {
     }
 });
 
+router.get("/push/public-key", isTeacher, function(req, res) {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
 router.post("/push/subscribe", isTeacher, async function(req, res) {
     try {
         const teacherId = req.user._id || req.user.id;
@@ -2617,6 +2751,79 @@ router.post("/push/subscribe", isTeacher, async function(req, res) {
     } catch(err) {
         console.log("TEACHER PUSH SUBSCRIBE ERROR:", err.message);
         res.status(500).json({ success: false });
+    }
+});
+
+// --- Attendance Review (Teacher) ---
+
+router.get("/reviews/pending", isTeacher, async function (req, res) {
+    try {
+        const teacher = await Teacher.findById(req.user._id).select("_id college");
+
+        if (!teacher) {
+            return res.status(401).json({ success: false, message: "Not authenticated." });
+        }
+
+        const records = await getPendingReviewsForTeacher(teacher._id, teacher.college || req.user.college);
+
+        res.json({ success: true, pendingReviews: records, count: records.length });
+    } catch (err) {
+        console.log("TEACHER PENDING REVIEWS ERROR:");
+        console.log(err.message);
+        res.status(500).json({ success: false, message: "Could not fetch pending reviews." });
+    }
+});
+
+router.post("/reviews/:recordId/approve", isTeacher, async function (req, res) {
+    try {
+        const teacher = await Teacher.findById(req.user._id).select("_id college");
+
+        if (!teacher) {
+            return res.status(401).json({ success: false, message: "Not authenticated." });
+        }
+
+        const result = await approveAttendanceReview(
+            teacher._id,
+            req.params.recordId,
+            teacher.college || req.user.college
+        );
+
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+
+        return res.json(result);
+    } catch (err) {
+        console.log("TEACHER APPROVE REVIEW ERROR:");
+        console.log(err.message);
+        res.status(500).json({ success: false, message: "Could not approve review." });
+    }
+});
+
+router.post("/reviews/:recordId/reject", isTeacher, async function (req, res) {
+    try {
+        const teacher = await Teacher.findById(req.user._id).select("_id college");
+
+        if (!teacher) {
+            return res.status(401).json({ success: false, message: "Not authenticated." });
+        }
+
+        const result = await rejectAttendanceReview(
+            teacher._id,
+            req.params.recordId,
+            teacher.college || req.user.college,
+            req.body.rejectReason || ""
+        );
+
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+
+        return res.json(result);
+    } catch (err) {
+        console.log("TEACHER REJECT REVIEW ERROR:");
+        console.log(err.message);
+        res.status(500).json({ success: false, message: "Could not reject review." });
     }
 });
 

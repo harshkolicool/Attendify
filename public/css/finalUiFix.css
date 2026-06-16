@@ -128,6 +128,8 @@ textarea {
 .notification-action-btn,
 .notification-meta > form > button {
     flex: 0 0 auto;
+    margin-top: 0 !important;
+    width: auto !important;
 }
 
 .admin-toolbar {
@@ -1523,3 +1525,38 @@ textarea {
         line-height: 1.2 !important;
     }
 }
+
+/* Student Sidebar Attendance Card */
+.student-sidebar-attendance-card {
+    background: #f1f5f9;
+    margin: 15px 20px 0;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+
+.student-sidebar-attendance-title {
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.student-sidebar-attendance-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.student-sidebar-attendance-value.success { color: #16a34a; }
+.student-sidebar-attendance-value.danger { color: #dc2626; }
+
+.student-sidebar-attendance-status {
+    font-size: 0.75rem;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.student-sidebar-attendance-status.success { color: #16a34a; }
+.student-sidebar-attendance-status.danger { color: #dc2626; }
+.student-sidebar-attendance-status.danger { color: #dc2626; }

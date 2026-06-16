@@ -3,6 +3,7 @@ const AttendanceSession = require("../models/attendanceSessionSchema");
 const AttendanceRecord = require("../models/attendanceRecordSchema");
 const socketManager = require("./socketManager");
 const attendanceWindow = require("./attendanceWindow");
+const logger = require("./logger");
 
 function getScheduleDateTimeForDate(timeText, baseDate) {
     if (!timeText) {
@@ -413,14 +414,12 @@ async function closeExpiredAttendanceSessions() {
                 closedCount++;
             }
         } catch (err) {
-            console.log("AUTO EXPIRE SESSION ERROR:");
-            console.log(err.message);
-            console.log(err.stack);
+            logger.error("AUTO EXPIRE SESSION ERROR", { msg: err.message, stack: err.stack });
         }
     }
 
     if (closedCount > 0) {
-        console.log("Auto expired attendance sessions:", closedCount);
+        logger.info("Auto expired attendance sessions", { count: closedCount });
     }
 
     const finalizedCount = await finalizePendingAbsenceSessions();
@@ -465,14 +464,12 @@ async function finalizePendingAbsenceSessions() {
                 finalizedCount++;
             }
         } catch (err) {
-            console.log("AUTO FINALIZE ABSENCE ERROR:");
-            console.log(err.message);
-            console.log(err.stack);
+            logger.error("AUTO FINALIZE ABSENCE ERROR", { msg: err.message, stack: err.stack });
         }
     }
 
     if (finalizedCount > 0) {
-        console.log("Auto finalized attendance absences:", finalizedCount);
+        logger.info("Auto finalized attendance absences", { count: finalizedCount });
     }
 
     return finalizedCount;
@@ -480,14 +477,12 @@ async function finalizePendingAbsenceSessions() {
 
 function startAttendanceExpiryJob() {
     closeExpiredAttendanceSessions().catch(function (err) {
-        console.log("INITIAL ATTENDANCE EXPIRY JOB ERROR:");
-        console.log(err.message);
+        logger.error("INITIAL ATTENDANCE EXPIRY JOB ERROR", { msg: err.message });
     });
 
     setInterval(function () {
         closeExpiredAttendanceSessions().catch(function (err) {
-            console.log("ATTENDANCE EXPIRY JOB ERROR:");
-            console.log(err.message);
+            logger.error("ATTENDANCE EXPIRY JOB ERROR", { msg: err.message });
         });
     }, 60 * 1000);
 }

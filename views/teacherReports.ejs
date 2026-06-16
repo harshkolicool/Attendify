@@ -310,6 +310,15 @@
                         </a>
 
                         <a
+                            href="/teacher/reports/export-excel?<%= exportQuery %>"
+                            class="teacher-secondary-btn"
+                            style="border-color: #16a34a; color: #16a34a;"
+                        >
+                            <i class="fa-solid fa-file-excel"></i>
+                            Export Attendance Excel
+                        </a>
+
+                        <a
                             href="/teacher/reports/export-suspicious?<%= exportQuery %>"
                             class="teacher-secondary-btn danger"
                         >
@@ -317,9 +326,9 @@
                             Export Suspicious CSV
                         </a>
 
-                        <button type="button" class="teacher-secondary-btn" onclick="prepareAndPrint()">
-                            <i class="fa-solid fa-print"></i>
-                            Print PDF Report
+                        <button type="button" class="teacher-secondary-btn" id="pdfPrintBtn" onclick="prepareAndPrint()">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            Export PDF Report
                         </button>
                     </div>
                 </div>
@@ -916,18 +925,73 @@
 
     <script src="/js/csrfAuto.js" defer></script>
     <script src="/js/selectEnhancer.js" defer></script>
+    
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <script>
-        function prepareAndPrint() {
+        async function prepareAndPrint() {
             // Open all expandable details so tables are visible in print
             const panels = document.querySelectorAll('.teacher-report-group-panel');
             panels.forEach(function(panel) {
                 panel.open = true;
             });
-            
-            // Allow the browser a moment to render the newly opened panels
-            setTimeout(function() {
-                window.print();
-            }, 150);
+
+            const btn = document.getElementById('pdfPrintBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF...';
+            btn.disabled = true;
+
+            // Wait for panels to expand
+            setTimeout(async function() {
+                try {
+                    const contentArea = document.querySelector('.teacher-panels-container');
+                    
+                    // Temporarily hide filter cards and action buttons for cleaner PDF
+                    const filterCard = document.querySelector('.teacher-report-filter-card');
+                    const headerActions = document.querySelector('.teacher-report-actions');
+                    
+                    if (filterCard) filterCard.style.display = 'none';
+                    if (headerActions) headerActions.style.display = 'none';
+                    
+                    // Adjust padding for PDF
+                    const originalPadding = contentArea.style.padding;
+                    contentArea.style.padding = '20px';
+                    contentArea.style.backgroundColor = '#ffffff';
+
+                    const canvas = await html2canvas(contentArea, {
+                        scale: 2, // Higher quality
+                        useCORS: true,
+                        logging: false,
+                        windowWidth: 1200 // Force desktop width
+                    });
+
+                    // Restore UI
+                    if (filterCard) filterCard.style.display = '';
+                    if (headerActions) headerActions.style.display = '';
+                    contentArea.style.padding = originalPadding;
+                    contentArea.style.backgroundColor = '';
+
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    const pdf = new jspdf.jsPDF({
+                        orientation: 'portrait',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height]
+                    });
+
+                    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+                    pdf.save('Attendify-Report.pdf');
+
+                } catch (err) {
+                    console.error("PDF Generation Error:", err);
+                    alert("Failed to generate PDF. Falling back to basic print.");
+                    window.print();
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }, 300);
         }
     </script>
 </body>

@@ -1,9 +1,22 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800;900&family=Sora:wght@600;700;800&display=swap");
+@import url("/css/darkMode.css");
 
 :root {
+    /* Layout Variables */
     --shell-sidebar-width: 280px;
     --shell-sidebar-collapsed: 94px;
     --shell-right-panel: 360px;
+    
+    /* New Global Theme Variables */
+    --theme-bg-main: #f5f7fb;
+    --theme-bg-card: #ffffff;
+    --theme-bg-hover: #f1f5f9;
+    --theme-text-main: #0f172a;
+    --theme-text-muted: #64748b;
+    --theme-border: #e2e8f0;
+    --theme-input-bg: #ffffff;
+
+    /* Legacy Shell Variables */
     --shell-bg: #eef4fb;
     --shell-bg-accent: #dfeefe;
     --shell-dark: #0f1f35;
@@ -634,7 +647,8 @@ body.ui-sidebar-open {
     body.ui-sidebar-collapsed .ui-sidebar .shell-text,
     body.ui-sidebar-collapsed .platform-link-text,
     body.ui-sidebar-collapsed .platform-logo-text,
-    body.ui-sidebar-collapsed .shell-settings-label {
+    body.ui-sidebar-collapsed .shell-settings-label,
+    body.ui-sidebar-collapsed .student-sidebar-attendance-card {
         display: none !important;
     }
 
@@ -1103,10 +1117,30 @@ body.ui-sidebar-open {
     border-color: #fed7aa !important;
 }
 
+@keyframes pulse-ring {
+    0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.pulse-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse-ring 2s infinite cubic-bezier(0.66, 0, 0, 1);
+    border: 2px solid #fca5a5;
+    box-sizing: content-box;
+    vertical-align: middle;
+}
+
 .status-badge.live,
 .view-btn.live {
-    background: #dbeafe !important;
+    background: #e0f2fe !important;
     color: #1d4ed8 !important;
+    border: 1px solid #bae6fd !important;
 }
 
 .status-badge.waiting {
@@ -1509,6 +1543,19 @@ a {
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+}
+
+.notification-meta .admin-badge {
+    margin-right: auto;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1px solid #e2e8f0;
 }
 
 .notification-meta form {

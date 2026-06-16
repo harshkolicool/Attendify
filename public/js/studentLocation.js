@@ -506,6 +506,11 @@ function markAttendance(sessionId, button) {
                 return res;
             }).catch(function(err) {
                 clearTimeout(timeoutId);
+                // IF offline or network timeout, queue it
+                if (!navigator.onLine || err.name === 'AbortError' || err.message.includes('Network')) {
+                    saveOfflineAttendance(payloadObj);
+                    throw new Error("You are offline. Your attendance has been saved and will sync automatically when you reconnect.");
+                }
                 throw new Error("Network error or timeout. Please check your connection and try again.");
             });
         })
@@ -527,8 +532,14 @@ function markAttendance(sessionId, button) {
         })
         .catch(function (err) {
             console.log(err);
-            showMessage(err.message || "An error occurred. Please try again.", "error");
-            resetAttendanceButton(button, oldHtml);
+            // Distinguish between offline success vs actual failure
+            if (err.message && err.message.includes("will sync automatically")) {
+                showMessage(err.message, "info");
+                setAttendancePresentUI(button); // Assume present, it will sync later
+            } else {
+                showMessage(err.message || "An error occurred. Please try again.", "error");
+                resetAttendanceButton(button, oldHtml);
+            }
         });
 }
 
@@ -565,6 +576,10 @@ function getStudentLocationErrorMessage(error, permissionState) {
         name.indexOf("POSITION_UNAVAILABLE") !== -1 ||
         name.indexOf("TIMEOUT") !== -1;
 
+    // Detect iOS device
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
     if (!hasStandardCode && !isGeoName && message) {
         if (message === "Location unavailable.") {
             return "Could not fetch your GPS location. Please ensure location permissions are granted, disable battery saver, and try again.";
@@ -582,6 +597,9 @@ function getStudentLocationErrorMessage(error, permissionState) {
         (lowerMessage.indexOf("permission") !== -1 && hasGeoKeyword) ||
         permissionState === "denied"
     ) {
+        if (isIOS) {
+            return "Location is blocked on iOS. To fix: open Settings → Privacy & Security → Location Services → Safari (or your browser) → set to \"While Using\"."
+        }
         return "Location access is blocked. Please allow location permission in browser/site settings.";
     }
 
@@ -896,3 +914,149 @@ function warmUpGPS(button) {
         }, 3000);
     });
 }
+
+// Auto GPS warm-up: if location is already granted, silently start the
+// GPS chip so the first "Mark Attendance" tap is instant.
+(function autoWarmUpGPS() {
+    if (!navigator.geolocation || !navigator.permissions) {
+        return;
+    }
+
+    navigator.permissions.query({ name: "geolocation" }).then(function(status) {
+        if (status.state !== "granted") {
+            return;
+        }
+
+        // Don't double-warm if live stream already running
+        if (window.AttendifyLiveStream && window.AttendifyLiveStream.isRunning) {
+            return;
+        }
+
+        var warmWatchId = null;
+        try {
+            warmWatchId = navigator.geolocation.watchPosition(
+                function() {},
+                function() {},
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } catch(e) {
+            return;
+        }
+
+        // Stop after 2 min to save battery if no session starts
+        var warmTimer = setTimeout(function() {
+            if (warmWatchId !== null) {
+                navigator.geolocation.clearWatch(warmWatchId);
+                warmWatchId = null;
+            }
+        }, 2 * 60 * 1000);
+
+        // Stop immediately once a live stream starts
+        var stopCheck = setInterval(function() {
+            if (window.AttendifyLiveStream && window.AttendifyLiveStream.isRunning) {
+                if (warmWatchId !== null) {
+                    navigator.geolocation.clearWatch(warmWatchId);
+                    warmWatchId = null;
+                }
+                clearTimeout(warmTimer);
+                clearInterval(stopCheck);
+            }
+        }, 3000);
+    }).catch(function() {});
+})();
+
+// --- Offline Queue Sync System ---
+function getOfflineQueue() {
+    try {
+        return JSON.parse(localStorage.getItem('attendify_offline_queue')) || [];
+    } catch(e) { return []; }
+}
+
+function saveOfflineAttendance(payload) {
+    const queue = getOfflineQueue();
+    payload._queuedAt = Date.now();
+    queue.push(payload);
+    localStorage.setItem('attendify_offline_queue', JSON.stringify(queue));
+    updateOfflineQueueUI();
+}
+
+function syncOfflineAttendance() {
+    if (!navigator.onLine) return;
+    const queue = getOfflineQueue();
+    if (queue.length === 0) return;
+
+    // Show syncing toast
+    const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false });
+    Toast.fire({ icon: 'info', title: `Syncing ${queue.length} pending attendance records...` });
+
+    const promises = queue.map(payload => {
+        return fetch("/student/attendance/mark", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify(payload)
+        }).then(r => r.json()).catch(() => ({ success: false, retry: true }));
+    });
+
+    Promise.all(promises).then(results => {
+        const remainingQueue = [];
+        let successCount = 0;
+        
+        results.forEach((res, index) => {
+            if (res.success || (res.message && res.message.includes("Already marked"))) {
+                successCount++;
+            } else if (res.retry) {
+                remainingQueue.push(queue[index]); // Keep if network failed during sync
+            }
+        });
+
+        localStorage.setItem('attendify_offline_queue', JSON.stringify(remainingQueue));
+        updateOfflineQueueUI();
+
+        if (successCount > 0) {
+            Toast.fire({ icon: 'success', title: `Synced ${successCount} attendance records!`, timer: 3000 });
+        }
+    });
+}
+
+function updateOfflineQueueUI() {
+    const queue = getOfflineQueue();
+    let badge = document.getElementById('offlineSyncBadge');
+    
+    if (queue.length > 0) {
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = 'offlineSyncBadge';
+            badge.style.position = 'fixed';
+            badge.style.bottom = '20px';
+            badge.style.right = '20px';
+            badge.style.background = '#f59e0b';
+            badge.style.color = '#fff';
+            badge.style.padding = '8px 16px';
+            badge.style.borderRadius = '20px';
+            badge.style.boxShadow = '0 4px 12px rgba(245,158,11,0.3)';
+            badge.style.zIndex = '9999';
+            badge.style.fontSize = '0.85rem';
+            badge.style.fontWeight = 'bold';
+            badge.style.display = 'flex';
+            badge.style.alignItems = 'center';
+            badge.style.gap = '8px';
+            badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>${queue.length} Pending Sync</span>`;
+            document.body.appendChild(badge);
+        } else {
+            badge.querySelector('span').textContent = `${queue.length} Pending Sync`;
+            badge.style.display = 'flex';
+        }
+    } else if (badge) {
+        badge.style.display = 'none';
+    }
+}
+
+// Auto sync when online
+window.addEventListener('online', syncOfflineAttendance);
+// Update UI immediately on load
+document.addEventListener('DOMContentLoaded', () => {
+    updateOfflineQueueUI();
+    // Delay initial sync to let page load completely
+    setTimeout(syncOfflineAttendance, 2000);
+});
+

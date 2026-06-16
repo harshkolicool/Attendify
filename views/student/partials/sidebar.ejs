@@ -13,6 +13,24 @@
         <h2>Hi <%= studentFirstName %>!</h2>
     </div>
 
+    <% if (typeof attendancePercentage !== 'undefined') { %>
+        <div class="student-sidebar-attendance-card">
+            <div class="student-sidebar-attendance-title">Overall Attendance</div>
+            <div class="student-sidebar-attendance-value <%= attendancePercentage >= 75 ? 'success' : 'danger' %>">
+                <%= attendancePercentage %>%
+            </div>
+            <% if (attendancePercentage < 75) { %>
+                <div class="student-sidebar-attendance-status danger">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Below 75% threshold
+                </div>
+            <% } else { %>
+                <div class="student-sidebar-attendance-status success">
+                    <i class="fa-solid fa-circle-check"></i> On track
+                </div>
+            <% } %>
+        </div>
+    <% } %>
+
     <nav class="sidebar-menu shell-sidebar-nav">
         <a href="/student/dashboard" class="menu-item <%= activePage === 'dashboard' ? 'active' : '' %>">
             <i class="fa-solid fa-house"></i>

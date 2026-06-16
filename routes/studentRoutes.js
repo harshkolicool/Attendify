@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const router = express.Router();
 
 const Student = require("../models/studentSchema");
+const logger = require("../utils/logger");
+const { authLimiter, attendanceLimiter } = require("../utils/rateLimiter");
 const AttendanceSession = require("../models/attendanceSessionSchema");
 const attendanceWindow = require("../utils/attendanceWindow");
 const { expireOneSession } = require("../utils/attendanceExpiryJob");
@@ -331,6 +333,9 @@ function studentSafeObjectId(value) {
 }
 
 const { escapeCsvValue } = require("../utils/csv");
+const {
+    requestAttendanceReview
+} = require("../utils/attendanceReview");
 
 function studentCsvEscape(value) {
     return escapeCsvValue(value);
@@ -881,12 +886,6 @@ async function getStudentPageData(req) {
         }
     }
 
-    let attendancePercentage = 0;
-
-    if (schedules.length > 0) {
-        attendancePercentage = Math.round((presentCount / schedules.length) * 100);
-    }
-
     const allStudentRecords = await AttendanceRecord.find({
         student: student._id,
         college: student.college
@@ -895,6 +894,19 @@ async function getStudentPageData(req) {
         .sort({
             createdAt: -1
         });
+
+    let totalAllSessions = 0;
+    let presentAllSessions = 0;
+    for (let r of allStudentRecords) {
+        if (r.status === "PRESENT" || r.status === "LATE") {
+            presentAllSessions++;
+            totalAllSessions++;
+        } else if (r.status === "ABSENT") {
+            totalAllSessions++;
+        }
+    }
+    const attendancePercentage = totalAllSessions > 0 ? Math.round((presentAllSessions / totalAllSessions) * 100) : 0;
+
 
     const dashboardSubjectMap = {};
 
@@ -1176,6 +1188,20 @@ router.get("/schedule", isStudent, async function (req, res) {
             };
         });
 
+        // Calculate overall attendance percentage
+        const allRecords = await AttendanceRecord.find({ student: student._id });
+        let totalSessions = 0;
+        let presentSessions = 0;
+        for (let r of allRecords) {
+            if (r.status === "PRESENT" || r.status === "LATE") {
+                presentSessions++;
+                totalSessions++;
+            } else if (r.status === "ABSENT") {
+                totalSessions++;
+            }
+        }
+        const attendancePercentage = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 100;
+
         res.render("studentSchedule", {
             student: student,
             activePage: "schedule",
@@ -1184,6 +1210,7 @@ router.get("/schedule", isStudent, async function (req, res) {
             activeSessionsBySchedule: activeSessionsBySchedule,
             todaySessionsBySchedule: todaySessionsBySchedule,
             attendanceStatusBySchedule: attendanceStatusBySchedule,
+            attendancePercentage: attendancePercentage,
             passkeyCount: getPasskeyCount(student),
             trustedDeviceCount: getActiveTrustedDeviceCount(student),
             hasPasskey: getPasskeyCount(student) > 0,
@@ -2094,7 +2121,9 @@ router.post("/live-location/update", isStudent, async function (req, res) {
     }
 });
 
-router.post("/attendance/mark", isStudent, async function (req, res) {
+
+
+router.post("/attendance/mark", attendanceLimiter, isStudent, async function (req, res) {
     let student = null;
     let session = null;
 
@@ -3570,6 +3599,10 @@ router.get("/realtime/poll", isStudent, async function (req, res) {
     }
 });
 
+router.get("/push/public-key", isStudent, function(req, res) {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
 router.post("/push/subscribe", isStudent, async function(req, res) {
     try {
         const studentId = getStudentIdFromRequest(req);
@@ -3600,6 +3633,32 @@ router.post("/push/subscribe", isStudent, async function(req, res) {
     } catch(err) {
         console.log("PUSH SUBSCRIBE ERROR:", err.message);
         res.status(500).json({ success: false });
+    }
+});
+
+// --- Attendance Review (Appeal) ---
+
+router.post("/attendance-history/request-review/:recordId", isStudent, async function (req, res) {
+    try {
+        const studentId = getStudentIdFromRequest(req);
+        const recordId = req.params.recordId;
+        const reason = req.body.reason || "";
+
+        if (!mongoose.Types.ObjectId.isValid(recordId)) {
+            return res.status(400).json({ success: false, message: "Invalid record ID." });
+        }
+
+        const result = await requestAttendanceReview(studentId, recordId, reason);
+
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+
+        return res.json(result);
+    } catch (err) {
+        console.log("STUDENT REQUEST REVIEW ERROR:");
+        console.log(err.message);
+        res.status(500).json({ success: false, message: "Could not submit review request. Please try again." });
     }
 });
 

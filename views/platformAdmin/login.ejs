@@ -40,6 +40,12 @@
     };
     </script>
     <% } %>
+    <script>
+        const initialTheme = localStorage.getItem('attendifyTheme');
+        if (initialTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
 </head>
 <body class="auth-bg-dark">
 

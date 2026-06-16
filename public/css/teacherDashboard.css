@@ -1637,12 +1637,12 @@ button {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
     gap: 18px;
     margin-bottom: 24px;
-    align-items: stretch;
+    align-items: start;
 }
 
 .teacher-report-control-grid .teacher-card {
     margin-bottom: 0;
-    height: 100%;
+    height: auto;
 }
 
 .teacher-card[id^="report-"] {
@@ -1987,10 +1987,10 @@ button {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 14px;
+    gap: 24px;
     width: 100%;
     min-height: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
 }
 
 .teacher-export-content h3 {
@@ -4105,5 +4105,185 @@ html {
 @media (max-width: 760px) {
     .teacher-dashboard-page .teacher-schedule-search-field {
         grid-column: span 1 !important;
+    }
+}
+
+/* ================= PENDING REVIEWS UI POLISH ================= */
+.teacher-review-item {
+    background: #ffffff;
+    border: 1px solid var(--shell-border);
+    border-left: 4px solid #f59e0b; /* Amber left border to indicate pending action */
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.teacher-review-item:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+    transform: translateY(-2px);
+}
+
+.review-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.review-student-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.review-student-name-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.review-student-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--shell-text);
+}
+
+.review-enrollment-pill {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+
+.review-class-details, .review-date {
+    font-size: 0.85rem;
+    color: var(--shell-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.review-class-details i, .review-date i {
+    color: #cbd5e1;
+}
+
+.review-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.review-approve-btn {
+    padding: 8px 16px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+}
+
+.review-reject-btn {
+    padding: 8px 16px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    border-color: #fca5a5 !important;
+    color: #ef4444 !important;
+    background: transparent !important;
+}
+
+.review-reject-btn:hover {
+    background: #fef2f2 !important;
+    border-color: #ef4444 !important;
+}
+
+.review-reason-box {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #334155;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border: 1px solid #e2e8f0;
+}
+
+.review-reason-box i {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    margin-top: 2px;
+}
+
+.review-reason-box span {
+    font-style: italic;
+    line-height: 1.5;
+}
+
+/* ================= PRINT STYLES ================= */
+@media print {
+    .teacher-sidebar,
+    .teacher-report-control-grid,
+    .dashboard-header .dashboard-action-btn,
+    .teacher-card-action,
+    .teacher-header .teacher-profile {
+        display: none !important;
+    }
+
+    body, html, .teacher-layout, .teacher-main {
+        background: white !important;
+        color: black !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .teacher-card {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 0 20px 0 !important;
+    }
+
+    .teacher-report-table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+    }
+
+    .teacher-report-table th,
+    .teacher-report-table td {
+        border: 1px solid #ccc !important;
+        padding: 6px !important;
+        color: black !important;
+        background: white !important;
+        font-size: 12px !important;
+    }
+
+    .teacher-report-group-summary {
+        background: #f8fafc !important;
+        border: 1px solid #ccc !important;
+        padding: 10px !important;
+        color: black !important;
+    }
+
+    .teacher-report-group-summary i {
+        display: none !important;
+    }
+
+    .teacher-report-table tr {
+        page-break-inside: avoid !important;
+    }
+
+    .teacher-report-group-panel {
+        page-break-inside: avoid !important;
+        margin-bottom: 20px !important;
     }
 }
