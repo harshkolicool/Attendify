@@ -339,10 +339,15 @@
                         </div>
                     <% } else { %>
                         <% if (group.offset === 0) { %>
-                            <div class="gps-help-banner">
-                                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-                                <strong>GPS Tip:</strong>
-                                For best accuracy, use mobile Chrome, enable precise location, turn off battery saver, and wait 5–10 seconds.
+                            <div class="gps-help-banner" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                                    <strong>GPS Tip:</strong>
+                                    For best accuracy, use mobile Chrome, enable precise location, turn off battery saver, and wait 5–10 seconds.
+                                </div>
+                                <button type="button" class="view-btn" onclick="warmUpGPS(this)" style="white-space: nowrap;">
+                                    <i class="fa-solid fa-satellite-dish"></i> Calibrate GPS
+                                </button>
                             </div>
                         <% } %>
 

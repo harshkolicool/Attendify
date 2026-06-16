@@ -716,7 +716,7 @@ function getBestStudentLocationPosition(onProgress) {
                 !Number.isFinite(lat) ||
                 !Number.isFinite(lon) ||
                 accuracy <= 0 ||
-                accuracy > 150
+                accuracy > 500  // 500m matches backend MAX_GPS_ACCEPTABLE_ACCURACY; deep-indoor Wi-Fi fixes can be 100-300m
             ) {
                 return;
             }
@@ -855,3 +855,44 @@ window.addEventListener('online', () => {
         setTimeout(() => toast.remove(), 3000);
     }
 });
+
+function warmUpGPS(button) {
+    if (!navigator.geolocation) {
+        showMessage("Your browser does not support location access.", "error");
+        return;
+    }
+
+    const oldHtml = button.innerHTML;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Calibrating...';
+    button.disabled = true;
+
+    const radiusHint = getActiveSessionRadiusHint();
+
+    getBestStudentLocationPosition(function (currentAccuracy, bestSample, sampleCountRaw) {
+        const bestAcc = bestSample && bestSample.coords ? Math.round(bestSample.coords.accuracy) : Math.round(currentAccuracy);
+        const sampleSuffix = Number(sampleCountRaw) > 0 ? " (" + sampleCountRaw + ")" : "";
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> GPS ±' + bestAcc + 'm' + sampleSuffix;
+    })
+    .then(function(pos) {
+        return improveStudentPositionForAccuracy(pos, radiusHint, button);
+    })
+    .then(function() {
+        button.innerHTML = '<i class="fa-solid fa-check"></i> Calibrated';
+        // Keep GPS warm after calibration so Mark Attendance gets an instant fix
+        if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.start === 'function' && !window.AttendifyLiveStream.isRunning) {
+            window.AttendifyLiveStream.start('global');
+        }
+        setTimeout(function() {
+            button.innerHTML = oldHtml;
+            button.disabled = false;
+        }, 3000);
+    })
+    .catch(function(err) {
+        button.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Failed';
+        showMessage(err.message || "Failed to calibrate GPS.", "error");
+        setTimeout(function() {
+            button.innerHTML = oldHtml;
+            button.disabled = false;
+        }, 3000);
+    });
+}
