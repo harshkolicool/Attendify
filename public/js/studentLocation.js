@@ -462,14 +462,17 @@ function markAttendance(sessionId, button) {
     button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Checking Location...';
 
     let finalPos = null;
+    const radiusHint = getActiveSessionRadiusHint();
 
     getFastGpsPosition()
         .catch(function(err) {
-            // Proceed without GPS, let the backend handle the missing GPS explicitly
             return null;
         })
         .then(function(pos) {
-            if (!pos) {
+            return improveStudentPositionForAccuracy(pos, radiusHint, button);
+        })
+        .then(function(pos) {
+            if (!pos || !pos.coords) {
                 throw new Error("Could not detect your location. Please move near a window and try again.");
             }
             finalPos = pos;
