@@ -3662,4 +3662,59 @@ router.post("/attendance-history/request-review/:recordId", isStudent, async fun
     }
 });
 
+/* =================== PROFILE PAGE =================== */
+router.get("/profile", isStudent, async function (req, res) {
+    try {
+        const data = await getStudentPageData(req);
+
+        if (data.error) {
+            return res.send(data.error);
+        }
+
+        const student = data.student;
+
+        // compute total present / absent / classes from all records
+        const allRecords = await AttendanceRecord.find({
+            student: student._id,
+            college: student.college
+        });
+
+        let totalPresent = 0;
+        let totalAbsent = 0;
+
+        for (const r of allRecords) {
+            if (r.status === "PRESENT" || r.status === "LATE") totalPresent++;
+            else if (r.status === "ABSENT") totalAbsent++;
+        }
+
+        const totalClasses = totalPresent + totalAbsent;
+
+        let displaySubjects = [];
+        if (student.subjects && student.subjects.length > 0) {
+            displaySubjects = student.subjects;
+        } else if (student.classGroup && student.classGroup.subjects && student.classGroup.subjects.length > 0) {
+            const Subject = require("../models/subjectSchema");
+            displaySubjects = await Subject.find({ _id: { $in: student.classGroup.subjects } });
+        }
+
+        res.render("studentProfile", {
+            student: student,
+            classGroup: student.classGroup,
+            subjects: displaySubjects,
+            attendancePercentage: data.attendancePercentage,
+            totalPresent: totalPresent,
+            totalAbsent: totalAbsent,
+            totalClasses: totalClasses,
+            activePage: "profile",
+            csrfToken: typeof req.csrfToken === "function" ? req.csrfToken() : ""
+        });
+
+    } catch (err) {
+        console.log("STUDENT PROFILE ERROR:");
+        console.log(err.message);
+        console.log(err.stack);
+        res.redirect("/student/dashboard");
+    }
+});
+
 module.exports = router;

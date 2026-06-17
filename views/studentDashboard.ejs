@@ -12,9 +12,9 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/studentSchedule.css">
-    <link rel="stylesheet" href="/css/finalUiFix.css">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260617b">
+    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260617b">
+    <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617b">
 
     <link
         rel="stylesheet"
@@ -148,6 +148,10 @@
                     <h2><%= typeof student !== "undefined" && student.classGroup && student.classGroup.name ? student.classGroup.name : "N/A" %></h2>
                 </div>
             </div>
+
+            <button id="enablePushBtn" class="primary-btn" style="padding: 10px 16px; border-radius: 8px; border: none; color: #fff; background: linear-gradient(135deg, #4f46e5, #7c3aed); cursor: pointer; display: none; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); grid-column: 1 / -1; margin-bottom: 1rem;">
+                <i class="fa-solid fa-bell"></i> Enable Notifications
+            </button>
 
             <div class="dashboard-stat-card">
                 <div class="stat-icon purple">
@@ -529,86 +533,7 @@
         </section>
     </main>
 
-    <aside class="profile-panel">
-        <div class="profile-card">
-            <div class="profile-avatar">
-                <%= typeof student !== "undefined" && student.fullName ? student.fullName.charAt(0).toUpperCase() : "S" %>
-            </div>
 
-            <div>
-                <h3><%= typeof student !== "undefined" && student.fullName %></h3>
-                <a href="/student/dashboard">Open Profile</a>
-                <form action="/auth/signout-all" method="POST" style="margin-top: 10px;">
-                    <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                    <button type="submit" class="danger-btn" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #dc2626; color: #dc2626; background: transparent; cursor: pointer; width: 100%;">
-                        <i class="fa-solid fa-right-from-bracket"></i> Sign Out All Devices
-                    </button>
-                </form>
-                <button id="enablePushBtn" class="primary-btn" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #4f46e5; color: #4f46e5; background: transparent; cursor: pointer; width: 100%; margin-top: 6px; display: none;">
-                    <i class="fa-solid fa-bell"></i> Enable Notifications
-                </button>
-            </div>
-        </div>
-
-        <div class="side-stat">
-            <div class="side-stat-icon blue">
-                <i class="fa-solid fa-users-rectangle"></i>
-            </div>
-            <div>
-                <span>Class Group</span>
-                <strong><%= typeof student !== "undefined" && student.classGroup ? student.classGroup.name : "-" %></strong>
-            </div>
-        </div>
-
-        <div class="side-stat">
-            <div class="side-stat-icon purple">
-                <i class="fa-solid fa-book-open"></i>
-            </div>
-            <div>
-                <span>Subjects</span>
-                <strong><%= Math.max((typeof student !== "undefined" && student.subjects ? student.subjects.length : 0), (typeof subjectSummary !== "undefined" ? subjectSummary.length : 0)) %> Subjects</strong>
-            </div>
-        </div>
-
-        <div class="side-stat">
-            <div class="side-stat-icon green">
-                <i class="fa-solid fa-broadcast-tower"></i>
-            </div>
-            <div>
-                <span>Live Sessions</span>
-                <strong><%= activeList.length %> Active</strong>
-            </div>
-        </div>
-
-        <div class="side-stat">
-            <div class="side-stat-icon green">
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
-            <div>
-                <span>Present Today</span>
-                <strong class="js-present-count-today"><%= presentCountView %> Classes</strong>
-            </div>
-        </div>
-
-        <div class="side-stat">
-            <div class="side-stat-icon red">
-                <i class="fa-solid fa-circle-xmark"></i>
-            </div>
-            <div>
-                <span>Absent Today</span>
-                <strong class="js-absent-count-today"><%= absentCountView %> Classes</strong>
-            </div>
-        </div>
-        <div class="dashboard-panel" style="margin-top: 18px; padding: 16px;">
-            <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #1e293b;">Overall Attendance</h4>
-            <div style="position: relative; height: 160px; display: flex; justify-content: center; align-items: center;">
-                <canvas id="studentAnalyticsChart"></canvas>
-                <div style="position: absolute; text-align: center; pointer-events: none;">
-                    <span style="display: block; font-size: 24px; font-weight: 700; color: #1e293b;"><%= typeof attendancePercentage !== 'undefined' ? attendancePercentage : 0 %>%</span>
-                </div>
-            </div>
-        </div>
-    </aside>
 </div>
 
 <script>

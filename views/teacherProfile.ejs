@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | Attendify</title>
+
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
+    <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/teacherDashboard.css">
+    <link rel="stylesheet" href="/css/finalUiFix.css">
+    <link rel="stylesheet" href="/css/profilePage.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="/js/customAlerts.js" defer></script>
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+</head>
+<body>
+
+<div class="teacher-layout">
+    <%- include("teacher/partials/sidebar", { activePage: "profile", teacher: teacher }) %>
+
+    <main class="profile-page-main">
+
+        <!-- Hero Banner -->
+        <div class="profile-hero" style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);">
+            <div class="profile-hero-avatar">
+                <%= teacher.fullName ? teacher.fullName.charAt(0).toUpperCase() : "T" %>
+            </div>
+            <div class="profile-hero-info">
+                <h1><%= teacher.fullName %></h1>
+                <p><%= teacher.email %></p>
+                <span class="profile-hero-badge">
+                    <% if (teacher.role === 'ADMIN') { %>
+                        <i class="fa-solid fa-shield-halved"></i> College Admin
+                    <% } else if (teacher.role === 'HOD') { %>
+                        <i class="fa-solid fa-user-tie"></i> Head of Department
+                    <% } else { %>
+                        <i class="fa-solid fa-chalkboard-user"></i> Teacher
+                    <% } %>
+                </span>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="profile-stat-row">
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#2563eb;"><%= totalSessionsConducted %></div>
+                <div class="profile-stat-chip-label">Sessions Held</div>
+            </div>
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#16a34a;"><%= activeSessions %></div>
+                <div class="profile-stat-chip-label">Active Now</div>
+            </div>
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#7c3aed;"><%= assignedSubjects %></div>
+                <div class="profile-stat-chip-label">Subjects</div>
+            </div>
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#ea580c;"><%= schedulesCount %></div>
+                <div class="profile-stat-chip-label">Schedules</div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="profile-actions-row">
+            <button type="button" class="profile-action-btn ghost js-theme-toggle">
+                <i class="fa-solid fa-moon"></i> Toggle Theme
+            </button>
+            <a href="/teacher/dashboard" class="profile-action-btn ghost">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+            <a href="/teacher/reports" class="profile-action-btn ghost">
+                <i class="fa-solid fa-chart-column"></i> Reports
+            </a>
+            <form action="/auth/signout-all" method="POST">
+                <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                <button type="submit" class="profile-action-btn danger">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sign Out All Devices
+                </button>
+            </form>
+        </div>
+
+        <!-- Account Details -->
+        <p class="profile-section-heading">Account Details</p>
+        <div class="profile-grid">
+
+            <div class="profile-card-block">
+                <div class="profile-card-block-header">
+                    <div class="profile-card-block-icon blue"><i class="fa-solid fa-id-card"></i></div>
+                    <span class="profile-card-block-title">Identity</span>
+                </div>
+                <ul class="profile-field-list">
+                    <li>
+                        <span class="profile-field-label">Full Name</span>
+                        <span class="profile-field-value"><%= teacher.fullName %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Email</span>
+                        <span class="profile-field-value"><%= teacher.email %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Employee ID</span>
+                        <span class="profile-field-value"><%= teacher.employeeId %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Role</span>
+                        <span class="profile-field-value">
+                            <span class="profile-status-badge teacher">
+                                <i class="fa-solid fa-chalkboard-user"></i> <%= teacher.role %>
+                            </span>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Status</span>
+                        <span class="profile-field-value">
+                            <% if (teacher.isBlocked) { %>
+                                <span class="profile-status-badge blocked"><i class="fa-solid fa-ban"></i> Blocked</span>
+                            <% } else { %>
+                                <span class="profile-status-badge active"><i class="fa-solid fa-circle-check"></i> Active</span>
+                            <% } %>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="profile-card-block">
+                <div class="profile-card-block-header">
+                    <div class="profile-card-block-icon indigo"><i class="fa-solid fa-building-columns"></i></div>
+                    <span class="profile-card-block-title">Academic</span>
+                </div>
+                <ul class="profile-field-list">
+                    <li>
+                        <span class="profile-field-label">Department</span>
+                        <span class="profile-field-value"><%= teacher.department %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">College</span>
+                        <span class="profile-field-value"><%= college ? college.collegeName : "N/A" %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">College Code</span>
+                        <span class="profile-field-value"><%= college ? college.collegeCode : "N/A" %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Last Login</span>
+                        <span class="profile-field-value">
+                            <%= teacher.lastLogin ? new Date(teacher.lastLogin).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "Never" %>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Member Since</span>
+                        <span class="profile-field-value">
+                            <%= new Date(teacher.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <% if (subjects && subjects.length > 0) { %>
+            <div class="profile-card-block">
+                <div class="profile-card-block-header">
+                    <div class="profile-card-block-icon cyan"><i class="fa-solid fa-book-open"></i></div>
+                    <span class="profile-card-block-title">Assigned Subjects</span>
+                </div>
+                <ul class="profile-field-list">
+                    <% subjects.forEach(function(sub) { %>
+                    <li>
+                        <span class="profile-field-label"><%= sub.subjectCode %></span>
+                        <span class="profile-field-value"><%= sub.subjectName %></span>
+                    </li>
+                    <% }) %>
+                </ul>
+            </div>
+            <% } %>
+
+        </div>
+
+    </main>
+</div>
+
+<script src="/js/teacherNav.js"></script>
+<script src="/js/uiShell.js?v=2"></script>
+<script src="/js/csrfAuto.js" defer></script>
+</body>
+</html>

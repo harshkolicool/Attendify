@@ -76,7 +76,7 @@ body {
 }
 
 body {
-    overflow-x: hidden;
+    overflow-x: clip;
     color: var(--shell-text);
     font-family: var(--shell-font);
     text-rendering: optimizeLegibility;
@@ -231,7 +231,7 @@ body.ui-sidebar-open {
 .student-layout,
 .platform-layout,
 .teacher-page {
-    width: 100%;
+    width: 100vw;
     min-height: 100vh;
     display: grid !important;
     grid-template-columns: var(--shell-sidebar-width) minmax(0, 1fr) !important;
@@ -240,10 +240,10 @@ body.ui-sidebar-open {
 
 .schedule-layout,
 .teacher-layout {
-    width: 100%;
+    width: 100vw;
     min-height: 100vh;
     display: grid !important;
-    grid-template-columns: var(--shell-sidebar-width) minmax(0, 1fr) var(--shell-right-panel) !important;
+    grid-template-columns: var(--shell-sidebar-width) minmax(0, 1fr) !important;
     background: var(--shell-bg);
 }
 
@@ -614,7 +614,7 @@ body.ui-sidebar-open {
 
     body.ui-sidebar-collapsed .schedule-layout,
     body.ui-sidebar-collapsed .teacher-layout {
-        grid-template-columns: var(--shell-sidebar-collapsed) minmax(0, 1fr) var(--shell-right-panel) !important;
+        grid-template-columns: var(--shell-sidebar-collapsed) minmax(0, 1fr) !important;
     }
 
     body.ui-sidebar-collapsed .ui-sidebar {
@@ -786,7 +786,9 @@ body.ui-sidebar-open {
     .teacher-main,
     .platform-main {
         padding: calc(96px + env(safe-area-inset-top, 0px)) 22px 36px !important;
-        width: 100% !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
         min-height: 100vh;
         min-height: 100dvh;
     }

@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Attendify</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="/css/uiShell.css">
-
-    <link rel="stylesheet" href="/css/adminTheme.css">
-    <link rel="stylesheet" href="/css/finalUiFix.css">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260617d">
+    <link rel="stylesheet" href="/css/adminTheme.css?v=20260617d">
+    <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617d">
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <!-- SweetAlert2 for Custom UI Alerts -->
@@ -50,16 +49,6 @@
                 <% if (college) { %>
                     <p><%= college.collegeName %> · <%= college.collegeCode %></p>
                 <% } %>
-            </div>
-
-            <div class="admin-user-pill">
-                <span class="admin-user-avatar" aria-hidden="true">
-                    <%= admin.fullName ? admin.fullName.trim().charAt(0).toUpperCase() : "A" %>
-                </span>
-                <div class="admin-user-meta">
-                    <span class="admin-user-label">Signed in as</span>
-                    <strong><%= admin.fullName %></strong>
-                </div>
             </div>
         </header>
 

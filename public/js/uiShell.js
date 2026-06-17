@@ -928,6 +928,27 @@
             document.documentElement.setAttribute('data-theme', 'dark');
         }
 
+        // Attach logic to any existing toggle buttons (e.g. on My Profile pages)
+        const toggleButtons = document.querySelectorAll('.js-theme-toggle');
+        toggleButtons.forEach(btn => {
+            // Initialize button state
+            btn.innerHTML = savedTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+            
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('attendifyTheme', newTheme);
+                
+                // Update all buttons on the page
+                document.querySelectorAll('.js-theme-toggle').forEach(b => {
+                    b.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+                });
+            });
+        });
+
         const profileCardDiv = document.querySelector('.profile-card > div:last-child');
         if (!profileCardDiv) return;
 
@@ -935,7 +956,7 @@
         if (profileCardDiv.querySelector('.theme-toggle-btn')) return;
 
         const btn = document.createElement('button');
-        btn.className = 'theme-toggle-btn secondary-btn';
+        btn.className = 'theme-toggle-btn secondary-btn js-theme-toggle';
         btn.innerHTML = savedTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
         btn.title = 'Toggle Theme';
         btn.style = 'padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #94a3b8; color: #475569; background: transparent; cursor: pointer; width: 100%; margin-top: 6px;';
@@ -948,7 +969,10 @@
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('attendifyTheme', newTheme);
             
-            btn.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+            // Update all buttons on the page
+            document.querySelectorAll('.js-theme-toggle').forEach(b => {
+                b.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+            });
         });
 
         profileCardDiv.appendChild(btn);

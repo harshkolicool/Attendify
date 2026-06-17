@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | Super Admin | Attendify</title>
+
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/finalUiFix.css">
+    <link rel="stylesheet" href="/css/profilePage.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="/js/customAlerts.js" defer></script>
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+</head>
+<body>
+
+<div class="platform-layout">
+    <%- include("partials/sidebar", { activePage: "profile" }) %>
+
+    <main class="profile-page-main">
+
+        <!-- Hero Banner -->
+        <div class="profile-hero" style="background: linear-gradient(135deg, #92400e 0%, #ea580c 100%);">
+            <div class="profile-hero-avatar">
+                <%= platformAdmin.fullName ? platformAdmin.fullName.charAt(0).toUpperCase() : "P" %>
+            </div>
+            <div class="profile-hero-info">
+                <h1><%= platformAdmin.fullName %></h1>
+                <p><%= platformAdmin.email %></p>
+                <span class="profile-hero-badge">
+                    <i class="fa-solid fa-crown"></i> Platform Super Admin
+                </span>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="profile-stat-row">
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#ea580c;"><%= collegesCount %></div>
+                <div class="profile-stat-chip-label">Colleges</div>
+            </div>
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#16a34a;"><%= approvedCount %></div>
+                <div class="profile-stat-chip-label">Approved</div>
+            </div>
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#f59e0b;"><%= pendingCount %></div>
+                <div class="profile-stat-chip-label">Pending</div>
+            </div>
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#dc2626;"><%= rejectedCount %></div>
+                <div class="profile-stat-chip-label">Rejected</div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="profile-actions-row">
+            <button type="button" class="profile-action-btn ghost js-theme-toggle">
+                <i class="fa-solid fa-moon"></i> Toggle Theme
+            </button>
+            <a href="/platform-admin/dashboard" class="profile-action-btn ghost">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+            <a href="/platform-admin/requests?status=PENDING" class="profile-action-btn ghost">
+                <i class="fa-solid fa-building-circle-check"></i> College Requests
+            </a>
+            <form action="/platform-admin/logout" method="POST">
+                <button type="submit" class="profile-action-btn danger">
+                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                </button>
+            </form>
+        </div>
+
+        <!-- Account Details -->
+        <p class="profile-section-heading">Account Details</p>
+        <div class="profile-grid">
+
+            <div class="profile-card-block">
+                <div class="profile-card-block-header">
+                    <div class="profile-card-block-icon orange"><i class="fa-solid fa-crown"></i></div>
+                    <span class="profile-card-block-title">Identity</span>
+                </div>
+                <ul class="profile-field-list">
+                    <li>
+                        <span class="profile-field-label">Full Name</span>
+                        <span class="profile-field-value"><%= platformAdmin.fullName %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Email</span>
+                        <span class="profile-field-value"><%= platformAdmin.email %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Role</span>
+                        <span class="profile-field-value">
+                            <span class="profile-status-badge platform"><i class="fa-solid fa-crown"></i> Super Admin</span>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Status</span>
+                        <span class="profile-field-value">
+                            <% if (platformAdmin.isBlocked) { %>
+                                <span class="profile-status-badge blocked"><i class="fa-solid fa-ban"></i> Blocked</span>
+                            <% } else { %>
+                                <span class="profile-status-badge active"><i class="fa-solid fa-circle-check"></i> Active</span>
+                            <% } %>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Last Login</span>
+                        <span class="profile-field-value">
+                            <%= platformAdmin.lastLogin ? new Date(platformAdmin.lastLogin).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "Never" %>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Account Created</span>
+                        <span class="profile-field-value">
+                            <%= new Date(platformAdmin.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="profile-card-block">
+                <div class="profile-card-block-header">
+                    <div class="profile-card-block-icon indigo"><i class="fa-solid fa-building-columns"></i></div>
+                    <span class="profile-card-block-title">Platform Overview</span>
+                </div>
+                <ul class="profile-field-list">
+                    <li>
+                        <span class="profile-field-label">Total Colleges</span>
+                        <span class="profile-field-value"><%= collegesCount %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Pending Requests</span>
+                        <span class="profile-field-value"><%= pendingCount %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Approved Colleges</span>
+                        <span class="profile-field-value"><%= approvedCount %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Rejected Requests</span>
+                        <span class="profile-field-value"><%= rejectedCount %></span>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<script src="/js/uiShell.js?v=2"></script>
+<script src="/js/csrfAuto.js" defer></script>
+</body>
+</html>

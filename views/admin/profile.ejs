@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | Admin | Attendify</title>
+
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/adminTheme.css">
+    <link rel="stylesheet" href="/css/finalUiFix.css">
+    <link rel="stylesheet" href="/css/profilePage.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="/js/customAlerts.js" defer></script>
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+
+    <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+</head>
+<body>
+
+<div class="admin-layout">
+    <%- include("partials/sidebar", { activePage: "profile", currentCollege: college }) %>
+
+    <main class="profile-page-main">
+
+        <!-- Hero Banner -->
+        <div class="profile-hero" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);">
+            <div class="profile-hero-avatar">
+                <%= admin.fullName ? admin.fullName.charAt(0).toUpperCase() : "A" %>
+            </div>
+            <div class="profile-hero-info">
+                <h1><%= admin.fullName %></h1>
+                <p><%= admin.email %></p>
+                <span class="profile-hero-badge">
+                    <i class="fa-solid fa-shield-halved"></i> College Administrator
+                </span>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="profile-stat-row">
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#4f46e5;"><%= counts.students %></div>
+                <div class="profile-stat-chip-label">Students</div>
+            </div>
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#2563eb;"><%= counts.teachers %></div>
+                <div class="profile-stat-chip-label">Teachers</div>
+            </div>
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#16a34a;"><%= counts.classGroups %></div>
+                <div class="profile-stat-chip-label">Class Groups</div>
+            </div>
+            <div class="profile-stat-chip">
+                <div class="profile-stat-chip-value" style="color:#ea580c;"><%= counts.schedules %></div>
+                <div class="profile-stat-chip-label">Schedules</div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="profile-actions-row">
+            <button type="button" class="profile-action-btn ghost js-theme-toggle">
+                <i class="fa-solid fa-moon"></i> Toggle Theme
+            </button>
+            <a href="/admin/dashboard" class="profile-action-btn ghost">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+            <a href="/admin/change-password" class="profile-action-btn ghost">
+                <i class="fa-solid fa-key"></i> Change Password
+            </a>
+            <form action="/logout" method="POST">
+                <button type="submit" class="profile-action-btn danger">
+                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                </button>
+            </form>
+        </div>
+
+        <!-- Account Details -->
+        <p class="profile-section-heading">Account Details</p>
+        <div class="profile-grid">
+
+            <div class="profile-card-block">
+                <div class="profile-card-block-header">
+                    <div class="profile-card-block-icon slate"><i class="fa-solid fa-id-card"></i></div>
+                    <span class="profile-card-block-title">Identity</span>
+                </div>
+                <ul class="profile-field-list">
+                    <li>
+                        <span class="profile-field-label">Full Name</span>
+                        <span class="profile-field-value"><%= admin.fullName %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Email</span>
+                        <span class="profile-field-value"><%= admin.email %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Employee ID</span>
+                        <span class="profile-field-value"><%= admin.employeeId %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Role</span>
+                        <span class="profile-field-value">
+                            <span class="profile-status-badge admin"><i class="fa-solid fa-shield-halved"></i> Admin</span>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Department</span>
+                        <span class="profile-field-value"><%= admin.department %></span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="profile-card-block">
+                <div class="profile-card-block-header">
+                    <div class="profile-card-block-icon indigo"><i class="fa-solid fa-building-columns"></i></div>
+                    <span class="profile-card-block-title">College</span>
+                </div>
+                <ul class="profile-field-list">
+                    <li>
+                        <span class="profile-field-label">College Name</span>
+                        <span class="profile-field-value"><%= college ? college.collegeName : "N/A" %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">College Code</span>
+                        <span class="profile-field-value"><%= college ? college.collegeCode : "N/A" %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Last Login</span>
+                        <span class="profile-field-value">
+                            <%= admin.lastLogin ? new Date(admin.lastLogin).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "Never" %>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Account Created</span>
+                        <span class="profile-field-value">
+                            <%= new Date(admin.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="profile-card-block">
+                <div class="profile-card-block-header">
+                    <div class="profile-card-block-icon green"><i class="fa-solid fa-chart-bar"></i></div>
+                    <span class="profile-card-block-title">College Overview</span>
+                </div>
+                <ul class="profile-field-list">
+                    <li>
+                        <span class="profile-field-label">Classrooms</span>
+                        <span class="profile-field-value"><%= counts.classrooms %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Subjects</span>
+                        <span class="profile-field-value"><%= counts.subjects %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Class Groups</span>
+                        <span class="profile-field-value"><%= counts.classGroups %></span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Schedules</span>
+                        <span class="profile-field-value"><%= counts.schedules %></span>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+
+    </main>
+</div>
+
+<script src="/js/adminValidation.js"></script>
+<script src="/js/uiShell.js?v=2"></script>
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/adminRealtime.js"></script>
+</body>
+</html>

@@ -12,9 +12,9 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/teacherDashboard.css">
-    <link rel="stylesheet" href="/css/finalUiFix.css">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260617d">
+    <link rel="stylesheet" href="/css/teacherDashboard.css?v=20260617d">
+    <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617d">
 
     <link
         rel="stylesheet"
@@ -299,6 +299,10 @@
                 <%= typeof message !== "undefined" ? message : "" %>
             </div>
         <% } %>
+
+        <button id="enablePushBtn" class="teacher-primary-btn" style="padding: 10px 16px; border-radius: 8px; width: 100%; margin-bottom: 1rem; display: none;">
+            <i class="fa-solid fa-bell"></i> Enable Notifications
+        </button>
 
         <section class="stats-row">
 
@@ -771,6 +775,18 @@
             <ul class="suspicious-attempt-list" id="suspiciousAttemptList"></ul>
         </section>
 
+        <section class="teacher-card">
+            <div class="teacher-card-header">
+                <div>
+                    <h3><i class="fa-solid fa-chart-pie" style="color:#3b82f6;"></i> Live Analytics</h3>
+                    <p id="liveAnalyticsStatus">Waiting for session...</p>
+                </div>
+            </div>
+            <div style="width: 100%; max-width: 350px; aspect-ratio: 1; position: relative; margin: 0 auto 16px auto;">
+                <canvas id="liveAnalyticsChart"></canvas>
+            </div>
+        </section>
+
         <section class="teacher-card" id="pendingReviewsSection" style="display:none;">
             <div class="teacher-card-header">
                 <div>
@@ -887,67 +903,6 @@
         </section>
 
     </main>
-
-    <aside class="teacher-profile-panel">
-
-        <div class="profile-card">
-            <div class="profile-avatar">
-                <%= teacher.fullName.charAt(0).toUpperCase() %>
-            </div>
-
-            <div>
-                <h3><%= teacher.fullName %></h3>
-                <p>Teacher Account</p>
-                <form action="/auth/signout-all" method="POST" style="margin-top: 10px;">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <button type="submit" class="teacher-secondary-btn danger" style="padding: 4px 8px; font-size: 12px; width: 100%;">
-                        <i class="fa-solid fa-right-from-bracket"></i> Sign Out All Devices
-                    </button>
-                </form>
-                <button id="enablePushBtn" class="teacher-primary-btn" style="padding: 4px 8px; font-size: 12px; width: 100%; margin-top: 6px; display: none;">
-                    <i class="fa-solid fa-bell"></i> Enable Notifications
-                </button>
-            </div>
-        </div>
-
-        <div class="info-card">
-            <div class="info-icon green">
-                <i class="fa-solid fa-signal"></i>
-            </div>
-
-            <div>
-                <h4>Live Sessions</h4>
-                <p><%= activeSessions.length %> active</p>
-            </div>
-        </div>
-
-        <div class="info-card" style="display: flex; flex-direction: column; align-items: stretch; gap: 12px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div class="info-icon blue">
-                    <i class="fa-solid fa-chart-pie"></i>
-                </div>
-                <div>
-                    <h4>Live Analytics</h4>
-                    <p id="liveAnalyticsStatus">Waiting for session...</p>
-                </div>
-            </div>
-            <div style="width: 100%; aspect-ratio: 1; position: relative;">
-                <canvas id="liveAnalyticsChart"></canvas>
-            </div>
-        </div>
-
-        <div class="info-card">
-            <div class="info-icon purple">
-                <i class="fa-solid fa-calendar-day"></i>
-            </div>
-
-            <div>
-                <h4>Today's Classes</h4>
-                <p><%= schedules.length %> scheduled</p>
-            </div>
-        </div>
-
-    </aside>
 
 </div>
 

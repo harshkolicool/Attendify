@@ -5545,5 +5545,36 @@ router.get("/realtime/poll", isCollegeAdmin, async function (req, res) {
         res.json({ success: false });
     }
 });
+/* =================== PROFILE PAGE =================== */
+router.get("/profile", isCollegeAdmin, async function (req, res) {
+    try {
+        const collegeId = getCollegeId(req);
+        const college = req.college || await College.findById(collegeId);
+
+        const counts = {
+            classGroups: await ClassGroup.countDocuments({ college: collegeId, isActive: true }),
+            classrooms: await Classroom.countDocuments({ college: collegeId, isDeleted: { $ne: true } }),
+            subjects: await Subject.countDocuments({ college: collegeId, isActive: true }),
+            teachers: await Teacher.countDocuments({ college: collegeId, role: { $in: ["TEACHER", "HOD"] }, isDeleted: { $ne: true } }),
+            students: await Student.countDocuments({ college: collegeId, accountType: "student", isDeleted: { $ne: true } }),
+            schedules: await Schedule.countDocuments({ college: collegeId })
+        };
+
+        res.render("admin/profile", {
+            admin: req.user,
+            college: college,
+            counts: counts,
+            activePage: "profile",
+            currentCollege: college,
+            csrfToken: typeof req.csrfToken === "function" ? req.csrfToken() : ""
+        });
+
+    } catch (err) {
+        console.log("ADMIN PROFILE ERROR:");
+        console.log(err.message);
+        console.log(err.stack);
+        res.redirect("/admin/dashboard");
+    }
+});
 
 module.exports = router;

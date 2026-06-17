@@ -971,5 +971,32 @@ router.get("/realtime/poll", isPlatformAdmin, async function (req, res) {
         res.json({ success: false });
     }
 });
+/* =================== PROFILE PAGE =================== */
+router.get("/platform-admin/profile", isPlatformAdmin, async function (req, res) {
+    try {
+        const platformAdmin = req.platformAdmin;
+
+        const collegesCount = await College.countDocuments();
+        const pendingCount = await CollegeRegistrationRequest.countDocuments({ status: "PENDING" });
+        const approvedCount = await CollegeRegistrationRequest.countDocuments({ status: "APPROVED" });
+        const rejectedCount = await CollegeRegistrationRequest.countDocuments({ status: "REJECTED" });
+
+        res.render("platformAdmin/profile", {
+            platformAdmin: platformAdmin,
+            collegesCount: collegesCount,
+            pendingCount: pendingCount,
+            approvedCount: approvedCount,
+            rejectedCount: rejectedCount,
+            activePage: "profile",
+            csrfToken: typeof req.csrfToken === "function" ? req.csrfToken() : ""
+        });
+
+    } catch (err) {
+        console.log("PLATFORM ADMIN PROFILE ERROR:");
+        console.log(err.message);
+        console.log(err.stack);
+        res.redirect("/platform-admin/dashboard");
+    }
+});
 
 module.exports = router;

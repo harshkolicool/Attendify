@@ -18,6 +18,7 @@ const AttendanceSession = require("../models/attendanceSessionSchema");
 const AttendanceRecord = require("../models/attendanceRecordSchema");
 const AttendanceAttempt = require("../models/attendanceAttemptSchema");
 const Subject = require("../models/subjectSchema");
+const College = require("../models/collegeSchema");
 const {
     getUnreadCount,
     getRecentNotifications,
@@ -2824,6 +2825,59 @@ router.post("/reviews/:recordId/reject", isTeacher, async function (req, res) {
         console.log("TEACHER REJECT REVIEW ERROR:");
         console.log(err.message);
         res.status(500).json({ success: false, message: "Could not reject review." });
+    }
+});
+
+/* =================== PROFILE PAGE =================== */
+router.get("/profile", isTeacher, async function (req, res) {
+    try {
+        const teacher = await Teacher.findById(req.user._id).select("-password");
+        if (!teacher) {
+            return res.redirect("/teacher/dashboard");
+        }
+
+        const college = await College.findById(teacher.college).select("collegeName collegeCode");
+
+        const subjects = await Subject.find({
+            college: teacher.college,
+            teacher: teacher._id,
+            isActive: true
+        }).select("subjectName subjectCode").lean();
+
+        const totalSessionsConducted = await AttendanceSession.countDocuments({
+            teacher: teacher._id,
+            college: teacher.college
+        });
+
+        const activeSessions = await AttendanceSession.countDocuments({
+            teacher: teacher._id,
+            college: teacher.college,
+            isActive: true,
+            status: "ACTIVE"
+        });
+
+        const schedulesCount = await Schedule.countDocuments({
+            teacher: teacher._id,
+            college: teacher.college
+        });
+
+        res.render("teacherProfile", {
+            teacher: teacher,
+            college: college,
+            subjects: subjects,
+            assignedSubjects: subjects.length,
+            totalSessionsConducted: totalSessionsConducted,
+            activeSessions: activeSessions,
+            schedulesCount: schedulesCount,
+            activePage: "profile",
+            csrfToken: typeof req.csrfToken === "function" ? req.csrfToken() : ""
+        });
+
+    } catch (err) {
+        console.log("TEACHER PROFILE ERROR:");
+        console.log(err.message);
+        console.log(err.stack);
+        res.redirect("/teacher/dashboard");
     }
 });
 
