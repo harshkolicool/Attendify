@@ -12,9 +12,9 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260617d">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260617m">
     <link rel="stylesheet" href="/css/teacherDashboard.css?v=20260617d">
-    <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617d">
+    <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617f">
 
     <link
         rel="stylesheet"
@@ -775,17 +775,7 @@
             <ul class="suspicious-attempt-list" id="suspiciousAttemptList"></ul>
         </section>
 
-        <section class="teacher-card">
-            <div class="teacher-card-header">
-                <div>
-                    <h3><i class="fa-solid fa-chart-pie" style="color:#3b82f6;"></i> Live Analytics</h3>
-                    <p id="liveAnalyticsStatus">Waiting for session...</p>
-                </div>
-            </div>
-            <div style="width: 100%; max-width: 350px; aspect-ratio: 1; position: relative; margin: 0 auto 16px auto;">
-                <canvas id="liveAnalyticsChart"></canvas>
-            </div>
-        </section>
+
 
         <section class="teacher-card" id="pendingReviewsSection" style="display:none;">
             <div class="teacher-card-header">
@@ -980,7 +970,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <script src="/js/teacherRealtime.js"></script>
 <script src="/js/teacherNav.js"></script>
 <script src="/js/teacherPanels.js"></script>
-<script src="/js/teacherLiveMap.js" defer></script>
+<script src="/js/teacherLiveMap.js?v=20260617j" defer></script>
 <script src="/js/uiShell.js"></script>
 <script src="/js/dashboardTimeSync.js"></script>
 
@@ -1149,20 +1139,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     const status = await window.PushManagerHelper.init("teacher");
     if (status.supported && !status.subscribed) {
-        btn.style.display = "block";
-        btn.addEventListener("click", async () => {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
-            btn.disabled = true;
-            try {
-                await window.PushManagerHelper.subscribe("teacher");
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
-                setTimeout(() => btn.style.display = "none", 2000);
-            } catch (err) {
-                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
-                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
-            }
-        });
+        if (Notification.permission === 'granted') {
+            try { await window.PushManagerHelper.subscribe("teacher"); } catch (err) {}
+        } else if (Notification.permission === 'default' || !Notification.permission) {
+            btn.style.display = "block";
+            btn.addEventListener("click", async () => {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
+                btn.disabled = true;
+                try {
+                    await window.PushManagerHelper.subscribe("teacher");
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
+                    setTimeout(() => btn.style.display = "none", 2000);
+                } catch (err) {
+                    btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+                }
+            });
+        }
     }
 });
 </script>

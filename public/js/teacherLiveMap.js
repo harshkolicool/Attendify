@@ -69,32 +69,7 @@ function initTeacherLiveMap() {
     const hintEl = document.getElementById("teacherMapHint");
 
     // Live Analytics Chart
-    let analyticsChart = null;
-    const chartCanvas = document.getElementById("liveAnalyticsChart");
-    const chartStatus = document.getElementById("liveAnalyticsStatus");
-    if (chartCanvas && window.Chart) {
-        const ctx = chartCanvas.getContext('2d');
-        analyticsChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Inside / Present', 'Outside / Rejected', 'Poor GPS', 'Offline'],
-                datasets: [{
-                    data: [0, 0, 0, 0],
-                    backgroundColor: ['#16a34a', '#dc2626', '#d97706', '#64748b'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: true }
-                }
-            }
-        });
-    }
+
 
     const rosterEl = document.getElementById("teacherMapRoster");
     const sessionSelectEl = document.getElementById("teacherMapSessionSelect");
@@ -224,18 +199,7 @@ function initTeacherLiveMap() {
         if (poorPill) poorPill.textContent = poor + " poor GPS";
         if (trackingPill) trackingPill.textContent = onlineDevices + " live";
 
-        if (analyticsChart) {
-            analyticsChart.data.datasets[0].data = [inside + near, outside, poor, deviceState.size - onlineDevices];
-            analyticsChart.update();
-            if (chartStatus) {
-                if (deviceState.size > 0) {
-                    const pct = Math.round(((inside + near) / deviceState.size) * 100);
-                    chartStatus.textContent = pct + "% Present";
-                } else {
-                    chartStatus.textContent = "Waiting for data...";
-                }
-            }
-        }
+
     }
 
     // Always initialize map

@@ -924,13 +924,15 @@
 
 [data-theme="dark"] .stat-box span,
 [data-theme="dark"] .panel-subtitle,
-[data-theme="dark"] .student-card-item p {
+[data-theme="dark"] .student-card-item p,
+[data-theme="dark"] .student-info span {
     color: #94a3b8 !important;
 }
 
 [data-theme="dark"] .stat-box h3,
 [data-theme="dark"] .panel-title,
-[data-theme="dark"] .student-card-item h3 {
+[data-theme="dark"] .student-card-item h3,
+[data-theme="dark"] .student-info strong {
     color: #f8fafc !important;
 }
 

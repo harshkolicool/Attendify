@@ -63,7 +63,7 @@ window.PushManagerHelper = {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ subscription })
+                body: JSON.stringify(subscription)
             });
 
             if (!saveResponse.ok) {

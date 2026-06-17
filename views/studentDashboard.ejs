@@ -14,7 +14,7 @@
 
     <link rel="stylesheet" href="/css/uiShell.css?v=20260617b">
     <link rel="stylesheet" href="/css/studentSchedule.css?v=20260617b">
-    <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617b">
+    <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617f">
 
     <link
         rel="stylesheet"
@@ -674,20 +674,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     const status = await window.PushManagerHelper.init("student");
     if (status.supported && !status.subscribed) {
-        btn.style.display = "block";
-        btn.addEventListener("click", async () => {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
-            btn.disabled = true;
-            try {
-                await window.PushManagerHelper.subscribe("student");
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
-                setTimeout(() => btn.style.display = "none", 2000);
-            } catch (err) {
-                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
-                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
-            }
-        });
+        if (Notification.permission === 'granted') {
+            try { await window.PushManagerHelper.subscribe("student"); } catch (err) {}
+        } else if (Notification.permission === 'default' || !Notification.permission) {
+            btn.style.display = "block";
+            btn.addEventListener("click", async () => {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
+                btn.disabled = true;
+                try {
+                    await window.PushManagerHelper.subscribe("student");
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
+                    setTimeout(() => btn.style.display = "none", 2000);
+                } catch (err) {
+                    btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+                }
+            });
+        }
     }
 });
 </script>
