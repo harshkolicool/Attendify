@@ -222,6 +222,14 @@ function initTeacherLiveMap() {
                 showCoverageOnHover: false
             });
             map.addLayer(studentClusterGroup);
+            
+            window.seatClusterGroup = L.markerClusterGroup({
+                maxClusterRadius: 20,
+                disableClusteringAtZoom: 22,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false
+            });
+            map.addLayer(window.seatClusterGroup);
         }
 
         mapInitialized = true;
@@ -296,12 +304,62 @@ function initTeacherLiveMap() {
         }
     }
 
+    function addSeatMarker(sessionId, studentId, fullName, lat, lon) {
+        if (!window.seatClusterGroup || !map || sessionId !== activeSessionId || !studentId || !lat || !lon) return;
+
+        // Custom icon for a fixed seat (blue pin)
+        const seatIcon = L.divIcon({
+            html: '<div style="background-color: #2563eb; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; transform: translate(-50%, -50%);"><i class="fa-solid fa-chair"></i></div>',
+            className: "",
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        // Check if marker exists to avoid duplicates
+        const existingMarkers = window.seatClusterGroup.getLayers();
+        for (let i = 0; i < existingMarkers.length; i++) {
+            if (existingMarkers[i].options && existingMarkers[i].options.studentId === studentId) {
+                // If it already exists, don't drop another one
+                return;
+            }
+        }
+
+        const marker = L.marker([lat, lon], {
+            icon: seatIcon,
+            zIndexOffset: 500, // Show above live dots
+            studentId: studentId // custom property
+        });
+
+        marker.bindTooltip("<b>" + escapeHtml(fullName) + "</b><br><small>Marked Present</small>", {
+            direction: 'top',
+            offset: [0, -10]
+        });
+
+        window.seatClusterGroup.addLayer(marker);
+    }
+
+    // Expose globally so teacherRealtime.js can call it on attendance:marked
+    window.addSeatMarker = addSeatMarker;
+
+    function applySeatMap(seatMap, sessionId) {
+        if (!window.seatClusterGroup) return;
+        window.seatClusterGroup.clearLayers();
+        
+        if (!Array.isArray(seatMap)) return;
+        
+        for (let i = 0; i < seatMap.length; i++) {
+            const sm = seatMap[i];
+            addSeatMarker(sessionId, sm.studentId, sm.fullName, sm.latitude, sm.longitude);
+        }
+    }
+
     function applySessionPayload(payload) {
         if (!payload || !payload.sessionId) return;
 
         seedRoster(payload.roster);
         setSessionCenter(payload);
         applySnapshot(payload.snapshot || []);
+        applySeatMap(payload.seatMap || [], payload.sessionId);
     }
 
     function loadPollingSnapshot(sessionId) {

@@ -12,8 +12,8 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/studentSchedule.css">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
+    <link rel="stylesheet" href="/css/studentSchedule.css?v=1783707817172">
     <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617f">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -44,6 +44,8 @@
     };
     </script>
     <% } %>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/themes/dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 </head>
 
 <body>
@@ -296,11 +298,174 @@
                     <p>View today and upcoming classes for the next 7 days.</p>
                 </div>
 
-                <a href="/student/dashboard" class="dashboard-action-btn">
-                    <i class="fa-solid fa-house"></i>
-                    Dashboard
-                </a>
+                <div class="header-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; width: 100%;">
+                    <div style="position: relative; width: 44px; height: 44px; flex-shrink: 0;">
+                        <input type="text" id="scheduleWeekPicker" class="dashboard-date-picker" value="<%= typeof targetDate !== 'undefined' ? targetDate : '' %>" readonly autocomplete="off" style="width: 100%; height: 100%; padding-right: 40px; cursor: pointer; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff;">
+                        <i class="fa-solid fa-calendar-days" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; font-size: 16px;"></i>
+                    </div>
+                    <a href="/student/dashboard" class="dashboard-action-btn" style="flex-grow: 1;">
+                        <i class="fa-solid fa-house"></i> Dashboard
+                    </a>
+                </div>
             </header>
+
+            <style>
+                /* Flatpickr Global Overrides for Attendify Dark Theme */
+                .flatpickr-calendar {
+                    background: #1e293b !important;
+                    border: 1px solid #334155 !important;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+                    font-family: inherit !important;
+                }
+                .flatpickr-months,
+                .flatpickr-months .flatpickr-month,
+                .flatpickr-current-month,
+                .flatpickr-current-month .numInputWrapper,
+                .flatpickr-weekdays,
+                .flatpickr-weekday {
+                    background: transparent !important;
+                }
+                .flatpickr-months {
+                    padding-top: 10px !important;
+                }
+                .flatpickr-current-month {
+                    padding-top: 0 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                }
+                .flatpickr-current-month span.cur-month {
+                    display: none !important; /* Fix overlapping text */
+                }
+                .flatpickr-current-month .flatpickr-monthDropdown-months {
+                    background: transparent url('data:image/svg+xml;utf8,<svg fill="%23f8fafc" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 0px center !important;
+                    border: none !important;
+                    color: #f8fafc !important;
+                    font-size: 18px !important;
+                    font-weight: 800 !important;
+                    appearance: none !important;
+                    -webkit-appearance: none !important;
+                    margin: 0 10px 0 0 !important;
+                    padding: 0 20px 0 0 !important;
+                    height: auto !important;
+                    line-height: inherit !important;
+                    outline: none !important;
+                    box-shadow: none !important;
+                }
+                .flatpickr-current-month .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month {
+                    background-color: #1e293b !important;
+                    color: #f8fafc !important;
+                }
+                .flatpickr-current-month input.cur-year {
+                    font-weight: 800 !important;
+                    color: #f8fafc !important;
+                    background: transparent !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                    outline: none !important;
+                }
+                .flatpickr-months .flatpickr-prev-month,
+                .flatpickr-months .flatpickr-next-month {
+                    fill: #94a3b8 !important;
+                }
+                .flatpickr-months .flatpickr-prev-month:hover,
+                .flatpickr-months .flatpickr-next-month:hover {
+                    fill: #f8fafc !important;
+                }
+                /* Responsiveness for header buttons */
+                @media (max-width: 480px) {
+                    .dashboard-date-picker {
+                        flex: 1;
+                        min-width: 0;
+                    }
+                }
+                .flatpickr-day.attendance-present {
+                    background: rgba(34, 197, 94, 0.15) !important;
+                    border-radius: 8px !important;
+                    color: #4ade80 !important;
+                    font-weight: 800 !important;
+                    border-bottom: 3px solid #22c55e !important;
+                }
+                .flatpickr-day.attendance-absent {
+                    background: rgba(239, 68, 68, 0.15) !important;
+                    border-radius: 8px !important;
+                    color: #f87171 !important;
+                    font-weight: 800 !important;
+                    border-bottom: 3px solid #ef4444 !important;
+                }
+                
+                /* PREMIUM UI ENHANCEMENTS */
+                .weekly-day-panel {
+                    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+                    background: linear-gradient(to bottom, #ffffff, #f8fafc) !important;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                }
+                .weekly-day-panel:hover {
+                    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08) !important;
+                    transform: translateY(-2px) !important;
+                }
+                .dashboard-class-card {
+                    background: #ffffff !important;
+                    border: 1px solid #e2e8f0 !important;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.02) !important;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .dashboard-class-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; width: 4px; height: 100%;
+                    background: linear-gradient(to bottom, #3b82f6, #60a5fa);
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                }
+                .dashboard-class-card:hover {
+                    transform: translateX(4px) scale(1.01) !important;
+                    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1) !important;
+                    border-color: #bfdbfe !important;
+                }
+                .dashboard-class-card:hover::before {
+                    opacity: 1;
+                }
+                .date-highlight-badge {
+                    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+                    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3) !important;
+                    border: 1px solid rgba(255,255,255,0.2) !important;
+                }
+            </style>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const picker = document.getElementById("scheduleWeekPicker");
+                    const historyDates = <%- typeof historyDates !== 'undefined' ? historyDates : '{"present":[],"absent":[]}' %>;
+                    
+                    flatpickr(picker, {
+                        dateFormat: "Y-m-d",
+                        defaultDate: "<%= targetDate %>",
+                        disableMobile: true, // prevents native picker on mobile
+                        onChange: function(selectedDates, dateStr, instance) {
+                            if (dateStr) {
+                                window.location.href = '/student/schedule?date=' + dateStr;
+                            }
+                        },
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const dateObj = dayElem.dateObj;
+                            if (!dateObj) return;
+                            
+                            // Adjust for local timezone
+                            const tzOffset = dateObj.getTimezoneOffset() * 60000;
+                            const localISOTime = (new Date(dateObj.getTime() - tzOffset)).toISOString().split('T')[0];
+                            
+                            if (historyDates.present.includes(localISOTime)) {
+                                dayElem.classList.add("attendance-present");
+                            } else if (historyDates.absent.includes(localISOTime)) {
+                                dayElem.classList.add("attendance-absent");
+                            }
+                        }
+                    });
+                });
+            </script>
 
             <div id="messageBox" class="schedule-message"></div>
 
@@ -316,22 +481,29 @@
 
             <% groups.forEach(function(group) { %>
                 <section class="dashboard-panel weekly-day-panel" data-day-offset="<%= group.offset %>">
-                    <div class="dashboard-panel-head">
-                        <div>
-                            <h3>
-                                <%= group.label %>
-                                <span class="schedule-day-name">
-                                    · <%= group.day %>
-                                </span>
-                            </h3>
-
-                            <p>
-                                <%= new Date(group.date).toLocaleDateString("en-IN", {
-                                    day: "2-digit",
-                                    month: "short",
-                                    year: "numeric"
-                                }) %>
-                            </p>
+                    <div class="dashboard-panel-head" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div class="date-highlight-badge" style="background: var(--primary, #3b82f6); color: white; min-width: 60px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);">
+                                <span style="font-size: 24px; font-weight: 900; line-height: 1;"><%= new Date(group.date).getDate() %></span>
+                                <span style="font-size: 13px; font-weight: 700; text-transform: uppercase; margin-top: 2px;"><%= new Date(group.date).toLocaleString('default', { month: 'short' }) %></span>
+                            </div>
+                            <div>
+                                <% 
+                                    const cDate = new Date(group.date);
+                                    const isToday = cDate.toDateString() === new Date().toDateString();
+                                    const isTomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toDateString() === cDate.toDateString();
+                                    const displayTitle = isToday ? "Today" : (isTomorrow ? "Tomorrow" : cDate.toLocaleString('default', { weekday: 'long' }));
+                                %>
+                                <h3 style="margin: 0; font-size: 22px; font-weight: 800;">
+                                    <%= displayTitle %>
+                                </h3>
+                                <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.8;">
+                                    <%= cDate.toLocaleDateString("en-IN", { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                                    <% if (displayTitle === "Today" || displayTitle === "Tomorrow") { %>
+                                        · <%= cDate.toLocaleString('default', { weekday: 'long' }) %>
+                                    <% } %>
+                                </p>
+                            </div>
                         </div>
 
                         <span class="panel-count">
@@ -556,10 +728,10 @@
     <script src="/js/studentRealtime.js"></script>
     <script src="/js/studentLiveLocation.js"></script>
     <script src="/js/studentScheduleFocusToday.js"></script>
-    <script src="/js/uiShell.js"></script>
+    <script src="/js/uiShell.js?v=2"></script>
 
     <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/selectEnhancer.js?v=2" defer></script>
 </body>
 
 </html>

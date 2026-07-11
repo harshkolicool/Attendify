@@ -954,7 +954,7 @@ function emitAttendanceReopened(session, scheduleItem) {
     }
 }
 
-function emitAttendanceRecordUpdated(session, student, attendanceRecord) {
+function emitAttendanceRecordUpdated(session, student, attendanceRecord, updatedCounts = null) {
     const io = getIO();
 
     if (!io || !session || !student || !attendanceRecord) {
@@ -963,6 +963,10 @@ function emitAttendanceRecordUpdated(session, student, attendanceRecord) {
 
     const teacherId = getId(session.teacher);
     const collegeId = getId(session.college);
+
+    const presentCount = updatedCounts ? updatedCounts.totalPresent : (session.attendanceSummary ? session.attendanceSummary.totalPresent : 0);
+    const absentCount = updatedCounts ? updatedCounts.totalAbsent : (session.attendanceSummary ? session.attendanceSummary.totalAbsent : 0);
+    const totalMarked = updatedCounts ? updatedCounts.totalMarked : (session.attendanceSummary ? session.attendanceSummary.totalMarked : 0);
 
     const payload = {
         sessionId: getId(session._id),
@@ -973,9 +977,11 @@ function emitAttendanceRecordUpdated(session, student, attendanceRecord) {
         oldStatus: "ABSENT",
         newStatus: attendanceRecord.status || "PRESENT",
         attendanceRecordId: getId(attendanceRecord._id),
-        presentCount: session.attendanceSummary ? session.attendanceSummary.totalPresent : 0,
-        absentCount: session.attendanceSummary ? session.attendanceSummary.totalAbsent : 0,
-        totalMarked: session.attendanceSummary ? session.attendanceSummary.totalMarked : 0,
+        latitude: attendanceRecord.latitude || student.latitude || null,
+        longitude: attendanceRecord.longitude || student.longitude || null,
+        presentCount: presentCount,
+        absentCount: absentCount,
+        totalMarked: totalMarked,
         message: "Attendance marked present.",
         updatedAt: new Date()
     };
@@ -1091,7 +1097,7 @@ function emitAttendanceEnded(session) {
     });
 }
 
-function emitAttendanceMarked(session, student, attendanceRecord, distance) {
+function emitAttendanceMarked(session, student, attendanceRecord, distance, updatedCounts = null) {
     const io = getIO();
 
     if (!io || !session || !student) {
@@ -1099,6 +1105,11 @@ function emitAttendanceMarked(session, student, attendanceRecord, distance) {
     }
 
     const teacherId = getId(session.teacher);
+
+    // Fallback to session values if updatedCounts is not provided
+    const totalPresent = updatedCounts ? updatedCounts.totalPresent : (session.presentStudents ? session.presentStudents.length : 0);
+    const totalAbsent = updatedCounts ? updatedCounts.totalAbsent : (session.absentStudents ? session.absentStudents.length : 0);
+    const totalMarked = updatedCounts ? updatedCounts.totalMarked : (session.attendanceSummary ? session.attendanceSummary.totalMarked : 0);
 
     const payload = {
         sessionId: getId(session._id),
@@ -1109,9 +1120,11 @@ function emitAttendanceMarked(session, student, attendanceRecord, distance) {
         attendanceRecordId: attendanceRecord ? getId(attendanceRecord._id) : "",
         status: attendanceRecord && attendanceRecord.status ? attendanceRecord.status : "PRESENT",
         distance: Math.round(distance || 0),
-        totalPresent: session.presentStudents ? session.presentStudents.length : 0,
-        totalAbsent: session.absentStudents ? session.absentStudents.length : 0,
-        totalMarked: session.attendanceSummary ? session.attendanceSummary.totalMarked : 0,
+        latitude: attendanceRecord && attendanceRecord.latitude ? attendanceRecord.latitude : (student.latitude || null),
+        longitude: attendanceRecord && attendanceRecord.longitude ? attendanceRecord.longitude : (student.longitude || null),
+        totalPresent: totalPresent,
+        totalAbsent: totalAbsent,
+        totalMarked: totalMarked,
         markedAt: new Date()
     };
 

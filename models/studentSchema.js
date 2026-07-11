@@ -1,39 +1,12 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const {
+    isBcryptHash,
+    hashPasswordIfNeeded,
+    hashPasswordInUpdate,
+    comparePassword
+} = require("../utils/passwordHelper");
 
-function isBcryptHash(value) {
-    return typeof value === "string" && /^\$2[aby]\$\d{2}\$/.test(value);
-}
 
-async function hashPasswordIfNeeded(password) {
-    if (!password || isBcryptHash(password)) {
-        return password;
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    return await bcrypt.hash(password, salt);
-}
-
-async function hashPasswordInUpdate() {
-    const update = this.getUpdate();
-
-    if (!update || Array.isArray(update)) {
-        return;
-    }
-
-    if (
-        update.$set &&
-        Object.prototype.hasOwnProperty.call(update.$set, "password")
-    ) {
-        update.$set.password = await hashPasswordIfNeeded(update.$set.password);
-    }
-
-    if (Object.prototype.hasOwnProperty.call(update, "password")) {
-        update.password = await hashPasswordIfNeeded(update.password);
-    }
-
-    this.setUpdate(update);
-}
 
 const studentPasskeySchema = new mongoose.Schema(
     {
@@ -308,15 +281,7 @@ studentSchema.pre("findOneAndUpdate", hashPasswordInUpdate);
 studentSchema.pre("updateMany", hashPasswordInUpdate);
 
 studentSchema.methods.comparePassword = async function (enteredPassword) {
-    if (!this.password) {
-        return false;
-    }
-
-    if (isBcryptHash(this.password)) {
-        return await bcrypt.compare(enteredPassword, this.password);
-    }
-
-    return enteredPassword === this.password;
+    return comparePassword(enteredPassword, this.password);
 };
 
 studentSchema.index({

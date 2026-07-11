@@ -39,6 +39,7 @@ const {
 const {
     timeToMinutes,
     getScheduleTimeStatus,
+    getTodayDateString,
     getTodayName,
     getTodayRange,
     sortSchedulesByTime
@@ -320,13 +321,13 @@ async function getScheduleForTeacher(req) {
         return null;
     }
 
-    const today = getTodayName();
+    const todayDate = getTodayDateString();
 
     const scheduleItem = await Schedule.findOne({
         _id: scheduleId,
         teacher: req.user._id,
         college: req.user.college,
-        day: today
+        date: todayDate
     })
     .populate("subject")
     .populate("classGroup")
@@ -404,61 +405,68 @@ async function getLatestSessionForScheduleByDate(
 
 router.get("/dashboard", isTeacher, async (req, res) => {
     try {
-        const today = getTodayName();
+        let targetDateObj = new Date();
+        let targetDate = '';
+        if (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)) {
+            targetDateObj = new Date(req.query.date);
+            targetDate = req.query.date;
+        } else {
+            targetDate = getTodayDateString();
+        }
+        const todayDate = targetDate;
         const now = new Date();
         const todayRange = getTodayRange();
 
         const teacher = await Teacher.findById(req.user._id)
-            .populate("subjects");
+            .populate("subjects")
+            .lean();
 
         if (!teacher) {
             return res.send("Teacher not found");
         }
 
-        const schedules = await Schedule.find({
-            teacher: req.user._id,
-            college: req.user.college,
-            day: today
-        })
-        .populate("subject")
-        .populate("classGroup")
-        .populate("classroom");
+        const teacherId = req.user._id;
+        const collegeId = req.user.college;
+
+        // Run all independent queries in parallel — saves ~4 sequential round-trips
+        const [schedules, classGroups, classrooms, activeSessions, todaysSessions] = await Promise.all([
+
+            Schedule.find({ teacher: teacherId, college: collegeId, date: todayDate })
+                .populate("subject")
+                .populate("classGroup")
+                .populate("classroom")
+                .lean(),
+
+            ClassGroup.find({ college: collegeId, isActive: true }).lean(),
+
+            Classroom.find({ college: collegeId }).lean(),
+
+            AttendanceSession.find({
+                teacher: teacherId,
+                college: collegeId,
+                isActive: true,
+                status: "ACTIVE",
+                endTime: { $gt: now }
+            })
+                .populate("schedule")
+                .populate("subject")
+                .populate("classGroup")
+                .populate("classroom")
+                .lean(),
+
+            AttendanceSession.find({
+                teacher: teacherId,
+                college: collegeId,
+                startTime: { $gte: todayRange.start, $lte: todayRange.end }
+            })
+                .populate("schedule")
+                .populate("subject")
+                .populate("classGroup")
+                .populate("classroom")
+                .lean()
+        ]);
 
         sortSchedulesByTime(schedules);
-
-        const classGroups = await ClassGroup.find({
-            college: req.user.college,
-            isActive: true
-        });
-
-        const classrooms = await Classroom.find({
-            college: req.user.college
-        });
-
-        const activeSessions = await AttendanceSession.find({
-            teacher: req.user._id,
-            college: req.user.college,
-            isActive: true,
-            status: "ACTIVE",
-            endTime: { $gt: now }
-        })
-        .populate("schedule")
-        .populate("subject")
-        .populate("classGroup")
-        .populate("classroom");
-
-        const todaysSessions = await AttendanceSession.find({
-            teacher: req.user._id,
-            college: req.user.college,
-            startTime: {
-                $gte: todayRange.start,
-                $lte: todayRange.end
-            }
-        })
-        .populate("schedule")
-        .populate("subject")
-        .populate("classGroup")
-        .populate("classroom");
 
         const classGroupIds = [];
 
@@ -468,11 +476,13 @@ router.get("/dashboard", isTeacher, async (req, res) => {
             }
         }
 
-        const students = await Student.find({
-            college: req.user.college,
-            classGroup: { $in: classGroupIds },
-            isDeleted: { $ne: true }
-        }).sort({ fullName: 1 });
+        const students = classGroupIds.length > 0
+            ? await Student.find({
+                college: collegeId,
+                classGroup: { $in: classGroupIds },
+                isDeleted: { $ne: true }
+            }).select("_id fullName email classGroup enrollmentNumber").sort({ fullName: 1 }).lean()
+            : [];
 
         const studentsByClassGroup = {};
 
@@ -579,7 +589,7 @@ router.get("/dashboard", isTeacher, async (req, res) => {
             schedules: schedules || [],
             scheduleCards: scheduleCards || [],
             manualAttendanceList: manualAttendanceList || [],
-            today: today,
+            today: todayDate,
             realtimeMode: realtimeConfig.getRealtimeMode(),
             realtimePollIntervalMs: realtimeConfig.getPollIntervalMs(),
             message: getSuccessMessage(req.query.message),
@@ -949,6 +959,14 @@ router.get("/live-map/global", isTeacher, async function (req, res) {
                     enrollmentNumber: student.enrollmentNumber || student.email || ""
                 };
             }),
+            seatMap: session.presentStudents ? session.presentStudents.map(function (ps) {
+                return {
+                    studentId: ps.student ? ps.student.toString() : "",
+                    fullName: ps.fullName || "Student",
+                    latitude: ps.latitude || null,
+                    longitude: ps.longitude || null
+                };
+            }).filter(s => s.latitude && s.longitude) : [],
             snapshot: snapshot
         });
     } catch (err) {
@@ -2136,7 +2154,7 @@ router.get("/reports/export-suspicious", isTeacher, async function (req, res) {
 
 router.get("/manual-attendance", isTeacher, async function (req, res) {
     try {
-        const today = getTodayName();
+        const todayDate = getTodayDateString();
         const now = new Date();
         const todayInput = teacherGetDateInputValue(now);
         const selectedDateInput = teacherNormalizeManualDateInput(req.query.date);
@@ -2156,7 +2174,7 @@ router.get("/manual-attendance", isTeacher, async function (req, res) {
         const schedules = await Schedule.find({
             teacher: req.user._id,
             college: req.user.college,
-            day: selectedDayName
+            date: selectedDateInput
         })
         .populate("subject")
         .populate("classGroup")
@@ -2261,7 +2279,7 @@ router.get("/manual-attendance", isTeacher, async function (req, res) {
         res.render("teacherManualAttendance", {
             teacher: req.user,
             activePage: "manual-attendance",
-            today: today,
+            today: todayDate,
             selectedDateInput: selectedDateInput,
             selectedDateLabel: teacherGetManualDateLabel(selectedDateInput),
             selectedDayName: selectedDayName,
@@ -2323,7 +2341,7 @@ router.get("/manual-attendance/:scheduleId", isTeacher, async function (req, res
             _id: scheduleId,
             teacher: req.user._id,
             college: req.user.college,
-            day: selectedDayName
+            date: selectedDateInput
         })
         .populate("subject")
         .populate("classGroup")
@@ -2433,7 +2451,7 @@ router.post("/manual-attendance/:scheduleId", isTeacher, async function (req, re
             _id: scheduleId,
             teacher: req.user._id,
             college: req.user.college,
-            day: selectedDayName
+            date: selectedDateInput
         })
             .populate("subject")
             .populate("classGroup")

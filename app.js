@@ -1,4 +1,4 @@
-process.env.TZ = process.env.TZ || "Asia/Kolkata";
+// Note: TZ is set in server.js before this file is required.
 require("dotenv").config();
 
 const express = require("express");
@@ -11,7 +11,7 @@ const rateLimit = require("express-rate-limit");
 const compression = require("compression");
 const mongoose = require("mongoose");
 
-const connectDB = require("./config/db");
+
 require("./config/passport");
 
 const csrfProtection = require("./middlewares/csrfProtection");
@@ -75,7 +75,8 @@ const helmetDirectives = {
         "'self'",
         "'unsafe-inline'",
         "https://cdnjs.cloudflare.com",
-        "https://fonts.googleapis.com"
+        "https://fonts.googleapis.com",
+        "https://cdn.jsdelivr.net"
     ],
     fontSrc: [
         "'self'",
@@ -109,7 +110,7 @@ app.use(
 );
 
 const trustProxyEnv = process.env.TRUST_PROXY;
-let trustProxyValue = false;
+let trustProxyValue = 1;
 
 if (typeof trustProxyEnv === "string" && trustProxyEnv.trim() !== "") {
     const normalizedTrustProxy = trustProxyEnv.trim().toLowerCase();
@@ -149,26 +150,30 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(express.json({ limit: "1mb" }));
 
-app.use(compression());
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.static(path.join(__dirname, "public"), {
-    maxAge: "7d",
+    maxAge: "365d",
     etag: true,
-    lastModified: true
+    lastModified: true,
+    immutable: true,
+    setHeaders: function (res, filePath) {
+        // Non-versioned files (favicon, manifest) get short cache so updates propagate
+        const base = require("path").basename(filePath);
+        const isVersioned = /\?v=/.test(res.req && res.req.url || "");
+        const isNeverCache = ["manifest.json", "service-worker.js"].some(function (f) {
+            return base === f;
+        });
+        if (isNeverCache) {
+            res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+        }
+        res.setHeader("Vary", "Accept-Encoding");
+    }
 }));
 
 /*
-    Important fix:
-    Do not call connectDB() without await at app startup.
-    This middleware makes sure real requests wait until MongoDB is ready.
+    Note: MongoDB connection is established once at server startup in server.js.
+    No per-request reconnect needed here.
 */
-app.use(async function ensureDatabaseConnection(req, res, next) {
-    try {
-        await connectDB();
-        next();
-    } catch (err) {
-        next(err);
-    }
-});
 
 app.use(
     rateLimit({
@@ -212,6 +217,20 @@ app.use(function injectRealtimeLocals(req, res, next) {
     next();
 });
 
+// Enable ETag so clients get 304 Not Modified for unchanged responses
+app.set("etag", "strong");
+
+// Health check — used by deployment platforms (Render, Railway, etc.)
+app.get("/healthz", function (req, res) {
+    const dbReady = mongoose.connection.readyState === 1;
+    res.status(dbReady ? 200 : 503).json({
+        status: dbReady ? "ok" : "degraded",
+        db: dbReady ? "connected" : "disconnected",
+        uptime: Math.floor(process.uptime()),
+        ts: new Date().toISOString()
+    });
+});
+
 app.use("/", authRoutes);
 app.use("/", collegeRegistrationRoutes);
 app.use("/", platformAdminRoutes);
@@ -236,13 +255,20 @@ app.use(function (req, res) {
 });
 
 app.use(function (err, req, res, next) {
-    console.log("SERVER ERROR:", err.message);
-    console.log(err.stack);
+    const logger = require("./utils/logger");
+    logger.error("SERVER ERROR", { msg: err.message, stack: err.stack });
 
     const statusCode = err.status || 500;
-    const userMessage = isProduction
+    const rawMessage = isProduction
         ? "Something went wrong. Please try again later."
         : err.message;
+
+    // Escape HTML to prevent XSS when injecting error messages into the page
+    const userMessage = String(rawMessage || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 
     res.status(statusCode).send(
         '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +

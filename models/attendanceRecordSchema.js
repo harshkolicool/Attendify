@@ -218,6 +218,19 @@ attendanceRecordSchema.index({
     status: 1
 });
 
+// Speeds up the aggregation pipeline on student dashboard (student + college + status)
+attendanceRecordSchema.index({
+    student: 1,
+    college: 1,
+    status: 1
+});
+
+// Speeds up today-only record lookups (attendanceSession + student)
+attendanceRecordSchema.index({
+    attendanceSession: 1,
+    student: 1
+});
+
 const AttendanceRecord = mongoose.models.AttendanceRecord || mongoose.model(
     "AttendanceRecord",
     attendanceRecordSchema

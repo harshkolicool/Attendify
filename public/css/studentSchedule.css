@@ -2106,15 +2106,6 @@ h4 {
 }
 
 @media (max-width: 760px) {
-    .schedule-layout {
-        display: block;
-    }
-
-    .schedule-sidebar {
-        position: relative;
-        height: auto;
-        min-height: auto;
-    }
 
     .schedule-main {
         padding: 22px 14px;
@@ -2172,18 +2163,23 @@ h4 {
 /* Mobile stacking fixes */
 @media (max-width: 480px) {
     .class-card-top {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-wrap: wrap;
         gap: 12px;
     }
     .class-body, .class-content {
         flex-direction: column;
         align-items: flex-start;
-        gap: 12px;
+        gap: 16px;
     }
     .class-time {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .class-time span {
+        white-space: nowrap;
     }
     .dashboard-class-card {
         grid-template-columns: 1fr;
@@ -2196,6 +2192,14 @@ h4 {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
+    }
+    .class-info h3 {
+        font-size: 16px;
+        line-height: 1.4;
+    }
+    .js-schedule-action .view-btn {
+        width: 100%;
+        margin-top: 8px;
     }
 }
 

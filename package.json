@@ -7,7 +7,7 @@
     "test": "npm run lint && npm run test:flows",
     "test:flows": "node --test tests/*.test.js",
     "lint": "node scripts/quality-check.js",
-    "start": "node server.js",
+    "start": "node cluster.js",
     "dev": "nodemon server.js",
     "init:admin": "node init/initAdmin.js"
   },
@@ -40,6 +40,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "puppeteer": "^25.1.0"
   }
 }

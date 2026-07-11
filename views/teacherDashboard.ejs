@@ -12,8 +12,12 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260617m">
-    <link rel="stylesheet" href="/css/teacherDashboard.css?v=20260617d">
+    <!-- Preload critical CSS -->
+    <link rel="preload" href="/css/uiShell.css?v=20260711" as="style">
+    <link rel="preload" href="/css/teacherDashboard.css?v=1783707422685?v=20260617d" as="style">
+
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
+    <link rel="stylesheet" href="/css/teacherDashboard.css?v=1783707422685?v=20260617d">
     <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617f">
 
     <link
@@ -27,7 +31,9 @@
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
-    <link rel="icon" type="image/png" href="/favicon.png">
+    <!-- SVG favicon — 300 bytes vs 897KB PNG -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="/favicon.png">
 
     <!-- SweetAlert2: defer so it doesn't block page render -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
@@ -281,10 +287,18 @@
                 </p>
             </div>
 
-            <div class="date-box" aria-label="Today's date">
-                <span><%= currentDate %></span>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="date" id="teacherDatePicker" class="dashboard-date-picker" value="<%= typeof targetDate !== 'undefined' ? targetDate : '' %>">
             </div>
         </header>
+
+        <script>
+            document.getElementById('teacherDatePicker').addEventListener('change', function(e) {
+                if (e.target.value) {
+                    window.location.href = '/teacher/dashboard?date=' + e.target.value;
+                }
+            });
+        </script>
 
         <% if (typeof error !== "undefined" && error) { %>
             <div class="alert-box error">

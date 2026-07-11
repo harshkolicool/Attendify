@@ -1,5 +1,6 @@
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
+const logger = require("../utils/logger");
 
 const Student = require("../models/studentSchema");
 const Teacher = require("../models/teacherSchema");
@@ -33,13 +34,12 @@ passport.use("student-local",
                 }
 
                 return done(null, {
-                    _id: student._id,
-                    id: student._id.toString(),
+                    _id: student._id.toString(),
                     accountType: "student"
                 });
 
             } catch (err) {
-                console.log("Student login error:", err.message);
+                logger.error("Student login error", { msg: err.message });
                 return done(err);
             }
         }
@@ -71,13 +71,13 @@ passport.use("teacher-local",
                 }
 
                 return done(null, {
-                    id: teacher._id,
+                    _id: teacher._id.toString(),
                     accountType: "teacher",
                     role: teacher.role
                 });
 
             } catch (err) {
-                console.log("Teacher login error:", err.message);
+                logger.error("Teacher login error", { msg: err.message });
                 return done(err);
             }
         }
@@ -86,16 +86,16 @@ passport.use("teacher-local",
 
 passport.serializeUser((user, done) => {
     done(null, {
-        _id: user._id || user.id,
-        id: user._id || user.id,
-        accountType: user.accountType
+        _id: (user._id || user.id).toString(),
+        accountType: user.accountType,
+        role: user.role
     });
 });
 
 passport.deserializeUser(async (user, done) => {
     try {
         if (user.accountType === "student") {
-            const studentId = user._id || user.id;
+            const studentId = user._id;
             const student = await Student.findById(studentId).select("-password");
 
             if (!student || student.isDeleted || student.isBlocked) {
@@ -109,7 +109,7 @@ passport.deserializeUser(async (user, done) => {
         }
 
         if (user.accountType === "teacher") {
-            const teacherId = user._id || user.id;
+            const teacherId = user._id;
             const teacher = await Teacher.findById(teacherId).select("-password");
 
             if (!teacher || teacher.isDeleted || teacher.isBlocked) {

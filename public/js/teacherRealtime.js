@@ -389,14 +389,14 @@ document.addEventListener("DOMContentLoaded", function init() {
             });
     }
 
-    socket.on("attendance:marked", function (payload) {
+    function updateLiveCardUI(payload, isOverride) {
         const card = findLiveCard(payload.sessionId);
 
         if (card) {
             const countElement = card.querySelector(".js-live-present-count");
 
             if (countElement) {
-                countElement.textContent = payload.totalPresent || 0;
+                countElement.textContent = payload.totalPresent || payload.presentCount || 0;
             }
 
             const list = card.querySelector(".js-live-student-list");
@@ -405,6 +405,16 @@ document.addEventListener("DOMContentLoaded", function init() {
                 const emptyState = list.querySelector(".empty-student-card");
                 if (emptyState) {
                     emptyState.remove();
+                }
+
+                // If this is an override, check if they are already in the list to avoid duplicates
+                if (isOverride) {
+                    const existingNames = list.querySelectorAll(".student-info strong");
+                    for (let i = 0; i < existingNames.length; i++) {
+                        if (existingNames[i].textContent === (payload.studentName || "Unknown Student")) {
+                            return; // Already in the list, nothing else to do on the basic card view
+                        }
+                    }
                 }
 
                 const item = document.createElement("li");
@@ -445,10 +455,27 @@ document.addEventListener("DOMContentLoaded", function init() {
         }
 
         showTeacherToast(
-            (payload.studentName || "Student") + " marked attendance",
+            (payload.studentName || "Student") + " marked attendance" + (isOverride ? " (Updated)" : ""),
             "success"
         );
+    }
+
+    socket.on("attendance:marked", function (payload) {
+        updateLiveCardUI(payload, false);
+        if (window.addSeatMarker && payload.latitude && payload.longitude) {
+            window.addSeatMarker(payload.sessionId, payload.studentId, payload.studentName, payload.latitude, payload.longitude);
+        }
     });
+
+    socket.on("attendance:record-updated", function (payload) {
+        if (payload.newStatus === "PRESENT" || payload.newStatus === "LATE") {
+            updateLiveCardUI(payload, true);
+            if (window.addSeatMarker && payload.latitude && payload.longitude) {
+                window.addSeatMarker(payload.sessionId, payload.studentId, payload.studentName, payload.latitude, payload.longitude);
+            }
+        }
+    });
+
 
     socket.on("attendance:ended:teacher", function (payload) {
         const card = findLiveCard(payload.sessionId);

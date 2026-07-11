@@ -1614,18 +1614,4 @@ textarea {
     opacity: 1 !important;
 }
 
-.teacher-greeting,
-.admin-greeting {
-    display: flex !important;
-    flex-direction: column !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.teacher-greeting h2,
-.teacher-greeting p,
-.admin-greeting h2,
-.admin-greeting p {
-    display: block !important;
-    width: 100% !important;
-}
+/* Kept blank to avoid breaking other CSS */

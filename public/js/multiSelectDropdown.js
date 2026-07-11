@@ -129,7 +129,7 @@
                     textSpan.style.color = "#9ca3af";
                 } else if (selectedCount === 1) {
                     textSpan.textContent = firstSelectedText;
-                    textSpan.style.color = "#111827";
+                    textSpan.style.color = "#ffffff";
                 } else {
                     textSpan.textContent = `${selectedCount} Teachers Selected`;
                     textSpan.style.color = "#4f46e5";

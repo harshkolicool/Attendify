@@ -165,13 +165,30 @@ router.post("/student/register", authLimiter, async (req, res) => {
             return await renderError("Selected class group is invalid for this college.");
         }
 
-        // Generate enrollment number: [DEPT][SEM][SECTION]-[RANDOM]
+        // Generate unique enrollment number: [DEPT][SEM][SECTION]-[RANDOM]
+        // Uses 6 hex chars (16M combinations) and retries up to 5 times on collision.
         const deptStr = classGroup.department ? classGroup.department.substring(0, 3).toUpperCase() : "UNK";
         const semStr = classGroup.semester || "0";
         const secStr = classGroup.section || "0";
-        const randomStr = generateRandomHex(4);
-        
-        const enrollmentNumber = `${deptStr}${semStr}${secStr}-${randomStr}`;
+
+        let enrollmentNumber;
+        let attempts = 0;
+        const MAX_ATTEMPTS = 5;
+
+        while (attempts < MAX_ATTEMPTS) {
+            const randomStr = Math.random().toString(16).slice(2, 8).toUpperCase();
+            const candidate = `${deptStr}${semStr}${secStr}-${randomStr}`;
+            const exists = await Student.findOne({ college: classGroup.college, enrollmentNumber: candidate }).select("_id").lean();
+            if (!exists) {
+                enrollmentNumber = candidate;
+                break;
+            }
+            attempts++;
+        }
+
+        if (!enrollmentNumber) {
+            return await renderError("Could not generate a unique enrollment number. Please try again.");
+        }
 
         const newStudent = new Student({
             fullName,
@@ -211,10 +228,15 @@ router.get("/student/waiting/:id", async (req, res) => {
         
         if (student.isApproved) {
             student.accountType = "student";
-            return req.login(student, (err) => {
-                if (err) return res.redirect("/student/login?message=approved");
-                return res.redirect("/student/dashboard?welcome=1");
-            });
+            loginWithFreshSession(req, student)
+                .then(function () {
+                    return res.redirect("/student/dashboard?welcome=1");
+                })
+                .catch(function (err) {
+                    console.error("Waiting room login error:", err);
+                    return res.redirect("/student/login?message=approved");
+                });
+            return;
         }
 
         res.render("studentWaiting", { student });
@@ -240,14 +262,18 @@ router.get("/student/check-approval/:id", async (req, res) => {
         }
 
         if (student.isApproved) {
-            student.accountType = "student";
-            return req.login(student, (err) => {
-                if (err) return res.json({ approved: false, error: "server_error" });
-                return res.json({
-                    approved: true,
-                    redirectUrl: "/student/dashboard?welcome=1"
+            const approvedStudent = { _id: student._id, id: student._id.toString(), accountType: "student" };
+            loginWithFreshSession(req, approvedStudent)
+                .then(function () {
+                    return res.json({
+                        approved: true,
+                        redirectUrl: "/student/dashboard?welcome=1"
+                    });
+                })
+                .catch(function () {
+                    return res.json({ approved: false, error: "server_error" });
                 });
-            });
+            return;
         }
 
         return res.json({ approved: false });
@@ -343,16 +369,28 @@ router.post("/auth/signout-all", async (req, res, next) => {
 
     try {
         const mongoose = require("mongoose");
-        const userId = req.user._id.toString();
-        
-        // Find all sessions containing this user ID in the session string
+        const userId = (req.user._id || req.user.id).toString();
+
+        // Target only sessions that contain this specific user ID in the
+        // passport.user field — avoids a full-collection regex scan.
         await mongoose.connection.collection("sessions").deleteMany({
-            "session": { $regex: userId }
+            $or: [
+                { "session.passport.user._id": userId },
+                { "session.passport.user.id": userId }
+            ]
         });
 
-        // The current session was just destroyed from DB, clear it from client
-        res.clearCookie("attendance.sid");
-        return res.redirect("/");
+        // Destroy the current in-memory session and clear the cookie
+        req.logout(function (logoutErr) {
+            if (logoutErr) {
+                return next(logoutErr);
+            }
+
+            req.session.destroy(function () {
+                res.clearCookie("attendance.sid");
+                return res.redirect("/");
+            });
+        });
     } catch (err) {
         console.error("Signout All Error:", err);
         return res.redirect("/");

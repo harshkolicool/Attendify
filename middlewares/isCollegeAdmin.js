@@ -1,5 +1,6 @@
 const Teacher = require("../models/teacherSchema");
 const College = require("../models/collegeSchema");
+const logger = require("../utils/logger");
 
 async function isCollegeAdmin(req, res, next) {
     try {
@@ -63,10 +64,7 @@ async function isCollegeAdmin(req, res, next) {
         next();
 
     } catch (err) {
-        console.log("COLLEGE ADMIN MIDDLEWARE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
+        logger.error("College admin middleware error", { msg: err.message, stack: err.stack });
         res.status(500).send("Admin authorization error. Please try again.");
     }
 }

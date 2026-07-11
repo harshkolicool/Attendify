@@ -1029,9 +1029,9 @@ button[disabled] {
 .report-stat-card {
     padding: 20px;
     border-radius: 24px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
+    background: #1e293b;
+    border: 1px solid #334155;
+    box-shadow: 0 14px 38px rgba(15, 23, 42, 0.25);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1040,15 +1040,16 @@ button[disabled] {
 
 .report-stat-card span {
     display: block;
-    color: #64748b;
+    color: #ffffff;
     font-size: 13px;
     font-weight: 900;
+    opacity: 0.75;
 }
 
 .report-stat-card strong {
     display: block;
     margin-top: 8px;
-    color: #0f172a;
+    color: #ffffff;
     font-size: 30px;
     font-weight: 950;
     letter-spacing: -0.05em;
@@ -1200,14 +1201,14 @@ button[disabled] {
 
 .report-export-content h3 {
     margin: 0;
-    color: #0f172a;
+    color: #ffffff;
     font-size: 20px;
     font-weight: 950;
 }
 
 .report-export-content p {
     margin: 6px 0 0;
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.65);
     font-size: 14px;
     font-weight: 800;
 }

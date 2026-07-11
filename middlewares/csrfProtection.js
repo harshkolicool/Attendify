@@ -75,6 +75,11 @@ function sendCsrfError(req, res) {
 
 function csrfProtection() {
     return function (req, res, next) {
+        // Socket.IO polling uses POST requests that cannot carry CSRF tokens
+        if (req.path.startsWith("/socket.io/")) {
+            return next();
+        }
+
         if (!req.session) {
             return next(new Error("Session is required before CSRF protection."));
         }

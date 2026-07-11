@@ -32,9 +32,8 @@ const scheduleSchema = new mongoose.Schema({
         required: true
     },
 
-    day: {
-        type: String,
-        enum: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    date: {
+        type: String, // format: YYYY-MM-DD
         required: true
     },
 
@@ -52,9 +51,9 @@ const scheduleSchema = new mongoose.Schema({
     timestamps: true
 });
 
-scheduleSchema.index({ college: 1, day: 1, teacher: 1, startTime: 1 });
-scheduleSchema.index({ college: 1, day: 1, classGroup: 1, startTime: 1 });
-scheduleSchema.index({ college: 1, day: 1, classroom: 1, startTime: 1 });
+scheduleSchema.index({ college: 1, date: 1, teacher: 1, startTime: 1 });
+scheduleSchema.index({ college: 1, date: 1, classGroup: 1, startTime: 1 });
+scheduleSchema.index({ college: 1, date: 1, classroom: 1, startTime: 1 });
 
 const Schedule = mongoose.models.Schedule || mongoose.model("Schedule", scheduleSchema);
 

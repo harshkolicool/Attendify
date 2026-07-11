@@ -902,7 +902,7 @@
         const selects = document.querySelectorAll('select');
         for (let i = 0; i < selects.length; i++) {
             const select = selects[i];
-            if (select.closest('.select-shell')) {
+            if (select.closest('.select-shell') || select.classList.contains("flatpickr-monthDropdown-months") || select.classList.contains("no-enhance")) {
                 continue;
             }
             const wrapper = document.createElement('div');

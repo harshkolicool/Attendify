@@ -340,21 +340,21 @@ function setupAdminSearch() {
         const semesterInput = document.querySelector("[data-schedule-filter='semester']");
         const classGroupInput = document.querySelector("[data-schedule-filter='group']");
         const classroomInput = document.querySelector("[data-schedule-filter='classroom']");
-        const dayInput = document.querySelector("[data-schedule-filter='day']");
+        const dateInput = document.querySelector("[data-schedule-filter='date']");
 
         const department = departmentInput ? departmentInput.value.trim() : "";
         const semester = semesterInput ? semesterInput.value.trim() : "";
         const classGroup = classGroupInput ? classGroupInput.value.trim() : "";
         const classroom = classroomInput ? classroomInput.value.trim() : "";
-        const day = dayInput ? dayInput.value.trim() : "";
+        const date = dateInput ? dateInput.value.trim() : "";
 
         return {
             department: department,
             semester: semester,
             classGroup: classGroup,
             classroom: classroom,
-            day: day,
-            hasFilter: Boolean(department || semester || classGroup || classroom || day)
+            date: date,
+            hasFilter: Boolean(department || semester || classGroup || classroom || date)
         };
     }
 
@@ -391,7 +391,7 @@ function setupAdminSearch() {
         const semester = (item.getAttribute("data-filter-semester") || "").trim();
         const classGroup = (item.getAttribute("data-filter-group") || "").trim();
         const classroom = (item.getAttribute("data-filter-classroom") || "").trim();
-        const day = (item.getAttribute("data-filter-day") || "").trim();
+        const date = (item.getAttribute("data-filter-date") || "").trim();
 
         if (filterState.department && department !== filterState.department) {
             return false;
@@ -409,7 +409,7 @@ function setupAdminSearch() {
             return false;
         }
 
-        if (filterState.day && day !== filterState.day) {
+        if (filterState.date && date !== filterState.date) {
             return false;
         }
 

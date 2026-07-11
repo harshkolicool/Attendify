@@ -39,7 +39,9 @@ const {
 
 const {
     timeToMinutes,
-    sortSchedulesByDayAndTime
+    sortSchedulesByDateAndTime,
+    getTodayDateString,
+    getDateString
 } = require("../utils/scheduleTime");
 
 const isCollegeAdmin = require("../middlewares/isCollegeAdmin");
@@ -1919,7 +1921,10 @@ router.post("/login", authLimiter, function (req, res, next) {
 
         loginWithFreshSession(req, user)
             .then(async function () {
-                const teacher = await Teacher.findById(user.id);
+                const teacher = await Teacher.findById(user._id || user.id);
+                console.log("LOGIN DEBUG - User ID:", user._id || user.id);
+                console.log("LOGIN DEBUG - Teacher Found:", !!teacher);
+                if (teacher) console.log("LOGIN DEBUG - Teacher Role:", teacher.role);
 
                 if (!teacher || teacher.role !== "ADMIN") {
                     req.logout(function () {
@@ -3462,8 +3467,14 @@ router.get("/students", isCollegeAdmin, async function (req, res) {
             section: 1
         });
 
+        let targetDate = req.query.date;
+        if (!targetDate || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+            targetDate = getTodayDateString();
+        }
+
         const schedules = await Schedule.find({
-            college: collegeId
+            college: collegeId,
+            date: targetDate
         })
         .select("classGroup classroom")
         .populate({
@@ -4351,15 +4362,21 @@ router.get("/schedules", isCollegeAdmin, async function (req, res) {
     try {
         const collegeId = getCollegeId(req);
 
+        let targetDate = req.query.date;
+        if (!targetDate || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+            targetDate = getTodayDateString();
+        }
+
         const schedules = await Schedule.find({
-            college: collegeId
+            college: collegeId,
+            date: targetDate
         })
         .populate("subject")
         .populate("teacher")
         .populate("classGroup")
         .populate("classroom");
 
-        sortSchedulesByDayAndTime(schedules);
+        sortSchedulesByDateAndTime(schedules);
 
         const classGroups = await ClassGroup.find({
             college: collegeId,
@@ -4392,15 +4409,7 @@ router.get("/schedules", isCollegeAdmin, async function (req, res) {
             classroomName: 1
         });
 
-        const days = [
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday"
-        ];
+        
 
         res.render("admin/schedules", {
             admin: req.user,
@@ -4409,7 +4418,7 @@ router.get("/schedules", isCollegeAdmin, async function (req, res) {
             subjects: subjects,
             teachers: teachers,
             classrooms: classrooms,
-            days: days,
+            targetDate: targetDate,
             message: getFlashMessage(req.query.message),
             error: null,
             activePage: "schedules"
@@ -4432,28 +4441,18 @@ router.post("/schedules/create", isCollegeAdmin, async function (req, res) {
         const subjectId = req.body.subjectId;
         const teacherId = req.body.teacherId;
         const classroomId = req.body.classroomId;
-        const day = cleanText(req.body.day);
+        const date = cleanText(req.body.date);
         const startTime = cleanText(req.body.startTime);
         const endTime = cleanText(req.body.endTime);
-
-        const validDays = [
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday"
-        ];
 
         if (
             !isValidObjectId(classGroupId) ||
             !isValidObjectId(subjectId) ||
             !isValidObjectId(teacherId) ||
             !isValidObjectId(classroomId) ||
-            !validDays.includes(day)
+            !/^\d{4}-\d{2}-\d{2}$/.test(date)
         ) {
-            return res.redirect("/admin/schedules?message=invalid_input");
+            return res.redirect(`/admin/schedules?date=${date}&message=invalid_input`);
         }
 
         const startMinutes = timeToMinutes(startTime);
@@ -4519,13 +4518,13 @@ router.post("/schedules/create", isCollegeAdmin, async function (req, res) {
             return res.redirect("/admin/schedules?message=teacher_not_assigned");
         }
 
-        const sameDaySchedules = await Schedule.find({
+        const sameDateSchedules = await Schedule.find({
             college: collegeId,
-            day: day
+            date: date
         });
 
-        for (let i = 0; i < sameDaySchedules.length; i++) {
-            const oldSchedule = sameDaySchedules[i];
+        for (let i = 0; i < sameDateSchedules.length; i++) {
+            const oldSchedule = sameDateSchedules[i];
 
             const oldStart = timeToMinutes(oldSchedule.startTime);
             const oldEnd = timeToMinutes(oldSchedule.endTime);
@@ -4564,7 +4563,7 @@ router.post("/schedules/create", isCollegeAdmin, async function (req, res) {
             subject: subjectId,
             teacher: teacherId,
             classroom: classroomId,
-            day: day,
+            date: date,
             startTime: startTime,
             endTime: endTime
         });
@@ -4584,7 +4583,7 @@ router.post("/schedules/create", isCollegeAdmin, async function (req, res) {
                 " scheduled for " +
                 (classGroup.name || "your class") +
                 " on " +
-                day +
+                date +
                 " (" +
                 startTime +
                 " - " +
@@ -4620,7 +4619,7 @@ router.post("/schedules/create", isCollegeAdmin, async function (req, res) {
                     
                     const studentPayload = JSON.stringify({
                         title: "New Class Schedule Added",
-                        body: `A new schedule for ${subjName} on ${day} has been added.`,
+                        body: `A new schedule for ${subjName} on ${date} has been added.`,
                         url: "/student/dashboard"
                     });
                     
@@ -4637,7 +4636,7 @@ router.post("/schedules/create", isCollegeAdmin, async function (req, res) {
                     if (teacher && teacher.pushSubscriptions && teacher.pushSubscriptions.length > 0) {
                         const teacherPayload = JSON.stringify({
                             title: "New Schedule Assigned",
-                            body: `You have been assigned to teach ${subjName} for ${classGroup.name} on ${day}.`,
+                            body: `You have been assigned to teach ${subjName} for ${classGroup.name} on ${date}.`,
                             url: "/teacher/dashboard"
                         });
                         teacher.pushSubscriptions.forEach(sub => {
@@ -4663,7 +4662,7 @@ router.post("/schedules/create", isCollegeAdmin, async function (req, res) {
             }
         }, 0);
 
-        res.redirect("/admin/schedules?message=created");
+        res.redirect(`/admin/schedules?date=${date}&message=created`);
 
     } catch (err) {
         console.log("ADMIN CREATE SCHEDULE ERROR:");
@@ -5056,7 +5055,7 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
             return res.redirect("/admin/schedules?message=invalid_id");
         }
 
-        const day = cleanText(req.body.day);
+        const date = cleanText(req.body.date);
         const startTime = cleanText(req.body.startTime);
         const endTime = cleanText(req.body.endTime);
         const classGroupId = req.body.classGroupId;
@@ -5064,18 +5063,8 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
         const teacherId = req.body.teacherId;
         const classroomId = req.body.classroomId;
 
-        const validDays = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday"
-        ];
-
         if (
-            !validDays.includes(day) ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
             !startTime ||
             !endTime ||
             !isValidObjectId(classGroupId) ||
@@ -5083,7 +5072,7 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
             !isValidObjectId(teacherId) ||
             !isValidObjectId(classroomId)
         ) {
-            return res.redirect("/admin/schedules?message=invalid_input");
+            return res.redirect(`/admin/schedules?date=${date}&message=invalid_input`);
         }
 
         const startMinutes = timeToMinutes(startTime);
@@ -5204,7 +5193,7 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
         const possibleConflicts = await Schedule.find({
             _id: { $ne: scheduleId },
             college: collegeId,
-            day: day,
+            date: date,
             $or: [
                 { teacher: teacherId },
                 { classGroup: classGroupId },
@@ -5233,11 +5222,6 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
                     existingSchedule.subject &&
                     existingSchedule.subject.toString() === subjectId.toString();
 
-                /*
-                    Sometimes duplicate schedule rows exist for the exact same class,
-                    subject, teacher and classroom. Editing one of them should not
-                    fail as a false "teacher conflict".
-                */
                 if (sameTeacher && sameClassGroup && sameClassroom && sameSubject) {
                     continue;
                 }
@@ -5256,7 +5240,7 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
             }
         }
 
-        schedule.day = day;
+        schedule.date = date;
         schedule.startTime = startTime;
         schedule.endTime = endTime;
         schedule.classGroup = classGroupId;
@@ -5325,7 +5309,7 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
             "Schedule updated",
             (subject.subjectName || "Subject") +
                 " schedule updated: " +
-                day +
+                date +
                 " (" +
                 startTime +
                 " - " +
@@ -5362,7 +5346,7 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
                     
                     const studentPayload = JSON.stringify({
                         title: "Class Rescheduled",
-                        body: `The schedule for ${subjName} has been updated to ${day} (${startTime} - ${endTime}).`,
+                        body: `The schedule for ${subjName} has been updated to ${date} (${startTime} - ${endTime}).`,
                         url: "/student/dashboard"
                     });
                     
@@ -5379,7 +5363,7 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
                     if (teacher && teacher.pushSubscriptions && teacher.pushSubscriptions.length > 0) {
                         const teacherPayload = JSON.stringify({
                             title: "Schedule Updated",
-                            body: `Your schedule for ${subjName} (${className}) has been changed to ${day} (${startTime} - ${endTime}).`,
+                            body: `Your schedule for ${subjName} (${className}) has been changed to ${date} (${startTime} - ${endTime}).`,
                             url: "/teacher/dashboard"
                         });
                         teacher.pushSubscriptions.forEach(sub => {
@@ -5405,7 +5389,7 @@ router.post("/schedules/:id/update", isCollegeAdmin, async function (req, res) {
             }
         }, 0);
 
-        res.redirect("/admin/schedules?message=updated");
+        res.redirect(`/admin/schedules?date=${date}&message=updated`);
 
     } catch (err) {
         console.log("ADMIN UPDATE SCHEDULE ERROR:");
@@ -5491,7 +5475,7 @@ router.post("/schedules/:id/delete", isCollegeAdmin, async function (req, res) {
             }
         );
 
-        res.redirect("/admin/schedules?message=deleted");
+        res.redirect(`/admin/schedules?date=${schedule.date}&message=deleted`);
 
     } catch (err) {
         console.log("ADMIN DELETE SCHEDULE ERROR:");

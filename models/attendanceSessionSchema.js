@@ -55,6 +55,16 @@ const studentAttendanceSnapshotSchema = new mongoose.Schema(
         distanceFromClassroom: {
             type: Number,
             default: 0
+        },
+
+        latitude: {
+            type: Number,
+            default: null
+        },
+
+        longitude: {
+            type: Number,
+            default: null
         }
     },
     {

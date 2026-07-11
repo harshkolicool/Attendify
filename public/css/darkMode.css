@@ -1,5 +1,6 @@
 /* Dark Mode Overrides (Slate/Zinc Palette) */
 [data-theme="dark"] {
+    color-scheme: dark;
     /* Legacy Shell Overrides */
     --shell-bg: #0f172a;
     --shell-bg-accent: #1e293b;
@@ -479,6 +480,9 @@
     background: #0f172a !important;
     color: #f8fafc !important;
     border-color: #334155 !important;
+}
+[data-theme="dark"] .custom-multi-select-trigger .multi-select-text {
+    color: #f8fafc !important;
 }
 [data-theme="dark"] .custom-multi-select-trigger:hover {
     border-color: #38bdf8 !important;

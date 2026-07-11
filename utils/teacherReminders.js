@@ -1,7 +1,7 @@
 const Schedule = require("../models/scheduleSchema");
 const AttendanceSession = require("../models/attendanceSessionSchema");
 const { createNotification } = require("./notificationService");
-const { getTodayName } = require("./scheduleTime");
+const { getTodayDateString } = require("./scheduleTime");
 const logger = require("./logger");
 
 /**
@@ -30,7 +30,7 @@ function isTimeWithinRecentWindow(timeStr, startMinutesAgo, endMinutesAgo) {
 
 async function checkTeacherReminders() {
     try {
-        const todayDay = getTodayName();
+        const todayDate = getTodayDateString();
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
         const endOfToday = new Date();
@@ -38,7 +38,7 @@ async function checkTeacherReminders() {
 
         // 1. Find all schedules for today
         const todaySchedules = await Schedule.find({
-            day: todayDay,
+            date: todayDate,
             isActive: true
         }).populate("teacher", "fullName _id")
           .populate("subject", "subjectName");

@@ -342,26 +342,16 @@ function validateSubjectForm(form, errors) {
 }
 
 function validateScheduleForm(form, errors) {
-    const validDays = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday"
-    ];
-
     validateRequired(form, "classGroupId", "Class Group", errors);
     validateRequired(form, "subjectId", "Subject", errors);
     validateRequired(form, "teacherId", "Teacher", errors);
     validateRequired(form, "classroomId", "Classroom", errors);
 
-    if (validateRequired(form, "day", "Day", errors)) {
-        const day = getFieldValue(form, "day");
+    if (validateRequired(form, "date", "Date", errors)) {
+        const date = getFieldValue(form, "date");
 
-        if (!validDays.includes(day)) {
-            addError(errors, form, "day", "Please select a valid day.");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            addError(errors, form, "date", "Please enter a valid date.");
         }
     }
 

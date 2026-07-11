@@ -182,7 +182,7 @@ function getClientIp(req) {
         return forwardedFor.split(",")[0].trim();
     }
 
-    return req.ip || req.connection.remoteAddress || "unknown";
+    return req.ip || req.socket?.remoteAddress || "unknown";
 }
 
 module.exports = {

@@ -186,6 +186,9 @@ function isOriginAllowed(origin) {
     return false;
 }
 
+const { createAdapter } = require('@socket.io/cluster-adapter');
+const { setupWorker } = require('@socket.io/sticky');
+
 async function startServer() {
     try {
         await connectDB();
@@ -205,6 +208,11 @@ async function startServer() {
                     credentials: true
                 }
             });
+
+            if (process.env.RUNNING_IN_CLUSTER === 'true') {
+                io.adapter(createAdapter());
+                setupWorker(io);
+            }
 
             const sessionMiddleware = app.get("sessionMiddleware");
 
@@ -247,9 +255,11 @@ async function startServer() {
             process.exit(1);
         });
 
-        server.listen(PORT, function () {
-            logger.info("Server running", { url: "http://localhost:" + PORT });
-        });
+        if (process.env.RUNNING_IN_CLUSTER !== 'true') {
+            server.listen(PORT, function () {
+                logger.info("Server running", { url: "http://localhost:" + PORT });
+            });
+        }
     } catch (err) {
         logger.error("SERVER STARTUP FAILED", { msg: err.message });
         process.exit(1);

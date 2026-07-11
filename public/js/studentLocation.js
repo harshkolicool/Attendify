@@ -338,96 +338,11 @@ function resetAttendanceButton(button, oldHtml) {
     button.dataset.pending = "false";
 }
 
-function getAdaptiveConfidenceThresholdFromPosition(position, radiusHint) {
-    const meta = position && position.meta ? position.meta : null;
-    let target = Number(meta && meta.targetConfidenceScore);
-
-    if (!Number.isFinite(target) || target <= 0) {
-        target = 50;
-    }
-
-    const radius = Math.max(1, Number(radiusHint) || 100);
-    if (radius <= 5) {
-        target = Math.max(target, 63);
-    } else if (radius < 25) {
-        target = Math.max(target, 58);
-    } else if (radius <= 50) {
-        target = Math.max(target, 54);
-    }
-
-    return Math.max(45, Math.min(72, target));
-}
-
-function positionNeedsRefinement(position, radiusHint) {
-    const meta = position && position.meta ? position.meta : null;
-    const confidenceScore = Number(meta && meta.confidenceScore);
-    const threshold = getAdaptiveConfidenceThresholdFromPosition(position, radiusHint);
-    const shouldRetry = Boolean(meta && meta.shouldRetry);
-
-    return shouldRetry || !Number.isFinite(confidenceScore) || confidenceScore < threshold;
-}
-
-function shouldRunExtraRefinement(position, radiusHint) {
-    const meta = position && position.meta ? position.meta : null;
-    const network = meta && meta.network ? meta.network : null;
-    const effectiveType = network && network.effectiveType
-        ? String(network.effectiveType).toLowerCase()
-        : "";
-    const sampleCount = Number(meta && meta.sampleCount) || 0;
-    const radius = Math.max(1, Number(radiusHint) || 100);
-
-    return (
-        radius < 25 ||
-        sampleCount < 10 ||
-        effectiveType === "slow-2g" ||
-        effectiveType === "2g" ||
-        effectiveType === "3g"
-    );
-}
-
-function refineStudentPosition(basePosition, radiusHint, button, label) {
-    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + label;
-
-    return getBestStudentLocationPosition(function (currentAccuracy, bestSample, sampleCountRaw) {
-        const bestAcc = bestSample && bestSample.coords
-            ? Math.round(bestSample.coords.accuracy)
-            : Math.round(currentAccuracy);
-        const sampleSuffix = Number(sampleCountRaw) > 0 ? " (" + sampleCountRaw + " samples)" : "";
-        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + label + " ±" + bestAcc + "m" + sampleSuffix;
-    }).then(function (refinedPosition) {
-        return chooseBetterGeoFix(basePosition, refinedPosition);
-    }).catch(function () {
-        return basePosition;
-    });
-}
-
-function improveStudentPositionForAccuracy(initialPosition, radiusHint, button) {
-    if (initialPosition && initialPosition.meta && initialPosition.meta.source === "mock-dev") {
-        return Promise.resolve(initialPosition);
-    }
-
-    if (!positionNeedsRefinement(initialPosition, radiusHint)) {
-        return Promise.resolve(initialPosition);
-    }
-
-    return refineStudentPosition(initialPosition, radiusHint, button, "Improving GPS")
-        .then(function (firstRefined) {
-            if (!positionNeedsRefinement(firstRefined, radiusHint)) {
-                return firstRefined;
-            }
-
-            if (!shouldRunExtraRefinement(firstRefined, radiusHint)) {
-                return firstRefined;
-            }
-
-            return refineStudentPosition(firstRefined, radiusHint, button, "Extra GPS check");
-        });
-}
 
 function getFastGpsPosition() {
     return new Promise(function(resolve, reject) {
         if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.getBestFreshPosition === 'function') {
-            const cached = window.AttendifyLiveStream.getBestFreshPosition(15000);
+            const cached = window.AttendifyLiveStream.getBestFreshPosition(20000);
             if (cached) {
                 return resolve({ coords: cached });
             }
@@ -436,7 +351,7 @@ function getFastGpsPosition() {
         navigator.geolocation.getCurrentPosition(
             function(pos) { resolve(pos); },
             function(err) { reject(err); },
-            { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     });
 }
@@ -467,9 +382,6 @@ function markAttendance(sessionId, button) {
     getFastGpsPosition()
         .catch(function(err) {
             return null;
-        })
-        .then(function(pos) {
-            return improveStudentPositionForAccuracy(pos, radiusHint, button);
         })
         .then(function(pos) {
             if (!pos || !pos.coords) {
@@ -650,167 +562,6 @@ function getActiveSessionRadiusHint() {
     return 100;
 }
 
-function getBestStudentLocationPosition(onProgress) {
-    const radiusHint = getActiveSessionRadiusHint();
-
-    function getWebLocation() {
-        const geoOptions =
-            window.AttendifyGeo && typeof window.AttendifyGeo.getCollectionOptionsForRadius === "function"
-                ? window.AttendifyGeo.getCollectionOptionsForRadius(radiusHint)
-                : null;
-
-        if (window.AttendifyGeo && typeof window.AttendifyGeo.getBestPosition === "function") {
-            const finalOptions = Object.assign({}, geoOptions || {}, {
-                radiusHintMeters: radiusHint
-            });
-
-            return window.AttendifyGeo.getBestPosition(onProgress, finalOptions);
-        }
-
-        // Fallback: original simple sampler
-        return new Promise(function (resolve, reject) {
-        const samples = [];
-        let lastError = null;
-        let finished = false;
-        let watchId = null;
-        let timeoutId = null;
-
-        const targetAccuracyMeters = 10;
-        const acceptableAccuracyMeters = 15;
-        const minimumSamples = 8;
-        const minCollectionMs = 15000;
-        const maxWaitMs = 25000;
-        const startTime = Date.now();
-
-        function cleanup() {
-            if (timeoutId) clearTimeout(timeoutId);
-            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-        }
-
-        function minCollectionReached() {
-            return Date.now() - startTime >= minCollectionMs;
-        }
-
-        function getAccuracy(position) {
-            return Number(
-                position && position.coords &&
-                Number.isFinite(Number(position.coords.accuracy))
-                    ? position.coords.accuracy : 999999
-            );
-        }
-
-        function getBestSample() {
-            samples.sort(function (a, b) { return getAccuracy(a) - getAccuracy(b); });
-            return samples[0];
-        }
-
-        function finish(error) {
-            if (finished) return;
-            finished = true;
-            cleanup();
-            if (samples.length === 0) {
-                if (window.localStorage && window.localStorage.getItem('MOCK_GPS') === 'true') {
-                    console.warn("Using MOCK GPS for development because real GPS failed.");
-                    resolve({
-                        coords: { latitude: 28.6139, longitude: 77.2090, accuracy: 15 },
-                        meta: { sampleCount: 1, source: "mock-dev" }
-                    });
-                    return;
-                }
-                reject(error || lastError || new Error("Location is not available."));
-                return;
-            }
-            resolve(getBestSample());
-        }
-
-        function addSample(position) {
-            if (finished || !position || !position.coords) return;
-
-            const lat = Number(position.coords.latitude);
-            const lon = Number(position.coords.longitude);
-            const accuracy = getAccuracy(position);
-
-            if (
-                !Number.isFinite(lat) ||
-                !Number.isFinite(lon) ||
-                accuracy <= 0 ||
-                accuracy > 500  // 500m matches backend MAX_GPS_ACCEPTABLE_ACCURACY; deep-indoor Wi-Fi fixes can be 100-300m
-            ) {
-                return;
-            }
-
-            samples.push(position);
-
-            if (onProgress && typeof onProgress === "function") {
-                onProgress(accuracy, getBestSample());
-            }
-
-            if (!minCollectionReached()) {
-                return;
-            }
-
-            if (accuracy <= targetAccuracyMeters && samples.length >= minimumSamples) {
-                finish();
-                return;
-            }
-
-            if (samples.length >= minimumSamples && accuracy <= acceptableAccuracyMeters) {
-                setTimeout(function () {
-                    if (!finished) {
-                        finish();
-                    }
-                }, 1200);
-            }
-        }
-
-        function handleError(error) {
-            lastError = error;
-            if (error && Number(error.code) === 1) finish(error);
-        }
-
-        const options = { enableHighAccuracy: true, timeout: 18000, maximumAge: 0 };
-        navigator.geolocation.getCurrentPosition(addSample, handleError, options);
-        try { watchId = navigator.geolocation.watchPosition(addSample, handleError, options); } catch (e) { lastError = e; }
-        timeoutId = setTimeout(function () { finish(); }, maxWaitMs);
-        });
-    }
-
-    // Web Geolocation Fallback
-    return getWebLocation();
-}
-
-function chooseBetterGeoFix(firstFix, secondFix) {
-    if (!firstFix || !firstFix.coords) {
-        return secondFix;
-    }
-
-    if (!secondFix || !secondFix.coords) {
-        return firstFix;
-    }
-
-    const firstConfidence = Number(
-        firstFix.meta && Number.isFinite(Number(firstFix.meta.confidenceScore))
-            ? firstFix.meta.confidenceScore
-            : 0
-    );
-    const secondConfidence = Number(
-        secondFix.meta && Number.isFinite(Number(secondFix.meta.confidenceScore))
-            ? secondFix.meta.confidenceScore
-            : 0
-    );
-
-    if (secondConfidence >= firstConfidence + 8) {
-        return secondFix;
-    }
-
-    if (firstConfidence >= secondConfidence + 8) {
-        return firstFix;
-    }
-
-    return Number(secondFix.coords.accuracy) < Number(firstFix.coords.accuracy)
-        ? secondFix
-        : firstFix;
-}
 
 let studentAttendanceTouchTs = 0;
 

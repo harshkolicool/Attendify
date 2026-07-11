@@ -38,20 +38,36 @@
         );
     }
 
+    var kalmanFilter = null;
+
     function handleSuccess(position) {
         var coords = position.coords;
         var ts = position.timestamp || Date.now();
 
         if (!isValid(coords.latitude, coords.longitude, coords.accuracy)) {
-            return;
+            return null;
+        }
+
+        var lat = coords.latitude;
+        var lon = coords.longitude;
+        var source = "browser-watch";
+
+        if (typeof window !== "undefined" && window.KalmanFilter) {
+            if (!kalmanFilter) {
+                kalmanFilter = new window.KalmanFilter();
+            }
+            var filtered = kalmanFilter.filter(lat, lon, coords.accuracy, ts);
+            lat = filtered.lat;
+            lon = filtered.lon;
+            source = "kalman-filtered-watch";
         }
 
         var sample = {
-            latitude: coords.latitude,
-            longitude: coords.longitude,
+            latitude: lat,
+            longitude: lon,
             accuracy: coords.accuracy,
             timestamp: ts,
-            source: "browser-watch"
+            source: source
         };
 
         state.cachedPosition = sample;
@@ -60,6 +76,8 @@
         if (state.recentSamples.length > CACHE_SIZE) {
             state.recentSamples.shift();
         }
+        
+        return sample;
     }
 
     function handleError(error) {
@@ -82,11 +100,17 @@
             // Warm up the GPS
             state.watchId = navigator.geolocation.watchPosition(
                 function(position) {
-                    handleSuccess(position);
-                    AttendifyLiveStream.push({
-                        coords: position.coords,
-                        timestamp: position.timestamp || Date.now()
-                    });
+                    var sample = handleSuccess(position);
+                    if (sample) {
+                        AttendifyLiveStream.push({
+                            coords: {
+                                latitude: sample.latitude,
+                                longitude: sample.longitude,
+                                accuracy: sample.accuracy
+                            },
+                            timestamp: sample.timestamp
+                        });
+                    }
                 },
                 handleError,
                 {

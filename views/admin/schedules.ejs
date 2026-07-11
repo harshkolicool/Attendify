@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedules | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
 
     <link rel="stylesheet" href="/css/adminTheme.css">
     <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617f">
@@ -45,21 +45,6 @@
 <body>
 
 <%
-    const dayOrder = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday"
-    ];
-
-    const dayRank = {};
-    dayOrder.forEach(function(dayName, dayIndex) {
-        dayRank[dayName] = dayIndex;
-    });
-
     function toTimeMinutes(timeValue) {
         if (!timeValue) {
             return Number.MAX_SAFE_INTEGER;
@@ -90,7 +75,7 @@
 
     const scheduleGroupMap = {};
     const classroomOptionMap = {};
-    const dayPresenceMap = {};
+    const datePresenceMap = {};
     
     const departmentSet = new Set();
     const semesterSet = new Set();
@@ -127,11 +112,11 @@
             }
         }
 
-        // Group by Day
-        let groupId = schedule.day || "missing";
-        let groupName = schedule.day || "Day Missing";
+        // Group by Date
+        let groupId = schedule.date || "missing";
+        let groupName = schedule.date ? new Date(schedule.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : "Date Missing";
         let groupMeta = "All classes scheduled for " + groupName;
-        let groupSort = String(dayRank[schedule.day] !== undefined ? dayRank[schedule.day] : 99).padStart(2, "0");
+        let groupSort = groupId;
 
         if (!scheduleGroupMap[groupId]) {
             scheduleGroupMap[groupId] = {
@@ -143,14 +128,14 @@
                 semester: "",
                 section: "",
                 roomMap: {},
-                dayMap: {},
+                dateMap: {},
                 schedules: []
             };
         }
 
-        if (schedule.day) {
-            scheduleGroupMap[groupId].dayMap[schedule.day] = true;
-            dayPresenceMap[schedule.day] = true;
+        if (schedule.date) {
+            scheduleGroupMap[groupId].dateMap[schedule.date] = true;
+            datePresenceMap[schedule.date] = true;
         }
 
         if (roomToken) {
@@ -206,9 +191,7 @@
             return first.label.localeCompare(second.label);
         });
 
-    const dayOptions = dayOrder.filter(function(dayName) {
-        return dayPresenceMap[dayName];
-    });
+    const dateOptions = Object.keys(datePresenceMap).sort();
 
     const totalSchedulesCount = (schedules || []).length;
     const groupedClassCount = classGroupOptions.length;
@@ -259,7 +242,7 @@
 
             <article class="admin-schedules-overview-pill">
                 <span>Active Days</span>
-                <strong><%= dayOptions.length %></strong>
+                <strong><%= dateOptions.length %></strong>
             </article>
         </section>
 
@@ -283,17 +266,8 @@
             >
 
                 <div class="admin-field">
-                    <label>Day</label>
-                    <select name="day" required>
-                        <option value="">Select Day</option>
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
-                        <option value="Friday">Friday</option>
-                        <option value="Saturday">Saturday</option>
-                        <option value="Sunday">Sunday</option>
-                    </select>
+                    <label>Date</label>
+                    <input type="date" name="date" required value="<%= typeof targetDate !== 'undefined' ? targetDate : '' %>" class="admin-date-input">
                 </div>
 
                 <div class="admin-field">
@@ -463,7 +437,7 @@
                     <input
                         type="text"
                         data-admin-search="schedules"
-                        placeholder="Search by day, subject, teacher, class group or classroom..."
+                        placeholder="Search by date, subject, teacher, class group or classroom..."
                     >
                 </div>
 
@@ -525,12 +499,12 @@
                     </div>
 
                     <div class="admin-schedule-filter-field">
-                        <label for="scheduleDayFilter">Day</label>
-                        <select id="scheduleDayFilter" data-schedule-filter="day">
-                            <option value="">All Days</option>
+                        <label for="scheduleDateFilter">Date</label>
+                        <select id="scheduleDateFilter" data-schedule-filter="date">
+                            <option value="">All Dates</option>
 
-                            <% dayOptions.forEach(function(dayName) { %>
-                                <option value="<%= dayName %>"><%= dayName %></option>
+                            <% dateOptions.forEach(function(dateStr) { %>
+                                <option value="<%= dateStr %>"><%= dateStr %></option>
                             <% }) %>
                         </select>
                     </div>
@@ -551,9 +525,7 @@
                         const groupRoomList = Object.keys(group.roomMap)
                             .map(function(roomToken) { return group.roomMap[roomToken]; })
                             .sort();
-                        const groupDayList = dayOrder.filter(function(dayName) {
-                            return group.dayMap[dayName];
-                        });
+                        const groupDateList = Object.keys(group.dateMap).sort();
                     %>
 
                     <details
@@ -581,10 +553,10 @@
                                         </span>
                                     <% } %>
 
-                                    <% groupDayList.forEach(function(dayName) { %>
+                                    <% groupDateList.forEach(function(dateStr) { %>
                                         <span class="admin-day-badge">
                                             <i class="fa-regular fa-calendar"></i>
-                                            <%= dayName %>
+                                            <%= dateStr %>
                                         </span>
                                     <% }) %>
                                 </div>
@@ -640,7 +612,7 @@
                                     data-filter-semester="<%= schedule._filterSemester || '' %>"
                                     data-filter-group="<%= schedule._filterGroup || '' %>"
                                     data-filter-classroom="<%= schedule._filterClassroom || '' %>"
-                                    data-filter-day="<%= schedule.day || '' %>"
+                                    data-filter-date="<%= schedule.date || '' %>"
                                 >
 
                                     <div class="admin-item-top">
@@ -739,15 +711,9 @@
                                             </div>
 
                                             <div class="admin-field">
-                                                <label>Day</label>
-                                                <select name="day" required>
-                                                    <% ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].forEach(function(dayName) { %>
-                                                        <option value="<%= dayName %>" <%= schedule.day === dayName ? "selected" : "" %>>
-                                                            <%= dayName %>
-                                                        </option>
-                                                    <% }) %>
-                                                </select>
-                                            </div>
+    <label>Date</label>
+    <input type="date" name="date" required value="<%= schedule.date || '' %>" class="admin-date-input">
+</div>
 
                                             <div class="admin-field">
                                                 <label>Start Time</label>
@@ -914,7 +880,7 @@
 <script src="/js/adminSearch.js?v=1780440263"></script>
 <script src="/js/adminScheduleTimes.js"></script>
 <script src="/js/adminScheduleForm.js"></script>
-<script src="/js/adminValidation.js"></script>
+<script src="/js/adminValidation.js?v=2"></script>
 <script src="/js/uiShell.js"></script>
 
     <script src="/js/csrfAuto.js" defer></script>

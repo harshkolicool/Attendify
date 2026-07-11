@@ -12,7 +12,11 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260617b">
+    <!-- Preload critical CSS so browser starts fetching before parser reaches link tags -->
+    <link rel="preload" href="/css/uiShell.css?v=20260711" as="style">
+    <link rel="preload" href="/css/studentSchedule.css?v=20260617b" as="style">
+
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
     <link rel="stylesheet" href="/css/studentSchedule.css?v=20260617b">
     <link rel="stylesheet" href="/css/finalUiFix.css?v=20260617f">
 
@@ -20,7 +24,9 @@
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
-    <link rel="icon" type="image/png" href="/favicon.png">
+    <!-- SVG favicon — 300 bytes vs 897KB PNG -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="/favicon.png">
 
     <!-- SweetAlert2: defer so it doesn't block page render -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
@@ -675,23 +681,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     const status = await window.PushManagerHelper.init("student");
     if (status.supported && !status.subscribed) {
         if (Notification.permission === 'granted') {
-            try { await window.PushManagerHelper.subscribe("student"); } catch (err) {}
+            try { 
+                await window.PushManagerHelper.subscribe("student"); 
+            } catch (err) {
+                // If it's granted but subscribe fails (e.g., cleared data, CSRF missing), we MUST show the button to let them retry
+                btn.style.display = "block";
+                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Subscription Failed. Click to Retry';
+            }
         } else if (Notification.permission === 'default' || !Notification.permission) {
             btn.style.display = "block";
-            btn.addEventListener("click", async () => {
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
-                btn.disabled = true;
-                try {
-                    await window.PushManagerHelper.subscribe("student");
-                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
-                    setTimeout(() => btn.style.display = "none", 2000);
-                } catch (err) {
-                    btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
-                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
-                }
-            });
         }
+        
+        // Always attach listener if button could ever be shown
+        btn.addEventListener("click", async () => {
+            if (Notification.permission === 'denied') {
+                alert("You have blocked notifications in your browser settings. Please enable them to continue.");
+                return;
+            }
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
+            btn.disabled = true;
+            try {
+                await window.PushManagerHelper.subscribe("student");
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
+                setTimeout(() => btn.style.display = "none", 2000);
+            } catch (err) {
+                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error: ' + (err.message || 'Failed');
+                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+            }
+        });
+    } else if (status.supported && status.subscribed) {
+        // Explicitly hide it just in case
+        btn.style.display = "none";
     }
 });
 </script>

@@ -12,8 +12,12 @@ const AttendanceRecord = require("../models/attendanceRecordSchema");
 const AttendanceAttempt = require("../models/attendanceAttemptSchema");
 const Schedule = require("../models/scheduleSchema");
 const PasskeySetupRequest = require("../models/passkeySetupRequestSchema");
+const ClassGroup = require("../models/classGroupSchema");
+const Subject = require("../models/subjectSchema");
+const Teacher = require("../models/teacherSchema");
+const Classroom = require("../models/classroomSchema");
 
-const { sortSchedulesByTime, getTodayName, getTodayRange } = require("../utils/scheduleTime");
+const { sortSchedulesByTime, getTodayDateString, getDateString, getTodayRange } = require("../utils/scheduleTime");
 const {
     evaluateLocationRange,
     getLocationDecisionMessage,
@@ -38,6 +42,7 @@ const {
     deleteNotification,
     clearAllNotifications
 } = require("../utils/notificationService");
+const { getCachedDashboard, setCachedDashboard, invalidateCachedDashboard } = require("../utils/studentDashboardCache");
 
 const {
     createAttendanceToken,
@@ -749,92 +754,145 @@ async function persistStudentLiveLocation(payload) {
 }
 
 async function getStudentPageData(req) {
-    const student = await Student.findById(getStudentIdFromRequest(req))
+    const studentId = getStudentIdFromRequest(req);
+
+    // Batch 1: fetch student profile first (needed as FK for subsequent queries)
+    const student = await Student.findById(studentId)
         .populate("classGroup")
-        .populate("subjects");
+        .populate("subjects")
+        .lean();
 
     if (!student) {
+        return { error: "Student not found" };
+    }
+
+    if (!student.classGroup || !student.college) {
         return {
-            error: "Student not found"
+            student: student,
+            schedules: [],
+            todaySessions: [],
+            activeSessions: [],
+            markedSessionIds: [],
+            attendanceStatusBySchedule: {},
+            today: getTodayDateString(),
+            presentCount: 0,
+            absentCount: 0,
+            attendancePercentage: 0,
+            historyDates: JSON.stringify({ present: [], absent: [] }),
+            dashboardSubjectSummary: [],
+            passkeyCount: getPasskeyCount(student),
+            trustedDeviceCount: getActiveTrustedDeviceCount(student),
+            hasPasskey: getPasskeyCount(student) > 0,
+            hasTrustedDevice: !!getTrustedDeviceFromStudent(student, req),
+            hasUsableTrustedDevice: isTrustedDeviceUsable(getTrustedDeviceFromStudent(student, req)),
+            realtimeMode: realtimeConfig.getRealtimeMode(),
+            realtimePollIntervalMs: realtimeConfig.getPollIntervalMs(),
+            attendanceWindow: attendanceWindow,
+            vapidPublicKey: process.env.VAPID_PUBLIC_KEY
         };
     }
 
-    if (!student.classGroup) {
-        return {
-            error: "Student classGroup missing. Run initAll.js again."
-        };
-    }
-
-    if (!student.college) {
-        return {
-            error: "Student college missing. Please contact admin."
-        };
-    }
-
-    const today = getTodayName();
+    const today = getTodayDateString();
     const todayRange = getTodayRange();
+    const collegeId = student.college;
+    const classGroupId = student.classGroup._id;
 
-    const schedules = await Schedule.find({
-        college: student.college,
-        classGroup: student.classGroup._id,
-        day: today
-    })
-        .populate("subject")
-        .populate("teacher")
-        .populate("classroom")
-        .populate("classGroup");
+    // Batch 2: run all remaining queries in parallel — saves ~4 sequential round-trips
+    const [schedules, todaySessions, activeSessions, attendanceAgg] = await Promise.all([
+
+        Schedule.find({ college: collegeId, classGroup: classGroupId, date: today })
+            .populate("subject")
+            .populate("teacher")
+            .populate("classroom")
+            .populate("classGroup")
+            .lean(),
+
+        AttendanceSession.find({
+            college: collegeId,
+            classGroup: classGroupId,
+            startTime: { $gte: todayRange.start, $lte: todayRange.end }
+        })
+            .sort({ createdAt: 1 })
+            .populate("schedule")
+            .populate("subject")
+            .populate("classroom")
+            .populate("teacher")
+            .populate("classGroup")
+            .lean(),
+
+        AttendanceSession.find({
+            college: collegeId,
+            classGroup: classGroupId,
+            isActive: true,
+            status: "ACTIVE",
+            endTime: { $gt: new Date() }
+        })
+            .sort({ createdAt: 1 })
+            .populate("schedule")
+            .populate("subject")
+            .populate("classroom")
+            .populate("teacher")
+            .populate("classGroup")
+            .lean(),
+
+        // Single aggregation replaces full allStudentRecords load + populate.
+        // Computes overall % and per-subject breakdown in one DB round-trip.
+        AttendanceRecord.aggregate([
+            {
+                $match: {
+                    student: student._id,
+                    college: student.college,
+                    status: { $in: ["PRESENT", "LATE", "ABSENT"] }
+                }
+            },
+            {
+                $lookup: {
+                    from: "subjects",
+                    localField: "subject",
+                    foreignField: "_id",
+                    as: "subjectDoc"
+                }
+            },
+            {
+                $group: {
+                    _id: "$subject",
+                    subjectName: { $first: { $arrayElemAt: ["$subjectDoc.subjectName", 0] } },
+                    subjectCode: { $first: { $arrayElemAt: ["$subjectDoc.subjectCode", 0] } },
+                    total: { $sum: 1 },
+                    present: {
+                        $sum: {
+                            $cond: [{ $in: ["$status", ["PRESENT", "LATE"]] }, 1, 0]
+                        }
+                    },
+                    absent: {
+                        $sum: { $cond: [{ $eq: ["$status", "ABSENT"] }, 1, 0] }
+                    }
+                }
+            }
+        ])
+    ]);
 
     sortSchedulesByTime(schedules);
 
-    const todaySessions = await AttendanceSession.find({
-        college: student.college,
-        classGroup: student.classGroup._id,
-        startTime: {
-            $gte: todayRange.start,
-            $lte: todayRange.end
-        }
-    })
-        .sort({ createdAt: 1 })
-        .populate("schedule")
-        .populate("subject")
-        .populate("classroom")
-        .populate("teacher")
-        .populate("classGroup");
-
-    const activeSessions = await AttendanceSession.find({
-        college: student.college,
-        classGroup: student.classGroup._id,
-        isActive: true,
-        status: "ACTIVE",
-        endTime: { $gt: new Date() }
-    })
-        .sort({ createdAt: 1 })
-        .populate("schedule")
-        .populate("subject")
-        .populate("classroom")
-        .populate("teacher")
-        .populate("classGroup");
-
+    // Attach missing schedule refs to active sessions
     for (let i = 0; i < activeSessions.length; i++) {
         if (!activeSessions[i].schedule) {
             const matchedSchedule = findScheduleForSession(schedules, activeSessions[i]);
-
             if (matchedSchedule) {
                 activeSessions[i].schedule = matchedSchedule;
             }
         }
     }
 
-    const todaySessionIds = [];
+    // Build today-only attendance status map
+    const todaySessionIds = todaySessions.map(function (s) { return s._id; });
 
-    for (let i = 0; i < todaySessions.length; i++) {
-        todaySessionIds.push(todaySessions[i]._id);
-    }
-
-    const attendanceRecords = await AttendanceRecord.find({
-        student: student._id,
-        attendanceSession: { $in: todaySessionIds }
-    });
+    const attendanceRecords = todaySessionIds.length > 0
+        ? await AttendanceRecord.find({
+            student: student._id,
+            attendanceSession: { $in: todaySessionIds }
+        }).lean()
+        : [];
 
     const markedSessionIds = [];
     const attendanceStatusBySchedule = {};
@@ -847,7 +905,6 @@ async function getStudentPageData(req) {
         }
 
         let matchedSession = null;
-
         for (let j = 0; j < todaySessions.length; j++) {
             if (
                 record.attendanceSession &&
@@ -859,7 +916,6 @@ async function getStudentPageData(req) {
 
         if (matchedSession) {
             const matchedSchedule = findScheduleForSession(schedules, matchedSession);
-
             if (matchedSchedule) {
                 setScheduleAttendanceStatus(attendanceStatusBySchedule, matchedSchedule._id.toString(), {
                     status: record.status,
@@ -872,77 +928,34 @@ async function getStudentPageData(req) {
 
     let presentCount = 0;
     let absentCount = 0;
-
     for (let key in attendanceStatusBySchedule) {
-        if (
-            attendanceStatusBySchedule[key].status === "PRESENT" ||
-            attendanceStatusBySchedule[key].status === "LATE"
-        ) {
-            presentCount++;
-        }
-
-        if (attendanceStatusBySchedule[key].status === "ABSENT") {
-            absentCount++;
-        }
+        const s = attendanceStatusBySchedule[key].status;
+        if (s === "PRESENT" || s === "LATE") presentCount++;
+        if (s === "ABSENT") absentCount++;
     }
 
-    const allStudentRecords = await AttendanceRecord.find({
-        student: student._id,
-        college: student.college
-    })
-        .populate("subject")
-        .sort({
-            createdAt: -1
-        });
-
+    // Build stats from aggregation result
     let totalAllSessions = 0;
     let presentAllSessions = 0;
-    for (let r of allStudentRecords) {
-        if (r.status === "PRESENT" || r.status === "LATE") {
-            presentAllSessions++;
-            totalAllSessions++;
-        } else if (r.status === "ABSENT") {
-            totalAllSessions++;
-        }
-    }
-    const attendancePercentage = totalAllSessions > 0 ? Math.round((presentAllSessions / totalAllSessions) * 100) : 0;
 
-
-    const dashboardSubjectMap = {};
-
-    for (let i = 0; i < allStudentRecords.length; i++) {
-        const record = allStudentRecords[i];
-
-        const subjectKey = record.subject
-            ? record.subject._id.toString()
-            : "missing-subject";
-
-        if (!dashboardSubjectMap[subjectKey]) {
-            dashboardSubjectMap[subjectKey] = {
-                name: record.subject ? record.subject.subjectName : "Subject Missing",
-                code: record.subject && record.subject.subjectCode ? record.subject.subjectCode : "",
-                total: 0,
-                present: 0,
-                absent: 0,
-                percentage: 0
-            };
-        }
-
-        dashboardSubjectMap[subjectKey].total++;
-
-        if (getAttendanceStatusPriority(record.status) === 3) {
-            dashboardSubjectMap[subjectKey].present++;
-        }
-
-        if (record.status === "ABSENT") {
-            dashboardSubjectMap[subjectKey].absent++;
-        }
-    }
-
-    const dashboardSubjectSummary = Object.values(dashboardSubjectMap).map(function (item) {
-        item.percentage = studentGetPercent(item.present, item.total);
-        return item;
+    const dashboardSubjectSummary = attendanceAgg.map(function (row) {
+        totalAllSessions += row.total;
+        presentAllSessions += row.present;
+        return {
+            name: row.subjectName || "Subject Missing",
+            code: row.subjectCode || "",
+            total: row.total,
+            present: row.present,
+            absent: row.absent,
+            percentage: studentGetPercent(row.present, row.total)
+        };
     });
+
+    const attendancePercentage = totalAllSessions > 0
+        ? Math.round((presentAllSessions / totalAllSessions) * 100)
+        : 0;
+
+    const trustedDevice = getTrustedDeviceFromStudent(student, req);
 
     return {
         student: student,
@@ -954,13 +967,14 @@ async function getStudentPageData(req) {
         today: today,
         presentCount: presentCount,
         absentCount: absentCount,
-        attendancePercentage: attendancePercentage,
+                    attendancePercentage: attendancePercentage,
+            historyDates: JSON.stringify({ present: [], absent: [] }),
         dashboardSubjectSummary: dashboardSubjectSummary,
         passkeyCount: getPasskeyCount(student),
         trustedDeviceCount: getActiveTrustedDeviceCount(student),
         hasPasskey: getPasskeyCount(student) > 0,
-        hasTrustedDevice: !!getTrustedDeviceFromStudent(student, req),
-        hasUsableTrustedDevice: isTrustedDeviceUsable(getTrustedDeviceFromStudent(student, req)),
+        hasTrustedDevice: !!trustedDevice,
+        hasUsableTrustedDevice: isTrustedDeviceUsable(trustedDevice),
         realtimeMode: realtimeConfig.getRealtimeMode(),
         realtimePollIntervalMs: realtimeConfig.getPollIntervalMs(),
         attendanceWindow: attendanceWindow,
@@ -970,11 +984,18 @@ async function getStudentPageData(req) {
 
 router.get("/dashboard", isStudent, async function (req, res) {
     try {
-        if (!req.user || !getStudentIdFromRequest(req)) {
+        const studentIdStr = getStudentIdFromRequest(req);
+        if (!req.user || !studentIdStr) {
             return res.send("User session invalid. Please login again.");
         }
 
-        const data = await getStudentPageData(req);
+        let data = getCachedDashboard(studentIdStr);
+        if (!data) {
+            data = await getStudentPageData(req);
+            if (!data.error) {
+                setCachedDashboard(studentIdStr, data);
+            }
+        }
 
         if (data.error) {
             return res.send(data.error);
@@ -1009,18 +1030,25 @@ router.get("/schedule", isStudent, async function (req, res) {
         }
 
         if (!student.classGroup) {
-            return res.send("Student classGroup missing. Please contact admin.");
+            return res.render("studentSchedule", {
+                student: student,
+                activePage: "schedule",
+                weeklyScheduleGroups: [],
+                activeSessionsBySchedule: {},
+                todaySessionsBySchedule: {},
+                attendanceStatusBySchedule: {},
+                attendancePercentage: 100,
+                targetDate: req.query.date || (new Date()).toISOString().split('T')[0],
+                passkeyCount: 0,
+                trustedDeviceCount: 0,
+                hasPasskey: false,
+                hasTrustedDevice: false,
+                hasUsableTrustedDevice: false,
+                realtimeMode: false,
+                realtimePollIntervalMs: 5000,
+                historyDates: JSON.stringify({present: [], absent: []})
+            });
         }
-
-        const dayNames = [
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday"
-        ];
 
         function localTimeToMinutes(timeText) {
             if (!timeText || typeof timeText !== "string") {
@@ -1049,30 +1077,34 @@ router.get("/schedule", isStudent, async function (req, res) {
             return hours * 60 + minutes;
         }
 
-        const todayDate = new Date();
+        let targetDateObj = new Date();
+        let targetDate = '';
+        if (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)) {
+            targetDateObj = new Date(req.query.date);
+            targetDate = req.query.date;
+        } else {
+            targetDate = getDateString(targetDateObj);
+        }
 
         const upcomingDays = [];
-
         for (let i = 0; i < 7; i++) {
-            const date = new Date();
-            date.setDate(todayDate.getDate() + i);
-
+            const d = new Date(targetDateObj);
+            d.setDate(targetDateObj.getDate() + i);
+            const dStr = getDateString(d);
             upcomingDays.push({
-                day: dayNames[date.getDay()],
-                date: date,
+                dateStr: dStr,
+                date: d,
                 offset: i,
-                label: i === 0 ? "Today" : i === 1 ? "Tomorrow" : dayNames[date.getDay()]
+                label: dStr
             });
         }
 
-        const dayList = upcomingDays.map(function (item) {
-            return item.day;
-        });
+        const dateList = upcomingDays.map(item => item.dateStr);
 
         const schedules = await Schedule.find({
             college: student.college,
             classGroup: student.classGroup._id,
-            day: { $in: dayList }
+            date: { $in: dateList }
         })
             .populate("subject")
             .populate("teacher")
@@ -1080,11 +1112,11 @@ router.get("/schedule", isStudent, async function (req, res) {
             .populate("classGroup");
 
         schedules.sort(function (a, b) {
-            const dayA = dayList.indexOf(a.day);
-            const dayB = dayList.indexOf(b.day);
+            const dateA = dateList.indexOf(a.date);
+            const dateB = dateList.indexOf(b.date);
 
-            if (dayA !== dayB) {
-                return dayA - dayB;
+            if (dateA !== dateB) {
+                return dateA - dateB;
             }
 
             return localTimeToMinutes(a.startTime) - localTimeToMinutes(b.startTime);
@@ -1178,12 +1210,12 @@ router.get("/schedule", isStudent, async function (req, res) {
 
         const weeklyScheduleGroups = upcomingDays.map(function (dayInfo) {
             return {
-                day: dayInfo.day,
+                day: dayInfo.dateStr,
                 label: dayInfo.label,
                 date: dayInfo.date,
                 offset: dayInfo.offset,
                 schedules: schedules.filter(function (schedule) {
-                    return schedule.day === dayInfo.day;
+                    return schedule.date === dayInfo.dateStr;
                 })
             };
         });
@@ -1192,6 +1224,8 @@ router.get("/schedule", isStudent, async function (req, res) {
         const allRecords = await AttendanceRecord.find({ student: student._id });
         let totalSessions = 0;
         let presentSessions = 0;
+        
+        const dateMap = {};
         for (let r of allRecords) {
             if (r.status === "PRESENT" || r.status === "LATE") {
                 presentSessions++;
@@ -1199,18 +1233,39 @@ router.get("/schedule", isStudent, async function (req, res) {
             } else if (r.status === "ABSENT") {
                 totalSessions++;
             }
+            
+            // Map dates for calendar highlighting
+            if (r.createdAt) {
+                const dateStr = getDateString(r.createdAt);
+                if (!dateMap[dateStr]) dateMap[dateStr] = { present: 0, absent: 0 };
+                if (r.status === "PRESENT" || r.status === "LATE") {
+                    dateMap[dateStr].present++;
+                } else if (r.status === "ABSENT") {
+                    dateMap[dateStr].absent++;
+                }
+            }
         }
+        
+        const historyDates = { present: [], absent: [] };
+        for (const [dateStr, counts] of Object.entries(dateMap)) {
+            if (counts.absent > 0 && counts.present === 0) {
+                historyDates.absent.push(dateStr);
+            } else if (counts.present > 0) {
+                historyDates.present.push(dateStr);
+            }
+        }
+
         const attendancePercentage = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 100;
 
         res.render("studentSchedule", {
             student: student,
             activePage: "schedule",
-            today: getTodayName(),
             weeklyScheduleGroups: weeklyScheduleGroups,
             activeSessionsBySchedule: activeSessionsBySchedule,
             todaySessionsBySchedule: todaySessionsBySchedule,
             attendanceStatusBySchedule: attendanceStatusBySchedule,
             attendancePercentage: attendancePercentage,
+            targetDate: targetDate,
             passkeyCount: getPasskeyCount(student),
             trustedDeviceCount: getActiveTrustedDeviceCount(student),
             hasPasskey: getPasskeyCount(student) > 0,
@@ -2632,7 +2687,9 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
                     attendanceRecord: attendanceRecord._id,
                     markedAt: markedAt,
                     verificationMethod: verificationMethod,
-                    distanceFromClassroom: decisionResult.distanceFromTeacher
+                    distanceFromClassroom: decisionResult.distanceFromTeacher,
+                    latitude: Number(latitude) || null,
+                    longitude: Number(longitude) || null
                 }
             },
             $inc: {
@@ -2650,10 +2707,16 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
             updateQuery
         );
 
+        const updatedCounts = {
+            totalPresent: (session.attendanceSummary ? session.attendanceSummary.totalPresent : 0) + 1,
+            totalAbsent: Math.max(0, (session.attendanceSummary ? session.attendanceSummary.totalAbsent : 0) - (wasAbsentOverridden ? 1 : 0)),
+            totalMarked: (session.attendanceSummary ? session.attendanceSummary.totalMarked : 0) + (wasAbsentOverridden ? 0 : 1)
+        };
+
         if (wasAbsentOverridden) {
-            socketManager.emitAttendanceRecordUpdated(session, student, attendanceRecord);
+            socketManager.emitAttendanceRecordUpdated(session, student, attendanceRecord, updatedCounts);
         } else {
-            socketManager.emitAttendanceMarked(session, student, attendanceRecord, decisionResult.distanceFromTeacher);
+            socketManager.emitAttendanceMarked(session, student, attendanceRecord, decisionResult.distanceFromTeacher, updatedCounts);
         }
 
         res.json({
@@ -2729,12 +2792,33 @@ router.get("/attendance-history", isStudent, async function (req, res) {
             return res.redirect("/student/login");
         }
 
-        if (!student.college) {
-            return res.send("Student college missing. Please contact admin.");
-        }
-
-        if (!student.classGroup) {
-            return res.send("Student class group missing. Please contact admin.");
+        if (!student.college || !student.classGroup) {
+            return res.render("studentAttendanceHistory", {
+                student: student,
+                activePage: "attendance-history",
+                filters: {
+                    fromDate: req.query.fromDate || studentGetMonthStartInputValue(),
+                    toDate: req.query.toDate || studentGetDateInputValue(new Date()),
+                    subjectId: req.query.subjectId || "all",
+                    status: req.query.status || "all"
+                },
+                subjects: student.subjects || [],
+                sessions: [],
+                attendanceRecords: [],
+                subjectWiseAttendance: [],
+                suspiciousAttempts: [],
+                subjectSummary: [],
+                summary: {
+                    totalSessions: 0,
+                    totalRecords: 0,
+                    totalPresent: 0,
+                    totalAbsent: 0,
+                    attendancePercentage: 0,
+                    suspiciousCount: 0
+                },
+                realtimeMode: realtimeConfig.getRealtimeMode(),
+                realtimePollIntervalMs: realtimeConfig.getPollIntervalMs()
+            });
         }
 
         const filters = {

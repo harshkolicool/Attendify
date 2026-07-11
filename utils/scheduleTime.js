@@ -80,26 +80,11 @@ function sortSchedulesByTime(schedules) {
     return schedules;
 }
 
-function sortSchedulesByDayAndTime(schedules) {
-    const dayOrder = {
-        Sunday: 0,
-        Monday: 1,
-        Tuesday: 2,
-        Wednesday: 3,
-        Thursday: 4,
-        Friday: 5,
-        Saturday: 6
-    };
-
+function sortSchedulesByDateAndTime(schedules) {
     schedules.sort(function (a, b) {
-        const firstDay = dayOrder[a.day];
-        const secondDay = dayOrder[b.day];
-
-        const safeFirstDay = firstDay === undefined ? 99 : firstDay;
-        const safeSecondDay = secondDay === undefined ? 99 : secondDay;
-
-        if (safeFirstDay !== safeSecondDay) {
-            return safeFirstDay - safeSecondDay;
+        // Sort by date first
+        if (a.date !== b.date) {
+            return a.date < b.date ? -1 : 1;
         }
 
         const firstTime = timeToMinutes(a.startTime);
@@ -123,12 +108,35 @@ function sortSchedulesByDayAndTime(schedules) {
     return schedules;
 }
 
-function getTodayName() {
+function getDateString(dateObj) {
+    const target = dateObj || new Date();
     const formatter = new Intl.DateTimeFormat('en-US', {
-        weekday: 'long',
-        timeZone: 'Asia/Kolkata'
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
     });
-    return formatter.format(new Date());
+    
+    const parts = formatter.formatToParts(target);
+    const d = {};
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i].type !== 'literal') {
+            d[parts[i].type] = parts[i].value;
+        }
+    }
+    
+    return `${d.year}-${d.month}-${d.day}`;
+}
+
+function getTodayDateString() {
+    return getDateString(new Date());
+}
+
+function getTodayName() {
+    return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Kolkata',
+        weekday: 'long'
+    }).format(new Date());
 }
 
 function getTodayRange() {
@@ -208,7 +216,9 @@ function getScheduleTimeStatus(startTime, endTime, currentDate) {
 module.exports = {
     timeToMinutes,
     sortSchedulesByTime,
-    sortSchedulesByDayAndTime,
+    sortSchedulesByDateAndTime,
+    getDateString,
+    getTodayDateString,
     getTodayName,
     getTodayRange,
     getScheduleTimeStatus

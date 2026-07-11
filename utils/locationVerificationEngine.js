@@ -114,7 +114,7 @@ function verifyStudentAttendanceLocation({
     const allowedDistanceWithPadding = allowedRadius + Math.min(safeAccuracy, 100);
 
     // Decision A: STRONG GPS PRESENT
-    if (activeAcc <= 50 && distanceFromTeacher <= allowedRadius && isFreshTimestamp(activeTs, 20000)) {
+    if (activeAcc <= 50 && distanceFromTeacher <= allowedRadius && isFreshTimestamp(activeTs, 30000)) {
         return {
             decision: "PRESENT_STRONG",
             attendanceStatus: "PRESENT",
@@ -133,7 +133,7 @@ function verifyStudentAttendanceLocation({
     }
 
     // Decision B: WEAK GPS PRESENT
-    if (activeAcc <= 300 && distanceFromTeacher <= allowedDistanceWithPadding && isFreshTimestamp(activeTs, 20000)) {
+    if (activeAcc <= 300 && distanceFromTeacher <= allowedDistanceWithPadding && isFreshTimestamp(activeTs, 30000)) {
         return {
             decision: "PRESENT_WEAK_GPS",
             attendanceStatus: "PRESENT",

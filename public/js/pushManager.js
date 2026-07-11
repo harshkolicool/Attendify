@@ -44,6 +44,18 @@ window.PushManagerHelper = {
         const baseUrl = role === 'teacher' ? '/teacher' : '/student';
         
         try {
+            // Request permission first
+            const permission = await new Promise((resolve) => {
+                const permPromise = Notification.requestPermission(resolve);
+                if (permPromise) {
+                    permPromise.then(resolve);
+                }
+            });
+
+            if (permission !== 'granted') {
+                throw new Error('Notification permission was denied');
+            }
+
             // Get public key from server
             const keyResponse = await fetch(`${baseUrl}/push/public-key`);
             if (!keyResponse.ok) throw new Error('Failed to fetch VAPID public key');
@@ -67,7 +79,8 @@ window.PushManagerHelper = {
             });
 
             if (!saveResponse.ok) {
-                throw new Error('Failed to save subscription on server');
+                const text = await saveResponse.text();
+                throw new Error(text || 'Failed to save subscription on server');
             }
 
             return subscription;

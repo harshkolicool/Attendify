@@ -88,6 +88,13 @@ notificationSchema.index({
     createdAt: -1
 });
 
+// Auto-expire read notifications after 30 days to keep the collection lean.
+// sparse: true ensures unread notifications (readAt = null/undefined) are never deleted.
+notificationSchema.index(
+    { readAt: 1 },
+    { expireAfterSeconds: 30 * 24 * 3600, sparse: true }
+);
+
 const Notification = mongoose.models.Notification || mongoose.model("Notification", notificationSchema);
 
 module.exports = Notification;
