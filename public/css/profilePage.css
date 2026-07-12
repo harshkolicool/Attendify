@@ -310,6 +310,11 @@
     border-color: rgba(255, 255, 255, 0.08);
 }
 
+[data-theme="dark"] .profile-stat-chip:nth-child(1) .profile-stat-chip-value { color: #818cf8 !important; }
+[data-theme="dark"] .profile-stat-chip:nth-child(2) .profile-stat-chip-value { color: #60a5fa !important; }
+[data-theme="dark"] .profile-stat-chip:nth-child(3) .profile-stat-chip-value { color: #4ade80 !important; }
+[data-theme="dark"] .profile-stat-chip:nth-child(4) .profile-stat-chip-value { color: #fb923c !important; }
+
 [data-theme="dark"] .profile-card-block-icon.indigo { background: #312e81; color: #a5b4fc; }
 [data-theme="dark"] .profile-card-block-icon.green  { background: #14532d; color: #86efac; }
 [data-theme="dark"] .profile-card-block-icon.blue   { background: #1e3a5f; color: #93c5fd; }

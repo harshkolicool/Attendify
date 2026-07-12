@@ -3708,3 +3708,31 @@ html {
         padding: 30px 14px;
     }
 }
+
+/* Dark Mode Overrides for Admin Theme */
+[data-theme="dark"] {
+    --admin-bg: #0f172a;
+    --admin-surface: rgba(30, 41, 59, 0.85);
+    --admin-surface-solid: #1e293b;
+    --admin-surface-soft: #334155;
+    --admin-border: rgba(255, 255, 255, 0.1);
+    --admin-text: #f8fafc;
+    --admin-muted: #94a3b8;
+    --admin-primary: #3b82f6;
+    --admin-primary-dark: #60a5fa;
+    --admin-primary-soft: rgba(59, 130, 246, 0.15);
+    --admin-primary-gradient: linear-gradient(135deg, #60a5fa, #3b82f6);
+    --admin-success: #10b981;
+    --admin-success-soft: rgba(16, 185, 129, 0.15);
+    --admin-warning: #f59e0b;
+    --admin-warning-soft: rgba(245, 158, 11, 0.15);
+    --admin-danger: #ef4444;
+    --admin-danger-soft: rgba(239, 68, 68, 0.15);
+    --admin-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.5);
+    --admin-shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    --admin-shadow-glow: 0 12px 24px -8px rgba(59, 130, 246, 0.25);
+}
+
+[data-theme="dark"] body {
+    background-image: none;
+}
