@@ -4,6 +4,14 @@
     --uifix-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
 }
 
+/* Dark mode: override uifix design tokens */
+[data-theme="dark"] {
+    --uifix-border: rgba(255, 255, 255, 0.08);
+    --uifix-surface: #1e293b;
+    --uifix-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+}
+
+
 body {
     overflow-x: hidden;
 }
@@ -1615,3 +1623,126 @@ textarea {
 }
 
 /* Kept blank to avoid breaking other CSS */
+
+/* =============================================================
+   DARK MODE — finalUiFix overrides (must be last in this file)
+   ============================================================= */
+
+/* Page backgrounds */
+[data-theme="dark"] body,
+html[data-theme="dark"] body {
+    background: #0f172a !important;
+    background-image: none !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .admin-main,
+[data-theme="dark"] .admin-layout,
+[data-theme="dark"] .profile-page-main,
+[data-theme="dark"] .student-main,
+[data-theme="dark"] .teacher-main,
+[data-theme="dark"] .platform-main,
+[data-theme="dark"] .schedule-main {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+}
+
+/* Cards */
+[data-theme="dark"] .teacher-card,
+[data-theme="dark"] .admin-card,
+[data-theme="dark"] .admin-item-card,
+[data-theme="dark"] .student-history-card,
+[data-theme="dark"] .platform-card,
+[data-theme="dark"] .teacher-notification-item,
+[data-theme="dark"] .notification-card,
+[data-theme="dark"] .panel-box {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Profile stat chips (the number boxes) */
+[data-theme="dark"] .profile-stat-chip {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+}
+
+/* Hardcoded white inputs */
+[data-theme="dark"] .teacher-dashboard-page .teacher-map-roster-header .teacher-search-box {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .admin-passkey-reject-group input:focus {
+    background: #1e293b !important;
+    border-color: #3b82f6 !important;
+}
+
+/* Text on dark backgrounds */
+[data-theme="dark"] .teacher-card *,
+[data-theme="dark"] .admin-card *,
+[data-theme="dark"] .admin-item-card *,
+[data-theme="dark"] .platform-card * {
+    color: inherit;
+}
+
+/* Muted/label text */
+[data-theme="dark"] .profile-field-label,
+[data-theme="dark"] .admin-stat-card-top span,
+[data-theme="dark"] .admin-kicker,
+[data-theme="dark"] .profile-section-heading {
+    color: #94a3b8 !important;
+}
+
+/* Profile action buttons */
+[data-theme="dark"] .profile-action-btn.ghost {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .profile-action-btn.ghost:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+[data-theme="dark"] .profile-action-btn.danger {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #fca5a5 !important;
+}
+
+/* Profile card blocks */
+[data-theme="dark"] .profile-card-block {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="dark"] .profile-field-value { color: #f1f5f9 !important; }
+[data-theme="dark"] .profile-field-list li { border-color: rgba(255, 255, 255, 0.05) !important; }
+[data-theme="dark"] .profile-card-block-title { color: #94a3b8 !important; }
+
+/* Admin stat cards */
+[data-theme="dark"] .admin-stat-card {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="dark"] .admin-stat-card h3 { color: #f8fafc !important; }
+[data-theme="dark"] .admin-stat-action { color: #60a5fa !important; }
+
+/* Setup panel */
+[data-theme="dark"] .admin-setup-panel,
+[data-theme="dark"] .info-panel {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .admin-setup-panel h2,
+[data-theme="dark"] .admin-setup-panel-head h2 { color: #f8fafc !important; }
+[data-theme="dark"] .admin-setup-panel p,
+[data-theme="dark"] .admin-setup-panel-head p { color: #94a3b8 !important; }
+[data-theme="dark"] .admin-setup-panel ol li { color: #cbd5e1 !important; }
+[data-theme="dark"] .admin-setup-panel li strong { color: #38bdf8 !important; }
+
+/* Page header */
+[data-theme="dark"] .admin-page-header { border-bottom-color: rgba(255, 255, 255, 0.08) !important; }
+[data-theme="dark"] .admin-header-copy h1 { color: #f8fafc !important; }
+[data-theme="dark"] .admin-header-copy p,
+[data-theme="dark"] .admin-header-copy > * { color: #94a3b8 !important; }
+

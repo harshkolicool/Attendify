@@ -2284,3 +2284,48 @@ h4 {
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================================
+   DARK MODE OVERRIDES — must stay at end of file
+   ============================================================ */
+[data-theme="dark"] body,
+html[data-theme="dark"] body {
+    background: #0f172a !important;
+    background-image: none !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .student-main,
+[data-theme="dark"] .student-layout,
+html[data-theme="dark"] .student-main {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .student-card,
+[data-theme="dark"] .student-history-card,
+[data-theme="dark"] .student-panel,
+[data-theme="dark"] .student-auth-content,
+[data-theme="dark"] .student-schedule-card {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .student-main h1,
+[data-theme="dark"] .student-main h2,
+[data-theme="dark"] .student-main h3,
+[data-theme="dark"] .student-main h4,
+[data-theme="dark"] .student-main p,
+[data-theme="dark"] .student-main span {
+    color: inherit;
+}
+
+[data-theme="dark"] .student-kicker,
+[data-theme="dark"] .student-auth-content p { 
+    color: #94a3b8 !important; 
+}
+
+[data-theme="dark"] .student-auth-option input:checked + .student-auth-content {
+    background: #334155 !important;
+}
