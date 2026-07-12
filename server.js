@@ -266,7 +266,7 @@ async function startServer() {
     }
 }
 
-if (require.main === module) {
+if (require.main === module || process.env.RUNNING_IN_CLUSTER === 'true') {
     startServer();
 }
 
