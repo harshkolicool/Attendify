@@ -1,0 +1,1981 @@
+/* ================================================================
+   ATTENDIFY UI OVERHAUL — DEEP ANALYSIS COMPLETE REDESIGN
+   Covers every page, every element. Premium visual polish.
+   ================================================================ */
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 1 — GLOBAL DESIGN SYSTEM ENHANCEMENTS
+   Better typography, focus rings, scrollbars, selection color,
+   smooth text rendering, and premium micro-interactions.
+─────────────────────────────────────────────────────────────────── */
+
+/* Better font rendering everywhere */
+*, *::before, *::after {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Premium selection color */
+::selection {
+    background: rgba(37, 99, 235, 0.2);
+    color: inherit;
+}
+
+/* Custom scrollbar — thin and elegant */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.35);
+    border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.55);
+}
+
+/* Focus ring that's beautiful */
+*:focus-visible {
+    outline: 2.5px solid rgba(37, 99, 235, 0.7) !important;
+    outline-offset: 2px !important;
+    border-radius: 4px;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 2 — HOME PAGE IMPROVEMENTS
+   Better typography scale, hero, features, workflow, stats, CTA
+─────────────────────────────────────────────────────────────────── */
+
+/* Home — Navbar refined */
+.home-navbar {
+    padding: 12px 20px !important;
+    border-radius: 22px !important;
+    transition: box-shadow 0.3s ease, background 0.3s ease !important;
+}
+
+.home-navbar:hover {
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12) !important;
+}
+
+/* Home — Brand text weight normalization */
+.home-brand {
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+}
+
+.home-brand span {
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.22) !important;
+}
+
+/* Home — Nav links lighter */
+.home-nav-links a {
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+    padding: 9px 13px !important;
+    font-size: 13.5px !important;
+    transition: background 0.18s ease, color 0.18s ease !important;
+}
+
+.home-nav-links .home-nav-cta {
+    padding: 9px 16px !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+}
+
+/* Home — Hero headline tightened */
+.hero-content h1 {
+    font-size: clamp(38px, 5.5vw, 62px) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.05em !important;
+    line-height: 1.05 !important;
+}
+
+/* Hero subtext weight improved */
+.hero-content p {
+    font-weight: 500 !important;
+    font-size: 17px !important;
+    line-height: 1.75 !important;
+    color: #4b5563 !important;
+}
+
+/* Home — Hero badge improved */
+.hero-badge {
+    font-weight: 700 !important;
+    font-size: 12.5px !important;
+    letter-spacing: 0.01em !important;
+    border-radius: 999px !important;
+}
+
+/* Home — Trust row items */
+.hero-trust-row div {
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+    padding: 9px 12px !important;
+    transition: background 0.18s ease, border-color 0.18s ease !important;
+}
+
+.hero-trust-row div:hover {
+    background: rgba(37, 99, 235, 0.06) !important;
+    border-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Home — Primary/Secondary buttons */
+.primary-btn {
+    font-weight: 700 !important;
+    font-size: 14.5px !important;
+    letter-spacing: 0.01em !important;
+    border-radius: 14px !important;
+    min-height: 50px !important;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.32) !important;
+}
+
+.secondary-btn {
+    font-weight: 600 !important;
+    font-size: 14.5px !important;
+    border-radius: 14px !important;
+    min-height: 50px !important;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.secondary-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1) !important;
+    border-color: #c7d2fe !important;
+}
+
+/* Home — Dashboard floating card improvements */
+.dashboard-card {
+    border-radius: 28px !important;
+    transition: box-shadow 0.3s ease !important;
+}
+
+.main-preview-card {
+    padding: 22px !important;
+}
+
+.floating-card {
+    border-radius: 18px !important;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1) !important;
+}
+
+/* Live pill should pulse */
+.live-pill i {
+    animation: livePulse 2s ease-in-out infinite !important;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Home — Section headings */
+.section-heading span {
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    letter-spacing: 0.1em !important;
+}
+
+.section-heading h2 {
+    font-size: clamp(26px, 3.5vw, 40px) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.04em !important;
+    line-height: 1.12 !important;
+}
+
+.section-heading p {
+    font-weight: 500 !important;
+    font-size: 15.5px !important;
+    line-height: 1.7 !important;
+}
+
+/* Home — Role cards refined */
+.role-card {
+    border-radius: 28px !important;
+    padding: 28px 24px !important;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.role-card:hover {
+    transform: translateY(-6px) scale(1.01) !important;
+}
+
+.role-icon {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 18px !important;
+    font-size: 24px !important;
+    margin-bottom: 20px !important;
+}
+
+.role-card h3 {
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+}
+
+.role-card p {
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    line-height: 1.65 !important;
+    color: #64748b !important;
+}
+
+.role-card span {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    margin-top: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: gap 0.2s ease !important;
+}
+
+.role-card:hover span {
+    gap: 10px !important;
+}
+
+/* Home — Feature cards */
+.feature-card {
+    border-radius: 24px !important;
+    padding: 22px !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.feature-card i {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 16px !important;
+    font-size: 19px !important;
+    margin-bottom: 16px !important;
+}
+
+.feature-card h3 {
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+    margin-bottom: 8px !important;
+}
+
+.feature-card p {
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    line-height: 1.65 !important;
+}
+
+/* Home — Workflow steps */
+.workflow-step {
+    border-radius: 24px !important;
+    padding: 22px !important;
+}
+
+.workflow-step span {
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.04em !important;
+    margin-bottom: 16px !important;
+}
+
+.workflow-step h3 {
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+}
+
+.workflow-step p {
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    line-height: 1.65 !important;
+}
+
+/* Home — Stat cards */
+.stat-card {
+    padding: 24px 20px !important;
+    border-radius: 24px !important;
+    transition: all 0.3s ease !important;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 24px 50px rgba(37, 99, 235, 0.12) !important;
+}
+
+.stat-card strong {
+    font-size: 32px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.05em !important;
+}
+
+.stat-card span {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    margin-top: 6px !important;
+}
+
+/* Home — CTA card */
+.cta-card {
+    border-radius: 32px !important;
+}
+
+.cta-card span {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+}
+
+.cta-card h2 {
+    font-size: clamp(24px, 3.5vw, 38px) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.15 !important;
+}
+
+.cta-card p {
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    line-height: 1.7 !important;
+}
+
+/* Home — Footer */
+.home-footer {
+    padding: 24px 0 40px !important;
+}
+
+.footer-links a {
+    font-weight: 600 !important;
+    font-size: 13.5px !important;
+    transition: color 0.18s ease !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 3 — AUTH PAGES (Login/Register for all roles)
+   Wider max-width, better inputs, premium password UX
+─────────────────────────────────────────────────────────────────── */
+
+/* Wider auth split to reduce cramped feel */
+.auth-split {
+    max-width: 1000px !important;
+    border-radius: 28px !important;
+    box-shadow: 0 32px 80px rgba(15, 23, 42, 0.14) !important;
+}
+
+/* Auth brand panel — improved layout */
+.auth-brand-panel {
+    padding: 44px 40px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.auth-brand-panel::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    pointer-events: none;
+}
+
+.auth-brand-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: -40px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    pointer-events: none;
+}
+
+/* Brand logo in auth */
+.auth-brand-panel .brand-logo {
+    font-size: 19px !important;
+    font-weight: 800 !important;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-brand-panel h2 {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    margin: 30px 0 12px !important;
+    letter-spacing: -0.03em !important;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-brand-panel > p {
+    font-size: 14.5px !important;
+    opacity: 0.88 !important;
+    line-height: 1.65 !important;
+    font-weight: 500 !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* Auth perks — better icons */
+.auth-perks {
+    margin-top: auto !important;
+    gap: 14px !important;
+    position: relative;
+    z-index: 1;
+}
+
+.auth-perks li {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    line-height: 1.4 !important;
+}
+
+.auth-perks i {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+}
+
+/* Auth card header */
+.auth-header.compact {
+    padding: 36px 36px 12px !important;
+}
+
+.auth-header.compact .auth-icon {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 16px !important;
+    font-size: 24px !important;
+    margin-bottom: 14px !important;
+    box-shadow: 0 8px 20px rgba(11, 99, 246, 0.15) !important;
+}
+
+.auth-header.compact h2 {
+    font-size: 23px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+}
+
+.auth-header.compact p {
+    font-size: 13.5px !important;
+    margin-top: 4px !important;
+}
+
+/* Auth form */
+.auth-form {
+    padding: 20px 36px 28px !important;
+    gap: 16px !important;
+}
+
+/* Auth input labels */
+.input-group label {
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #374151 !important;
+    letter-spacing: 0.02em !important;
+    margin-bottom: 7px !important;
+}
+
+/* Auth inputs — premium look */
+.input-wrap input,
+.input-wrap select {
+    height: 46px !important;
+    border-radius: 10px !important;
+    font-size: 14.5px !important;
+    font-weight: 500 !important;
+    background: #f9fafb !important;
+    border-color: #dde1e9 !important;
+    padding-left: 44px !important;
+    color: #0f172a !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+}
+
+.input-wrap input:focus,
+.input-wrap select:focus {
+    background: #ffffff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+.input-wrap input::placeholder {
+    color: #9ca3af !important;
+    font-weight: 400 !important;
+}
+
+.input-wrap i {
+    left: 13px !important;
+    font-size: 13.5px !important;
+    color: #9ca3af !important;
+    transition: color 0.2s ease !important;
+}
+
+.input-wrap:has(input:focus) i,
+.input-wrap:has(select:focus) i {
+    color: #2563eb !important;
+}
+
+/* Auth submit button */
+.auth-form .btn-primary.btn-full {
+    height: 46px !important;
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    letter-spacing: 0.01em !important;
+    transition: all 0.22s ease !important;
+}
+
+.auth-form .btn-primary.btn-full:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 12px 28px rgba(11, 99, 246, 0.35) !important;
+}
+
+/* Auth footer links */
+.auth-footer {
+    padding: 0 36px 32px !important;
+    font-size: 13.5px !important;
+}
+
+.auth-footer a {
+    font-weight: 700 !important;
+    color: #2563eb !important;
+    transition: color 0.18s ease !important;
+}
+
+.auth-footer a:hover {
+    color: #1d4ed8 !important;
+}
+
+/* Auth error alert */
+.auth-alert {
+    margin: 4px 36px 0 !important;
+    border-radius: 10px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+}
+
+/* Auth responsive — stack at 660px */
+@media (max-width: 660px) {
+    .auth-split {
+        grid-template-columns: 1fr !important;
+        max-width: 480px !important;
+    }
+
+    .auth-brand-panel {
+        display: none !important;
+    }
+
+    .auth-form {
+        padding: 16px 24px 24px !important;
+    }
+
+    .auth-header.compact {
+        padding: 28px 24px 12px !important;
+    }
+
+    .auth-alert {
+        margin: 4px 24px 0 !important;
+    }
+
+    .auth-footer {
+        padding: 0 24px 24px !important;
+    }
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 4 — COLLEGE REGISTER PAGE
+   Better hero sizing, input polish
+─────────────────────────────────────────────────────────────────── */
+
+.register-page {
+    grid-template-columns: 40% 60% !important;
+}
+
+.register-left {
+    padding: 52px 44px !important;
+}
+
+.brand-box {
+    margin-bottom: 0;
+}
+
+.brand-box h1 {
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+}
+
+.brand-icon {
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 16px !important;
+    font-size: 22px !important;
+}
+
+.hero-content h2 {
+    font-size: clamp(28px, 3.5vw, 40px) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.12 !important;
+}
+
+.hero-content p {
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    line-height: 1.7 !important;
+}
+
+.feature-list div {
+    padding: 14px !important;
+    border-radius: 14px !important;
+    transition: background 0.2s ease !important;
+}
+
+.feature-list div:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.feature-list p {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+.register-right {
+    padding: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.form-card {
+    border-radius: 24px !important;
+    padding: 36px !important;
+}
+
+.form-head h2 {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+}
+
+.form-head p {
+    font-size: 14.5px !important;
+    font-weight: 500 !important;
+    line-height: 1.6 !important;
+}
+
+form h3 {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    color: #64748b !important;
+    margin: 24px 0 14px !important;
+}
+
+.field label {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #374151 !important;
+    letter-spacing: 0.02em !important;
+}
+
+.field input {
+    height: 46px !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+}
+
+.field input:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+.submit-btn {
+    height: 50px !important;
+    border-radius: 14px !important;
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+    transition: all 0.22s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 16px 32px rgba(37, 99, 235, 0.3) !important;
+}
+
+.login-note {
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+}
+
+.login-note a {
+    font-weight: 700 !important;
+    transition: color 0.18s ease !important;
+}
+
+.login-note a:hover {
+    color: #1d4ed8 !important;
+}
+
+@media (max-width: 950px) {
+    .register-page {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 5 — 404 NOT FOUND PAGE
+   Fix font-weight, fix teal color to brand blue
+─────────────────────────────────────────────────────────────────── */
+
+.not-found-panel {
+    border-radius: 28px !important;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12) !important;
+}
+
+.not-found-mark {
+    width: 72px !important;
+    height: 72px !important;
+    border-radius: 22px !important;
+    font-size: 30px !important;
+    background: #eff6ff !important;
+    color: #2563eb !important;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.15) !important;
+}
+
+.not-found-kicker {
+    color: #2563eb !important;
+    font-weight: 800 !important;
+    font-size: 12px !important;
+    letter-spacing: 0.12em !important;
+}
+
+.not-found-panel h1 {
+    font-size: clamp(32px, 7vw, 52px) !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.04em !important;
+}
+
+.not-found-copy {
+    font-size: 15.5px !important;
+    font-weight: 500 !important;
+    line-height: 1.65 !important;
+    color: #64748b !important;
+}
+
+.not-found-primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    border-color: transparent !important;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28) !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    transition: all 0.22s ease !important;
+}
+
+.not-found-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 16px 32px rgba(37, 99, 235, 0.38) !important;
+}
+
+.not-found-secondary {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: all 0.22s ease !important;
+    border-color: #d1d9e6 !important;
+}
+
+.not-found-secondary:hover {
+    transform: translateY(-1px) !important;
+    border-color: #b0c4e0 !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 6 — ADMIN PAGES DEEP OVERHAUL
+   Header, sidebar, stat cards, tables, forms, buttons, alerts
+─────────────────────────────────────────────────────────────────── */
+
+/* Admin layout — full height */
+.admin-layout {
+    min-height: 100vh !important;
+}
+
+/* Admin sidebar — refined */
+.ui-sidebar.admin-sidebar {
+    background: rgba(11, 16, 29, 0.92) !important;
+    backdrop-filter: blur(30px) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Admin brand section */
+.admin-brand {
+    padding: 16px !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    transition: background 0.2s ease !important;
+}
+
+.admin-brand:hover {
+    background: rgba(255, 255, 255, 0.09) !important;
+}
+
+.admin-brand-icon {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 13px !important;
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.32) !important;
+}
+
+.admin-brand h2 {
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+}
+
+.admin-brand p {
+    font-size: 12px !important;
+    color: #64748b !important;
+    margin-top: 2px !important;
+}
+
+/* Admin sidebar menu links */
+.admin-menu a,
+.admin-logout-btn {
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    min-height: 44px !important;
+    border-radius: 12px !important;
+    letter-spacing: 0.01em !important;
+    transition: background 0.18s ease, color 0.18s ease !important;
+}
+
+.admin-menu a.active {
+    background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3) !important;
+}
+
+.admin-menu a:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.07) !important;
+    color: #e2e8f0 !important;
+}
+
+/* Admin main content */
+.admin-main {
+    background: #f1f5fb !important;
+}
+
+/* Admin page header */
+.admin-header.admin-page-header {
+    margin-bottom: 28px !important;
+    padding-bottom: 20px !important;
+    border-bottom: 1px solid #e8edf5 !important;
+}
+
+.admin-kicker {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: #64748b !important;
+    margin-bottom: 6px !important;
+}
+
+.admin-header-copy h1 {
+    font-size: clamp(20px, 2vw, 26px) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    color: #0f172a !important;
+    line-height: 1.2 !important;
+}
+
+.admin-header-sub {
+    font-size: 14px !important;
+    color: #64748b !important;
+    margin-top: 5px !important;
+}
+
+/* Admin stat grid */
+.admin-stat-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+    gap: 16px !important;
+    margin-bottom: 28px !important;
+}
+
+/* Admin stat cards — premium */
+.admin-stat-card {
+    padding: 20px !important;
+    border-radius: 20px !important;
+    gap: 10px !important;
+    background: #ffffff !important;
+    border: 1px solid #e8edf5 !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 16px 32px rgba(37, 99, 235, 0.1) !important;
+}
+
+.admin-stat-card h3 {
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.04em !important;
+    line-height: 1.1 !important;
+    color: #0f172a !important;
+}
+
+.admin-stat-card-top span {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+}
+
+.admin-stat-icon {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+    font-size: 16px !important;
+}
+
+.admin-stat-action {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: gap 0.18s ease !important;
+}
+
+.admin-stat-action:hover {
+    gap: 10px !important;
+}
+
+/* Admin cards (content panels) */
+.admin-card {
+    background: #ffffff !important;
+    border: 1px solid #e8edf5 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+}
+
+.admin-card-head {
+    margin-bottom: 16px !important;
+}
+
+/* Admin primary button */
+.admin-primary-btn {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    letter-spacing: 0.01em !important;
+    transition: all 0.22s ease !important;
+}
+
+.admin-primary-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Admin secondary button */
+.admin-secondary-btn {
+    min-height: 40px !important;
+    height: 40px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+    transition: all 0.18s ease !important;
+}
+
+/* Admin tables */
+.admin-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.admin-table thead th {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: #64748b !important;
+    padding: 12px 16px !important;
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e8edf5 !important;
+}
+
+.admin-table thead th:first-child {
+    border-radius: 12px 0 0 0 !important;
+}
+
+.admin-table thead th:last-child {
+    border-radius: 0 12px 0 0 !important;
+}
+
+.admin-table tbody tr {
+    transition: background 0.15s ease !important;
+}
+
+.admin-table tbody tr:nth-child(even) td {
+    background: #fafbfd !important;
+}
+
+.admin-table tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.03) !important;
+}
+
+.admin-table tbody td {
+    padding: 13px 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #334155 !important;
+    border-bottom: 1px solid #f1f4f9 !important;
+    vertical-align: middle !important;
+}
+
+.admin-table tbody td strong {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+
+.admin-table tbody td small {
+    font-size: 12px !important;
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+}
+
+/* Admin form fields */
+.admin-field label {
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em !important;
+    color: #374151 !important;
+    text-transform: uppercase !important;
+}
+
+.admin-field input,
+.admin-field select,
+.admin-field textarea {
+    height: 44px !important;
+    border-radius: 11px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    background: #f9fafb !important;
+    border-color: #dde1e9 !important;
+    transition: all 0.2s ease !important;
+    color: #0f172a !important;
+}
+
+.admin-field input:focus,
+.admin-field select:focus,
+.admin-field textarea:focus {
+    background: #ffffff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Admin page header actions */
+.admin-action-btn {
+    height: 38px !important;
+    padding: 0 14px !important;
+    border-radius: 10px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    gap: 7px !important;
+}
+
+/* Admin alert banners */
+.alert {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 12px 16px !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin-bottom: 20px !important;
+}
+
+.alert.success {
+    background: #ecfdf5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+
+.alert.error {
+    background: #fef2f2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
+}
+
+/* Admin college code badge */
+.admin-college-code-badge {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+}
+
+/* Admin setup panel */
+.admin-setup-panel {
+    border-radius: 20px !important;
+}
+
+.admin-setup-panel-icon {
+    border-radius: 14px !important;
+}
+
+.admin-setup-panel-head h2 {
+    font-size: 19px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 7 — REPORT PAGE IMPROVEMENTS
+─────────────────────────────────────────────────────────────────── */
+
+.reports-summary-grid {
+    gap: 14px !important;
+}
+
+.report-stat-card {
+    border-radius: 20px !important;
+    padding: 18px !important;
+}
+
+.report-stat-card span {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    opacity: 0.85 !important;
+}
+
+.report-stat-card strong {
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.04em !important;
+    margin-top: 6px !important;
+}
+
+.report-stat-card i {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 14px !important;
+    font-size: 18px !important;
+}
+
+.report-table thead {
+    background: #f8fafc !important;
+}
+
+.report-table th {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    padding: 13px 14px !important;
+}
+
+.report-table td {
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    padding: 13px 14px !important;
+}
+
+.report-table td strong {
+    font-weight: 700 !important;
+}
+
+.report-percent-pill {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 8 — PENDING STUDENTS PAGE
+─────────────────────────────────────────────────────────────────── */
+
+.pending-empty-state {
+    border-radius: 20px !important;
+    border: 2px dashed #cbd5e1 !important;
+}
+
+.pending-empty-icon {
+    width: 72px !important;
+    height: 72px !important;
+    font-size: 32px !important;
+    border-radius: 20px !important;
+    background: #eff6ff !important;
+    color: #2563eb !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12) !important;
+}
+
+.pending-empty-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin-top: 14px !important;
+}
+
+.pending-empty-copy {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    line-height: 1.6 !important;
+}
+
+.pending-student-name {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+}
+
+.pending-student-email {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 9 — PROFILE PAGES (Student/Teacher/Admin)
+─────────────────────────────────────────────────────────────────── */
+
+.profile-hero {
+    border-radius: 22px !important;
+    padding: 2rem !important;
+}
+
+.profile-hero-avatar {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50% !important;
+    font-size: 2rem !important;
+    border: 3px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.profile-hero-info h1 {
+    font-size: 1.65rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+}
+
+.profile-hero-info p {
+    font-size: 0.92rem !important;
+    opacity: 0.85 !important;
+}
+
+.profile-card-block {
+    border-radius: 18px !important;
+    padding: 1.5rem !important;
+    transition: box-shadow 0.22s ease, transform 0.22s ease !important;
+}
+
+.profile-card-block:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08) !important;
+}
+
+.profile-card-block-title {
+    font-size: 0.78rem !important;
+    letter-spacing: 0.08em !important;
+}
+
+.profile-stat-chip {
+    border-radius: 16px !important;
+    padding: 1.25rem 1rem !important;
+    transition: box-shadow 0.22s ease, transform 0.22s ease !important;
+}
+
+.profile-stat-chip:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08) !important;
+}
+
+.profile-stat-chip-value {
+    font-size: 1.9rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+}
+
+.profile-stat-chip-label {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+}
+
+.profile-action-btn {
+    border-radius: 10px !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    padding: 10px 18px !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 10 — STUDENT DASHBOARD SHELL
+─────────────────────────────────────────────────────────────────── */
+
+/* Student bottom nav */
+.shell-bottom-nav {
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.7) !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 11 — BADGE & PILL COMPONENTS (Global)
+─────────────────────────────────────────────────────────────────── */
+
+.admin-badge,
+.badge-green,
+.badge-amber,
+.badge-red,
+.badge-blue,
+.badge-neutral {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    padding: 3px 10px !important;
+    border-radius: 999px !important;
+    letter-spacing: 0.02em !important;
+}
+
+/* Status badges */
+.profile-status-badge {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    padding: 3px 10px !important;
+    letter-spacing: 0.02em !important;
+}
+
+/* Report percentage pills */
+.report-percent-pill.good {
+    background: #ecfdf5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+
+.report-percent-pill.bad {
+    background: #fff1f2 !important;
+    color: #9f1239 !important;
+    border: 1px solid #fecdd3 !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 12 — EMPTY STATES (Global)
+─────────────────────────────────────────────────────────────────── */
+
+.admin-empty,
+.teacher-empty,
+.student-empty,
+[class*="empty-state"] {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 40px 24px !important;
+    border-radius: 16px !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 13 — DARK MODE OVERHAUL (every page)
+─────────────────────────────────────────────────────────────────── */
+
+/* Home page dark mode */
+[data-theme="dark"] .home-page,
+body.dark-mode .home-page {
+    background:
+        radial-gradient(circle at 10% 0%, rgba(37, 99, 235, 0.18), transparent 32%),
+        radial-gradient(circle at 90% 5%, rgba(14, 165, 233, 0.12), transparent 30%),
+        linear-gradient(180deg, #0d1117 0%, #111827 100%) !important;
+}
+
+[data-theme="dark"] .home-navbar,
+body.dark-mode .home-navbar {
+    background: rgba(15, 23, 42, 0.88) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .home-brand,
+body.dark-mode .home-brand {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .home-nav-links a,
+body.dark-mode .home-nav-links a {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .home-nav-links a:hover,
+body.dark-mode .home-nav-links a:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .hero-content h1,
+body.dark-mode .hero-content h1 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .hero-content p,
+body.dark-mode .hero-content p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .hero-badge,
+body.dark-mode .hero-badge {
+    background: rgba(37, 99, 235, 0.2) !important;
+    border-color: rgba(37, 99, 235, 0.4) !important;
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] .hero-trust-row div,
+body.dark-mode .hero-trust-row div {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .secondary-btn,
+body.dark-mode .secondary-btn {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .dashboard-card,
+body.dark-mode .dashboard-card {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .preview-class-info div,
+body.dark-mode .preview-class-info div {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .attendance-progress,
+body.dark-mode .attendance-progress {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(15, 23, 42, 0.5)) !important;
+    border-color: rgba(37, 99, 235, 0.25) !important;
+}
+
+[data-theme="dark"] .student-chip.present,
+body.dark-mode .student-chip.present {
+    background: rgba(22, 163, 74, 0.2) !important;
+    color: #4ade80 !important;
+}
+
+[data-theme="dark"] .student-chip.absent,
+body.dark-mode .student-chip.absent {
+    background: rgba(220, 38, 38, 0.2) !important;
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .floating-card,
+body.dark-mode .floating-card {
+    background: rgba(30, 41, 59, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .floating-card strong,
+body.dark-mode .floating-card strong {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .role-card,
+[data-theme="dark"] .feature-card,
+[data-theme="dark"] .workflow-step,
+[data-theme="dark"] .stat-card,
+body.dark-mode .role-card,
+body.dark-mode .feature-card,
+body.dark-mode .workflow-step,
+body.dark-mode .stat-card {
+    background: rgba(30, 41, 59, 0.75) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+[data-theme="dark"] .section-heading h2,
+body.dark-mode .section-heading h2 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .section-heading p,
+body.dark-mode .section-heading p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .role-card h3,
+[data-theme="dark"] .feature-card h3,
+[data-theme="dark"] .workflow-step h3,
+body.dark-mode .role-card h3,
+body.dark-mode .feature-card h3,
+body.dark-mode .workflow-step h3 {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .stat-card strong,
+body.dark-mode .stat-card strong {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .home-footer,
+body.dark-mode .home-footer {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .home-footer p,
+[data-theme="dark"] .footer-links a,
+body.dark-mode .home-footer p,
+body.dark-mode .footer-links a {
+    color: #64748b !important;
+}
+
+[data-theme="dark"] .footer-links a:hover,
+body.dark-mode .footer-links a:hover {
+    color: #93c5fd !important;
+}
+
+/* Auth dark mode */
+[data-theme="dark"] .auth-page,
+body.dark-mode .auth-page {
+    background: #0b0f19 !important;
+}
+
+[data-theme="dark"] .auth-split,
+body.dark-mode .auth-split {
+    background: #111827 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .auth-header.compact h2,
+body.dark-mode .auth-header.compact h2 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .auth-header.compact p,
+body.dark-mode .auth-header.compact p {
+    color: #64748b !important;
+}
+
+[data-theme="dark"] .input-group label,
+body.dark-mode .input-group label {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .input-wrap input,
+[data-theme="dark"] .input-wrap select,
+body.dark-mode .input-wrap input,
+body.dark-mode .input-wrap select {
+    background: #0d1117 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .input-wrap input:focus,
+[data-theme="dark"] .input-wrap select:focus,
+body.dark-mode .input-wrap input:focus,
+body.dark-mode .input-wrap select:focus {
+    background: #111827 !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+[data-theme="dark"] .auth-footer a,
+body.dark-mode .auth-footer a {
+    color: #60a5fa !important;
+}
+
+/* College register dark mode */
+[data-theme="dark"] .register-right,
+body.dark-mode .register-right {
+    background: #0b0f19 !important;
+}
+
+/* Not Found dark mode */
+[data-theme="dark"] .not-found-mark,
+body.dark-mode .not-found-mark {
+    background: rgba(37, 99, 235, 0.15) !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .not-found-kicker,
+body.dark-mode .not-found-kicker {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .not-found-panel h1,
+body.dark-mode .not-found-panel h1 {
+    color: #f8fafc !important;
+}
+
+/* Admin dark mode improvements */
+[data-theme="dark"] .admin-main,
+body.dark-mode .admin-main {
+    background: #0b0f19 !important;
+}
+
+[data-theme="dark"] .admin-stat-card,
+body.dark-mode .admin-stat-card {
+    background: rgba(22, 31, 50, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+[data-theme="dark"] .admin-card,
+body.dark-mode .admin-card {
+    background: rgba(22, 31, 50, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+[data-theme="dark"] .admin-header.admin-page-header,
+body.dark-mode .admin-header.admin-page-header {
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .admin-table thead,
+body.dark-mode .admin-table thead {
+    background: rgba(15, 23, 42, 0.5) !important;
+}
+
+[data-theme="dark"] .admin-table tbody tr:nth-child(even) td,
+body.dark-mode .admin-table tbody tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+
+[data-theme="dark"] .admin-table tbody tr:hover td,
+body.dark-mode .admin-table tbody tr:hover td {
+    background: rgba(59, 130, 246, 0.07) !important;
+}
+
+[data-theme="dark"] .admin-field input,
+[data-theme="dark"] .admin-field select,
+[data-theme="dark"] .admin-field textarea,
+body.dark-mode .admin-field input,
+body.dark-mode .admin-field select,
+body.dark-mode .admin-field textarea {
+    background: #0d1117 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+}
+
+/* Profile dark mode */
+[data-theme="dark"] .profile-hero,
+body.dark-mode .profile-hero {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .profile-card-block-header,
+body.dark-mode .profile-card-block-header {
+    border-bottom-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+[data-theme="dark"] .profile-field-label,
+body.dark-mode .profile-field-label {
+    color: #64748b !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 14 — SELECT SHELL & ENHANCED FORM CONTROLS
+─────────────────────────────────────────────────────────────────── */
+
+.select-shell {
+    position: relative !important;
+    transition: all 0.2s ease !important;
+}
+
+.select-shell select {
+    width: 100% !important;
+    height: 46px !important;
+    padding: 0 40px 0 40px !important;
+    border-radius: 10px !important;
+    border: 1px solid #dde1e9 !important;
+    background: #f9fafb !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #0f172a !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.select-shell select:focus {
+    background: #ffffff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+    outline: none !important;
+}
+
+.select-shell-icon {
+    position: absolute !important;
+    left: 13px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #9ca3af !important;
+    font-size: 13px !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+    transition: color 0.2s ease !important;
+}
+
+.select-shell:focus-within .select-shell-icon {
+    color: #2563eb !important;
+}
+
+.select-shell-chevron {
+    position: absolute !important;
+    right: 13px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #9ca3af !important;
+    font-size: 11px !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+    transition: transform 0.2s ease !important;
+}
+
+.select-shell:focus-within .select-shell-chevron {
+    transform: translateY(-50%) rotate(180deg) !important;
+    color: #2563eb !important;
+}
+
+[data-theme="dark"] .select-shell select,
+body.dark-mode .select-shell select {
+    background: rgba(15, 23, 42, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .select-shell select:focus,
+body.dark-mode .select-shell select:focus {
+    background: rgba(15, 23, 42, 0.85) !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-theme="dark"] .select-shell select option,
+body.dark-mode .select-shell select option {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 15 — SHARED CARD INTERACTIONS (Premium micro-animations)
+─────────────────────────────────────────────────────────────────── */
+
+/* Any card with hover effect */
+.admin-card,
+.profile-card-block,
+.admin-stat-card,
+.feature-card,
+.workflow-step,
+.stat-card,
+.role-card {
+    will-change: transform !important;
+}
+
+/* Button loading state */
+button[disabled],
+.btn[disabled] {
+    opacity: 0.65 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+/* Link transitions everywhere */
+a {
+    transition: color 0.18s ease !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 16 — RESPONSIVE REFINEMENTS
+─────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1280px) {
+    .admin-stat-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-stat-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .profile-stat-row {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .profile-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-stat-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .profile-stat-row {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .role-card {
+        flex: 1 1 280px !important;
+        max-width: 100% !important;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .workflow-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .stats-section {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .workflow-grid,
+    .stats-section {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 17 — ANIMATION IMPROVEMENTS (reduce motion respected)
+─────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .live-pill i {
+        animation: none !important;
+    }
+}
+
+/* Scroll-animated elements improved */
+.scroll-animate {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.scroll-animate.in-view {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    animation: none !important;
+}
+
+/* Staggered delays for scroll animations */
+.scroll-animate.delay-100 { transition-delay: 0.08s !important; }
+.scroll-animate.delay-200 { transition-delay: 0.16s !important; }
+.scroll-animate.delay-300 { transition-delay: 0.24s !important; }
+.scroll-animate.delay-400 { transition-delay: 0.32s !important; }
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 18 — TEACHER MANUAL ATTENDANCE PAGE
+─────────────────────────────────────────────────────────────────── */
+
+/* Improve teacher manual attendance specific elements */
+.teacher-manual-container {
+    max-width: 820px !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 19 — GLOBAL ALERT / NOTIFICATION BANNERS
+─────────────────────────────────────────────────────────────────── */
+
+.error-box {
+    border-radius: 10px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    padding: 12px 14px !important;
+}
+
+.success-box {
+    border-radius: 10px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    padding: 12px 14px !important;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 20 — FINAL PREMIUM TOUCHES
+─────────────────────────────────────────────────────────────────── */
+
+/* Sticky header glass effect */
+.admin-header.admin-page-header,
+.home-navbar {
+    will-change: transform !important;
+}
+
+/* Inputs auto-complete style fix */
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px #f9fafb inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+[data-theme="dark"] input:-webkit-autofill,
+body.dark-mode input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px #0d1117 inset !important;
+    -webkit-text-fill-color: #f8fafc !important;
+}
+
+/* Print styles */
+@media print {
+    .admin-main {
+        padding: 0 !important;
+    }
+
+    .home-navbar,
+    .shell-bottom-nav,
+    .admin-action-btn {
+        display: none !important;
+    }
+}

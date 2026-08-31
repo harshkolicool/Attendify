@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile | Attendify</title>
@@ -9,10 +12,12 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
-    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260713">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
-    <link rel="stylesheet" href="/css/profilePage.css?v=20260617f">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260831_18">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8_18">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=20260831_18">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19_18">
+    <link rel="stylesheet" href="/css/profilePage.css?v=20260831_18">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -27,44 +32,88 @@
 <body>
 
 <div class="schedule-layout">
-    <%- include("student/partials/sidebar", { activePage: "profile", student: student, attendancePercentage: attendancePercentage }) %>
+    <%- include("student/partials/sidebar", { activePage: "profile", student: student, attendancePercentage: attendancePercentage, totalAttendanceSessions: totalClasses }) %>
 
     <main class="profile-page-main">
 
         <!-- Hero Banner -->
-        <div class="profile-hero">
-            <div class="profile-hero-avatar">
-                <%= student.fullName ? student.fullName.charAt(0).toUpperCase() : "S" %>
+        <div class="profile-hero student-profile-hero">
+            <div class="profile-hero-content">
+                <div class="profile-hero-avatar-wrap">
+                    <div class="profile-hero-avatar">
+                        <%= student.fullName ? student.fullName.charAt(0).toUpperCase() : "S" %>
+                    </div>
+                    <span class="profile-avatar-badge" title="Enrolled Student">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </span>
+                </div>
+                <div class="profile-hero-info">
+                    <div class="profile-hero-header-row">
+                        <h1><%= student.fullName %></h1>
+                        <span class="profile-hero-badge student">
+                            <i class="fa-solid fa-graduation-cap"></i> Student
+                        </span>
+                    </div>
+                    <div class="profile-hero-chips">
+                        <span class="profile-hero-chip">
+                            <i class="fa-regular fa-envelope"></i> <%= student.email %>
+                        </span>
+                        <span class="profile-hero-chip">
+                            <i class="fa-solid fa-id-card"></i> <%= student.enrollmentNumber %>
+                        </span>
+                        <span class="profile-hero-chip">
+                            <i class="fa-solid fa-users"></i> <%= classGroup ? classGroup.name : (student.classGroup ? student.classGroup.name : "Class") %>
+                        </span>
+                        <% if (student.department) { %>
+                            <span class="profile-hero-chip">
+                                <i class="fa-solid fa-book-bookmark"></i> <%= student.department %> (Sem <%= student.semester %>)
+                            </span>
+                        <% } %>
+                        <% if (student.college && student.college.collegeName) { %>
+                            <span class="profile-hero-chip">
+                                <i class="fa-solid fa-landmark"></i> <%= student.college.collegeName %><% if (student.college.collegeCode) { %> (<%= student.college.collegeCode %>)<% } %>
+                            </span>
+                        <% } %>
+                    </div>
+                </div>
             </div>
-            <div class="profile-hero-info">
-                <h1><%= student.fullName %></h1>
-                <p><%= student.email %></p>
-                <span class="profile-hero-badge">
-                    <i class="fa-solid fa-user-graduate"></i>
-                    Student Account
-                </span>
+
+            <div class="profile-hero-status-tag">
+                <% if (student.isBlocked) { %>
+                    <span class="profile-status-badge blocked"><i class="fa-solid fa-ban"></i> Blocked</span>
+                <% } else if (student.isApproved === false) { %>
+                    <span class="profile-status-badge waiting"><i class="fa-solid fa-clock"></i> Pending Approval</span>
+                <% } else { %>
+                    <span class="status-pulse-dot"></span>
+                    <span>Enrolled Student</span>
+                <% } %>
             </div>
         </div>
 
         <!-- Quick Stats -->
         <div class="profile-stat-row">
-            <div class="profile-stat-chip">
+            <div class="profile-stat-chip stat-attendance">
+                <div class="profile-stat-chip-icon"><i class="fa-solid fa-chart-pie"></i></div>
                 <div class="profile-stat-chip-value"><%= attendancePercentage %>%</div>
                 <div class="profile-stat-chip-label">Attendance</div>
             </div>
-            <div class="profile-stat-chip">
+            <div class="profile-stat-chip stat-present">
+                <div class="profile-stat-chip-icon"><i class="fa-solid fa-circle-check"></i></div>
                 <div class="profile-stat-chip-value"><%= totalPresent %></div>
                 <div class="profile-stat-chip-label">Total Present</div>
             </div>
-            <div class="profile-stat-chip">
+            <div class="profile-stat-chip stat-absent">
+                <div class="profile-stat-chip-icon"><i class="fa-solid fa-circle-xmark"></i></div>
                 <div class="profile-stat-chip-value"><%= totalAbsent %></div>
                 <div class="profile-stat-chip-label">Total Absent</div>
             </div>
-            <div class="profile-stat-chip">
+            <div class="profile-stat-chip stat-classes">
+                <div class="profile-stat-chip-icon"><i class="fa-solid fa-calendar-days"></i></div>
                 <div class="profile-stat-chip-value"><%= totalClasses %></div>
                 <div class="profile-stat-chip-label">Total Classes</div>
             </div>
-            <div class="profile-stat-chip">
+            <div class="profile-stat-chip stat-passkeys">
+                <div class="profile-stat-chip-icon"><i class="fa-solid fa-fingerprint"></i></div>
                 <div class="profile-stat-chip-value"><%= student.passkeys ? student.passkeys.length : 0 %></div>
                 <div class="profile-stat-chip-label">Passkeys</div>
             </div>
@@ -72,34 +121,40 @@
 
         <!-- Actions -->
         <div class="profile-actions-row">
-            <button type="button" class="profile-action-btn ghost js-theme-toggle">
-                <i class="fa-solid fa-moon"></i> Toggle Theme
+            <button type="button" class="profile-action-btn ghost js-theme-toggle" id="themeToggleProfileBtn">
+                <i class="fa-solid fa-moon"></i> <span>Toggle Theme</span>
             </button>
             <a href="/student/dashboard" class="profile-action-btn ghost">
-                <i class="fa-solid fa-house"></i> Dashboard
+                <i class="fa-solid fa-house"></i> <span>Dashboard</span>
             </a>
             <a href="/student/attendance-history" class="profile-action-btn ghost">
-                <i class="fa-solid fa-chart-column"></i> Attendance History
+                <i class="fa-solid fa-chart-column"></i> <span>Attendance History</span>
             </a>
             <a href="/student/passkeys" class="profile-action-btn ghost">
-                <i class="fa-solid fa-fingerprint"></i> Manage Passkeys
+                <i class="fa-solid fa-fingerprint"></i> <span>Manage Passkeys</span>
             </a>
-            <form action="/auth/signout-all" method="POST">
+            <form action="/auth/signout-all" method="POST" class="profile-action-form">
                 <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                 <button type="submit" class="profile-action-btn danger">
-                    <i class="fa-solid fa-right-from-bracket"></i> Sign Out All Devices
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Sign Out All Devices</span>
                 </button>
             </form>
         </div>
 
         <!-- Account Details -->
-        <p class="profile-section-heading">Account Details</p>
+        <div class="profile-section-header">
+            <p class="profile-section-heading">
+                <i class="fa-solid fa-sliders"></i> Account Details
+            </p>
+        </div>
         <div class="profile-grid">
 
+            <!-- 1. Identity -->
             <div class="profile-card-block">
                 <div class="profile-card-block-header">
                     <div class="profile-card-block-icon indigo"><i class="fa-solid fa-id-card"></i></div>
                     <span class="profile-card-block-title">Identity</span>
+                    <span class="profile-header-pill indigo"><i class="fa-solid fa-user-check"></i> Verified</span>
                 </div>
                 <ul class="profile-field-list">
                     <li>
@@ -112,10 +167,10 @@
                     </li>
                     <li>
                         <span class="profile-field-label">Enrollment No.</span>
-                        <span class="profile-field-value"><%= student.enrollmentNumber %></span>
+                        <span class="profile-field-value"><span class="profile-mono-chip"><%= student.enrollmentNumber %></span></span>
                     </li>
                     <li>
-                        <span class="profile-field-label">Status</span>
+                        <span class="profile-field-label">Account Status</span>
                         <span class="profile-field-value">
                             <% if (student.isBlocked) { %>
                                 <span class="profile-status-badge blocked"><i class="fa-solid fa-ban"></i> Blocked</span>
@@ -127,45 +182,55 @@
                 </ul>
             </div>
 
+            <!-- 2. Academic -->
             <div class="profile-card-block">
                 <div class="profile-card-block-header">
                     <div class="profile-card-block-icon purple"><i class="fa-solid fa-graduation-cap"></i></div>
                     <span class="profile-card-block-title">Academic</span>
+                    <span class="profile-header-pill purple"><i class="fa-solid fa-graduation-cap"></i> Sem <%= student.semester || 1 %></span>
                 </div>
                 <ul class="profile-field-list">
                     <li>
                         <span class="profile-field-label">Department</span>
-                        <span class="profile-field-value"><%= student.department %></span>
+                        <span class="profile-field-value"><%= student.department || "-" %></span>
                     </li>
                     <li>
                         <span class="profile-field-label">Semester</span>
-                        <span class="profile-field-value">Semester <%= student.semester %></span>
+                        <span class="profile-field-value"><%= student.semester ? "Semester " + student.semester : "-" %></span>
                     </li>
                     <li>
                         <span class="profile-field-label">Class Group</span>
-                        <span class="profile-field-value"><%= classGroup ? classGroup.name : "N/A" %></span>
+                        <span class="profile-field-value"><%= classGroup ? classGroup.name : (student.classGroup ? student.classGroup.name : "N/A") %></span>
                     </li>
                     <li>
-                        <span class="profile-field-label">Subjects</span>
-                        <span class="profile-field-value"><%= subjects ? subjects.length : 0 %></span>
+                        <span class="profile-field-label">Total Enrolled Subjects</span>
+                        <span class="profile-field-value"><%= subjects ? subjects.length : 0 %> <%= (subjects && subjects.length === 1) ? 'Subject' : 'Subjects' %></span>
                     </li>
                 </ul>
             </div>
 
+            <!-- 3. Security -->
             <div class="profile-card-block">
                 <div class="profile-card-block-header">
                     <div class="profile-card-block-icon green"><i class="fa-solid fa-shield-halved"></i></div>
                     <span class="profile-card-block-title">Security</span>
+                    <span class="profile-header-pill green"><i class="fa-solid fa-shield-check"></i> Protected</span>
                 </div>
                 <ul class="profile-field-list">
                     <li>
                         <span class="profile-field-label">Passkeys</span>
-                        <span class="profile-field-value"><%= student.passkeys ? student.passkeys.length : 0 %> registered</span>
+                        <span class="profile-field-value">
+                            <span class="profile-stat-badge <%= (student.passkeys && student.passkeys.length > 0) ? 'good' : 'neutral' %>">
+                                <i class="fa-solid fa-fingerprint"></i> <%= student.passkeys ? student.passkeys.length : 0 %> registered
+                            </span>
+                        </span>
                     </li>
                     <li>
                         <span class="profile-field-label">Trusted Devices</span>
                         <span class="profile-field-value">
-                            <%= student.trustedDevices ? student.trustedDevices.filter(function(d){ return d.isActive; }).length : 0 %> active
+                            <span class="profile-stat-badge info">
+                                <i class="fa-solid fa-laptop-mobile"></i> <%= student.trustedDevices ? student.trustedDevices.filter(function(d){ return d.isActive; }).length : 0 %> active
+                            </span>
                         </span>
                     </li>
                     <li>
@@ -183,22 +248,42 @@
                 </ul>
             </div>
 
-            <% if (subjects && subjects.length > 0) { %>
-            <div class="profile-card-block">
+            <!-- 4. Enrolled Subjects -->
+            <div class="profile-card-block profile-card-subjects">
                 <div class="profile-card-block-header">
                     <div class="profile-card-block-icon blue"><i class="fa-solid fa-book-open"></i></div>
-                    <span class="profile-card-block-title">My Subjects</span>
+                    <span class="profile-card-block-title">Enrolled Subjects</span>
+                    <span class="profile-header-pill blue">
+                        <i class="fa-solid fa-book-bookmark"></i> <%= (subjects && subjects.length) ? subjects.length + ((subjects.length === 1) ? ' Subject' : ' Subjects') : '0 Subjects' %>
+                    </span>
                 </div>
-                <ul class="profile-field-list">
-                    <% subjects.forEach(function(sub) { %>
-                    <li>
-                        <span class="profile-field-label"><%= sub.subjectCode %></span>
-                        <span class="profile-field-value"><%= sub.subjectName %></span>
-                    </li>
-                    <% }) %>
-                </ul>
+                <% if (subjects && subjects.length > 0) { %>
+                    <div class="profile-subjects-list">
+                        <% subjects.forEach(function(sub) { %>
+                            <div class="profile-subject-row">
+                                <div class="profile-subject-code-badge"><%= sub.subjectCode || "SUB" %></div>
+                                <div class="profile-subject-info">
+                                    <div class="profile-subject-name"><%= sub.subjectName %></div>
+                                    <div class="profile-subject-sub">
+                                        <span><i class="fa-solid fa-building-columns"></i> <%= sub.department || student.department || "General" %></span>
+                                        <span>·</span>
+                                        <span><i class="fa-solid fa-layer-group"></i> Sem <%= sub.semester || student.semester || 1 %></span>
+                                    </div>
+                                </div>
+                                <a href="/student/attendance-history" class="profile-subject-history-link" title="View Attendance Records">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div class="profile-empty-state">
+                        <div class="profile-empty-icon"><i class="fa-solid fa-book-open"></i></div>
+                        <p class="profile-empty-title">No Subjects Assigned</p>
+                        <p class="profile-empty-desc">You are not enrolled in any active subjects for this semester yet.</p>
+                    </div>
+                <% } %>
             </div>
-            <% } %>
 
         </div>
 
@@ -209,3 +294,4 @@
 <script src="/js/csrfAuto.js" defer></script>
 </body>
 </html>
+

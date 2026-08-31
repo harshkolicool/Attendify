@@ -8,48 +8,80 @@ window.uiAlert = function (message, title = "Alert", icon = "info") {
         title: title,
         text: message,
         icon: icon,
-        confirmButtonColor: "#0b63f6",
+        position: "center",
+        confirmButtonColor: "#2563eb",
         confirmButtonText: "OK",
         customClass: {
-            popup: 'shell-enhanced-alert',
-            title: 'shell-enhanced-title',
-            htmlContainer: 'shell-enhanced-text',
-            actions: 'shell-enhanced-actions',
-            confirmButton: 'shell-enhanced-confirm'
+            container: "shell-enhanced-container",
+            popup: "shell-enhanced-alert",
+            title: "shell-enhanced-title",
+            htmlContainer: "shell-enhanced-text",
+            actions: "shell-enhanced-actions",
+            confirmButton: "shell-enhanced-confirm"
         }
     });
 };
 
 window.uiConfirm = function (event, message, title = "Are you sure?") {
-    event.preventDefault();
+    if (event) {
+        event.preventDefault();
+    }
     
-    const form = event.target.closest("form") || event.target;
-    const customMessage = message || event.target.dataset.confirm || "Are you sure you want to proceed?";
+    const form = event && event.target ? (event.target.closest("form") || event.target) : null;
+    const customMessage = message || (event && event.target && event.target.dataset ? event.target.dataset.confirm : null) || "Are you sure you want to proceed?";
 
     Swal.fire({
         title: title,
         text: customMessage,
         icon: "warning",
-        iconColor: "#fba341", // Custom orange color for icon
+        iconColor: "#fba341",
+        position: "center",
         showCancelButton: true,
-        confirmButtonColor: "#0b63f6", // var(--shell-primary)
-        cancelButtonColor: "#ffffff",
+        confirmButtonColor: "#2563eb",
         confirmButtonText: "Yes, proceed",
         cancelButtonText: "Cancel",
         customClass: {
-            popup: 'shell-enhanced-alert',
-            title: 'shell-enhanced-title',
-            htmlContainer: 'shell-enhanced-text',
-            actions: 'shell-enhanced-actions',
-            confirmButton: 'shell-enhanced-confirm',
-            cancelButton: 'shell-enhanced-cancel'
+            container: "shell-enhanced-container",
+            popup: "shell-enhanced-alert",
+            title: "shell-enhanced-title",
+            htmlContainer: "shell-enhanced-text",
+            actions: "shell-enhanced-actions",
+            confirmButton: "shell-enhanced-confirm",
+            cancelButton: "shell-enhanced-cancel"
         }
     }).then((result) => {
-        if (result.isConfirmed) {
+        if (result.isConfirmed && form) {
             form.submit();
         }
     });
-    
-    // Return false to ensure the native onsubmit returns false
-    return false;
 };
+
+window.uiToast = window.showToast = function (message, icon = "success", title = "") {
+    if (typeof Swal === "undefined") {
+        console.log(message);
+        return;
+    }
+
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener("mouseenter", Swal.stopTimer);
+            toast.addEventListener("mouseleave", Swal.resumeTimer);
+        },
+        customClass: {
+            popup: "shell-enhanced-toast"
+        }
+    });
+
+    return Toast.fire({
+        icon: icon,
+        title: title || message,
+        text: title ? message : undefined
+    });
+};
+
+

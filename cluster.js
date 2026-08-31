@@ -29,12 +29,14 @@ if (cluster.isMaster || cluster.isPrimary) {
     });
 
     for (let i = 0; i < numCPUs; i++) {
-        cluster.fork();
+        cluster.fork({ CLUSTER_WORKER_ID: String(i + 1) });
     }
+
+    let nextWorkerId = numCPUs + 1;
 
     cluster.on('exit', (worker, code, signal) => {
         console.log(`[CLUSTER] Worker ${worker.process.pid} died (Code: ${code}). Restarting...`);
-        cluster.fork();
+        cluster.fork({ CLUSTER_WORKER_ID: String(nextWorkerId++) });
     });
 } else {
     // In worker process

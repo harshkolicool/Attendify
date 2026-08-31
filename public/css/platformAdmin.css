@@ -147,34 +147,104 @@ h4 {
 
 /* Authenticated layout shell: uiShell.css */
 
-.platform-logo {
-    text-decoration: none;
-    color: #ffffff;
+.platform-layout {
+    width: 100vw;
+    min-height: 100vh;
+    display: grid !important;
+    grid-template-columns: var(--shell-sidebar-width, 280px) minmax(0, 1fr) !important;
+    background: var(--shell-bg, #f5f7fb);
 }
 
-.platform-logo-text {
+.platform-logo,
+.admin-brand {
+    padding: 16px !important;
+    border-radius: 18px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    text-decoration: none !important;
+    color: #ffffff !important;
+    margin-bottom: 8px !important;
+}
+
+.admin-brand-icon,
+.platform-brand-icon-sm {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    border-radius: 14px !important;
+    background: #2563eb !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.28) !important;
+    color: #ffffff !important;
+    font-size: 20px !important;
+}
+
+.platform-logo-text,
+.admin-brand-text {
     min-width: 0;
 }
 
-.platform-logo h2 {
+.platform-logo-text h2,
+.admin-brand-text h2 {
+    margin: 0;
     font-size: 18px;
     font-weight: 950;
     color: #ffffff;
+    line-height: 1.2;
 }
 
-.platform-logo p {
-    margin-top: 3px;
+.platform-logo-text p,
+.admin-brand-text p {
+    margin: 3px 0 0 0;
     color: #94a3b8;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .platform-menu {
     width: 100%;
 }
 
-.platform-nav-link {
-    text-decoration: none;
+.platform-nav-link,
+.platform-menu .menu-link {
+    width: 100% !important;
+    min-height: 52px !important;
+    padding: 0 16px !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+    color: #b0c1d9 !important;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.platform-nav-link:hover,
+.platform-menu .menu-link:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+}
+
+.platform-nav-link.active,
+.platform-menu .menu-link.active {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3) !important;
+}
+
+.platform-nav-link i,
+.platform-menu .menu-link i {
+    width: 22px;
+    font-size: 17px;
+    text-align: center;
 }
 
 .platform-logout-btn {
@@ -642,12 +712,98 @@ h4 {
     flex-wrap: wrap;
 }
 
-.platform-request-actions {
+/* Platform Notifications */
+.platform-card-head {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 12px;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
     flex-wrap: wrap;
+}
+
+.notification-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.platform-chip {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 0 16px;
+    background: rgba(37, 99, 235, 0.12) !important;
+    border: 1px solid rgba(37, 99, 235, 0.28) !important;
+    color: #2563eb !important;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.platform-secondary-btn {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 12px;
+    padding: 0 16px;
+    background: rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    color: #0f172a !important;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.platform-secondary-btn:hover {
+    background: rgba(15, 23, 42, 0.1);
+    color: #0f172a !important;
+}
+
+.platform-secondary-btn.notification-delete-btn {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.25) !important;
+    color: #dc2626 !important;
+}
+
+.platform-secondary-btn.notification-delete-btn:hover {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+/* Dark Mode Overrides for Platform Notifications */
+[data-theme="dark"] .platform-chip {
+    background: rgba(59, 130, 246, 0.18) !important;
+    border-color: rgba(59, 130, 246, 0.35) !important;
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] .platform-secondary-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .platform-secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .platform-secondary-btn.notification-delete-btn {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .platform-secondary-btn.notification-delete-btn:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
 }
 
 /* ================= RESPONSIVE ================= */

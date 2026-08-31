@@ -14,6 +14,40 @@ if (ATTENDANCE_SECRET.length < 32) {
 
 const rateLimitStore = new Map();
 
+const RATE_LIMIT_STORE_MAX_SIZE = 10000;
+const RATE_LIMIT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
+
+// Sweep expired entries to prevent unbounded memory growth.
+// Also evict oldest half when the store exceeds max size.
+function cleanupRateLimitStore() {
+    const now = Date.now();
+    const toDelete = [];
+
+    rateLimitStore.forEach(function (data, key) {
+        if (data && (now - data.startTime) > (data.windowMs || 60000)) {
+            toDelete.push(key);
+        }
+    });
+
+    toDelete.forEach(function (key) {
+        rateLimitStore.delete(key);
+    });
+
+    // Hard cap — if still over limit, evict oldest entries
+    if (rateLimitStore.size > RATE_LIMIT_STORE_MAX_SIZE) {
+        const overflow = rateLimitStore.size - Math.floor(RATE_LIMIT_STORE_MAX_SIZE / 2);
+        let evicted = 0;
+        for (const key of rateLimitStore.keys()) {
+            if (evicted >= overflow) break;
+            rateLimitStore.delete(key);
+            evicted++;
+        }
+    }
+}
+
+// Run cleanup on a repeating interval (unref so it doesn't block process exit)
+setInterval(cleanupRateLimitStore, RATE_LIMIT_CLEANUP_INTERVAL_MS).unref();
+
 function base64UrlEncode(value) {
     return Buffer.from(value)
         .toString("base64")
@@ -140,7 +174,8 @@ function allowAttendanceRequest(key, maxRequests, windowMs) {
     if (!rateLimitStore.has(key)) {
         rateLimitStore.set(key, {
             count: 1,
-            startTime: now
+            startTime: now,
+            windowMs: windowMs
         });
 
         return {
@@ -153,7 +188,8 @@ function allowAttendanceRequest(key, maxRequests, windowMs) {
     if (now - data.startTime > windowMs) {
         rateLimitStore.set(key, {
             count: 1,
-            startTime: now
+            startTime: now,
+            windowMs: windowMs
         });
 
         return {

@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notifications | Admin</title>
+    <title>Notifications & Passkeys | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -30,7 +32,6 @@
         }
     </script>
 
-
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
     <script>
@@ -43,74 +44,126 @@
 </head>
 <body>
 
+<%
+    const safeNotifications = (typeof notifications !== "undefined" && notifications) ? notifications : [];
+    const safePasskeyRequests = (typeof pendingPasskeyRequests !== "undefined" && pendingPasskeyRequests) ? pendingPasskeyRequests : [];
+    const safeUnreadCount = (typeof unreadCount !== "undefined") ? unreadCount : safeNotifications.filter(n => !n.isRead).length;
+%>
+
 <div class="admin-layout">
-    <%- include("partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "" }) %>
+    <%- include("partials/sidebar", { activePage: "notifications", currentCollege: typeof college !== "undefined" ? college : null }) %>
 
     <main class="admin-main">
         <header class="admin-header">
             <div>
                 <span class="admin-kicker">Admin Panel</span>
-                <h1>Notifications</h1>
-                <p>Approve passkey requests and review admin alerts.</p>
+                <h1>Security Alerts & Notification Hub</h1>
+                <p>Approve student biometric passkey enrollment requests and monitor real-time security events.</p>
             </div>
         </header>
 
         <% if (typeof message !== "undefined" && message) { %>
             <% const adminNotificationFlash = String(message || "").toLowerCase(); %>
             <div class="admin-alert <%= adminNotificationFlash.includes('success') || adminNotificationFlash.includes('approved') || adminNotificationFlash.includes('rejected') || adminNotificationFlash.includes('read') || adminNotificationFlash.includes('deleted') || adminNotificationFlash.includes('cleared') ? 'success' : 'error' %>">
-                <%= typeof message !== "undefined" ? message : "" %>
+                <%= message %>
             </div>
         <% } %>
 
+        <!-- OVERVIEW STAT RADAR CARDS -->
+        <section class="adm-radar-grid">
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon room">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Total Dispatches</span>
+                    <span class="adm-radar-val"><%= safeNotifications.length %> Alerts</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon <%= safePasskeyRequests.length > 0 ? 'gps' : 'security' %>">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Passkey Approvals</span>
+                    <span class="adm-radar-val" style="color: <%= safePasskeyRequests.length > 0 ? '#f59e0b' : '#10b981' %>;"><%= safePasskeyRequests.length %> Pending</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon <%= safeUnreadCount > 0 ? 'dept' : 'sync' %>">
+                    <i class="fa-solid fa-inbox"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Unread Inbox</span>
+                    <span class="adm-radar-val" style="color: <%= safeUnreadCount > 0 ? '#6366f1' : '#10b981' %>;"><%= safeUnreadCount %> Unread</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon security">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Audit Engine</span>
+                    <span class="adm-radar-val" style="color: #10b981;">100% Guarded</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- PENDING PASSKEY REQUESTS -->
         <section class="admin-card admin-passkey-pending-card">
             <div class="admin-card-head">
                 <div>
-                    <h3>Pending Passkey Requests</h3>
-                    <p>Students waiting for passkey setup approval.</p>
+                    <h3><i class="fa-solid fa-fingerprint" style="color: #6366f1; margin-right: 8px;"></i> Pending Passkey Requests</h3>
+                    <p>Students waiting for biometric passkey authorization to take attendance securely.</p>
                 </div>
 
                 <span class="admin-count-pill">
-                    <%= pendingPasskeyRequests ? pendingPasskeyRequests.length : 0 %> Pending
+                    <%= safePasskeyRequests.length %> Pending
                 </span>
             </div>
 
-            <% if (!pendingPasskeyRequests || pendingPasskeyRequests.length === 0) { %>
+            <% if (safePasskeyRequests.length === 0) { %>
                 <div class="admin-empty admin-empty-compact">
-                    <span>No pending passkey requests.</span>
+                    <i class="fa-solid fa-circle-check" style="color: #10b981; margin-right: 6px;"></i>
+                    <span>No pending passkey requests. All student biometric credentials are synchronized.</span>
                 </div>
             <% } else { %>
                 <div class="admin-grid">
-                    <% pendingPasskeyRequests.forEach(function(request) { %>
+                    <% safePasskeyRequests.forEach(function(request) { %>
                         <article class="admin-item-card">
                             <h4><%= request.student ? request.student.fullName : "Student" %></h4>
                             <p><%= request.student ? request.student.enrollmentNumber : "-" %></p>
 
                             <div class="admin-meta">
-                                <span class="admin-badge">
+                                <span class="admin-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-weight: 700;">
                                     <i class="fa-solid fa-graduation-cap"></i>
                                     <%= request.student && request.student.classGroup && request.student.classGroup.name ? request.student.classGroup.name : "Class Group" %>
                                 </span>
                                 <span class="admin-badge">
-                                    Requested: <%= new Date(request.requestedAt || request.createdAt).toLocaleString() %>
+                                    <i class="fa-solid fa-clock"></i> <%= new Date(request.requestedAt || request.createdAt).toLocaleString() %>
                                 </span>
                             </div>
 
-                            <div class="admin-passkey-actions">
-                                <form action="/admin/passkey-requests/<%= request._id %>/approve" method="POST">
-                                    <button class="admin-secondary-btn" type="submit">
+                            <div class="admin-passkey-actions" style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <form action="/admin/passkey-requests/<%= request._id %>/approve" method="POST" style="flex: 1;">
+                                    <button class="admin-primary-btn" type="submit" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
                                         <i class="fa-solid fa-circle-check"></i>
                                         Approve (30m)
                                     </button>
                                 </form>
 
-                                <form action="/admin/passkey-requests/<%= request._id %>/reject" method="POST">
-                                    <div class="admin-passkey-reject-group">
+                                <form action="/admin/passkey-requests/<%= request._id %>/reject" method="POST" style="flex: 1;">
+                                    <div class="admin-passkey-reject-group" style="display: flex; gap: 6px;">
                                         <input
                                             type="text"
                                             name="reviewNote"
                                             placeholder="Reason (optional)"
+                                            style="font-size: 0.82rem; height: 38px;"
                                         >
-                                        <button class="admin-warning-btn" type="submit">
+                                        <button class="admin-warning-btn" type="submit" style="height: 38px; white-space: nowrap;">
                                             <i class="fa-solid fa-circle-xmark"></i>
                                             Reject
                                         </button>
@@ -123,18 +176,19 @@
             <% } %>
         </section>
 
+        <!-- NOTIFICATION INBOX -->
         <section class="admin-card">
             <div class="admin-card-head">
                 <div>
-                    <h3>Notification Inbox</h3>
-                    <p>Recent admin notifications.</p>
+                    <h3><i class="fa-solid fa-inbox" style="color: #6366f1; margin-right: 8px;"></i> Notification Inbox</h3>
+                    <p>Recent audit dispatches, attendance anomaly alerts, and system notices.</p>
                 </div>
 
-                <div class="notification-head-actions">
-                    <span class="admin-count-pill"><%= typeof unreadCount !== "undefined" ? unreadCount : 0 %> Unread</span>
+                <div class="notification-head-actions" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <span class="admin-count-pill"><%= safeUnreadCount %> Unread</span>
 
                     <form action="/admin/notifications/mark-all-read" method="POST">
-                        <button class="admin-secondary-btn" type="submit">
+                        <button class="admin-secondary-btn" type="submit" style="font-size: 0.82rem;">
                             <i class="fa-solid fa-check-double"></i>
                             Mark All Read
                         </button>
@@ -145,7 +199,7 @@
                         method="POST"
                         onsubmit="return uiConfirm(event, 'Clear all notifications? This cannot be undone.')"
                     >
-                        <button class="admin-warning-btn notification-delete-btn" type="submit">
+                        <button class="admin-warning-btn notification-delete-btn" type="submit" style="font-size: 0.82rem;">
                             <i class="fa-solid fa-trash"></i>
                             Clear All
                         </button>
@@ -153,13 +207,14 @@
                 </div>
             </div>
 
-            <% if (!notifications || notifications.length === 0) { %>
+            <% if (safeNotifications.length === 0) { %>
                 <div class="admin-empty admin-empty-compact">
-                    <span>No notifications yet.</span>
+                    <i class="fa-solid fa-envelope-open" style="opacity: 0.5; margin-right: 6px;"></i>
+                    <span>No notifications yet. You're completely up to date.</span>
                 </div>
             <% } else { %>
                 <div class="notification-list">
-                    <% notifications.forEach(function(notification) { %>
+                    <% safeNotifications.forEach(function(notification) { %>
                         <article class="notification-card <%= notification.isRead ? 'read' : 'unread' %>">
                             <div class="notification-top">
                                 <h4><%= notification.title %></h4>
@@ -169,7 +224,7 @@
                             <p><%= notification.message %></p>
 
                             <div class="notification-meta">
-                                <span class="admin-badge"><%= notification.category || "GENERAL" %></span>
+                                <span class="admin-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-weight: 700;"><%= notification.category || "GENERAL" %></span>
 
                                 <% if (notification.link) { %>
                                     <a class="admin-secondary-btn notification-open-link" href="<%= notification.link %>">
@@ -209,7 +264,7 @@
 <script src="/js/uiShell.js"></script>
 
     <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/selectEnhancer.js?v=3" defer></script>
     <script src="/js/adminRealtime.js"></script>
 </body>
 </html>

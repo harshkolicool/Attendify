@@ -1948,33 +1948,83 @@ router.get("/dashboard", isCollegeAdmin, async function (req, res) {
     try {
         const collegeId = getCollegeId(req);
         const college = req.college || await College.findById(collegeId);
+        const todayStr = typeof getTodayDateString === "function" ? getTodayDateString() : new Date().toISOString().slice(0, 10);
+        const collegeObjectId = mongoose.Types.ObjectId.isValid(collegeId) ? new mongoose.Types.ObjectId(collegeId) : collegeId;
+
+        const [
+            classGroupsCount,
+            classroomsCount,
+            subjectsCount,
+            teachersCount,
+            studentsCount,
+            schedulesCount,
+            pendingStudentsCount,
+            activeSessionsCount,
+            todaySchedulesCount,
+            recentSessions,
+            recentNotifications,
+            unreadNotificationsCount,
+            departmentStats,
+            recentSchedules
+        ] = await Promise.all([
+            ClassGroup.countDocuments({ college: collegeId, isActive: true }).catch(() => 0),
+            Classroom.countDocuments({ college: collegeId, isDeleted: { $ne: true } }).catch(() => 0),
+            Subject.countDocuments({ college: collegeId, isActive: true }).catch(() => 0),
+            Teacher.countDocuments({ college: collegeId, role: { $in: ["TEACHER", "HOD"] }, isDeleted: { $ne: true } }).catch(() => 0),
+            Student.countDocuments(studentAccountQuery({ college: collegeId })).catch(() => 0),
+            Schedule.countDocuments({ college: collegeId }).catch(() => 0),
+            Student.countDocuments({ college: collegeId, isApproved: false, isDeleted: { $ne: true } }).catch(() => 0),
+            AttendanceSession.countDocuments({ college: collegeId, isActive: true, status: "ACTIVE" }).catch(() => 0),
+            Schedule.countDocuments({ college: collegeId, date: todayStr }).catch(() => 0),
+            AttendanceSession.find({ college: collegeId })
+                .sort({ createdAt: -1 })
+                .limit(6)
+                .populate("teacher", "fullName email")
+                .populate("subject", "name code")
+                .populate("classGroup", "name department semester section")
+                .populate("classroom", "name roomNumber")
+                .lean()
+                .catch(() => []),
+            getRecentNotifications(getAdminNotificationFilter(collegeId), 5).catch(() => []),
+            getUnreadCount(getAdminNotificationFilter(collegeId)).catch(() => 0),
+            Student.aggregate([
+                { $match: { college: collegeObjectId, isDeleted: { $ne: true } } },
+                { $group: { _id: { $ifNull: ["$department", "General"] }, count: { $sum: 1 } } },
+                { $sort: { count: -1 } },
+                { $limit: 6 }
+            ]).catch(() => []),
+            Schedule.find({ college: collegeId, date: todayStr })
+                .sort({ startTime: 1 })
+                .limit(5)
+                .populate("teacher", "fullName")
+                .populate("subject", "name code")
+                .populate("classGroup", "name")
+                .populate("classroom", "name roomNumber")
+                .lean()
+                .catch(() => [])
+        ]);
 
         const counts = {
-            classGroups: await ClassGroup.countDocuments({
-                college: collegeId,
-                isActive: true
-            }),
-            classrooms: await Classroom.countDocuments({
-                college: collegeId,
-                isDeleted: { $ne: true }
-            }),
-            subjects: await Subject.countDocuments({
-                college: collegeId,
-                isActive: true
-            }),
-            teachers: await Teacher.countDocuments({
-                college: collegeId,
-                role: { $in: ["TEACHER", "HOD"] },
-                isDeleted: { $ne: true }
-            }),
-            students: await Student.countDocuments(studentAccountQuery({ college: collegeId })),
-            schedules: await Schedule.countDocuments({ college: collegeId })
+            classGroups: classGroupsCount,
+            classrooms: classroomsCount,
+            subjects: subjectsCount,
+            teachers: teachersCount,
+            students: studentsCount,
+            schedules: schedulesCount,
+            pendingStudents: pendingStudentsCount,
+            activeSessions: activeSessionsCount,
+            todaySchedules: todaySchedulesCount
         };
 
         res.render("admin/dashboard", {
             admin: req.user,
             college: college,
             counts: counts,
+            recentSessions: recentSessions || [],
+            recentNotifications: recentNotifications || [],
+            unreadNotificationsCount: unreadNotificationsCount || 0,
+            departmentStats: departmentStats || [],
+            todaySchedulesList: recentSchedules || [],
             message: getFlashMessage(req.query.message),
             error: null,
             activePage: "dashboard",
@@ -3423,7 +3473,7 @@ router.post("/students/approve/:id", isCollegeAdmin, async function (req, res) {
         const student = await Student.findOneAndUpdate(
             { _id: studentId, college: collegeId, isDeleted: { $ne: true } },
             { $set: { isApproved: true, autoLoginToken: null } },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!student) {

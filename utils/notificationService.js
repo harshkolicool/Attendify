@@ -22,6 +22,7 @@ function buildNotificationPayload(notification) {
 
     return {
         id: notification._id.toString(),
+        _id: notification._id.toString(),
         recipientRole: notification.recipientRole,
         recipientUserId: notification.recipientUserId
             ? notification.recipientUserId.toString()
@@ -122,7 +123,7 @@ async function markNotificationRead(notificationId, filter) {
             }
         },
         {
-            new: true
+            returnDocument: 'after'
         }
     ).lean();
 

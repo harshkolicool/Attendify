@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passkeys | Student</title>
+    <title>Passkeys & Biometrics | Student | Attendify</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260713">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260901_fixed">
+    <link rel="stylesheet" href="/css/studentPasskeys.css?v=20260901_compact5">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -30,7 +36,6 @@
         }
     </script>
 
-
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
     <script>
@@ -43,288 +48,312 @@
 </head>
 <body>
 
+<%
+    const safeStudent = (typeof student !== "undefined" && student) ? student : null;
+    const safePasskeys = (typeof passkeys !== "undefined" && passkeys) ? passkeys : [];
+    const safeTrustedDevices = (typeof trustedDevices !== "undefined" && trustedDevices) ? trustedDevices : [];
+%>
+
 <div class="student-layout">
 
-    <%- include("student/partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "", student: typeof student !== "undefined" ? student : null }) %>
+    <%- include("student/partials/sidebar", { activePage: "passkeys", student: safeStudent }) %>
 
-    <main class="student-main">
-        <header class="student-header">
-            <div>
-                <span class="student-kicker">Student Panel</span>
-                <h1>Passkey Security</h1>
-                <p>Use your college-admin approved passkey to verify attendance securely.</p>
-            </div>
-        </header>
+    <main class="student-main student-passkeys-page">
 
-        <div id="messageBox" class="schedule-message"></div>
-
-        <% if (typeof message !== "undefined" && message === "deleted") { %>
-            <div class="success-box">Passkey deleted successfully.</div>
-        <% } else if (typeof message !== "undefined" && message === "device_deleted") { %>
-            <div class="success-box">Trusted browser removed successfully.</div>
-        <% } else if (typeof message !== "undefined" && message === "request_sent") { %>
-            <div class="success-box">Passkey setup request sent to admin successfully.</div>
-        <% } else if (typeof message !== "undefined" && message === "request_pending") { %>
-            <div class="error-box">Your passkey setup request is already pending admin approval.</div>
-        <% } else if (typeof message !== "undefined" && message === "setup_already_open") { %>
-            <div class="success-box">Passkey setup is already allowed right now. You can register immediately.</div>
-        <% } else if (typeof message !== "undefined" && message === "request_error") { %>
-            <div class="error-box">Could not send passkey setup request. Please try again.</div>
-        <% } else if (typeof message !== "undefined" && message === "error") { %>
-            <div class="error-box">Something went wrong. Please try again.</div>
-        <% } else if (typeof message !== "undefined" && message === "invalid") { %>
-            <div class="error-box">Invalid passkey selected.</div>
-        <% } %>
-
-        <section class="student-passkey-hero">
-            <div>
-                <h3>Secure attendance with passkeys</h3>
-                <p>
-                    Passkeys use your device lock, fingerprint, Face ID, Touch ID or PIN.
-                    A new passkey can be created only when your college admin allows setup.
-                    <span id="passkeySupportHint" class="student-support-hint"></span>
-                </p>
+        <!-- COMPACT RESPONSIVE HEADER -->
+        <header class="student-header student-passkey-header">
+            <div class="student-header-left">
+                <div class="student-avatar-badge">
+                    <%= safeStudent && (safeStudent.fullName || safeStudent.name) ? (safeStudent.fullName || safeStudent.name).charAt(0).toUpperCase() : "S" %>
+                    <span class="student-online-dot" title="Active"></span>
+                </div>
+                <div class="student-header-titles">
+                    <div class="student-header-badge-row">
+                        <h1>Passkey Security</h1>
+                        <span class="student-security-chip">
+                            <i class="fa-solid fa-shield-halved"></i> FIDO2 Biometrics
+                        </span>
+                    </div>
+                    <p class="student-header-subtitle">Hardware-bound biometric verification for zero-proxy attendance.</p>
+                </div>
             </div>
 
-            <div class="student-passkey-actions">
+            <div class="student-passkey-header-actions">
                 <button
-                    class="view-btn live"
+                    class="passkey-hdr-btn <%= isPasskeySetupOpen ? 'primary' : 'secondary' %>"
                     type="button"
                     id="registerPasskeyBtn"
                     <%= isPasskeySetupOpen ? "" : "disabled" %>
                     data-allowed-until="<%= passkeySetupAllowedUntil ? passkeySetupAllowedUntil.getTime() : '' %>"
                 >
                     <i class="fa-solid fa-fingerprint"></i>
-                    <%= isPasskeySetupOpen ? "Add New Passkey" : "Setup Not Allowed Yet" %>
+                    <span><%= isPasskeySetupOpen ? "Add Passkey" : "Setup Closed" %></span>
                 </button>
 
-                <form action="/student/passkeys/request-setup" method="POST" onsubmit="return uiConfirm(event, 'Request permission from admin to add a new passkey?')">
+                <form action="/student/passkeys/request-setup" method="POST" onsubmit="return uiConfirm(event, 'Request permission from admin to add a new passkey?')" class="passkey-request-form">
                     <button
-                        class="view-btn"
+                        class="passkey-hdr-btn secondary"
                         type="submit"
                         <%= pendingPasskeyRequest ? "disabled" : "" %>
                     >
                         <i class="fa-solid fa-paper-plane"></i>
-                        <%= pendingPasskeyRequest ? "Request Pending" : "Request New Passkey" %>
+                        <span><%= pendingPasskeyRequest ? "Pending Request" : "Request Window" %></span>
                     </button>
                 </form>
+
+                <a href="/student/dashboard" class="passkey-hdr-btn secondary passkey-dash-link" title="Dashboard">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Dashboard</span>
+                </a>
             </div>
-        </section>
+        </header>
+
+        <div id="messageBox" class="schedule-message"></div>
+
+        <% if (typeof message !== "undefined" && message) { %>
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    const msgMap = {
+                        "deleted": "Passkey deleted successfully.",
+                        "device_deleted": "Trusted browser removed successfully.",
+                        "request_sent": "Passkey setup request sent to admin successfully.",
+                        "request_pending": "Passkey request is already pending admin review.",
+                        "setup_already_open": "Passkey setup is open right now. Register immediately."
+                    };
+                    const text = msgMap[<%- JSON.stringify(message) %>] || <%- JSON.stringify(message) %>;
+                    const icon = <%- JSON.stringify(message) %> === "request_pending" ? "info" : "success";
+                    if (typeof window.showToast === "function") {
+                        window.showToast(text, icon);
+                    } else if (typeof Swal !== "undefined") {
+                        Swal.fire({ toast: true, position: "top-end", icon: icon, title: text, showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                    }
+                    try {
+                        const url = new URL(window.location);
+                        url.searchParams.delete("message");
+                        window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : ""));
+                    } catch(e) {}
+                });
+            </script>
+        <% } %>
 
         <% if (pendingPasskeyRequest) { %>
-            <div class="schedule-message">
-                <div class="success-box">
-                    Passkey request pending since
-                    <strong><%= new Date(pendingPasskeyRequest.createdAt).toLocaleString() %></strong>.
-                    Admin approval is required.
-                </div>
+            <div class="admin-alert success" style="margin-bottom: 12px; padding: 10px 14px; font-size: 0.84rem; border-radius: 12px;">
+                <i class="fa-solid fa-clock"></i> Setup request pending approval since
+                <strong><%= new Date(pendingPasskeyRequest.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></strong>.
             </div>
         <% } %>
 
-        <section class="student-history-summary-grid">
-            <article class="student-history-stat blue">
-                <div>
-                    <span>Total Passkeys</span>
-                    <strong><%= passkeys.length %></strong>
+        <!-- RESPONSIVE RADAR STATS ROW -->
+        <section class="student-passkey-kpi-grid">
+            <div class="student-kpi-card">
+                <div class="student-kpi-icon-wrap room">
+                    <i class="fa-solid fa-key"></i>
                 </div>
-                <i class="fa-solid fa-key"></i>
-            </article>
-
-            <article class="student-history-stat security <%= passkeys.length > 0 ? 'is-active' : 'is-setup-needed' %>">
-                <div>
-                    <span>Attendance Security</span>
-                    <strong><%= passkeys.length > 0 || trustedDevices.length > 0 ? "Active" : "Setup Needed" %></strong>
-                </div>
-                <i class="fa-solid <%= passkeys.length > 0 || trustedDevices.length > 0 ? 'fa-shield-halved' : 'fa-triangle-exclamation' %>"></i>
-            </article>
-
-            <article class="student-history-stat green">
-                <div>
-                    <span>Trusted Browsers</span>
-                    <strong><%= trustedDevices.length %></strong>
-                </div>
-                <i class="fa-solid fa-laptop"></i>
-            </article>
-        </section>
-
-        <section class="student-history-card student-trusted-browser-card">
-            <div class="student-history-card-head">
-                <div>
-                    <h3>Trusted Browser Fallback</h3>
-                    <p>For devices where passkeys are unavailable.</p>
-                </div>
-
-                <span class="student-count-pill">
-                    <%= trustedDevices.length %> Trusted
-                </span>
-            </div>
-
-            <form id="trustedDeviceForm" class="student-trusted-browser-form">
-                <div class="student-field">
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Confirm your student password"
-                        autocomplete="current-password"
-                        required
-                    >
-                </div>
-
-                <button class="view-btn live" type="submit">
-                    <i class="fa-solid fa-laptop-file"></i>
-                    Trust This Browser
-                </button>
-            </form>
-        </section>
-
-        <section class="student-history-card">
-            <div class="student-history-card-head">
-                <div>
-                    <h3>Trusted Browsers</h3>
-                    <p>Fallback browsers approved for attendance verification.</p>
+                <div class="student-kpi-body">
+                    <span class="student-kpi-label">Registered Keys</span>
+                    <strong class="student-kpi-val"><%= safePasskeys.length %> Active FIDO2</strong>
                 </div>
             </div>
 
-            <% if (!trustedDevices || trustedDevices.length === 0) { %>
-                <div class="student-history-empty">
-                    No trusted browser registered yet.
+            <div class="student-kpi-card">
+                <div class="student-kpi-icon-wrap <%= safePasskeys.length > 0 ? 'security' : 'gps' %>">
+                    <i class="fa-solid <%= safePasskeys.length > 0 ? 'fa-shield-halved' : 'fa-triangle-exclamation' %>"></i>
                 </div>
-            <% } else { %>
-                <div class="student-passkey-grid">
-                    <% trustedDevices.forEach(function(device) { %>
-                        <%
-                            const isCurrentDevice = currentTrustedDeviceId && device.deviceId === currentTrustedDeviceId;
-                            const usableAt = device.usableAfter ? new Date(device.usableAfter) : null;
-                            const isPending = usableAt && usableAt.getTime() > Date.now();
-                        %>
+                <div class="student-kpi-body">
+                    <span class="student-kpi-label">Biometric Posture</span>
+                    <strong class="student-kpi-val <%= safePasskeys.length > 0 ? 'success' : 'warning' %>">
+                        <%= safePasskeys.length > 0 ? "100% Armed" : "Setup Needed" %>
+                    </strong>
+                </div>
+            </div>
 
-                        <article class="student-passkey-card student-trusted-device-card">
-                            <div class="student-passkey-top">
-                                <div class="student-passkey-icon trusted">
-                                    <i class="fa-solid fa-laptop"></i>
+            <div class="student-kpi-card">
+                <div class="student-kpi-icon-wrap sync">
+                    <i class="fa-solid fa-laptop"></i>
+                </div>
+                <div class="student-kpi-body">
+                    <span class="student-kpi-label">Trusted Browsers</span>
+                    <strong class="student-kpi-val"><%= safeTrustedDevices.length %> Fallback</strong>
+                </div>
+            </div>
+
+            <div class="student-kpi-card">
+                <div class="student-kpi-icon-wrap dept">
+                    <i class="fa-solid <%= isPasskeySetupOpen ? 'fa-lock-open' : 'fa-lock' %>"></i>
+                </div>
+                <div class="student-kpi-body">
+                    <span class="student-kpi-label">Setup Window</span>
+                    <strong class="student-kpi-val <%= isPasskeySetupOpen ? 'success' : 'muted' %>">
+                        <%= isPasskeySetupOpen ? "Open Now" : "Locked" %>
+                    </strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- HARDWARE SUPPORT RIBBON -->
+        <div class="student-passkey-support-deck">
+            <div class="student-support-text-col">
+                <div class="student-support-title-row">
+                    <i class="fa-solid fa-fingerprint support-lead-icon"></i>
+                    <span>Hardware biometrics bind attendance directly to your device lock.</span>
+                </div>
+                <div id="passkeySupportHint" class="student-support-status-chip"></div>
+            </div>
+
+            <div class="student-support-chips-row">
+                <span class="student-device-chip"><i class="fa-brands fa-apple"></i> Touch/Face ID</span>
+                <span class="student-device-chip"><i class="fa-brands fa-windows"></i> Hello</span>
+                <span class="student-device-chip"><i class="fa-brands fa-android"></i> Android</span>
+                <span class="student-device-chip"><i class="fa-solid fa-key"></i> YubiKey</span>
+            </div>
+        </div>
+
+        <!-- 2-COLUMN SPLIT GRID (REGISTERED PASSKEYS & TRUSTED BROWSERS) -->
+        <div class="student-passkey-split-grid">
+
+            <!-- COLUMN 1: REGISTERED PASSKEYS -->
+            <section class="admin-card student-passkey-section-card">
+                <div class="student-card-header-bar">
+                    <div class="student-card-header-titles">
+                        <h3><i class="fa-solid fa-fingerprint text-emerald"></i> Registered Passkeys</h3>
+                        <p>Hardware credentials authorized for attendance.</p>
+                    </div>
+                    <span class="student-count-pill">
+                        <%= safePasskeys.length %> <%= safePasskeys.length === 1 ? 'Key' : 'Keys' %>
+                    </span>
+                </div>
+
+                <% if (safePasskeys.length === 0) { %>
+                    <div class="student-empty-state-box">
+                        <i class="fa-solid fa-key"></i>
+                        <p>No passkey registered. Click <strong>Request Window</strong> to enroll.</p>
+                    </div>
+                <% } else { %>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <% safePasskeys.forEach(function(passkey, index) { %>
+                            <article class="student-passkey-item-card">
+                                <div class="student-passkey-item-top">
+                                    <div class="student-passkey-item-left">
+                                        <div class="student-passkey-item-icon">
+                                            <i class="fa-solid fa-fingerprint"></i>
+                                        </div>
+                                        <h4 class="student-passkey-item-name"><%= passkey.name || ("Passkey " + (index + 1)) %></h4>
+                                    </div>
+                                    <span class="student-passkey-status-badge">Active</span>
                                 </div>
 
-                                <span class="student-passkey-badge <%= isPending ? 'pending' : '' %>">
-                                    <%= isPending ? "Activating" : "Trusted" %>
-                                </span>
-                            </div>
-
-                            <h4><%= isCurrentDevice ? "This Browser" : "Trusted Browser" %></h4>
-
-                            <div class="student-passkey-meta">
-                                <p>
-                                    <i class="fa-solid fa-calendar-plus"></i>
-                                    Registered:
-                                    <strong><%= device.registeredAt ? new Date(device.registeredAt).toLocaleDateString() : "-" %></strong>
-                                </p>
-
-                                <p>
-                                    <i class="fa-solid fa-clock"></i>
-                                    Usable:
-                                    <strong><%= isPending ? new Date(device.usableAfter).toLocaleTimeString() : "Now" %></strong>
-                                </p>
-
-                                <p>
-                                    <i class="fa-solid fa-clock-rotate-left"></i>
-                                    Last Used:
-                                    <strong><%= device.lastUsedAt ? new Date(device.lastUsedAt).toLocaleString() : "Never" %></strong>
-                                </p>
-                            </div>
-
-                            <form
-                                action="/student/trusted-devices/<%= encodeURIComponent(device.deviceId) %>/delete"
-                                method="POST"
-                                onsubmit="return uiConfirm(event, 'Remove this trusted browser?')"
-                            >
-                                <button class="student-delete-passkey-btn" type="submit">
-                                    <i class="fa-solid fa-trash"></i>
-                                    Remove Browser
-                                </button>
-                            </form>
-                        </article>
-                    <% }) %>
-                </div>
-            <% } %>
-        </section>
-
-        <section class="student-history-card">
-            <div class="student-history-card-head">
-                <div>
-                    <h3>Registered Passkeys</h3>
-                    <p>These passkeys can be used to verify attendance.</p>
-                </div>
-
-                <span class="student-count-pill">
-                    <%= passkeys.length %> Passkeys
-                </span>
-            </div>
-
-            <% if (!passkeys || passkeys.length === 0) { %>
-                <div class="student-history-empty">
-                    No passkey registered yet. Ask your college admin to allow passkey setup, then click “Add New Passkey”.
-                </div>
-            <% } else { %>
-                <div class="student-passkey-grid">
-                    <% passkeys.forEach(function(passkey, index) { %>
-                        <article class="student-passkey-card">
-                            <div class="student-passkey-top">
-                                <div class="student-passkey-icon">
-                                    <i class="fa-solid fa-fingerprint"></i>
+                                <div class="student-passkey-details-grid">
+                                    <div class="student-passkey-detail-cell">
+                                        <i class="fa-solid fa-mobile-screen" style="opacity: 0.6;"></i>
+                                        <span>Type: <strong><%= passkey.deviceType || "Multi-Device" %></strong></span>
+                                    </div>
+                                    <div class="student-passkey-detail-cell">
+                                        <i class="fa-solid fa-cloud" style="opacity: 0.6;"></i>
+                                        <span>Cloud: <strong><%= passkey.backedUp ? "Synced" : "Local" %></strong></span>
+                                    </div>
+                                    <div class="student-passkey-detail-cell">
+                                        <i class="fa-solid fa-calendar-plus" style="opacity: 0.6;"></i>
+                                        <span>Added: <strong><%= passkey.registeredAt ? new Date(passkey.registeredAt).toLocaleDateString() : "-" %></strong></span>
+                                    </div>
+                                    <div class="student-passkey-detail-cell">
+                                        <i class="fa-solid fa-clock-rotate-left" style="opacity: 0.6;"></i>
+                                        <span>Used: <strong><%= passkey.lastUsedAt ? new Date(passkey.lastUsedAt).toLocaleDateString() : "Never" %></strong></span>
+                                    </div>
                                 </div>
 
-                                <span class="student-passkey-badge">
-                                    Active
-                                </span>
-                            </div>
+                                <form
+                                    action="/student/passkeys/<%= encodeURIComponent(passkey.credentialId) %>/delete"
+                                    method="POST"
+                                    onsubmit="return uiConfirm(event, 'Delete this passkey? Admin approval will be required to register a new one.')"
+                                    style="margin: 0;"
+                                >
+                                    <button class="student-delete-passkey-btn" type="submit">
+                                        <i class="fa-solid fa-trash"></i> Delete Passkey
+                                    </button>
+                                </form>
+                            </article>
+                        <% }) %>
+                    </div>
+                <% } %>
+            </section>
 
-                            <h4><%= passkey.name || ("Passkey " + (index + 1)) %></h4>
-
-                            <div class="student-passkey-meta">
-                                <p>
-                                    <i class="fa-solid fa-mobile-screen"></i>
-                                    Device Type:
-                                    <strong><%= passkey.deviceType || "Unknown" %></strong>
-                                </p>
-
-                                <p>
-                                    <i class="fa-solid fa-cloud"></i>
-                                    Backup:
-                                    <strong><%= passkey.backedUp ? "Yes" : "No" %></strong>
-                                </p>
-
-                                <p>
-                                    <i class="fa-solid fa-calendar-plus"></i>
-                                    Registered:
-                                    <strong>
-                                        <%= passkey.registeredAt ? new Date(passkey.registeredAt).toLocaleDateString() : "-" %>
-                                    </strong>
-                                </p>
-
-                                <p>
-                                    <i class="fa-solid fa-clock-rotate-left"></i>
-                                    Last Used:
-                                    <strong>
-                                        <%= passkey.lastUsedAt ? new Date(passkey.lastUsedAt).toLocaleString() : "Never" %>
-                                    </strong>
-                                </p>
-                            </div>
-
-                            <form
-                                action="/student/passkeys/<%= encodeURIComponent(passkey.credentialId) %>/delete"
-                                method="POST"
-                                onsubmit="return uiConfirm(event, 'Delete this passkey? You may need admin approval to create a new one.')"
-                            >
-                                <button class="student-delete-passkey-btn" type="submit">
-                                    <i class="fa-solid fa-trash"></i>
-                                    Delete Passkey
-                                </button>
-                            </form>
-                        </article>
-                    <% }) %>
+            <!-- COLUMN 2: TRUSTED BROWSER FALLBACK & SETUP -->
+            <section class="admin-card student-passkey-section-card">
+                <div class="student-card-header-bar">
+                    <div class="student-card-header-titles">
+                        <h3><i class="fa-solid fa-laptop text-indigo"></i> Trusted Browsers</h3>
+                        <p>Secondary fallback when biometrics are unavailable.</p>
+                    </div>
+                    <span class="student-count-pill">
+                        <%= safeTrustedDevices.length %> <%= safeTrustedDevices.length === 1 ? 'Device' : 'Devices' %>
+                    </span>
                 </div>
-            <% } %>
-        </section>
+
+                <!-- TRUST FORM -->
+                <form id="trustedDeviceForm" class="student-trusted-browser-form-box">
+                    <label class="student-trusted-form-label"><i class="fa-solid fa-lock" style="opacity: 0.7;"></i> Trust Current Browser</label>
+                    <div class="student-trusted-form-row">
+                        <input
+                            type="password"
+                            name="password"
+                            placeholder="Enter Student Password"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <button type="submit">
+                            <i class="fa-solid fa-check"></i> Trust
+                        </button>
+                    </div>
+                </form>
+
+                <!-- LIST OF TRUSTED BROWSERS -->
+                <% if (safeTrustedDevices.length === 0) { %>
+                    <div class="student-empty-state-box">
+                        <i class="fa-solid fa-laptop"></i>
+                        <p>No fallback browser registered yet.</p>
+                    </div>
+                <% } else { %>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <% safeTrustedDevices.forEach(function(device) { %>
+                            <%
+                                const isCurrentDevice = currentTrustedDeviceId && device.deviceId === currentTrustedDeviceId;
+                                const usableAt = device.usableAfter ? new Date(device.usableAfter) : null;
+                                const isPending = usableAt && usableAt.getTime() > Date.now();
+                            %>
+                            <article class="student-trusted-device-item">
+                                <div class="student-trusted-device-left">
+                                    <div class="student-trusted-device-icon">
+                                        <i class="fa-solid fa-laptop"></i>
+                                    </div>
+                                    <div class="student-trusted-device-info">
+                                        <h5><%= isCurrentDevice ? "This Browser" : "Saved Browser" %></h5>
+                                        <span><%= device.registeredAt ? new Date(device.registeredAt).toLocaleDateString() : "-" %></span>
+                                    </div>
+                                </div>
+
+                                <div class="student-trusted-device-actions">
+                                    <span class="admin-badge" style="background: <%= isPending ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)' %>; color: <%= isPending ? '#d97706' : '#10b981' %>; font-size: 0.68rem; padding: 2px 6px; border-radius: 6px;">
+                                        <%= isPending ? "Activating" : "Trusted" %>
+                                    </span>
+
+                                    <form
+                                        action="/student/trusted-devices/<%= encodeURIComponent(device.deviceId) %>/delete"
+                                        method="POST"
+                                        onsubmit="return uiConfirm(event, 'Remove this trusted browser?')"
+                                        style="margin: 0; display: inline-flex;"
+                                    >
+                                        <button class="passkey-icon-btn danger" type="submit" title="Remove Browser">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </article>
+                        <% }) %>
+                    </div>
+                <% } %>
+            </section>
+
+        </div>
     </main>
 </div>
 
@@ -339,7 +368,7 @@
     };
 </script>
 
-<% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>
+<% if (typeof realtimeMode === 'undefined' || realtimeMode === 'socket' || realtimeMode === 'auto') { %>
 <script src="/socket.io/socket.io.js"></script>
 <% } %>
 <script src="/js/kalmanFilter.js"></script>
@@ -350,6 +379,6 @@
 <script src="/js/uiShell.js"></script>
 
     <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/selectEnhancer.js?v=3" defer></script>
 </body>
 </html>

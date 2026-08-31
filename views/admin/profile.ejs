@@ -3,182 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile | Admin | Attendify</title>
+    <title>Administrator Profile | Attendify</title>
 
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
+    <link rel="stylesheet" href="/css/profilePage.css?v=20260901c">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
-    <link rel="stylesheet" href="/css/profilePage.css?v=20260617f">
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
     <link rel="icon" type="image/png" href="/favicon.png">
 
+    <!-- SweetAlert2 for Custom UI Alerts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <script src="/js/customAlerts.js" defer></script>
 
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4f46e5">
+    <link rel="apple-touch-icon" href="/icon-192.png">
 
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
+    <% if (typeof realtimeMode !== "undefined") { %>
+    <script>
+    window.AttendifyRealtimeConfig = {
+        mode: <%- JSON.stringify(realtimeMode) %>,
+        pollIntervalMs: <%= typeof realtimePollIntervalMs !== "undefined" ? realtimePollIntervalMs : 5000 %>
+    };
+    </script>
+    <% } %>
 </head>
 <body>
 
+<%
+    const safeAdmin = (typeof admin !== "undefined" && admin) ? admin : (typeof user !== "undefined" ? user : {});
+    const safeCollege = (typeof college !== "undefined" && college) ? college : (typeof currentCollege !== "undefined" ? currentCollege : null);
+    const safeCounts = (typeof counts !== "undefined" && counts) ? counts : { students: 0, teachers: 0, classGroups: 0, schedules: 0, classrooms: 0, subjects: 0 };
+    const adminInitial = (safeAdmin.fullName || "Admin").charAt(0).toUpperCase();
+%>
+
 <div class="admin-layout">
-    <%- include("partials/sidebar", { activePage: "profile", currentCollege: college }) %>
 
-    <main class="profile-page-main">
+    <%- include("partials/sidebar", { activePage: "profile", currentCollege: safeCollege }) %>
 
-        <!-- Hero Banner -->
-        <div class="profile-hero" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);">
-            <div class="profile-hero-avatar">
-                <%= admin.fullName ? admin.fullName.charAt(0).toUpperCase() : "A" %>
-            </div>
-            <div class="profile-hero-info">
-                <h1><%= admin.fullName %></h1>
-                <p><%= admin.email %></p>
-                <span class="profile-hero-badge">
-                    <i class="fa-solid fa-shield-halved"></i> College Administrator
-                </span>
-            </div>
-        </div>
+    <main class="admin-main">
 
-        <!-- Quick Stats -->
-        <div class="profile-stat-row">
-            <div class="profile-stat-chip">
-                <div class="profile-stat-chip-value" style="color:#4f46e5;"><%= counts.students %></div>
-                <div class="profile-stat-chip-label">Students</div>
+        <header class="admin-header">
+            <div>
+                <span class="admin-kicker">Admin Panel</span>
+                <h1>Administrator Profile</h1>
+                <p>Manage administrative credentials, security keys, and institutional campus capacity.</p>
             </div>
-            <div class="profile-stat-chip">
-                <div class="profile-stat-chip-value" style="color:#2563eb;"><%= counts.teachers %></div>
-                <div class="profile-stat-chip-label">Teachers</div>
-            </div>
-            <div class="profile-stat-chip">
-                <div class="profile-stat-chip-value" style="color:#16a34a;"><%= counts.classGroups %></div>
-                <div class="profile-stat-chip-label">Class Groups</div>
-            </div>
-            <div class="profile-stat-chip">
-                <div class="profile-stat-chip-value" style="color:#ea580c;"><%= counts.schedules %></div>
-                <div class="profile-stat-chip-label">Schedules</div>
-            </div>
-        </div>
+        </header>
 
-        <!-- Actions -->
-        <div class="profile-actions-row">
-            <button type="button" class="profile-action-btn ghost js-theme-toggle">
-                <i class="fa-solid fa-moon"></i> Toggle Theme
-            </button>
-            <a href="/admin/dashboard" class="profile-action-btn ghost">
-                <i class="fa-solid fa-house"></i> Dashboard
-            </a>
-            <a href="/admin/change-password" class="profile-action-btn ghost">
-                <i class="fa-solid fa-key"></i> Change Password
-            </a>
-            <form action="/logout" method="POST">
-                <button type="submit" class="profile-action-btn danger">
-                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
-                </button>
-            </form>
-        </div>
+        <% if (typeof message !== "undefined" && message) { %>
+            <div class="admin-alert <%= message && message.includes('success') ? 'success' : 'error' %>">
+                <%= message %>
+            </div>
+        <% } %>
 
-        <!-- Account Details -->
-        <p class="profile-section-heading">Account Details</p>
-        <div class="profile-grid">
-
-            <div class="profile-card-block">
-                <div class="profile-card-block-header">
-                    <div class="profile-card-block-icon slate"><i class="fa-solid fa-id-card"></i></div>
-                    <span class="profile-card-block-title">Identity</span>
+        <!-- EXECUTIVE PROFILE HERO CARD -->
+        <section class="profile-hero platform-admin-hero" style="margin-bottom: 24px;">
+            <div class="profile-hero-content">
+                <div class="profile-hero-avatar-wrap">
+                    <div class="profile-hero-avatar">
+                        <%= adminInitial %>
+                    </div>
+                    <span class="profile-avatar-badge" title="Verified College Administrator">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </span>
                 </div>
-                <ul class="profile-field-list">
-                    <li>
-                        <span class="profile-field-label">Full Name</span>
-                        <span class="profile-field-value"><%= admin.fullName %></span>
+
+                <div class="profile-hero-info">
+                    <div class="profile-hero-header-row">
+                        <h1><%= safeAdmin.fullName || "Administrator" %></h1>
+                        <span class="profile-hero-badge super-admin">
+                            <i class="fa-solid fa-building-columns"></i> College Admin
+                        </span>
+                    </div>
+
+                    <p class="profile-hero-email">
+                        <span><i class="fa-regular fa-envelope"></i> <%= safeAdmin.email || "admin@institution.edu" %></span>
+                        <span class="profile-hero-dot">·</span>
+                        <span class="profile-hero-access"><i class="fa-solid fa-id-badge"></i> ID: <%= safeAdmin.employeeId || "ADM-01" %></span>
+                        <% if (safeCollege) { %>
+                            <span class="profile-hero-dot">·</span>
+                            <span class="profile-hero-access"><i class="fa-solid fa-landmark"></i> <%= safeCollege.collegeName %> (<%= safeCollege.collegeCode %>)</span>
+                        <% } %>
+                    </p>
+                </div>
+            </div>
+
+            <div class="profile-hero-status-tag">
+                <span class="status-pulse-dot"></span>
+                <span>Active Administrator</span>
+            </div>
+        </section>
+
+        <!-- OVERVIEW STAT RADAR CARDS -->
+        <section class="adm-radar-grid">
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon room">
+                    <i class="fa-solid fa-user-graduate"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Enrolled Students</span>
+                    <span class="adm-radar-val"><%= safeCounts.students %> Students</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon security">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Faculty Members</span>
+                    <span class="adm-radar-val"><%= safeCounts.teachers %> Professors</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon sync">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Class Cohorts</span>
+                    <span class="adm-radar-val"><%= safeCounts.classGroups %> Groups</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon dept">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Active Schedules</span>
+                    <span class="adm-radar-val"><%= safeCounts.schedules %> Lectures</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ACTIONS ROW -->
+        <section class="admin-card" style="margin-bottom: 24px; padding: 18px 22px;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <a href="/admin/dashboard" class="admin-secondary-btn">
+                        <i class="fa-solid fa-chart-line"></i> Dashboard
+                    </a>
+                    <a href="/admin/change-password" class="admin-secondary-btn">
+                        <i class="fa-solid fa-key"></i> Change Password
+                    </a>
+                    <a href="/admin/notifications" class="admin-secondary-btn">
+                        <i class="fa-solid fa-bell"></i> Notifications
+                    </a>
+                    <button type="button" class="admin-secondary-btn js-theme-toggle">
+                        <i class="fa-solid fa-moon"></i> Toggle Theme
+                    </button>
+                </div>
+
+                <form action="/logout" method="POST" style="margin: 0;">
+                    <button type="submit" class="admin-secondary-btn danger">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ACCOUNT & INSTITUTIONAL DETAILS -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px;">
+
+            <!-- ADMINISTRATOR IDENTITY CARD -->
+            <section class="admin-card" style="margin-bottom: 0;">
+                <div class="admin-card-head">
+                    <div>
+                        <h3><i class="fa-solid fa-id-card" style="color: #6366f1; margin-right: 8px;"></i> Administrator Identity</h3>
+                        <p>Core credentials and system privilege assignments.</p>
+                    </div>
+                </div>
+
+                <ul class="profile-field-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px;">
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Full Name</span>
+                        <strong style="font-size: 0.95rem;"><%= safeAdmin.fullName %></strong>
                     </li>
-                    <li>
-                        <span class="profile-field-label">Email</span>
-                        <span class="profile-field-value"><%= admin.email %></span>
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Email Address</span>
+                        <span style="font-size: 0.9rem; font-family: monospace; opacity: 0.9;"><%= safeAdmin.email %></span>
                     </li>
-                    <li>
-                        <span class="profile-field-label">Employee ID</span>
-                        <span class="profile-field-value"><%= admin.employeeId %></span>
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Employee ID</span>
+                        <span class="admin-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-weight: 800;"><%= safeAdmin.employeeId || "ADM-01" %></span>
                     </li>
-                    <li>
-                        <span class="profile-field-label">Role</span>
-                        <span class="profile-field-value">
-                            <span class="profile-status-badge admin"><i class="fa-solid fa-shield-halved"></i> Admin</span>
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Role Privilege</span>
+                        <span class="admin-badge gold" style="background: rgba(245, 158, 11, 0.15); color: #d97706; font-weight: 800;"><i class="fa-solid fa-shield-halved"></i> College Admin</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Department</span>
+                        <span style="font-size: 0.9rem; font-weight: 600;"><%= safeAdmin.department || "Academic Administration" %></span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Member Since</span>
+                        <span style="font-size: 0.9rem; color: #94a3b8;">
+                            <%= safeAdmin.createdAt ? new Date(safeAdmin.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "Active" %>
                         </span>
                     </li>
-                    <li>
-                        <span class="profile-field-label">Department</span>
-                        <span class="profile-field-value"><%= admin.department %></span>
-                    </li>
                 </ul>
-            </div>
+            </section>
 
-            <div class="profile-card-block">
-                <div class="profile-card-block-header">
-                    <div class="profile-card-block-icon indigo"><i class="fa-solid fa-building-columns"></i></div>
-                    <span class="profile-card-block-title">College</span>
+            <!-- INSTITUTIONAL OVERVIEW CARD -->
+            <section class="admin-card" style="margin-bottom: 0;">
+                <div class="admin-card-head">
+                    <div>
+                        <h3><i class="fa-solid fa-building-columns" style="color: #6366f1; margin-right: 8px;"></i> Institutional Overview</h3>
+                        <p>Campus organization and infrastructure metrics.</p>
+                    </div>
                 </div>
-                <ul class="profile-field-list">
-                    <li>
-                        <span class="profile-field-label">College Name</span>
-                        <span class="profile-field-value"><%= college ? college.collegeName : "N/A" %></span>
+
+                <ul class="profile-field-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px;">
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Institution Name</span>
+                        <strong style="font-size: 0.95rem;"><%= safeCollege ? safeCollege.collegeName : "Mirai School of Technology" %></strong>
                     </li>
-                    <li>
-                        <span class="profile-field-label">College Code</span>
-                        <span class="profile-field-value"><%= college ? college.collegeCode : "N/A" %></span>
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Institution Code</span>
+                        <span class="admin-badge" style="background: rgba(6, 182, 212, 0.12); color: #0891b2; font-weight: 800;"><%= safeCollege ? safeCollege.collegeCode : "MIRAI001" %></span>
                     </li>
-                    <li>
-                        <span class="profile-field-label">Last Login</span>
-                        <span class="profile-field-value">
-                            <%= admin.lastLogin ? new Date(admin.lastLogin).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "Never" %>
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Configured Classrooms</span>
+                        <strong style="font-size: 0.95rem;"><%= safeCounts.classrooms %> Rooms</strong>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Registered Subjects</span>
+                        <strong style="font-size: 0.95rem;"><%= safeCounts.subjects %> Courses</strong>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Active Class Groups</span>
+                        <strong style="font-size: 0.95rem;"><%= safeCounts.classGroups %> Cohorts</strong>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.86rem; color: #94a3b8; font-weight: 600;">Last Active Session</span>
+                        <span style="font-size: 0.9rem; color: #10b981; font-weight: 700;">
+                            <i class="fa-solid fa-circle" style="font-size: 0.5rem; vertical-align: middle; margin-right: 4px;"></i> Live Now
                         </span>
                     </li>
-                    <li>
-                        <span class="profile-field-label">Account Created</span>
-                        <span class="profile-field-value">
-                            <%= new Date(admin.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %>
-                        </span>
-                    </li>
                 </ul>
-            </div>
-
-            <div class="profile-card-block">
-                <div class="profile-card-block-header">
-                    <div class="profile-card-block-icon green"><i class="fa-solid fa-chart-bar"></i></div>
-                    <span class="profile-card-block-title">College Overview</span>
-                </div>
-                <ul class="profile-field-list">
-                    <li>
-                        <span class="profile-field-label">Classrooms</span>
-                        <span class="profile-field-value"><%= counts.classrooms %></span>
-                    </li>
-                    <li>
-                        <span class="profile-field-label">Subjects</span>
-                        <span class="profile-field-value"><%= counts.subjects %></span>
-                    </li>
-                    <li>
-                        <span class="profile-field-label">Class Groups</span>
-                        <span class="profile-field-value"><%= counts.classGroups %></span>
-                    </li>
-                    <li>
-                        <span class="profile-field-label">Schedules</span>
-                        <span class="profile-field-value"><%= counts.schedules %></span>
-                    </li>
-                </ul>
-            </div>
+            </section>
 
         </div>
 
     </main>
 </div>
 
+<script src="/js/uiShell.js"></script>
 <script src="/js/adminValidation.js"></script>
-<script src="/js/uiShell.js?v=2"></script>
 <script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js?v=3" defer></script>
 <script src="/js/adminRealtime.js"></script>
 </body>
 </html>

@@ -33,49 +33,28 @@ function getScheduleDateTimeForDate(timeText, baseDate) {
 }
 
 function getEffectiveAttendanceEndTime(session, schedule) {
-    let effectiveEnd = null;
-    
-    if (session && session.effectiveEndTime) {
-        effectiveEnd = new Date(session.effectiveEndTime);
-    } else if (session && session.endTime) {
-        effectiveEnd = new Date(session.endTime);
+    if (session && session.endTime) {
+        return new Date(session.endTime);
     }
-
-    if (schedule && schedule.endTime) {
-        const scheduleEnd = getScheduleDateTimeForDate(
-            schedule.endTime, 
-            session ? (session.startTime || session.createdAt) : new Date()
-        );
-        if (scheduleEnd) {
-            if (!effectiveEnd || scheduleEnd > effectiveEnd) {
-                effectiveEnd = scheduleEnd;
-            }
-        }
-    }
-
-    return effectiveEnd;
+    return null;
 }
 
 function isAttendanceWindowOpen(session, schedule) {
     if (!session) return { isOpen: false, reason: "NO_SESSION" };
     
-    // If teacher manually closed it
-    if (!session.isActive && session.closedBy) {
-        return { isOpen: false, reason: "MANUALLY_CLOSED_BY_TEACHER" };
+    // If teacher closed it or session is no longer active / expired
+    if (!session.isActive || session.status !== "ACTIVE") {
+        return { isOpen: false, reason: "SESSION_NOT_ACTIVE" };
     }
 
-    const effectiveEnd = getEffectiveAttendanceEndTime(session, schedule);
     const now = new Date();
+    const sessionEnd = session.endTime ? new Date(session.endTime) : null;
     
-    if (effectiveEnd && now <= effectiveEnd) {
-        return { isOpen: true, effectiveEnd };
+    if (sessionEnd && now > sessionEnd) {
+        return { isOpen: false, reason: "WINDOW_CLOSED", effectiveEnd: sessionEnd };
     }
     
-    if (session.isActive && session.status === "ACTIVE") {
-        return { isOpen: true, effectiveEnd };
-    }
-    
-    return { isOpen: false, reason: "WINDOW_CLOSED", effectiveEnd };
+    return { isOpen: true, effectiveEnd: sessionEnd };
 }
 
 function isAutoAbsentRecord(record) {

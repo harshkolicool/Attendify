@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedules | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
-
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -200,7 +201,7 @@
 
 <div class="admin-layout">
 
-    <%- include("partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "" }) %>
+    <%- include("partials/sidebar", { activePage: "schedules", currentCollege: typeof college !== "undefined" ? college : null }) %>
 
     <main class="admin-main admin-schedules-page">
 
@@ -224,26 +225,47 @@
             </div>
         <% } %>
 
-        <section class="admin-schedules-overview-row">
-            <article class="admin-schedules-overview-pill">
-                <span>Total Schedules</span>
-                <strong><%= totalSchedulesCount %></strong>
-            </article>
+        <!-- OVERVIEW STAT RADAR CARDS -->
+        <section class="adm-radar-grid">
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon room">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Total Lectures</span>
+                    <span class="adm-radar-val"><%= totalSchedulesCount %> Scheduled</span>
+                </div>
+            </div>
 
-            <article class="admin-schedules-overview-pill">
-                <span>Class Groups</span>
-                <strong><%= groupedClassCount %></strong>
-            </article>
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon sync">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Class Cohorts</span>
+                    <span class="adm-radar-val"><%= groupedClassCount %> Active</span>
+                </div>
+            </div>
 
-            <article class="admin-schedules-overview-pill">
-                <span>Mapped Classrooms</span>
-                <strong><%= mappedClassroomsCount %></strong>
-            </article>
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon dept">
+                    <i class="fa-solid fa-door-open"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Mapped Classrooms</span>
+                    <span class="adm-radar-val"><%= mappedClassroomsCount %> Facilities</span>
+                </div>
+            </div>
 
-            <article class="admin-schedules-overview-pill">
-                <span>Active Days</span>
-                <strong><%= dateOptions.length %></strong>
-            </article>
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon security">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Timetable Span</span>
+                    <span class="adm-radar-val"><%= dateOptions.length %> <%= dateOptions.length === 1 ? 'Day' : 'Days' %></span>
+                </div>
+            </div>
         </section>
 
         <section class="admin-card">
@@ -436,8 +458,10 @@
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input
                         type="text"
+                        class="admin-search-input"
                         data-admin-search="schedules"
                         placeholder="Search by date, subject, teacher, class group or classroom..."
+                        style="border: none !important; background: transparent !important; outline: none !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; width: 100% !important; flex: 1 1 auto !important;"
                     >
                 </div>
 
@@ -625,8 +649,8 @@
                                             method="POST"
                                             onsubmit="return uiConfirm(event, 'Delete this schedule? Existing attendance history stays safe.')"
                                         >
-                                            <button class="admin-delete-btn" type="submit">
-                                                Delete
+                                            <button class="admin-delete-btn admin-delete-btn-icon" type="submit" title="Delete Schedule" aria-label="Delete Schedule">
+                                                <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>
                                     </div>

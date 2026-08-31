@@ -78,7 +78,7 @@
     }
 
     function enhanceSelect(select) {
-        if (!select || select.closest(".select-shell") || select.classList.contains("flatpickr-monthDropdown-months") || select.classList.contains("no-enhance")) {
+        if (!select || select.closest(".select-shell") || select.classList.contains("flatpickr-monthDropdown-months") || select.classList.contains("no-enhance") || select.multiple || select.hasAttribute("multiple")) {
             return;
         }
 

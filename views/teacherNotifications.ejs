@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications | Attendify</title>
 
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
     <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/teacherDashboard.css">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -29,7 +38,6 @@
             });
         }
     </script>
-
 
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
@@ -53,17 +61,17 @@
             <div>
                 <span class="teacher-kicker">Teacher Panel</span>
                 <h1>Notifications</h1>
-                <p>Latest updates about schedules, attendance and admin actions.</p>
+                <p>Latest updates about schedules, attendance reviews, and system alerts.</p>
             </div>
 
             <div class="teacher-notifications-header-actions">
                 <span class="teacher-notification-summary-pill">
                     <i class="fa-solid fa-bell"></i>
-                    <%= unreadCount || 0 %> Unread
+                    <strong id="unreadCountDisplay"><%= unreadCount || 0 %></strong> Unread
                 </span>
 
                 <form action="/teacher/notifications/mark-all-read" method="POST">
-                    <button class="teacher-notification-toolbar-btn neutral" type="submit">
+                    <button class="teacher-notification-toolbar-btn neutral" type="submit" title="Mark all notifications as read">
                         <i class="fa-solid fa-check-double"></i>
                         Mark All Read
                     </button>
@@ -72,15 +80,39 @@
                 <form
                     action="/teacher/notifications/clear-all"
                     method="POST"
-                    onsubmit="return uiConfirm(event, 'Clear all notifications?')"
+                    onsubmit="return uiConfirm(event, 'Clear all notifications? This action cannot be undone.')"
                 >
-                    <button class="teacher-notification-toolbar-btn danger" type="submit">
+                    <button class="teacher-notification-toolbar-btn danger" type="submit" title="Permanently delete all notifications">
                         <i class="fa-solid fa-trash"></i>
                         Clear All
                     </button>
                 </form>
             </div>
         </header>
+
+        <!-- Category & Read Status Filter Tabs -->
+        <div class="teacher-notifications-filter-nav" role="tablist">
+            <button type="button" class="teacher-notif-tab is-active" data-filter="all">
+                <i class="fa-solid fa-layer-group"></i> All
+                <span class="teacher-tab-badge"><%= notifications ? notifications.length : 0 %></span>
+            </button>
+            <button type="button" class="teacher-notif-tab" data-filter="unread">
+                <i class="fa-solid fa-envelope"></i> Unread
+                <span class="teacher-tab-badge unread-badge"><%= unreadCount || 0 %></span>
+            </button>
+            <button type="button" class="teacher-notif-tab" data-filter="ATTENDANCE">
+                <i class="fa-solid fa-user-check"></i> Attendance
+            </button>
+            <button type="button" class="teacher-notif-tab" data-filter="SECURITY">
+                <i class="fa-solid fa-shield-halved"></i> Security & Alerts
+            </button>
+            <button type="button" class="teacher-notif-tab" data-filter="SCHEDULE">
+                <i class="fa-solid fa-calendar-days"></i> Schedules
+            </button>
+            <button type="button" class="teacher-notif-tab" data-filter="SYSTEM">
+                <i class="fa-solid fa-gear"></i> System
+            </button>
+        </div>
 
         <section class="teacher-card teacher-notifications-page-card">
 
@@ -91,62 +123,104 @@
                         <i class="fa-solid fa-bell-slash"></i>
                     </div>
 
-                    <h3>No notifications</h3>
-                    <p>You are all caught up.</p>
+                    <h3>No Notifications Yet</h3>
+                    <p>You're all caught up! Updates regarding your classes and attendance sessions will appear here.</p>
                 </div>
 
             <% } else { %>
 
-                <div class="teacher-notifications-list">
+                <div class="teacher-notifications-list" id="notificationsListContainer">
 
                     <% notifications.forEach(function(notification) { %>
+                        <%
+                            const cat = (notification.category || "GENERAL").toUpperCase();
+                            let iconClass = "fa-solid fa-bell";
+                            let iconColorClass = "blue";
 
-                        <article class="notification-card <%= notification.isRead ? 'read' : 'unread' %>">
-                            <div class="notification-top">
-                                <h4><%= notification.title || "Notification" %></h4>
-                                <span>
-                                    <%= notification.createdAt ? new Date(notification.createdAt).toLocaleString("en-IN") : "" %>
-                                </span>
+                            if (cat.includes("ATTEND") || cat.includes("SESSION")) {
+                                iconClass = "fa-solid fa-user-check";
+                                iconColorClass = "emerald";
+                            } else if (cat.includes("SEC") || cat.includes("SUSPICIOUS") || cat.includes("ALERT") || cat.includes("DEVICE")) {
+                                iconClass = "fa-solid fa-triangle-exclamation";
+                                iconColorClass = "rose";
+                            } else if (cat.includes("SCHED") || cat.includes("CLASS")) {
+                                iconClass = "fa-solid fa-calendar-check";
+                                iconColorClass = "purple";
+                            } else if (cat.includes("REVIEW") || cat.includes("REQUEST")) {
+                                iconClass = "fa-solid fa-clipboard-check";
+                                iconColorClass = "amber";
+                            }
+                        %>
+
+                        <article
+                            class="teacher-notification-item <%= notification.isRead ? 'read' : 'unread' %>"
+                            data-category="<%= cat %>"
+                            data-is-read="<%= notification.isRead ? 'true' : 'false' %>"
+                        >
+                            <div class="teacher-notif-icon-tile <%= iconColorClass %>">
+                                <i class="<%= iconClass %>"></i>
+                                <% if (!notification.isRead) { %>
+                                    <span class="teacher-notif-pulse-dot" title="Unread"></span>
+                                <% } %>
                             </div>
 
-                            <p><%= notification.message || "" %></p>
+                            <div class="teacher-notif-body">
+                                <div class="teacher-notif-top">
+                                    <div class="teacher-notif-title-row">
+                                        <h4><%= notification.title || "Notification" %></h4>
+                                        <span class="teacher-notif-cat-pill <%= iconColorClass %>">
+                                            <%= notification.category || "GENERAL" %>
+                                        </span>
+                                    </div>
+                                    <span class="teacher-notif-timestamp">
+                                        <i class="fa-regular fa-clock"></i>
+                                        <%= notification.createdAt ? new Date(notification.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : "" %>
+                                    </span>
+                                </div>
 
-                            <div class="notification-meta">
-                                <span class="admin-badge">
-                                    <%= notification.category || "GENERAL" %>
-                                </span>
+                                <p class="teacher-notif-message"><%= notification.message || "" %></p>
 
-                                <% if (notification.link) { %>
-                                    <a class="view-btn notification-open-link" href="<%= notification.link %>">
-                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                        Open
-                                    </a>
-                                <% } %>
+                                <div class="teacher-notif-actions">
+                                    <% if (notification.link) { %>
+                                        <a class="teacher-notif-action-btn primary" href="<%= notification.link %>">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                            Open Action
+                                        </a>
+                                    <% } %>
 
-                                <% if (!notification.isRead) { %>
-                                    <form action="/teacher/notifications/<%= notification._id %>/read" method="POST">
-                                        <button class="view-btn live notification-action-btn" type="submit">
-                                            <i class="fa-solid fa-check"></i>
-                                            Mark Read
+                                    <% if (!notification.isRead) { %>
+                                        <form action="/teacher/notifications/<%= notification.id || notification._id %>/read" method="POST">
+                                            <button class="teacher-notif-action-btn success" type="submit">
+                                                <i class="fa-solid fa-check"></i>
+                                                Mark Read
+                                            </button>
+                                        </form>
+                                    <% } %>
+
+                                    <form
+                                        action="/teacher/notifications/<%= notification.id || notification._id %>/delete"
+                                        method="POST"
+                                        onsubmit="return uiConfirm(event, 'Delete this notification?')"
+                                    >
+                                        <button class="teacher-notif-action-btn delete" type="submit" title="Delete notification">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                            Delete
                                         </button>
                                     </form>
-                                <% } %>
-
-                                <form
-                                    action="/teacher/notifications/<%= notification._id %>/delete"
-                                    method="POST"
-                                    onsubmit="return uiConfirm(event, 'Delete this notification?')"
-                                >
-                                    <button class="view-btn marked absent notification-delete-btn notification-action-btn" type="submit">
-                                        <i class="fa-solid fa-trash"></i>
-                                        Delete
-                                    </button>
-                                </form>
+                                </div>
                             </div>
                         </article>
 
                     <% }) %>
 
+                </div>
+
+                <div class="teacher-notifications-empty hidden-by-filter" id="noFilterMatches">
+                    <div class="teacher-notifications-empty-icon">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                    </div>
+                    <h3>No Matching Notifications</h3>
+                    <p>No notifications match the selected filter criteria.</p>
                 </div>
 
             <% } %>
@@ -158,9 +232,52 @@
 </div>
 
 <script src="/js/uiShell.js"></script>
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js" defer></script>
+<script src="/js/teacherNav.js" defer></script>
 
-    <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
-    <script src="/js/teacherNav.js" defer></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const tabs = document.querySelectorAll(".teacher-notif-tab");
+    const items = document.querySelectorAll(".teacher-notification-item");
+    const emptyFilter = document.getElementById("noFilterMatches");
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener("click", function() {
+            tabs.forEach(t => t.classList.remove("is-active"));
+            tab.classList.add("is-active");
+
+            const filter = tab.dataset.filter;
+            let visibleCount = 0;
+
+            items.forEach(function(item) {
+                const itemCat = item.dataset.category || "";
+                const isRead = item.dataset.isRead === "true";
+
+                let matches = false;
+
+                if (filter === "all") {
+                    matches = true;
+                } else if (filter === "unread") {
+                    matches = !isRead;
+                } else if (itemCat.includes(filter)) {
+                    matches = true;
+                }
+
+                if (matches) {
+                    item.style.display = "";
+                    visibleCount++;
+                } else {
+                    item.style.display = "none";
+                }
+            });
+
+            if (emptyFilter) {
+                emptyFilter.classList.toggle("hidden-by-filter", visibleCount > 0);
+            }
+        });
+    });
+});
+</script>
 </body>
 </html>

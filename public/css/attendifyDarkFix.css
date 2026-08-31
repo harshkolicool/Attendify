@@ -306,18 +306,38 @@ textarea {
     flex-wrap: wrap;
 }
 
-.select-shell select {
+.select-shell select,
+.admin-field .select-shell select,
+.admin-form .select-shell select,
+.admin-form-grid .select-shell select,
+.admin-field select {
     padding-left: 46px !important;
     padding-right: 40px !important;
 }
 
-.select-shell-icon {
+.select-shell .select-shell-icon,
+.admin-field .select-shell .select-shell-icon,
+.admin-field .select-shell-icon {
     left: 15px !important;
-    width: 16px;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 18px !important;
+    height: 18px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
 }
 
-.select-shell-chevron {
+.select-shell .select-shell-chevron,
+.admin-field .select-shell .select-shell-chevron,
+.admin-field .select-shell-chevron {
     right: 14px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
 }
 
 /* Notification badge stability in sidebars */
@@ -704,28 +724,169 @@ textarea {
     padding: clamp(18px, 1.7vw, 24px) !important;
 }
 
-/* Student cards: desktop should be compact buttons, mobile should stack */
-.admin-students-page .admin-student-actions {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-    align-items: stretch !important;
-    justify-content: flex-start !important;
+/* Compact & Space-Efficient Admin Student Cards */
+.admin-main .admin-grid.admin-student-group-grid,
+.admin-student-group-grid,
+.admin-students-page .admin-student-group-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)) !important;
+    gap: 12px !important;
 }
 
-.admin-students-page .admin-student-actions form {
-    flex: 0 1 auto !important;
-    min-width: min(100%, 210px) !important;
+.admin-main .admin-student-card,
+.admin-students-page .admin-student-card,
+.admin-student-card {
+    padding: 14px 16px !important;
+    border-radius: 16px !important;
+    gap: 8px !important;
+    min-height: auto !important;
+}
+
+.admin-student-card::before {
+    left: 14px !important;
+    right: 14px !important;
+    height: 2.5px !important;
+}
+
+.admin-student-card .admin-item-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 2px !important;
+}
+
+.admin-student-card .admin-item-icon,
+.admin-main .admin-student-card .admin-item-icon {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    border-radius: 10px !important;
+}
+
+.admin-student-card .admin-item-icon i,
+.admin-main .admin-student-card .admin-item-icon i {
+    font-size: 15px !important;
+}
+
+.admin-student-card .admin-delete-btn-icon,
+.admin-main .admin-student-card .admin-delete-btn-icon {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+}
+
+.admin-student-body h4,
+.admin-student-card h4,
+.admin-students-page .admin-student-card h4 {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+    margin: 2px 0 1px 0 !important;
+}
+
+.admin-student-body p,
+.admin-student-card p,
+.admin-students-page .admin-student-card p {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    margin: 0 0 6px 0 !important;
+    line-height: 1.3 !important;
+    color: var(--admin-muted, #94a3b8) !important;
+}
+
+.admin-student-meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px 6px !important;
+    margin-bottom: 4px !important;
+}
+
+.admin-student-card .admin-badge,
+.admin-main .admin-student-card .admin-badge {
+    min-height: 22px !important;
+    height: 22px !important;
+    padding: 0 8px !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    gap: 4px !important;
+}
+
+.admin-student-card .admin-passkey-status {
+    margin-top: 2px !important;
+}
+
+.admin-student-card .admin-passkey-status .admin-badge {
+    min-height: 22px !important;
+    height: 22px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+}
+
+.admin-students-page .admin-student-actions,
+.admin-student-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    margin-top: 8px !important;
+    width: 100% !important;
+}
+
+.admin-students-page .admin-student-actions form,
+.admin-student-actions form {
+    min-width: 0 !important;
+    width: 100% !important;
     margin: 0 !important;
 }
 
+.admin-students-page .admin-student-actions form:nth-child(3),
+.admin-student-actions form:nth-child(3),
+.admin-students-page .admin-student-actions form:last-child:nth-child(odd),
+.admin-student-actions form:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+}
+
 .admin-students-page .admin-student-actions .admin-secondary-btn,
-.admin-students-page .admin-student-actions .admin-warning-btn {
-    width: auto !important;
-    min-width: 210px !important;
-    max-width: 100% !important;
-    white-space: nowrap !important;
+.admin-students-page .admin-student-actions .admin-warning-btn,
+.admin-student-actions button {
+    height: auto !important;
+    min-height: 38px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    padding: 6px 8px !important;
+    border-radius: 9px !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+    gap: 6px !important;
     justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    line-height: 1.25 !important;
+    box-sizing: border-box !important;
+}
+
+.admin-students-page .admin-student-actions button i,
+.admin-student-actions button i {
+    font-size: 12px !important;
+    flex-shrink: 0 !important;
+}
+
+.admin-student-card .admin-student-edit {
+    margin-top: 2px !important;
+}
+
+.admin-student-card .admin-student-edit summary {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 10px !important;
+    font-size: 11.5px !important;
+    border-radius: 8px !important;
 }
 
 /* Ensure dashboard empty cards look intentional on student routes */
@@ -1536,38 +1697,225 @@ textarea {
 
 /* Student Sidebar Attendance Card */
 .student-sidebar-attendance-card {
-    background: #f1f5f9;
+    background: rgba(241, 245, 249, 0.7);
     margin: 15px 20px 0;
-    padding: 15px;
-    border-radius: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
     text-align: center;
     border: 1px solid #e2e8f0;
 }
 
 .student-sidebar-attendance-title {
-    font-size: 0.85rem;
-    color: #475569;
+    font-size: 0.8rem;
+    color: #64748b;
     font-weight: 600;
-    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
 }
 
 .student-sidebar-attendance-value {
-    font-size: 1.8rem;
-    font-weight: 700;
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1.2;
 }
 
 .student-sidebar-attendance-value.success { color: #16a34a; }
 .student-sidebar-attendance-value.danger { color: #dc2626; }
+.student-sidebar-attendance-value.neutral { color: #64748b; }
 
 .student-sidebar-attendance-status {
-    font-size: 0.75rem;
-    margin-top: 4px;
+    font-size: 0.78rem;
+    margin-top: 5px;
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: center;
 }
 
 .student-sidebar-attendance-status.success { color: #16a34a; }
 .student-sidebar-attendance-status.danger { color: #dc2626; }
-.student-sidebar-attendance-status.danger { color: #dc2626; }
+.student-sidebar-attendance-status.neutral { color: #64748b; }
+
+[data-theme="dark"] .student-sidebar-attendance-card {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .student-sidebar-attendance-title {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .student-sidebar-attendance-value.success { color: #4ade80 !important; }
+[data-theme="dark"] .student-sidebar-attendance-value.danger { color: #f87171 !important; }
+[data-theme="dark"] .student-sidebar-attendance-value.neutral { color: #94a3b8 !important; }
+
+[data-theme="dark"] .student-sidebar-attendance-status.success { color: #4ade80 !important; }
+[data-theme="dark"] .student-sidebar-attendance-status.danger { color: #f87171 !important; }
+[data-theme="dark"] .student-sidebar-attendance-status.neutral { color: #94a3b8 !important; }
+
+/* Schedule Calendar Trigger & Header Actions */
+.schedule-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.schedule-datepicker-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px 8px 10px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    min-height: 52px;
+}
+
+.schedule-datepicker-btn:hover {
+    background: #ffffff;
+    border-color: #93c5fd;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+    transform: translateY(-2px);
+}
+
+.schedule-datepicker-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.schedule-datepicker-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    line-height: 1.2;
+}
+
+.schedule-datepicker-kicker {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.schedule-datepicker-val {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 2px;
+}
+
+.schedule-datepicker-arrow {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-left: 2px;
+    transition: transform 0.2s ease;
+}
+
+.schedule-hidden-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    z-index: 2;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.schedule-dashboard-btn {
+    height: 52px;
+    padding: 0 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff !important;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.schedule-dashboard-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .schedule-datepicker-btn {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .schedule-datepicker-btn:hover {
+    background: rgba(37, 99, 235, 0.18) !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .schedule-datepicker-icon {
+    background: rgba(37, 99, 235, 0.25) !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .schedule-datepicker-kicker {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .schedule-datepicker-val {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .schedule-datepicker-arrow {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .schedule-datepicker-btn:hover .schedule-datepicker-arrow {
+    color: #60a5fa !important;
+}
+
+@media (max-width: 640px) {
+    .schedule-header-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+    }
+    .schedule-datepicker-btn {
+        flex: 1;
+    }
+    .schedule-dashboard-btn span {
+        display: none;
+    }
+    .schedule-dashboard-btn {
+        padding: 0 16px;
+    }
+}
 
 /* =========================================================
    GLOBAL LAYOUT WIDTH FIX
@@ -1608,8 +1956,10 @@ textarea {
     .admin-layout .ui-sidebar {
         height: 100vh !important;
         max-height: 100vh !important;
-        position: sticky !important;
+        position: fixed !important;
         top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
     }
 }
 
@@ -1745,4 +2095,2419 @@ html[data-theme="dark"] body {
 [data-theme="dark"] .admin-header-copy h1 { color: #f8fafc !important; }
 [data-theme="dark"] .admin-header-copy p,
 [data-theme="dark"] .admin-header-copy > * { color: #94a3b8 !important; }
+
+/* ─── Premium UI/UX Polish & Micro-Interactions ───────────────────────────── */
+
+/* Global Smooth Transitions */
+button, a, input, select, textarea, .card, .stat-card, .menu-item, .menu-link {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Button Active & Focus Micro-Interactions */
+button:active,
+.btn:active,
+.primary-btn:active,
+.secondary-btn:active,
+.admin-primary-btn:active,
+.teacher-primary-btn:active,
+.platform-primary-btn:active,
+.js-mark-attendance-btn:active {
+    transform: translateY(1px) scale(0.985);
+}
+
+/* Interactive Card Hover Elevation */
+.teacher-card:hover,
+.admin-card:hover,
+.admin-item-card:hover,
+.platform-card:hover,
+.stat-card:hover,
+.student-history-card:hover,
+.role-card:hover {
+    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 6px 16px -2px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="dark"] .teacher-card:hover,
+[data-theme="dark"] .admin-card:hover,
+[data-theme="dark"] .admin-item-card:hover,
+[data-theme="dark"] .platform-card:hover,
+[data-theme="dark"] .stat-card:hover,
+[data-theme="dark"] .student-history-card:hover,
+[data-theme="dark"] .role-card:hover {
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6);
+    border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Custom Sleek Scrollbars */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #334155;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* Modern Radar Pulse Animation */
+@keyframes liveRadarPulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 14px rgba(34, 197, 94, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+.live-pill,
+.status-pill.live,
+.badge-live {
+    animation: liveRadarPulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Status Pill Refinements */
+.status-pill,
+.student-status-badge,
+.attendance-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+}
+
+/* Status Pills & Table Badges - High Contrast Light Mode */
+.status-pill.present,
+.status-pill.success,
+.report-status.present,
+.teacher-status.present,
+.student-status.present,
+.status-badge.present,
+.manual-status-badge.recorded {
+    background: #ecfdf5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+    font-weight: 800 !important;
+}
+
+.status-pill.absent,
+.status-pill.danger,
+.report-status.absent,
+.teacher-status.absent,
+.student-status.absent,
+.status-badge.absent {
+    background: #fff1f2 !important;
+    color: #9f1239 !important;
+    border: 1px solid #fecdd3 !important;
+    font-weight: 800 !important;
+}
+
+.status-pill.pending,
+.status-pill.warning,
+.student-status.review,
+.manual-status-badge.pending,
+.status-badge.pending {
+    background: #fffbeb !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a !important;
+    font-weight: 800 !important;
+}
+
+.gps-distance-pill {
+    background: #eef2ff !important;
+    color: #3730a3 !important;
+    border: 1px solid #c7d2fe !important;
+    font-weight: 700 !important;
+    padding: 3px 10px !important;
+    border-radius: 999px !important;
+    font-size: 11.5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+}
+
+/* Status Pills & Table Badges - High Contrast Dark Mode */
+[data-theme="dark"] .status-pill.present,
+[data-theme="dark"] .status-pill.success,
+[data-theme="dark"] .report-status.present,
+[data-theme="dark"] .teacher-status.present,
+[data-theme="dark"] .student-status.present,
+[data-theme="dark"] .status-badge.present,
+[data-theme="dark"] .manual-status-badge.recorded,
+body.dark-mode .status-pill.present,
+body.dark-mode .status-pill.success,
+body.dark-mode .report-status.present,
+body.dark-mode .teacher-status.present,
+body.dark-mode .student-status.present,
+body.dark-mode .status-badge.present,
+body.dark-mode .manual-status-badge.recorded {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.38) !important;
+    font-weight: 800 !important;
+}
+
+[data-theme="dark"] .status-pill.absent,
+[data-theme="dark"] .status-pill.danger,
+[data-theme="dark"] .report-status.absent,
+[data-theme="dark"] .teacher-status.absent,
+[data-theme="dark"] .student-status.absent,
+[data-theme="dark"] .status-badge.absent,
+body.dark-mode .status-pill.absent,
+body.dark-mode .status-pill.danger,
+body.dark-mode .report-status.absent,
+body.dark-mode .teacher-status.absent,
+body.dark-mode .student-status.absent,
+body.dark-mode .status-badge.absent {
+    background: rgba(244, 63, 94, 0.18) !important;
+    color: #fb7185 !important;
+    border: 1px solid rgba(244, 63, 94, 0.38) !important;
+    font-weight: 800 !important;
+}
+
+[data-theme="dark"] .status-pill.pending,
+[data-theme="dark"] .status-pill.warning,
+[data-theme="dark"] .student-status.review,
+[data-theme="dark"] .manual-status-badge.pending,
+[data-theme="dark"] .status-badge.pending,
+body.dark-mode .status-pill.pending,
+body.dark-mode .status-pill.warning,
+body.dark-mode .student-status.review,
+body.dark-mode .manual-status-badge.pending,
+body.dark-mode .status-badge.pending {
+    background: rgba(245, 158, 11, 0.18) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.38) !important;
+    font-weight: 800 !important;
+}
+
+[data-theme="dark"] .gps-distance-pill,
+body.dark-mode .gps-distance-pill {
+    background: rgba(99, 102, 241, 0.18) !important;
+    color: #c7d2fe !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+    font-weight: 700 !important;
+}
+
+[data-theme="dark"] .admin-count-pill,
+[data-theme="dark"] .teacher-count-pill,
+[data-theme="dark"] .student-count-pill,
+body.dark-mode .admin-count-pill,
+body.dark-mode .teacher-count-pill,
+body.dark-mode .student-count-pill {
+    background: rgba(99, 102, 241, 0.18) !important;
+    color: #c7d2fe !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+    font-weight: 700 !important;
+}
+
+/* Report Percentage Pills (100% attendance pills) */
+.report-percent-pill {
+    padding: 4px 12px !important;
+    border-radius: 999px !important;
+    font-size: 11.5px !important;
+    font-weight: 800 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+}
+
+.report-percent-pill.good {
+    background: #ecfdf5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+
+.report-percent-pill.bad {
+    background: #fff1f2 !important;
+    color: #9f1239 !important;
+    border: 1px solid #fecdd3 !important;
+}
+
+.report-percent-pill.warn {
+    background: #fffbeb !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a !important;
+}
+
+[data-theme="dark"] .report-percent-pill.good,
+body.dark-mode .report-percent-pill.good {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.38) !important;
+    font-weight: 800 !important;
+}
+
+[data-theme="dark"] .report-percent-pill.bad,
+body.dark-mode .report-percent-pill.bad {
+    background: rgba(244, 63, 94, 0.18) !important;
+    color: #fb7185 !important;
+    border: 1px solid rgba(244, 63, 94, 0.38) !important;
+    font-weight: 800 !important;
+}
+
+[data-theme="dark"] .report-percent-pill.warn,
+body.dark-mode .report-percent-pill.warn {
+    background: rgba(245, 158, 11, 0.18) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.38) !important;
+    font-weight: 800 !important;
+}
+
+/* High Contrast Table Number Colors */
+[data-theme="dark"] .report-table td.text-success,
+body.dark-mode .report-table td.text-success,
+[data-theme="dark"] td.text-success,
+body.dark-mode td.text-success {
+    color: #34d399 !important;
+    font-weight: 800 !important;
+}
+
+[data-theme="dark"] .report-table td.text-danger,
+body.dark-mode .report-table td.text-danger,
+[data-theme="dark"] td.text-danger,
+body.dark-mode td.text-danger {
+    color: #fb7185 !important;
+    font-weight: 800 !important;
+}
+
+/* Admin Empty State (Zero Box-Shadow) */
+.admin-empty,
+.admin-main .admin-empty,
+[data-theme="dark"] .admin-empty,
+body.dark-mode .admin-empty {
+    box-shadow: none !important;
+    background: rgba(15, 23, 42, 0.3) !important;
+    border: 1px dashed rgba(255, 255, 255, 0.12) !important;
+    color: #94a3b8 !important;
+    border-radius: 14px !important;
+    padding: 16px 20px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+:root:not([data-theme="dark"]) body:not(.dark-mode) .admin-empty,
+:root:not([data-theme="dark"]) body:not(.dark-mode) .admin-main .admin-empty {
+    box-shadow: none !important;
+    background: #f8fafc !important;
+    border: 1px dashed #cbd5e1 !important;
+    color: #64748b !important;
+    border-radius: 14px !important;
+}
+
+/* Modern Form Input Enhancements */
+.input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrap i {
+    position: absolute;
+    left: 14px;
+    color: var(--shell-muted, #64748b);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.input-wrap input:focus ~ i,
+.input-wrap input:focus + i {
+    color: #4f46e5;
+}
+
+.input-wrap input,
+.form-control,
+.select-shell select {
+    border-radius: 12px;
+    border: 1.5px solid #cbd5e1;
+    padding: 10px 14px 10px 40px;
+    font-size: 0.95rem;
+    background: #ffffff;
+    color: #0f172a;
+    transition: all 0.2s ease;
+}
+
+.input-wrap input:focus,
+.form-control:focus,
+.select-shell select:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3.5px rgba(79, 70, 229, 0.15);
+}
+
+[data-theme="dark"] .input-wrap input,
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .select-shell select {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .input-wrap input:focus,
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .select-shell select:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3.5px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* High-Quality Modal Styling */
+.modal-overlay,
+.ui-modal-overlay {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.modal-content,
+.ui-modal-box {
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ─── Universal Multi-Device Responsive Polish ───────────────────────────── */
+
+/* Table Responsiveness Across All Routes */
+.table-responsive,
+.admin-table-container,
+.teacher-reports-table-wrap,
+.student-history-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 16px;
+    border: 1px solid var(--uifix-border, #e2e8f0);
+    margin-bottom: 20px;
+}
+
+.table-responsive table,
+.admin-table,
+.teacher-table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Fluid Typography for Headers */
+h1, .page-title, .admin-page-header h1, .platform-header h1, .teacher-header h1 {
+    font-size: clamp(1.6rem, 3.5vw, 2.3rem) !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.025em !important;
+}
+
+/* Tablet & Mobile Grid Adaptation (<= 1024px) */
+@media (max-width: 1024px) {
+    .admin-stat-grid,
+    .platform-stats-grid,
+    .teacher-stats-grid,
+    .student-stats-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+
+    .form-grid,
+    .admin-grid-two {
+        grid-template-columns: 1fr !important;
+    }
+
+    .teacher-dashboard-grid,
+    .student-dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+}
+
+/* Mobile Devices (<= 640px) */
+@media (max-width: 640px) {
+    /* Main Content Padding with Safe-Area support */
+    .admin-main,
+    .student-main,
+    .schedule-main,
+    .teacher-main,
+    .platform-main,
+    .profile-page-main {
+        padding: calc(76px + env(safe-area-inset-top, 0px)) 14px calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+        width: 100% !important;
+    }
+
+    /* Single Column Stat Cards */
+    .admin-stat-grid,
+    .platform-stats-grid,
+    .teacher-stats-grid,
+    .student-stats-row {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* Header Actions Stacking */
+    .admin-header,
+    .platform-header,
+    .teacher-header,
+    .student-header,
+    .section-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 14px !important;
+    }
+
+    .admin-header .admin-primary-btn,
+    .platform-header .platform-primary-link,
+    .teacher-header .teacher-primary-btn,
+    .header-actions {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Full-Width Search & Filter Bars */
+    .search-box,
+    .filter-bar,
+    .admin-filter-row,
+    .teacher-filter-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
+    .search-box input,
+    .filter-bar select,
+    .admin-filter-row select {
+        width: 100% !important;
+        min-height: 48px !important;
+        font-size: 16px !important; /* Prevents iOS auto-zoom */
+    }
+
+    /* Modal Sizing on Mobile */
+    .modal-content,
+    .ui-modal-box {
+        width: calc(100vw - 28px) !important;
+        max-width: calc(100vw - 28px) !important;
+        max-height: 88vh !important;
+        overflow-y: auto !important;
+        padding: 20px 16px !important;
+        margin: 14px auto !important;
+        border-radius: 16px !important;
+    }
+
+    /* Map Radar Container on Mobile */
+    #teacherLiveMap,
+    #studentLocationMap,
+    .leaflet-container {
+        height: 300px !important;
+        min-height: 300px !important;
+        border-radius: 16px !important;
+    }
+
+    /* Button Touch Targets (Minimum 44px for accessibility) */
+    button,
+    .btn,
+    .primary-btn,
+    .secondary-btn,
+    .menu-link,
+    .platform-nav-link {
+        min-height: 46px !important;
+        font-size: 15px !important;
+    }
+
+    /* Auth Split Cards on Mobile */
+    .auth-split {
+        grid-template-columns: 1fr !important;
+    }
+
+    .auth-brand-panel {
+        display: none !important;
+    }
+
+    .auth-card {
+        padding: 26px 18px !important;
+        margin: 16px auto !important;
+        border-radius: 20px !important;
+    }
+}
+
+/* ─── Notification Chips & Action Buttons High-Contrast Polish ───────────── */
+.platform-chip,
+.admin-count-pill,
+.notification-chip {
+    min-height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    border-radius: 999px !important;
+    padding: 0 16px !important;
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    background: rgba(37, 99, 235, 0.12) !important;
+    border: 1px solid rgba(37, 99, 235, 0.28) !important;
+    color: #2563eb !important;
+}
+
+.platform-secondary-btn,
+.notification-action-btn,
+.notification-head-actions button {
+    min-height: 42px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    border-radius: 12px !important;
+    padding: 0 16px !important;
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    background: rgba(15, 23, 42, 0.07) !important;
+    border: 1px solid rgba(15, 23, 42, 0.14) !important;
+    color: #0f172a !important;
+}
+
+.platform-secondary-btn:hover,
+.notification-head-actions button:hover {
+    background: rgba(15, 23, 42, 0.12) !important;
+    color: #0f172a !important;
+}
+
+/* Dark Theme Overrides */
+[data-theme="dark"] .platform-chip,
+[data-theme="dark"] .admin-count-pill,
+[data-theme="dark"] .notification-chip {
+    background: rgba(59, 130, 246, 0.2) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] .platform-secondary-btn,
+[data-theme="dark"] .notification-action-btn,
+[data-theme="dark"] .notification-head-actions button {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .platform-secondary-btn:hover,
+[data-theme="dark"] .notification-head-actions button:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .platform-secondary-btn.notification-delete-btn,
+[data-theme="dark"] .notification-delete-btn {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .platform-secondary-btn.notification-delete-btn:hover,
+[data-theme="dark"] .notification-delete-btn:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+/* Admin Portal Buttons High-Contrast Dark Mode */
+[data-theme="dark"] .admin-secondary-btn {
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.35) !important;
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] .admin-secondary-btn:hover {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .admin-warning-btn {
+    background: rgba(245, 158, 11, 0.15) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    color: #fcd34d !important;
+}
+
+[data-theme="dark"] .admin-warning-btn:hover {
+    background: #d97706 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .admin-badge {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .admin-empty {
+    background: rgba(15, 23, 42, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #94a3b8 !important;
+}
+
+.admin-header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.admin-action-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    height: 40px !important;
+    padding: 0 16px !important;
+    border-radius: 12px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background: #ffffff !important;
+    border: 1px solid #d5e3f5 !important;
+    color: #0f172a !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+}
+
+.admin-action-btn span {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+.admin-action-btn i {
+    font-size: 14px !important;
+    color: #2563eb !important;
+}
+
+.admin-action-btn:hover {
+    background: #eff6ff !important;
+    border-color: #93c5fd !important;
+    color: #1d4ed8 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15) !important;
+}
+
+.admin-action-btn:hover span {
+    color: #1d4ed8 !important;
+}
+
+.admin-action-btn:hover i {
+    color: #1d4ed8 !important;
+}
+
+[data-theme="dark"] .admin-action-btn {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    color: #f8fafc !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .admin-action-btn span {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .admin-action-btn i {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .admin-action-btn:hover {
+    background: rgba(37, 99, 235, 0.3) !important;
+    border-color: rgba(59, 130, 246, 0.6) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .admin-action-btn:hover span {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .admin-action-btn:hover i {
+    color: #93c5fd !important;
+}
+
+/* Entity Card Icons High-Contrast Fix (Light & Dark) */
+.admin-item-icon,
+.admin-entity-card .admin-item-icon,
+.admin-student-card .admin-item-icon,
+.admin-schedule-card .admin-item-icon,
+.admin-classroom-card .admin-item-icon {
+    background: rgba(37, 99, 235, 0.12) !important;
+    border: 1px solid rgba(37, 99, 235, 0.25) !important;
+    color: #2563eb !important;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12) !important;
+}
+
+.admin-item-icon i,
+.admin-entity-card .admin-item-icon i,
+.admin-student-card .admin-item-icon i,
+.admin-schedule-card .admin-item-icon i,
+.admin-classroom-card .admin-item-icon i {
+    color: #2563eb !important;
+    font-size: 22px !important;
+}
+
+[data-theme="dark"] .admin-item-icon,
+[data-theme="dark"] .admin-entity-card .admin-item-icon,
+[data-theme="dark"] .admin-student-card .admin-item-icon,
+[data-theme="dark"] .admin-schedule-card .admin-item-icon,
+[data-theme="dark"] .admin-classroom-card .admin-item-icon {
+    background: rgba(37, 99, 235, 0.25) !important;
+    border: 1px solid rgba(59, 130, 246, 0.45) !important;
+    color: #60a5fa !important;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25) !important;
+}
+
+[data-theme="dark"] .admin-item-icon i,
+[data-theme="dark"] .admin-entity-card .admin-item-icon i,
+[data-theme="dark"] .admin-student-card .admin-item-icon i,
+[data-theme="dark"] .admin-schedule-card .admin-item-icon i,
+[data-theme="dark"] .admin-classroom-card .admin-item-icon i {
+    color: #60a5fa !important;
+    font-size: 22px !important;
+}
+
+/* Fix Icon Shrinking on All Student/Teacher/Admin History & Security Stat Cards */
+.student-history-stat i,
+.stat-card .stat-icon,
+.dashboard-stat-card .stat-icon {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+    aspect-ratio: 1 / 1 !important;
+    flex-shrink: 0 !important;
+    border-radius: 16px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+[data-theme="dark"] .student-history-stat.blue i {
+    background: rgba(37, 99, 235, 0.22) !important;
+    color: #60a5fa !important;
+    border: 1px solid rgba(59, 130, 246, 0.4) !important;
+}
+
+[data-theme="dark"] .student-history-stat.green i,
+[data-theme="dark"] .student-history-stat.security.is-active i {
+    background: rgba(34, 197, 94, 0.22) !important;
+    color: #4ade80 !important;
+    border: 1px solid rgba(34, 197, 94, 0.4) !important;
+}
+
+[data-theme="dark"] .student-history-stat.security.is-setup-needed i,
+[data-theme="dark"] .student-history-stat.orange i {
+    background: rgba(249, 115, 22, 0.22) !important;
+    color: #fb923c !important;
+    border: 1px solid rgba(249, 115, 22, 0.4) !important;
+}
+
+[data-theme="dark"] .student-history-stat.red i {
+    background: rgba(239, 68, 68, 0.22) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.4) !important;
+}
+
+[data-theme="dark"] .student-history-stat.purple i {
+    background: rgba(168, 85, 247, 0.22) !important;
+    color: #c084fc !important;
+    border: 1px solid rgba(168, 85, 247, 0.4) !important;
+}
+
+/* ==========================================================================
+   STUDENT PORTAL COMPREHENSIVE UI/UX POLISH & MODERN DESIGN TOKENS
+   ========================================================================== */
+
+.subject-code-chip {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+    display: inline-block;
+}
+
+[data-theme="dark"] .subject-code-chip {
+    background: rgba(59, 130, 246, 0.18) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+
+.student-percent-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.student-percent-pill.good {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.student-percent-pill.warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.student-percent-pill.bad {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+[data-theme="dark"] .student-percent-pill.good {
+    background: rgba(34, 197, 94, 0.2) !important;
+    color: #4ade80 !important;
+    border-color: rgba(74, 222, 128, 0.35) !important;
+}
+
+[data-theme="dark"] .student-percent-pill.warning {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+[data-theme="dark"] .student-percent-pill.bad {
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #f87171 !important;
+    border-color: rgba(248, 113, 113, 0.35) !important;
+}
+
+[data-theme="dark"] .student-progress-track {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .dashboard-stat-card,
+[data-theme="dark"] .student-history-card,
+[data-theme="dark"] .student-history-profile-card,
+[data-theme="dark"] .student-export-card,
+[data-theme="dark"] .passkey-security-card,
+[data-theme="dark"] .student-passkey-card,
+[data-theme="dark"] .student-history-stat {
+    background: rgba(30, 41, 59, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.09) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .dashboard-stat-card:hover,
+[data-theme="dark"] .student-history-stat:hover,
+[data-theme="dark"] .student-passkey-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+[data-theme="dark"] .dashboard-stat-card h2,
+[data-theme="dark"] .student-history-stat strong,
+[data-theme="dark"] .student-history-card-head h3,
+[data-theme="dark"] .dashboard-panel-head h3,
+[data-theme="dark"] .student-header h1,
+[data-theme="dark"] .dashboard-header h1 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .student-history-table th {
+    background: rgba(15, 23, 42, 0.7) !important;
+    color: #94a3b8 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .student-history-table td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .student-history-table td strong {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .student-history-table tr:hover td {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+[data-theme="dark"] .student-field input,
+[data-theme="dark"] .student-field select {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .student-field input:focus,
+[data-theme="dark"] .student-field select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-theme="dark"] .student-field label {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .student-secondary-btn {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .student-secondary-btn:hover {
+    background: rgba(37, 99, 235, 0.2) !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .notification-card {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 18px 20px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .notification-card:hover {
+    background: rgba(15, 23, 42, 0.85) !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .notification-card.unread {
+    background: rgba(30, 41, 59, 0.55) !important;
+    border-left: 4px solid #6366f1 !important;
+    border-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+/* ==========================================================================
+   TEACHER PORTAL COMPREHENSIVE UI/UX POLISH & MODERN DESIGN TOKENS
+   ========================================================================== */
+
+.teacher-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.teacher-datepicker-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px 8px 10px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    min-height: 52px;
+}
+
+.teacher-datepicker-btn:hover {
+    background: #ffffff;
+    border-color: #93c5fd;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+    transform: translateY(-2px);
+}
+
+.teacher-datepicker-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.teacher-datepicker-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    line-height: 1.2;
+}
+
+.teacher-datepicker-kicker {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.teacher-datepicker-val {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 2px;
+}
+
+.teacher-datepicker-arrow {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-left: 2px;
+    transition: transform 0.2s ease;
+}
+
+.teacher-datepicker-btn:hover .teacher-datepicker-arrow {
+    color: #2563eb;
+    transform: translateY(1px);
+}
+
+.teacher-hidden-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    z-index: 2;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.teacher-reports-quick-btn {
+    height: 52px;
+    padding: 0 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff !important;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.teacher-reports-quick-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .teacher-datepicker-btn {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .teacher-datepicker-btn:hover {
+    background: rgba(37, 99, 235, 0.18) !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .teacher-datepicker-icon {
+    background: rgba(37, 99, 235, 0.25) !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .teacher-datepicker-kicker {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .teacher-datepicker-val {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-datepicker-arrow {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .teacher-datepicker-btn:hover .teacher-datepicker-arrow {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .teacher-card,
+[data-theme="dark"] .stat-box,
+[data-theme="dark"] .teacher-report-stat,
+[data-theme="dark"] .teacher-report-header-banner,
+[data-theme="dark"] .teacher-report-filter-bar-card,
+[data-theme="dark"] .teacher-report-group-panel,
+[data-theme="dark"] .teacher-report-nav-bar {
+    background: rgba(15, 23, 42, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.09) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .stat-box:hover,
+[data-theme="dark"] .teacher-report-stat:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+[data-theme="dark"] .stat-box h3,
+[data-theme="dark"] .teacher-report-stat strong,
+[data-theme="dark"] .teacher-card h3,
+[data-theme="dark"] .teacher-header h1 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-field input,
+[data-theme="dark"] .teacher-field select {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-field input:focus,
+[data-theme="dark"] .teacher-field select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-theme="dark"] .teacher-field label {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .teacher-secondary-btn {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-secondary-btn:hover {
+    background: rgba(37, 99, 235, 0.2) !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .teacher-stat-card {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .teacher-stat-card:hover {
+    background: rgba(30, 41, 59, 0.9) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .teacher-stat-value {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-stat-subtext {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .teacher-stat-label {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .teacher-stat-icon-tile.blue {
+    background: rgba(99, 102, 241, 0.12) !important;
+    color: #818cf8 !important;
+    border: 1px solid rgba(99, 102, 241, 0.25) !important;
+}
+
+[data-theme="dark"] .teacher-stat-icon-tile.sky {
+    background: rgba(56, 189, 248, 0.12) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+}
+
+[data-theme="dark"] .teacher-stat-icon-tile.emerald {
+    background: rgba(16, 185, 129, 0.12) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.25) !important;
+}
+
+[data-theme="dark"] .teacher-stat-icon-tile.purple {
+    background: rgba(168, 85, 247, 0.12) !important;
+    color: #c084fc !important;
+    border: 1px solid rgba(168, 85, 247, 0.25) !important;
+}
+
+[data-theme="dark"] .teacher-stat-icon-tile.amber {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+[data-theme="dark"] .teacher-dept-chip {
+    background: rgba(37, 99, 235, 0.2) !important;
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] .teacher-highlight-count {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .class-card.teacher-schedule-class-card {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .class-card.teacher-schedule-class-card:hover {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .time-box.teacher-schedule-time {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .time-box.teacher-schedule-time strong {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .time-box.teacher-schedule-time span {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .teacher-card-subject-row h4 {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-meta-tag {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .teacher-meta-tag i {
+    color: #64748b !important;
+}
+
+[data-theme="dark"] .teacher-export-btn {
+    background: rgba(99, 102, 241, 0.12) !important;
+    border-color: rgba(99, 102, 241, 0.25) !important;
+    color: #c7d2fe !important;
+}
+
+[data-theme="dark"] .teacher-export-btn:hover {
+    background: rgba(99, 102, 241, 0.22) !important;
+    border-color: rgba(99, 102, 241, 0.45) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .teacher-live-panel {
+    background: rgba(30, 41, 59, 0.7) !important;
+}
+
+[data-theme="dark"] .teacher-live-active-card {
+    background: rgba(15, 23, 42, 0.65) !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .teacher-end-btn {
+    background: rgba(51, 65, 85, 0.8) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .teacher-end-btn:hover {
+    background: #475569 !important;
+}
+
+[data-theme="dark"] .teacher-schedule-toolbar-card {
+    background: rgba(30, 41, 59, 0.75) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .teacher-schedule-group-panel {
+    background: rgba(30, 41, 59, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .teacher-schedule-group-summary {
+    background: rgba(30, 41, 59, 0.6) !important;
+}
+
+[data-theme="dark"] .teacher-room-chip {
+    background: rgba(15, 23, 42, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+}
+
+/* =========================================================
+   Teacher Dashboard Dark Theme Polish: Manual Page & Alerts
+   ========================================================= */
+body.dark-mode .manual-link-btn,
+[data-theme="dark"] .manual-link-btn,
+body.dark-mode .manual-shortcut-card .manual-link-btn,
+[data-theme="dark"] .manual-shortcut-card .manual-link-btn {
+    background: rgba(249, 115, 22, 0.16) !important;
+    color: #fb923c !important;
+    border: 1px solid rgba(249, 115, 22, 0.35) !important;
+}
+
+body.dark-mode .manual-link-btn i,
+[data-theme="dark"] .manual-link-btn i {
+    color: #fb923c !important;
+}
+
+body.dark-mode .manual-link-btn:hover,
+[data-theme="dark"] .manual-link-btn:hover {
+    background: rgba(249, 115, 22, 0.28) !important;
+    color: #fdba74 !important;
+    border-color: rgba(249, 115, 22, 0.55) !important;
+}
+
+body.dark-mode .suspicious-count-pill,
+[data-theme="dark"] .suspicious-count-pill {
+    background: rgba(148, 163, 184, 0.1) !important;
+    color: #94a3b8 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .suspicious-count-pill.has-items,
+[data-theme="dark"] .suspicious-count-pill.has-items {
+    background: rgba(244, 63, 94, 0.12) !important;
+    color: #fb7185 !important;
+    border: 1px solid rgba(244, 63, 94, 0.3) !important;
+}
+
+body.dark-mode #pendingReviewCount.has-items,
+[data-theme="dark"] #pendingReviewCount.has-items {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+body.dark-mode .suspicious-empty,
+[data-theme="dark"] .suspicious-empty {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    color: #94a3b8 !important;
+    background: rgba(14, 20, 38, 0.5) !important;
+}
+
+body.dark-mode .suspicious-empty i,
+[data-theme="dark"] .suspicious-empty i,
+body.dark-mode #pendingReviewsEmpty i,
+[data-theme="dark"] #pendingReviewsEmpty i {
+    background: transparent !important;
+    color: #64748b !important;
+    border: none !important;
+    font-size: 24px !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* =========================================================
+   Student Passkeys Dark Theme: Active Badge & Card Contrast
+   ========================================================= */
+body.dark-mode .student-passkey-badge,
+[data-theme="dark"] .student-passkey-badge {
+    background: rgba(16, 185, 129, 0.22) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.45) !important;
+}
+
+body.dark-mode .student-passkey-badge.pending,
+[data-theme="dark"] .student-passkey-badge.pending {
+    background: rgba(245, 158, 11, 0.22) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.45) !important;
+}
+
+body.dark-mode .student-passkey-card,
+[data-theme="dark"] .student-passkey-card {
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .student-passkey-card h4,
+[data-theme="dark"] .student-passkey-card h4 {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .student-passkey-icon,
+[data-theme="dark"] .student-passkey-icon {
+    background: rgba(37, 99, 235, 0.2) !important;
+    color: #60a5fa !important;
+}
+
+body.dark-mode .student-passkey-icon.trusted,
+[data-theme="dark"] .student-passkey-icon.trusted {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+}
+
+/* =========================================================
+   Redesigned Teacher Dashboard Luxury Glassmorphism Dark Theme
+   ========================================================= */
+body.dark-mode .teacher-dashboard-page,
+[data-theme="dark"] .teacher-dashboard-page {
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.14), transparent),
+                radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.08), transparent 40%),
+                radial-gradient(circle at 0% 40%, rgba(168, 85, 247, 0.06), transparent 40%),
+                #090d16 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .teacher-header,
+[data-theme="dark"] .teacher-header {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .teacher-header h1,
+[data-theme="dark"] .teacher-header h1 {
+    color: #ffffff !important;
+}
+
+body.dark-mode .teacher-datepicker-btn,
+[data-theme="dark"] .teacher-datepicker-btn {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .teacher-datepicker-val,
+[data-theme="dark"] .teacher-datepicker-val {
+    color: #ffffff !important;
+}
+
+body.dark-mode .teacher-stat-card,
+[data-theme="dark"] .teacher-stat-card {
+    background: rgba(17, 24, 39, 0.75) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .teacher-stat-value,
+[data-theme="dark"] .teacher-stat-value {
+    color: #ffffff !important;
+}
+
+body.dark-mode .panel-box,
+[data-theme="dark"] .panel-box,
+body.dark-mode .teacher-map-card,
+[data-theme="dark"] .teacher-map-card,
+body.dark-mode .teacher-card,
+[data-theme="dark"] .teacher-card {
+    background: rgba(17, 24, 39, 0.75) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .panel-title,
+[data-theme="dark"] .panel-title,
+body.dark-mode .teacher-map-title,
+[data-theme="dark"] .teacher-map-title,
+body.dark-mode .teacher-card-header h3,
+[data-theme="dark"] .teacher-card-header h3 {
+    color: #ffffff !important;
+}
+
+body.dark-mode .teacher-schedule-toolbar-card,
+[data-theme="dark"] .teacher-schedule-toolbar-card {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .teacher-search-box input,
+[data-theme="dark"] .teacher-search-box input,
+body.dark-mode .select-shell select,
+[data-theme="dark"] .select-shell select,
+body.dark-mode .teacher-map-select,
+[data-theme="dark"] .teacher-map-select {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .teacher-secondary-btn,
+[data-theme="dark"] .teacher-secondary-btn,
+body.dark-mode .teacher-map-icon-button,
+[data-theme="dark"] .teacher-map-icon-button {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .teacher-schedule-group-panel,
+[data-theme="dark"] .teacher-schedule-group-panel {
+    background: rgba(15, 23, 42, 0.55) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .teacher-schedule-group-summary,
+[data-theme="dark"] .teacher-schedule-group-summary {
+    background: rgba(30, 41, 59, 0.5) !important;
+}
+
+body.dark-mode .teacher-schedule-group-summary:hover,
+[data-theme="dark"] .teacher-schedule-group-summary:hover {
+    background: rgba(30, 41, 59, 0.8) !important;
+}
+
+body.dark-mode .teacher-schedule-group-summary-copy h4,
+[data-theme="dark"] .teacher-schedule-group-summary-copy h4 {
+    color: #ffffff !important;
+}
+
+body.dark-mode .teacher-schedule-group-list,
+[data-theme="dark"] .teacher-schedule-group-list {
+    background: rgba(15, 23, 42, 0.4) !important;
+}
+
+body.dark-mode .teacher-schedule-class-card,
+[data-theme="dark"] .teacher-schedule-class-card {
+    background: rgba(30, 41, 59, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .teacher-schedule-class-card:hover,
+[data-theme="dark"] .teacher-schedule-class-card:hover {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+body.dark-mode .teacher-schedule-time,
+[data-theme="dark"] .teacher-schedule-time {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .teacher-schedule-time strong,
+[data-theme="dark"] .teacher-schedule-time strong {
+    color: #ffffff !important;
+}
+
+body.dark-mode .teacher-card-subject-row h4,
+[data-theme="dark"] .teacher-card-subject-row h4 {
+    color: #ffffff !important;
+}
+
+body.dark-mode .teacher-live-active-card,
+[data-theme="dark"] .teacher-live-active-card {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.1) 0%, rgba(15, 23, 42, 0.75) 100%) !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.15) !important;
+}
+
+body.dark-mode .live-course-info h4,
+[data-theme="dark"] .live-course-info h4 {
+    color: #ffffff !important;
+}
+
+body.dark-mode .live-course-info p,
+[data-theme="dark"] .live-course-info p {
+    color: #34d399 !important;
+}
+
+body.dark-mode .live-meta,
+[data-theme="dark"] .live-meta {
+    background: rgba(15, 23, 42, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .live-meta p,
+[data-theme="dark"] .live-meta p {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .student-card-item,
+[data-theme="dark"] .student-card-item {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .student-info strong,
+[data-theme="dark"] .student-info strong {
+    color: #ffffff !important;
+}
+
+body.dark-mode .teacher-map-roster-wrap,
+[data-theme="dark"] .teacher-map-roster-wrap {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .teacher-map-roster-title,
+[data-theme="dark"] .teacher-map-roster-title {
+    color: #ffffff !important;
+}
+
+body.dark-mode .teacher-review-item,
+[data-theme="dark"] .teacher-review-item {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .review-student-name,
+[data-theme="dark"] .review-student-name {
+    color: #ffffff !important;
+}
+
+body.dark-mode .review-reason-box,
+[data-theme="dark"] .review-reason-box {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .teacher-enable-push-pill,
+[data-theme="dark"] .teacher-enable-push-pill {
+    background: rgba(99, 102, 241, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+    color: #e0e7ff !important;
+}
+
+body.dark-mode .teacher-map .leaflet-tile-pane,
+[data-theme="dark"] .teacher-map .leaflet-tile-pane {
+    filter: saturate(1.05) contrast(1.02) brightness(0.98) !important;
+}
+
+body.dark-mode .teacher-map .leaflet-container,
+[data-theme="dark"] .teacher-map .leaflet-container {
+    background: #f1f5f9 !important;
+}
+
+body.dark-mode .leaflet-control-zoom,
+[data-theme="dark"] .leaflet-control-zoom {
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+body.dark-mode .leaflet-control-zoom a,
+[data-theme="dark"] .leaflet-control-zoom a {
+    background: transparent !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+}
+
+body.dark-mode .leaflet-control-zoom a:hover,
+[data-theme="dark"] .leaflet-control-zoom a:hover {
+    background: rgba(99, 102, 241, 0.3) !important;
+    color: #818cf8 !important;
+}
+
+body.dark-mode .leaflet-control-attribution,
+[data-theme="dark"] .leaflet-control-attribution {
+    background: rgba(15, 23, 42, 0.75) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 6px !important;
+    color: #64748b !important;
+    font-size: 10px !important;
+}
+
+body.dark-mode .leaflet-control-attribution a,
+[data-theme="dark"] .leaflet-control-attribution a {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .flatpickr-calendar,
+[data-theme="dark"] .flatpickr-calendar {
+    width: 320px !important;
+    max-width: calc(100vw - 24px) !important;
+    background: rgba(15, 23, 42, 0.96) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    padding: 16px !important;
+    overflow: hidden !important;
+}
+
+body.dark-mode .flatpickr-calendar::before,
+body.dark-mode .flatpickr-calendar::after,
+[data-theme="dark"] .flatpickr-calendar::before,
+[data-theme="dark"] .flatpickr-calendar::after {
+    display: none !important;
+}
+
+body.dark-mode .flatpickr-months,
+[data-theme="dark"] .flatpickr-months {
+    background: transparent !important;
+}
+
+body.dark-mode .flatpickr-month,
+[data-theme="dark"] .flatpickr-month {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+body.dark-mode .flatpickr-current-month,
+[data-theme="dark"] .flatpickr-current-month {
+    color: #ffffff !important;
+}
+
+body.dark-mode .flatpickr-current-month .cur-month,
+[data-theme="dark"] .flatpickr-current-month .cur-month {
+    color: #ffffff !important;
+}
+
+body.dark-mode .flatpickr-current-month select.cur-month,
+[data-theme="dark"] .flatpickr-current-month select.cur-month {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .flatpickr-current-month select.cur-month option,
+[data-theme="dark"] .flatpickr-current-month select.cur-month option {
+    background: #0f172a !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .flatpickr-current-month input.cur-year,
+[data-theme="dark"] .flatpickr-current-month input.cur-year {
+    color: #a5b4fc !important;
+}
+
+body.dark-mode .flatpickr-prev-month,
+body.dark-mode .flatpickr-next-month,
+[data-theme="dark"] .flatpickr-prev-month,
+[data-theme="dark"] .flatpickr-next-month {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #818cf8 !important;
+    fill: #818cf8 !important;
+}
+
+body.dark-mode .flatpickr-prev-month:hover,
+body.dark-mode .flatpickr-next-month:hover,
+[data-theme="dark"] .flatpickr-prev-month:hover,
+[data-theme="dark"] .flatpickr-next-month:hover {
+    background: rgba(99, 102, 241, 0.3) !important;
+    border-color: rgba(99, 102, 241, 0.6) !important;
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+body.dark-mode .flatpickr-innerContainer,
+[data-theme="dark"] .flatpickr-innerContainer {
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode .flatpickr-rContainer,
+[data-theme="dark"] .flatpickr-rContainer {
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode .flatpickr-weekdays,
+[data-theme="dark"] .flatpickr-weekdays {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode .flatpickr-weekdaycontainer,
+[data-theme="dark"] .flatpickr-weekdaycontainer {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    width: 100% !important;
+    gap: 4px !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode span.flatpickr-weekday,
+[data-theme="dark"] span.flatpickr-weekday {
+    color: #94a3b8 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    height: 24px !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode .flatpickr-days,
+[data-theme="dark"] .flatpickr-days {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode .dayContainer,
+[data-theme="dark"] .dayContainer {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 4px !important;
+    box-sizing: border-box !important;
+    justify-items: center !important;
+    align-items: center !important;
+}
+
+body.dark-mode .flatpickr-day,
+[data-theme="dark"] .flatpickr-day {
+    color: #f1f5f9 !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode .flatpickr-day.prevMonthDay,
+body.dark-mode .flatpickr-day.nextMonthDay,
+[data-theme="dark"] .flatpickr-day.prevMonthDay,
+[data-theme="dark"] .flatpickr-day.nextMonthDay {
+    color: #475569 !important;
+    opacity: 0.35 !important;
+}
+
+body.dark-mode .flatpickr-day:hover,
+[data-theme="dark"] .flatpickr-day:hover {
+    background: rgba(99, 102, 241, 0.25) !important;
+    color: #ffffff !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+body.dark-mode .flatpickr-day.today,
+[data-theme="dark"] .flatpickr-day.today {
+    border: 1.5px solid #6366f1 !important;
+    color: #818cf8 !important;
+    background: rgba(99, 102, 241, 0.15) !important;
+}
+
+body.dark-mode .flatpickr-day.selected,
+body.dark-mode .flatpickr-day.selected:hover,
+[data-theme="dark"] .flatpickr-day.selected,
+[data-theme="dark"] .flatpickr-day.selected:hover {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.6) !important;
+}
+
+body.dark-mode .flatpickr-attendance-legend,
+[data-theme="dark"] .flatpickr-attendance-legend {
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .teacher-live-actions-row,
+[data-theme="dark"] .teacher-live-actions-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    margin-top: 16px !important;
+    width: 100% !important;
+}
+
+body.dark-mode .teacher-end-btn,
+[data-theme="dark"] .teacher-end-btn {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    height: 44px !important;
+    width: 100% !important;
+    padding: 0 16px !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode .teacher-force-end-btn,
+[data-theme="dark"] .teacher-force-end-btn {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.25) 100%) !important;
+    border: 1px solid rgba(239, 68, 68, 0.45) !important;
+    color: #fca5a5 !important;
+    height: 44px !important;
+    width: 100% !important;
+    padding: 0 16px !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode .teacher-map-student-card,
+[data-theme="dark"] .teacher-map-student-card {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+}
+
+body.dark-mode .teacher-map-avatar,
+[data-theme="dark"] .teacher-map-avatar {
+    background: rgba(148, 163, 184, 0.15) !important;
+    color: #94a3b8 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .teacher-map-student-head strong,
+[data-theme="dark"] .teacher-map-student-head strong {
+    color: #ffffff !important;
+}
+
+/* ================================================================
+   FOCUSED UI IMPROVEMENTS — DEEP ANALYSIS FIXES
+   Addresses: padding, font sizes, dark mode alerts, empty states,
+   table readability, sidebar weight, auth page polish, stat cards
+   ================================================================ */
+
+/* ── 1. Admin Main Content Area — Tighter, More Responsive Padding ── */
+.admin-main {
+    padding: clamp(20px, 3vw, 34px) clamp(18px, 3.5vw, 42px) !important;
+}
+
+@media (max-width: 900px) {
+    .admin-main {
+        padding: 18px 16px !important;
+    }
+}
+
+/* ── 2. Admin Stat Cards — More Compact, Better Proportions ── */
+.admin-stat-card {
+    padding: 20px !important;
+    gap: 12px !important;
+    border-radius: 18px !important;
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-4px) !important;
+}
+
+.admin-stat-card h3 {
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.04em !important;
+    line-height: 1.1 !important;
+}
+
+.admin-stat-card-top span {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+.admin-stat-icon {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+    font-size: 17px !important;
+}
+
+.admin-stat-action {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+}
+
+/* ── 3. Sidebar Menu — Reduce Font Size & Weight ── */
+.admin-menu a,
+.admin-logout-btn {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    min-height: 46px !important;
+}
+
+/* ── 4. Admin Secondary Button — Fix Excessive Height ── */
+.admin-secondary-btn {
+    min-height: 44px !important;
+    height: 44px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+}
+
+/* CSV area secondary buttons can keep larger sizing */
+.admin-csv-buttons .admin-secondary-btn,
+.admin-students-page .admin-csv-buttons .admin-secondary-btn {
+    min-height: 52px !important;
+    height: auto !important;
+}
+
+/* ── 5. Font Weight Normalization — Remove non-standard 750/950 values ── */
+.report-table td {
+    font-weight: 500 !important;
+}
+
+.admin-file-text strong {
+    font-weight: 800 !important;
+}
+
+.admin-csv-help code {
+    font-weight: 700 !important;
+}
+
+.admin-form-helper {
+    font-weight: 600 !important;
+}
+
+.admin-input-help {
+    font-weight: 600 !important;
+}
+
+/* ── 6. Dark Mode — Alert Banners & Hints ── */
+[data-theme="dark"] .admin-dynamic-hint,
+body.dark-mode .admin-dynamic-hint {
+    background: rgba(29, 78, 216, 0.18) !important;
+    color: #93c5fd !important;
+    border-color: rgba(59, 130, 246, 0.35) !important;
+}
+
+[data-theme="dark"] .admin-dynamic-hint.success,
+body.dark-mode .admin-dynamic-hint.success {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #6ee7b7 !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+[data-theme="dark"] .admin-dynamic-hint.error,
+body.dark-mode .admin-dynamic-hint.error {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+[data-theme="dark"] .admin-dynamic-hint.info,
+body.dark-mode .admin-dynamic-hint.info {
+    background: rgba(29, 78, 216, 0.18) !important;
+    color: #93c5fd !important;
+    border-color: rgba(59, 130, 246, 0.35) !important;
+}
+
+/* ── 7. Dark Mode — Form Error Box ── */
+[data-theme="dark"] .admin-form-error-box,
+body.dark-mode .admin-form-error-box {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+/* ── 8. Dark Mode — CSV Help Box ── */
+[data-theme="dark"] .admin-csv-help,
+body.dark-mode .admin-csv-help {
+    background: rgba(15, 23, 42, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .admin-csv-help code,
+body.dark-mode .admin-csv-help code {
+    background: #020617 !important;
+    color: #a5f3fc !important;
+}
+
+/* ── 9. Dark Mode — Report Stat Cards ── */
+[data-theme="dark"] .report-stat-card,
+body.dark-mode .report-stat-card {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .report-stat-card.blue i,
+body.dark-mode .report-stat-card.blue i {
+    background: rgba(37, 99, 235, 0.25) !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .report-stat-card.green i,
+body.dark-mode .report-stat-card.green i {
+    background: rgba(22, 163, 74, 0.25) !important;
+    color: #4ade80 !important;
+}
+
+[data-theme="dark"] .report-stat-card.red i,
+body.dark-mode .report-stat-card.red i {
+    background: rgba(220, 38, 38, 0.25) !important;
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .report-stat-card.purple i,
+body.dark-mode .report-stat-card.purple i {
+    background: rgba(2, 132, 199, 0.25) !important;
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .report-stat-card.orange i,
+body.dark-mode .report-stat-card.orange i {
+    background: rgba(249, 115, 22, 0.25) !important;
+    color: #fb923c !important;
+}
+
+/* ── 10. Dark Mode — Report Table ── */
+[data-theme="dark"] .report-table thead,
+body.dark-mode .report-table thead {
+    background: rgba(30, 41, 59, 0.8) !important;
+}
+
+[data-theme="dark"] .report-table th,
+body.dark-mode .report-table th {
+    color: #64748b !important;
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .report-table td,
+body.dark-mode .report-table td {
+    border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ── 11. Dark Mode — Pending Student Cards ── */
+[data-theme="dark"] .pending-empty-state,
+body.dark-mode .pending-empty-state {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pending-badge-muted,
+body.dark-mode .pending-badge-muted {
+    background: rgba(15, 23, 42, 0.5) !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .pending-badge-semester,
+body.dark-mode .pending-badge-semester {
+    background: rgba(3, 105, 161, 0.25) !important;
+    color: #38bdf8 !important;
+}
+
+/* ── 12. Auth Page — Larger Perk Icons ── */
+.auth-perks i {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    font-size: 12px !important;
+    flex-shrink: 0 !important;
+}
+
+.auth-perks li {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+}
+
+.auth-brand-panel h2 {
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    margin: 24px 0 10px !important;
+}
+
+.auth-brand-panel > p {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+/* ── 13. Auth Inputs — Smooth Focus Animation ── */
+.input-wrap input,
+.input-wrap select {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+}
+
+.input-wrap input:focus {
+    background: #fafbff !important;
+}
+
+/* ── 14. Admin Header ── */
+.admin-kicker {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.admin-header-copy h1 {
+    font-size: clamp(20px, 2.2vw, 28px) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.2 !important;
+}
+
+/* ── 15. Admin Card Border Radius Refinement ── */
+.admin-card,
+.admin-form-card,
+.admin-table-card,
+.admin-filter-card,
+.admin-table-wrapper {
+    border-radius: 18px !important;
+}
+
+/* ── 16. Admin Table — Better Row Hover ── */
+.admin-table tbody tr:hover td {
+    background: rgba(59, 130, 246, 0.04) !important;
+}
+
+[data-theme="dark"] .admin-table tbody tr:hover td {
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* ── 17. Home Page Stats Banner — Tablet Breakpoint ── */
+@media (max-width: 880px) {
+    .stats-banner {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-banner {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ── 18. Admin Notifications Page — Dark Mode ── */
+[data-theme="dark"] .admin-notif-card,
+body.dark-mode .admin-notif-card {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── 19. Teacher/Student Dashboard Empty States ── */
+.empty-state-icon {
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 24px !important;
+    margin-bottom: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 16px !important;
+}
+
+.empty-state-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    margin-bottom: 6px !important;
+}
+
+.empty-state-text {
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+}
+
+/* ── 20. Admin Edit Box Summary — More Polished ── */
+.admin-edit-box summary {
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 14px !important;
+    border-radius: 10px !important;
+    background: rgba(37, 99, 235, 0.08) !important;
+    border: 1px solid rgba(37, 99, 235, 0.2) !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.18s ease !important;
+    width: 100% !important;
+    justify-content: center !important;
+}
+
+.admin-edit-box summary:hover {
+    background: rgba(37, 99, 235, 0.14) !important;
+    border-color: rgba(37, 99, 235, 0.4) !important;
+}
+
+[data-theme="dark"] .admin-edit-box summary,
+body.dark-mode .admin-edit-box summary {
+    background: rgba(37, 99, 235, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .admin-edit-box summary:hover,
+body.dark-mode .admin-edit-box summary:hover {
+    background: rgba(37, 99, 235, 0.25) !important;
+    color: #93c5fd !important;
+}
+
+/* ── 21. Admin Edit Box Top Border ── */
+[data-theme="dark"] .admin-edit-box,
+body.dark-mode .admin-edit-box {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── 22. Admin Primary Button — Consistent Height ── */
+.admin-primary-btn {
+    font-weight: 700 !important;
+}
+
+/* ── 23. Admin Field Label — Lighter Weight ── */
+.admin-field label {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+}
+
+/* ── 24. Admin Warning Button ── */
+.admin-warning-btn {
+    font-weight: 700 !important;
+    font-size: 13px !important;
+}
+
+
+
+
+
+
+
+
 

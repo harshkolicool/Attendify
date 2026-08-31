@@ -1,11 +1,32 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const socket = io();
     const grid = document.getElementById("pending-grid");
     const emptyStateContainers = document.querySelectorAll(".js-empty-state-container");
     const countHeader = document.querySelector(".admin-card-header h2");
 
-    if (!countHeader || !grid) {
+    if (!grid) {
         return;
+    }
+
+    const socket =
+        window.AttendifySharedSocket ||
+        (typeof io !== "undefined"
+            ? io({
+                  transports: ["websocket", "polling"],
+                  withCredentials: true,
+                  timeout: 20000,
+                  reconnectionAttempts: 20
+              })
+            : null);
+
+    if (socket) {
+        window.AttendifySharedSocket = socket;
+        function joinAdmin() {
+            socket.emit("admin:join");
+        }
+        socket.on("connect", joinAdmin);
+        if (socket.connected) {
+            joinAdmin();
+        }
     }
 
     function escapeHTML(str) {
@@ -232,15 +253,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 title: 'Are you sure?',
                 text: 'Are you sure you want to reject and delete this registration?',
                 icon: "warning",
+                iconColor: "#ef4444",
                 showCancelButton: true,
                 confirmButtonColor: "#ef4444",
-                cancelButtonColor: "#64748b",
                 confirmButtonText: "Yes, reject",
                 cancelButtonText: "Cancel",
                 customClass: {
-                    popup: 'admin-card',
-                    confirmButton: 'admin-primary-btn danger',
-                    cancelButton: 'admin-secondary-btn'
+                    container: 'shell-enhanced-container',
+                    popup: 'shell-enhanced-alert',
+                    title: 'shell-enhanced-title',
+                    htmlContainer: 'shell-enhanced-text',
+                    actions: 'shell-enhanced-actions',
+                    confirmButton: 'shell-enhanced-confirm danger',
+                    cancelButton: 'shell-enhanced-cancel'
                 }
             }).then((result) => {
                 if (result.isConfirmed) {

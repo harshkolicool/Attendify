@@ -1,16 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Attendify</title>
+    <title>Institutional Dashboard | Attendify</title>
+    
+    <!-- Core & Theme Styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
-    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
+    <link rel="stylesheet" href="/css/adminDashboard.css?v=17">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="/favicon.png">
 
-    <!-- SweetAlert2 for Custom UI Alerts -->
+    <!-- Chart.js for High-Performance Institutional Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- SweetAlert2 for Alerts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <script src="/js/customAlerts.js" defer></script>
 
@@ -25,7 +37,6 @@
         }
     </script>
 
-
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
     <script>
@@ -38,118 +49,825 @@
 </head>
 <body>
 
+<%
+    const currentHour = new Date().getHours();
+    let timeGreeting = "Good morning";
+    if (currentHour >= 12 && currentHour < 17) timeGreeting = "Good afternoon";
+    else if (currentHour >= 17) timeGreeting = "Good evening";
+
+    const adminName = (typeof admin !== "undefined" && admin && (admin.fullName || admin.name)) ? (admin.fullName || admin.name) : "Administrator";
+%>
+
 <div class="admin-layout">
-    <%- include("partials/sidebar", { activePage: "dashboard" }) %>
+    <%- include("partials/sidebar", { activePage: "dashboard", currentCollege: college }) %>
 
     <main class="admin-main">
-        <header class="admin-header admin-page-header">
-            <div class="admin-header-copy">
-                <span class="admin-kicker">College Admin</span>
-                <h1>Dashboard</h1>
-                <% if (college) { %>
-                    <p><%= college.collegeName %> · <%= college.collegeCode %></p>
+        <div class="adm-dashboard-wrap">
+
+            <!-- HERO / HEADER SECTION -->
+            <section class="adm-hero" aria-label="Dashboard Welcome">
+                <div class="adm-hero-content">
+                    <div class="adm-hero-badge-row">
+                        <span class="adm-badge adm-badge-institution">
+                            <i class="fa-solid fa-building-columns"></i> Institutional Command
+                        </span>
+                        <% if (typeof college !== "undefined" && college && college.collegeCode) { %>
+                            <span class="adm-badge adm-badge-code">
+                                <i class="fa-solid fa-hashtag"></i> <%= college.collegeCode %>
+                            </span>
+                        <% } %>
+                        <span class="adm-badge adm-badge-live">
+                            <span class="adm-live-dot"></span> Live Sync Active
+                        </span>
+                    </div>
+
+                    <h1><%= timeGreeting %>, <%= adminName %></h1>
+                    <p class="adm-hero-meta">
+                        <span><i class="fa-solid fa-landmark"></i> <%= (typeof college !== "undefined" && college && college.collegeName) ? college.collegeName : "College Administration" %></span>
+                        <span class="adm-hero-meta-dot">·</span>
+                        <span id="admLiveClock"><i class="fa-regular fa-clock"></i> Synchronizing...</span>
+                    </p>
+                </div>
+
+                <div class="adm-hero-actions">
+                    <a href="/admin/students" class="adm-btn-primary">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Manage Students</span>
+                    </a>
+                    <a href="/admin/schedules" class="adm-btn-secondary">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>Timetables</span>
+                    </a>
+                    <a href="/admin/reports" class="adm-btn-secondary">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Reports</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- SYSTEM HEALTH & SECURITY STATUS BAR -->
+            <section class="adm-radar-grid" aria-label="System Health Radar">
+                <div class="adm-radar-card">
+                    <div class="adm-radar-icon gps">
+                        <i class="fa-solid fa-satellite-dish"></i>
+                    </div>
+                    <div class="adm-radar-info">
+                        <span class="adm-radar-label">GPS Geofences</span>
+                        <span class="adm-radar-val"><%= counts.classrooms || 0 %> Geofences Active</span>
+                    </div>
+                </div>
+
+                <div class="adm-radar-card">
+                    <div class="adm-radar-icon security">
+                        <i class="fa-solid fa-fingerprint"></i>
+                    </div>
+                    <div class="adm-radar-info">
+                        <span class="adm-radar-label">Biometric Security</span>
+                        <span class="adm-radar-val">FIDO2 / WebAuthn Active</span>
+                    </div>
+                </div>
+
+                <div class="adm-radar-card">
+                    <div class="adm-radar-icon sync">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div class="adm-radar-info">
+                        <span class="adm-radar-label">Sync Engine</span>
+                        <span class="adm-radar-val">100% Operational</span>
+                    </div>
+                </div>
+
+                <div class="adm-radar-card">
+                    <div class="adm-radar-icon dept">
+                        <i class="fa-solid fa-sitemap"></i>
+                    </div>
+                    <div class="adm-radar-info">
+                        <span class="adm-radar-label">Academic Departments</span>
+                        <span class="adm-radar-val"><%= (typeof departmentStats !== "undefined" && departmentStats) ? departmentStats.length : 0 %> Faculties Active</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FLASH & SYSTEM MESSAGES -->
+            <% if (typeof message !== "undefined" && message) { %>
+                <div class="adm-alert-strip adm-alert-strip-info">
+                    <div class="adm-alert-left">
+                        <i class="fa-solid fa-circle-info adm-alert-icon"></i>
+                        <span><%= message %></span>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- OPERATIONAL BANNERS -->
+            <div class="adm-status-banners">
+                <% if (counts.pendingStudents && counts.pendingStudents > 0) { %>
+                    <div class="adm-alert-strip adm-alert-strip-warning">
+                        <div class="adm-alert-left">
+                            <i class="fa-solid fa-user-clock adm-alert-icon"></i>
+                            <div>
+                                <strong><%= counts.pendingStudents %> Student Registration<%= counts.pendingStudents > 1 ? 's' : '' %> Pending Approval</strong>
+                                <span style="opacity: 0.85; margin-left: 6px; font-weight: 400;">Review student credentials and grant portal access.</span>
+                            </div>
+                        </div>
+                        <a href="/admin/students/pending" class="adm-alert-action-btn">
+                            Review Now <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                <% } %>
+
+                <% if (counts.activeSessions && counts.activeSessions > 0) { %>
+                    <div class="adm-alert-strip adm-alert-strip-info">
+                        <div class="adm-alert-left">
+                            <i class="fa-solid fa-tower-broadcast adm-alert-icon"></i>
+                            <div>
+                                <strong><%= counts.activeSessions %> Live Attendance Session<%= counts.activeSessions > 1 ? 's' : '' %> Active Right Now</strong>
+                                <span style="opacity: 0.85; margin-left: 6px; font-weight: 400;">Faculty members are actively taking real-time attendance.</span>
+                            </div>
+                        </div>
+                        <a href="/admin/reports" class="adm-alert-action-btn">
+                            View Live Sessions <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
                 <% } %>
             </div>
-        </header>
 
-        <% if (typeof message !== "undefined" && message) { %>
-            <div class="alert success"><%= typeof message !== "undefined" ? message : "" %></div>
-        <% } %>
+            <!-- KEY PERFORMANCE INDICATORS (KPIs) -->
+            <section class="adm-kpi-grid" aria-label="Key Performance Indicators">
+                <!-- Students Card -->
+                <a href="/admin/students" class="adm-kpi-card emerald">
+                    <div class="adm-kpi-top">
+                        <div class="adm-kpi-label-group">
+                            <span class="adm-kpi-label">Students</span>
+                            <span class="adm-kpi-subtitle">Total Enrolled</span>
+                        </div>
+                        <div class="adm-kpi-icon-wrap emerald">
+                            <i class="fa-solid fa-user-graduate"></i>
+                        </div>
+                    </div>
+                    <div class="adm-kpi-value-row">
+                        <div class="adm-kpi-value"><%= counts.students %></div>
+                        <% if (counts.pendingStudents && counts.pendingStudents > 0) { %>
+                            <span class="adm-kpi-tag live"><%= counts.pendingStudents %> Pending</span>
+                        <% } else { %>
+                            <span class="adm-kpi-tag neutral">Active Roster</span>
+                        <% } %>
+                    </div>
+                    <div class="adm-kpi-action">
+                        <span>Manage Roster</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
 
-        <section class="admin-stat-grid" aria-label="Overview statistics">
-            <article class="admin-stat-card">
-                <div class="admin-stat-card-top">
-                    <span>Class Groups</span>
-                    <div class="admin-stat-icon blue"><i class="fa-solid fa-layer-group"></i></div>
-                </div>
-                <h3><%= counts.classGroups %></h3>
-                <a href="/admin/class-groups" class="admin-stat-action">Manage <i class="fa-solid fa-arrow-right"></i></a>
-            </article>
+                <!-- Faculty Card -->
+                <a href="/admin/teachers" class="adm-kpi-card indigo">
+                    <div class="adm-kpi-top">
+                        <div class="adm-kpi-label-group">
+                            <span class="adm-kpi-label">Faculty</span>
+                            <span class="adm-kpi-subtitle">Teachers & HODs</span>
+                        </div>
+                        <div class="adm-kpi-icon-wrap indigo">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                        </div>
+                    </div>
+                    <div class="adm-kpi-value-row">
+                        <div class="adm-kpi-value"><%= counts.teachers %></div>
+                        <span class="adm-kpi-tag neutral">Verified Faculty</span>
+                    </div>
+                    <div class="adm-kpi-action">
+                        <span>Manage Faculty</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
 
-            <article class="admin-stat-card">
-                <div class="admin-stat-card-top">
-                    <span>Classrooms</span>
-                    <div class="admin-stat-icon cyan"><i class="fa-solid fa-door-open"></i></div>
-                </div>
-                <h3><%= counts.classrooms %></h3>
-                <a href="/admin/classrooms" class="admin-stat-action">Manage <i class="fa-solid fa-arrow-right"></i></a>
-            </article>
+                <!-- Class Groups Card -->
+                <a href="/admin/class-groups" class="adm-kpi-card blue">
+                    <div class="adm-kpi-top">
+                        <div class="adm-kpi-label-group">
+                            <span class="adm-kpi-label">Class Groups</span>
+                            <span class="adm-kpi-subtitle">Cohorts & Batches</span>
+                        </div>
+                        <div class="adm-kpi-icon-wrap blue">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                    </div>
+                    <div class="adm-kpi-value-row">
+                        <div class="adm-kpi-value"><%= counts.classGroups %></div>
+                        <span class="adm-kpi-tag neutral">Active Batches</span>
+                    </div>
+                    <div class="adm-kpi-action">
+                        <span>Manage Groups</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
 
-            <article class="admin-stat-card">
-                <div class="admin-stat-card-top">
-                    <span>Subjects</span>
-                    <div class="admin-stat-icon purple"><i class="fa-solid fa-book"></i></div>
-                </div>
-                <h3><%= counts.subjects %></h3>
-                <a href="/admin/subjects" class="admin-stat-action">Manage <i class="fa-solid fa-arrow-right"></i></a>
-            </article>
+                <!-- Classrooms Card -->
+                <a href="/admin/classrooms" class="adm-kpi-card cyan">
+                    <div class="adm-kpi-top">
+                        <div class="adm-kpi-label-group">
+                            <span class="adm-kpi-label">Classrooms</span>
+                            <span class="adm-kpi-subtitle">Geofenced Rooms</span>
+                        </div>
+                        <div class="adm-kpi-icon-wrap cyan">
+                            <i class="fa-solid fa-door-open"></i>
+                        </div>
+                    </div>
+                    <div class="adm-kpi-value-row">
+                        <div class="adm-kpi-value"><%= counts.classrooms %></div>
+                        <span class="adm-kpi-tag neutral">GPS Configured</span>
+                    </div>
+                    <div class="adm-kpi-action">
+                        <span>Manage Rooms</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
 
-            <article class="admin-stat-card">
-                <div class="admin-stat-card-top">
-                    <span>Teachers</span>
-                    <div class="admin-stat-icon indigo"><i class="fa-solid fa-chalkboard-user"></i></div>
-                </div>
-                <h3><%= counts.teachers %></h3>
-                <a href="/admin/teachers" class="admin-stat-action">Manage <i class="fa-solid fa-arrow-right"></i></a>
-            </article>
+                <!-- Subjects Card -->
+                <a href="/admin/subjects" class="adm-kpi-card violet">
+                    <div class="adm-kpi-top">
+                        <div class="adm-kpi-label-group">
+                            <span class="adm-kpi-label">Subjects</span>
+                            <span class="adm-kpi-subtitle">Curriculum Courses</span>
+                        </div>
+                        <div class="adm-kpi-icon-wrap violet">
+                            <i class="fa-solid fa-book-bookmark"></i>
+                        </div>
+                    </div>
+                    <div class="adm-kpi-value-row">
+                        <div class="adm-kpi-value"><%= counts.subjects %></div>
+                        <span class="adm-kpi-tag neutral">Active Courses</span>
+                    </div>
+                    <div class="adm-kpi-action">
+                        <span>Manage Courses</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
 
-            <article class="admin-stat-card">
-                <div class="admin-stat-card-top">
-                    <span>Students</span>
-                    <div class="admin-stat-icon green"><i class="fa-solid fa-user-graduate"></i></div>
-                </div>
-                <h3><%= counts.students %></h3>
-                <a href="/admin/students" class="admin-stat-action">Manage <i class="fa-solid fa-arrow-right"></i></a>
-            </article>
+                <!-- Schedules Card -->
+                <a href="/admin/schedules" class="adm-kpi-card amber">
+                    <div class="adm-kpi-top">
+                        <div class="adm-kpi-label-group">
+                            <span class="adm-kpi-label">Timetables</span>
+                            <span class="adm-kpi-subtitle">Lectures Scheduled</span>
+                        </div>
+                        <div class="adm-kpi-icon-wrap amber">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                    </div>
+                    <div class="adm-kpi-value-row">
+                        <div class="adm-kpi-value"><%= counts.schedules %></div>
+                        <span class="adm-kpi-tag neutral"><%= counts.todaySchedules || 0 %> Today</span>
+                    </div>
+                    <div class="adm-kpi-action">
+                        <span>View Timetables</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
 
-            <article class="admin-stat-card">
-                <div class="admin-stat-card-top">
-                    <span>Schedules</span>
-                    <div class="admin-stat-icon orange"><i class="fa-solid fa-calendar-days"></i></div>
-                </div>
-                <h3><%= counts.schedules %></h3>
-                <a href="/admin/schedules" class="admin-stat-action">Manage <i class="fa-solid fa-arrow-right"></i></a>
-            </article>
+                <!-- Live Sessions Card -->
+                <a href="/admin/reports" class="adm-kpi-card rose">
+                    <div class="adm-kpi-top">
+                        <div class="adm-kpi-label-group">
+                            <span class="adm-kpi-label">Live Sessions</span>
+                            <span class="adm-kpi-subtitle">Real-time Activity</span>
+                        </div>
+                        <div class="adm-kpi-icon-wrap rose">
+                            <i class="fa-solid fa-signal"></i>
+                        </div>
+                    </div>
+                    <div class="adm-kpi-value-row">
+                        <div class="adm-kpi-value"><%= counts.activeSessions %></div>
+                        <% if (counts.activeSessions > 0) { %>
+                            <span class="adm-kpi-tag live"><i class="fa-solid fa-circle-dot"></i> Ongoing</span>
+                        <% } else { %>
+                            <span class="adm-kpi-tag neutral">Idle</span>
+                        <% } %>
+                    </div>
+                    <div class="adm-kpi-action">
+                        <span>Monitor Live</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
 
-            <article class="admin-stat-card admin-stat-card-featured">
-                <div class="admin-stat-card-top">
-                    <span>Subject-wise Reports</span>
-                    <div class="admin-stat-icon rose"><i class="fa-solid fa-chart-pie"></i></div>
-                </div>
-                <h3 class="admin-stat-icon-value"><i class="fa-solid fa-chart-pie"></i></h3>
-                <a href="/admin/reports" class="admin-stat-action">View Reports <i class="fa-solid fa-arrow-right"></i></a>
-            </article>
-        </section>
+                <!-- Reports Card -->
+                <a href="/admin/reports" class="adm-kpi-card purple">
+                    <div class="adm-kpi-top">
+                        <div class="adm-kpi-label-group">
+                            <span class="adm-kpi-label">Audit & Export</span>
+                            <span class="adm-kpi-subtitle">Attendance Reports</span>
+                        </div>
+                        <div class="adm-kpi-icon-wrap purple">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                    </div>
+                    <div class="adm-kpi-value-row">
+                        <div class="adm-kpi-value" style="font-size: 1.8rem;"><i class="fa-solid fa-file-excel"></i></div>
+                        <span class="adm-kpi-tag neutral">Excel Ready</span>
+                    </div>
+                    <div class="adm-kpi-action">
+                        <span>Generate Reports</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
+            </section>
 
-        <section class="info-panel admin-setup-panel">
-            <div class="admin-setup-panel-head">
-                <div class="admin-setup-panel-icon">
-                    <i class="fa-solid fa-list-check"></i>
+            <!-- VISUAL INTELLIGENCE & ANALYTICS CHARTS -->
+            <section class="adm-analytics-grid" aria-label="Institutional Visual Analytics">
+                <!-- Institutional Overview Chart -->
+                <article class="adm-panel">
+                    <div class="adm-panel-head">
+                        <div class="adm-panel-title-wrap">
+                            <div class="adm-panel-icon"><i class="fa-solid fa-chart-simple"></i></div>
+                            <div>
+                                <h2>Institutional Resource Distribution</h2>
+                                <p>Overall breakdown of students, faculty, cohorts, and classrooms</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="adm-chart-box">
+                        <canvas id="admOverviewChart"></canvas>
+                    </div>
+                </article>
+
+                <!-- Departmental Enrollment Breakdown -->
+                <article class="adm-panel">
+                    <div class="adm-panel-head">
+                        <div class="adm-panel-title-wrap">
+                            <div class="adm-panel-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                            <div>
+                                <h2>Department Roster</h2>
+                                <p>Student enrollment distribution by branch</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="adm-chart-box">
+                        <canvas id="admDeptChart"></canvas>
+                    </div>
+                </article>
+            </section>
+
+            <!-- TODAY'S SCHEDULED LECTURES & TIMETABLES -->
+            <section class="adm-panel" aria-label="Today's Timetable Feed">
+                <div class="adm-panel-head">
+                    <div class="adm-panel-title-wrap">
+                        <div class="adm-panel-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                        <div>
+                            <h2>Today's Scheduled Timetable</h2>
+                            <p>Active and scheduled classes for <%= new Date().toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }) %></p>
+                        </div>
+                    </div>
+                    <a href="/admin/schedules" class="adm-btn-secondary" style="padding: 6px 14px; font-size: 0.84rem;">
+                        Full Timetable <i class="fa-solid fa-arrow-right"></i>
+                    </a>
                 </div>
-                <div>
-                    <h2>Setup order for a new college</h2>
-                    <p>Follow these steps to get attendance running for your institution.</p>
+
+                <div class="adm-timeline-grid">
+                    <% if (typeof todaySchedulesList !== "undefined" && todaySchedulesList && todaySchedulesList.length > 0) { %>
+                        <% todaySchedulesList.forEach(function(item) { 
+                            const subjName = item.subject ? (item.subject.name || "Subject") : "Lecture";
+                            const subjCode = item.subject ? (item.subject.code || "") : "";
+                            const teacherName = item.teacher ? item.teacher.fullName : "Faculty";
+                            const groupName = item.classGroup ? item.classGroup.name : "Class Group";
+                            const roomName = item.classroom ? (item.classroom.name || "Room " + item.classroom.roomNumber) : "Classroom";
+                            const timeDisplay = (item.startTime && item.endTime) ? `${item.startTime} - ${item.endTime}` : (item.startTime || "Scheduled");
+                        %>
+                            <div class="adm-timeline-card">
+                                <div class="adm-timeline-top">
+                                    <span class="adm-timeline-time">
+                                        <i class="fa-regular fa-clock"></i> <%= timeDisplay %>
+                                    </span>
+                                    <span class="adm-status-pill closed">Scheduled</span>
+                                </div>
+                                <div class="adm-timeline-subj">
+                                    <%= subjName %> <% if (subjCode) { %><span style="opacity: 0.7; font-size: 0.82rem;">(<%= subjCode %>)</span><% } %>
+                                </div>
+                                <div class="adm-timeline-meta">
+                                    <span><i class="fa-solid fa-chalkboard-user"></i> <%= teacherName %></span>
+                                    <span><i class="fa-solid fa-layer-group"></i> <%= groupName %></span>
+                                    <span><i class="fa-solid fa-door-open"></i> <%= roomName %></span>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="adm-empty-state" style="grid-column: 1 / -1; padding: 28px;">
+                            <i class="fa-solid fa-calendar-xmark adm-empty-icon"></i>
+                            <span>No scheduled classes found for today. You can create new timetable entries anytime.</span>
+                            <a href="/admin/schedules" class="adm-btn-primary" style="margin-top: 10px; padding: 8px 16px; font-size: 0.85rem;">
+                                <i class="fa-solid fa-calendar-plus"></i> Add Lecture Timetable
+                            </a>
+                        </div>
+                    <% } %>
                 </div>
-            </div>
-            <ol>
-                <li>Create <strong>Class Groups</strong></li>
-                <li>Add <strong>Classrooms</strong> with allowed attendance radius</li>
-                <li>Add <strong>Subjects</strong> and assign teachers</li>
-                <li>Add <strong>Teachers</strong> and <strong>Students</strong></li>
-                <li>Create weekly <strong>Schedules</strong></li>
-            </ol>
-        </section>
+            </section>
+
+            <!-- SPLIT OPERATIONS: RECENT SESSIONS & RECENT ALERTS -->
+            <section class="adm-dual-feed" aria-label="Operations and Alerts">
+                <!-- Recent Attendance Sessions -->
+                <article class="adm-panel">
+                    <div class="adm-panel-head">
+                        <div class="adm-panel-title-wrap">
+                            <div class="adm-panel-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                            <div>
+                                <h2>Recent Attendance Sessions</h2>
+                                <p>Latest recorded lectures and real-time class activity</p>
+                            </div>
+                        </div>
+                        <a href="/admin/reports" class="adm-btn-secondary" style="padding: 6px 12px; font-size: 0.82rem;">
+                            View All <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+
+                    <div class="adm-feed-list">
+                        <% if (typeof recentSessions !== "undefined" && recentSessions && recentSessions.length > 0) { %>
+                            <% recentSessions.forEach(function(session) { 
+                                const subjName = session.subject && session.subject.name ? session.subject.name : "Subject";
+                                const subjCode = session.subject && session.subject.code ? session.subject.code : "";
+                                const teacherName = session.teacher && session.teacher.fullName ? session.teacher.fullName : "Faculty";
+                                const groupName = session.classGroup && session.classGroup.name ? session.classGroup.name : "Class Group";
+                                const roomName = session.classroom && session.classroom.name ? session.classroom.name : (session.classroom && session.classroom.roomNumber ? "Room " + session.classroom.roomNumber : "");
+                                const isLive = session.status === "ACTIVE" && session.isActive;
+                                const startTimeStr = session.startTime ? new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+                                const dateStr = session.startTime ? new Date(session.startTime).toLocaleDateString([], { month: 'short', day: 'numeric' }) : "";
+                            %>
+                                <div class="adm-session-row">
+                                    <div class="adm-session-left">
+                                        <div class="adm-subject-avatar">
+                                            <%= subjName.slice(0, 2).toUpperCase() %>
+                                        </div>
+                                        <div class="adm-session-info">
+                                            <span class="adm-session-title">
+                                                <%= subjName %> <% if (subjCode) { %><span style="opacity: 0.65; font-size: 0.8rem;">(<%= subjCode %>)</span><% } %>
+                                            </span>
+                                            <span class="adm-session-meta">
+                                                <span><i class="fa-solid fa-chalkboard-user"></i> <%= teacherName %></span>
+                                                <span>•</span>
+                                                <span><i class="fa-solid fa-layer-group"></i> <%= groupName %></span>
+                                                <% if (roomName) { %>
+                                                    <span>•</span>
+                                                    <span><i class="fa-solid fa-door-open"></i> <%= roomName %></span>
+                                                <% } %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="adm-session-right">
+                                        <span style="font-size: 0.8rem; color: var(--adm-text-muted);"><%= dateStr %> <%= startTimeStr %></span>
+                                        <span class="adm-status-pill <%= isLive ? 'active' : (session.status === 'EXPIRED' ? 'expired' : 'closed') %>">
+                                            <%= isLive ? 'Live' : (session.status || 'Recorded') %>
+                                        </span>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="adm-empty-state">
+                                <i class="fa-solid fa-clipboard-question adm-empty-icon"></i>
+                                <span>No attendance sessions recorded yet today.</span>
+                            </div>
+                        <% } %>
+                    </div>
+                </article>
+
+                <!-- Institutional Notifications / System Alerts -->
+                <article class="adm-panel">
+                    <div class="adm-panel-head">
+                        <div class="adm-panel-title-wrap">
+                            <div class="adm-panel-icon"><i class="fa-solid fa-bell"></i></div>
+                            <div>
+                                <h2>Institutional Alerts</h2>
+                                <p>System updates, student requests & notifications</p>
+                            </div>
+                        </div>
+                        <a href="/admin/notifications" class="adm-btn-secondary" style="white-space: nowrap; flex-shrink: 0; padding: 6px 14px; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 8px;">
+                            <span>Inbox</span>
+                            <span class="adm-count-pill" style="background: rgba(99, 102, 241, 0.15); color: #6366f1; padding: 2px 8px; border-radius: 20px; font-weight: 800; font-size: 0.78rem;"><%= typeof unreadNotificationsCount !== "undefined" ? unreadNotificationsCount : 0 %></span>
+                        </a>
+                    </div>
+
+                    <div class="adm-feed-list">
+                        <% if (typeof recentNotifications !== "undefined" && recentNotifications && recentNotifications.length > 0) { %>
+                            <% recentNotifications.forEach(function(notif) { 
+                                const timeFormatted = notif.createdAt ? new Date(notif.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "";
+                            %>
+                                <div class="adm-notif-row">
+                                    <div class="adm-notif-icon">
+                                        <i class="fa-solid fa-bell"></i>
+                                    </div>
+                                    <div class="adm-notif-body">
+                                        <span class="adm-notif-title"><%= notif.title || "Notification" %></span>
+                                        <span class="adm-notif-text"><%= notif.message || notif.body || "" %></span>
+                                        <span class="adm-notif-time"><i class="fa-regular fa-clock"></i> <%= timeFormatted %></span>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="adm-empty-state">
+                                <i class="fa-solid fa-bell-slash adm-empty-icon"></i>
+                                <span>No new institutional notifications.</span>
+                            </div>
+                        <% } %>
+                    </div>
+                </article>
+            </section>
+
+            <!-- INSTITUTIONAL SETUP & CONFIGURATION ROADMAP -->
+            <section class="adm-panel" aria-label="Quick Setup Roadmap">
+                <div class="adm-panel-head">
+                    <div class="adm-panel-title-wrap">
+                        <div class="adm-panel-icon"><i class="fa-solid fa-list-check"></i></div>
+                        <div>
+                            <h2>Institutional Quick Setup Roadmap</h2>
+                            <p>Follow these 6 structured steps to configure academic rosters, GPS boundaries, and lecture timetables</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="adm-roadmap-grid">
+                    <a href="/admin/class-groups" class="adm-roadmap-card">
+                        <div class="adm-step-header">
+                            <span class="adm-step-number">1</span>
+                            <i class="fa-solid fa-layer-group adm-step-icon"></i>
+                        </div>
+                        <h3 class="adm-step-title">Class Groups</h3>
+                        <p class="adm-step-desc">Create academic departments, semesters, and batch cohorts.</p>
+                    </a>
+
+                    <a href="/admin/classrooms" class="adm-roadmap-card">
+                        <div class="adm-step-header">
+                            <span class="adm-step-number">2</span>
+                            <i class="fa-solid fa-location-dot adm-step-icon"></i>
+                        </div>
+                        <h3 class="adm-step-title">Classrooms & GPS</h3>
+                        <p class="adm-step-desc">Establish GPS coordinates and geofence verification radius.</p>
+                    </a>
+
+                    <a href="/admin/subjects" class="adm-roadmap-card">
+                        <div class="adm-step-header">
+                            <span class="adm-step-number">3</span>
+                            <i class="fa-solid fa-book-bookmark adm-step-icon"></i>
+                        </div>
+                        <h3 class="adm-step-title">Course Catalog</h3>
+                        <p class="adm-step-desc">Define subjects, curriculum codes, and department associations.</p>
+                    </a>
+
+                    <a href="/admin/teachers" class="adm-roadmap-card">
+                        <div class="adm-step-header">
+                            <span class="adm-step-number">4</span>
+                            <i class="fa-solid fa-chalkboard-user adm-step-icon"></i>
+                        </div>
+                        <h3 class="adm-step-title">Faculty Members</h3>
+                        <p class="adm-step-desc">Register professors, lecturers, and HOD administrative leads.</p>
+                    </a>
+
+                    <a href="/admin/students" class="adm-roadmap-card">
+                        <div class="adm-step-header">
+                            <span class="adm-step-number">5</span>
+                            <i class="fa-solid fa-user-graduate adm-step-icon"></i>
+                        </div>
+                        <h3 class="adm-step-title">Student Rosters</h3>
+                        <p class="adm-step-desc">Enroll students, assign roll numbers, and verify passkey credentials.</p>
+                    </a>
+
+                    <a href="/admin/schedules" class="adm-roadmap-card">
+                        <div class="adm-step-header">
+                            <span class="adm-step-number">6</span>
+                            <i class="fa-solid fa-calendar-check adm-step-icon"></i>
+                        </div>
+                        <h3 class="adm-step-title">Timetables</h3>
+                        <p class="adm-step-desc">Build weekly lecture schedules mapped to classrooms and faculty.</p>
+                    </a>
+                </div>
+            </section>
+
+            <!-- RAPID SHORTCUTS HUB -->
+            <section class="adm-panel" aria-label="Administrative Shortcuts">
+                <div class="adm-panel-head">
+                    <div class="adm-panel-title-wrap">
+                        <div class="adm-panel-icon"><i class="fa-solid fa-bolt"></i></div>
+                        <div>
+                            <h2>Administrative Shortcuts</h2>
+                            <p>Fast-track navigation to primary management tools</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="adm-shortcuts-grid">
+                    <a href="/admin/students" class="adm-shortcut-tile">
+                        <div class="adm-shortcut-icon" style="background: var(--adm-grad-emerald);">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <span>Manage Students</span>
+                    </a>
+
+                    <a href="/admin/students/pending" class="adm-shortcut-tile">
+                        <div class="adm-shortcut-icon" style="background: var(--adm-grad-amber);">
+                            <i class="fa-solid fa-user-clock"></i>
+                        </div>
+                        <span>Pending Approvals</span>
+                    </a>
+
+                    <a href="/admin/teachers" class="adm-shortcut-tile">
+                        <div class="adm-shortcut-icon" style="background: var(--adm-grad-indigo);">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                        </div>
+                        <span>Faculty Directory</span>
+                    </a>
+
+                    <a href="/admin/classrooms" class="adm-shortcut-tile">
+                        <div class="adm-shortcut-icon" style="background: var(--adm-grad-cyan);">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <span>Geofence Config</span>
+                    </a>
+
+                    <a href="/admin/reports" class="adm-shortcut-tile">
+                        <div class="adm-shortcut-icon" style="background: var(--adm-grad-purple);">
+                            <i class="fa-solid fa-file-excel"></i>
+                        </div>
+                        <span>Export Excel</span>
+                    </a>
+
+                    <a href="/admin/profile" class="adm-shortcut-tile">
+                        <div class="adm-shortcut-icon" style="background: var(--adm-grad-rose);">
+                            <i class="fa-solid fa-sliders"></i>
+                        </div>
+                        <span>College Settings</span>
+                    </a>
+                </div>
+            </section>
+
+        </div>
     </main>
 </div>
 
+<!-- SCRIPTS & INITIALIZERS -->
 <script src="/js/adminValidation.js"></script>
 <script src="/js/uiShell.js"></script>
-
-    <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
-    <script src="/js/adminRealtime.js"></script>
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js" defer></script>
+<script src="/js/adminRealtime.js"></script>
 
 <script>
+// ==========================================
+// 1. LIVE CLOCK SYNCHRONIZATION
+// ==========================================
+function updateAdmLiveClock() {
+    const clockEl = document.getElementById('admLiveClock');
+    if (!clockEl) return;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    clockEl.innerHTML = `<i class="fa-regular fa-clock"></i> ${dateStr} · ${timeStr}`;
+}
+setInterval(updateAdmLiveClock, 1000);
+updateAdmLiveClock();
+
+// ==========================================
+// 2. CHART.JS ANALYTICS INITIALIZATION
+// ==========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.classList.contains('dark-mode');
+    
+    const textColor = isDark ? '#cbd5e1' : '#475569';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+
+    // Overview Resource Distribution Bar Chart
+    const overviewCtx = document.getElementById('admOverviewChart');
+    if (overviewCtx) {
+        window.admOverviewChartInstance = new Chart(overviewCtx, {
+            type: 'bar',
+            data: {
+                labels: [['Students'], ['Faculty'], ['Class', 'Groups'], ['Rooms'], ['Subjects'], ['Schedules']],
+                datasets: [{
+                    label: 'Configured Assets',
+                    data: [
+                        <%= counts.students || 0 %>,
+                        <%= counts.teachers || 0 %>,
+                        <%= counts.classGroups || 0 %>,
+                        <%= counts.classrooms || 0 %>,
+                        <%= counts.subjects || 0 %>,
+                        <%= counts.schedules || 0 %>
+                    ],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.85)',
+                        'rgba(99, 102, 241, 0.85)',
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(6, 182, 212, 0.85)',
+                        'rgba(139, 92, 246, 0.85)',
+                        'rgba(245, 158, 11, 0.85)'
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        padding: 10,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { 
+                            color: textColor, 
+                            autoSkip: false,
+                            font: { family: "'Manrope', sans-serif", weight: '600', size: (window.innerWidth < 600 ? 10 : 11) } 
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: textColor, precision: 0, font: { family: "'Manrope', sans-serif" } },
+                        grid: { color: gridColor }
+                    }
+                }
+            }
+        });
+    }
+
+    // Department Distribution Donut Chart
+    const deptCtx = document.getElementById('admDeptChart');
+    if (deptCtx) {
+        <% 
+            const deptLabels = (typeof departmentStats !== "undefined" && departmentStats && departmentStats.length > 0)
+                ? departmentStats.map(d => d._id || "General")
+                : ["Students", "Faculty", "Staff"];
+            const deptCounts = (typeof departmentStats !== "undefined" && departmentStats && departmentStats.length > 0)
+                ? departmentStats.map(d => d.count)
+                : [counts.students || 1, counts.teachers || 1, 1];
+        %>
+        
+        window.admDeptChartInstance = new Chart(deptCtx, {
+            type: 'doughnut',
+            data: {
+                labels: <%- JSON.stringify(deptLabels) %>,
+                datasets: [{
+                    data: <%- JSON.stringify(deptCounts) %>,
+                    backgroundColor: [
+                        '#6366f1',
+                        '#10b981',
+                        '#06b6d4',
+                        '#f59e0b',
+                        '#ec4899',
+                        '#8b5cf6'
+                    ],
+                    borderWidth: 2,
+                    borderColor: isDark ? '#111827' : '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: window.innerWidth < 600 ? 'bottom' : 'right',
+                        labels: {
+                            color: textColor,
+                            padding: window.innerWidth < 600 ? 8 : 14,
+                            font: { family: "'Manrope', sans-serif", weight: '600', size: 11 },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        padding: 10,
+                        cornerRadius: 8
+                    }
+                },
+                cutout: '68%'
+            }
+        });
+    }
+});
+
+// Dynamic Theme Synchronizer for Charts
+document.querySelectorAll('.js-theme-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+        setTimeout(() => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.classList.contains('dark-mode');
+            const textColor = isDark ? '#cbd5e1' : '#475569';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+
+            if (window.admOverviewChartInstance) {
+                window.admOverviewChartInstance.options.scales.x.ticks.color = textColor;
+                window.admOverviewChartInstance.options.scales.y.ticks.color = textColor;
+                window.admOverviewChartInstance.options.scales.y.grid.color = gridColor;
+                window.admOverviewChartInstance.update();
+            }
+
+            if (window.admDeptChartInstance) {
+                window.admDeptChartInstance.options.plugins.legend.labels.color = textColor;
+                window.admDeptChartInstance.data.datasets[0].borderColor = isDark ? '#111827' : '#ffffff';
+                window.admDeptChartInstance.update();
+            }
+        }, 150);
+    });
+});
+
+// ==========================================
+// 3. PUSH NOTIFICATION SUBSCRIBER
+// ==========================================
 const vapidPublicKey = "<%= typeof vapidPublicKey !== 'undefined' ? vapidPublicKey : '' %>";
 
 function urlB64ToUint8Array(base64String) {
@@ -174,11 +892,11 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                         userVisibleOnly: true,
                         applicationServerKey: urlB64ToUint8Array(vapidPublicKey)
                     }).then(function(newSubscription) {
-                        fetch('/teacher/push/subscribe', { // Admin shares the teacher push endpoint because they use the same schema
+                        fetch('/teacher/push/subscribe', {
                             method: 'POST',
                             headers: { 
                                 'Content-Type': 'application/json',
-                                'CSRF-Token': '<%= csrfToken %>'
+                                'CSRF-Token': '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>'
                             },
                             body: JSON.stringify(newSubscription)
                         });
@@ -191,7 +909,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'CSRF-Token': '<%= csrfToken %>'
+                        'CSRF-Token': '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>'
                     },
                     body: JSON.stringify(subscription)
                 });

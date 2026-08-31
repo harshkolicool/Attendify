@@ -3,6 +3,7 @@ const AttendanceSession = require("../models/attendanceSessionSchema");
 const { createNotification } = require("./notificationService");
 const { getTodayDateString } = require("./scheduleTime");
 const logger = require("./logger");
+const jobLock = require("./jobLock");
 
 /**
  * Checks if a time string (e.g., "10:30 AM") is between `startMinutesAgo` and `endMinutesAgo`.
@@ -56,19 +57,16 @@ async function checkTeacherReminders() {
             });
 
             if (!sessionExists) {
-                // Prevent duplicate notifications by checking if one was already sent today
-                // For simplicity in MVP, we just use the notificationService which doesn't deduplicate natively,
-                // but we will send it anyway or we can add a check if needed.
-                // In a production app we'd add a "reminderSentAt" field.
-                
                 await createNotification({
                     user: schedule.teacher._id,
                     title: "Class Started",
                     message: `You haven't started attendance for ${schedule.subject.subjectName} yet.`,
+                    recipientRole: "TEACHER",
+                    recipientUserId: schedule.teacher._id,
                     type: "SYSTEM",
                     link: "/teacher/dashboard"
                 });
-                
+
                 logger.info("Sent class start reminder", { teacherId: schedule.teacher._id, scheduleId: schedule._id });
             }
         }
@@ -79,8 +77,27 @@ async function checkTeacherReminders() {
 }
 
 function startTeacherRemindersJob() {
+    const LOCK_NAME = "teacher-reminders-job";
+    const LOCK_TTL_MS = 4.5 * 60 * 1000; // 4.5 minutes — slightly shorter than the 5-minute interval
+
+    async function runWithLock() {
+        const acquired = await jobLock.acquireLock(LOCK_NAME, LOCK_TTL_MS);
+
+        if (!acquired) {
+            logger.debug("Teacher reminders job: lock not acquired — another worker is running it.");
+            return;
+        }
+
+        await checkTeacherReminders();
+    }
+
     // Run every 5 minutes
-    setInterval(checkTeacherReminders, 5 * 60 * 1000);
+    setInterval(function () {
+        runWithLock().catch(function (err) {
+            logger.error("TEACHER REMINDER JOB ERROR", { msg: err.message });
+        });
+    }, 5 * 60 * 1000);
 }
 
 module.exports = { startTeacherRemindersJob };
+

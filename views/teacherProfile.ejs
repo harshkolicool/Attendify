@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile | Attendify</title>
@@ -9,9 +12,11 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
     <link rel="stylesheet" href="/css/teacherDashboard.css">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
     <link rel="stylesheet" href="/css/profilePage.css?v=20260617f">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -32,22 +37,52 @@
     <main class="profile-page-main">
 
         <!-- Hero Banner -->
-        <div class="profile-hero" style="background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);">
-            <div class="profile-hero-avatar">
-                <%= teacher.fullName ? teacher.fullName.charAt(0).toUpperCase() : "T" %>
+        <div class="profile-hero platform-admin-hero">
+            <div class="profile-hero-content">
+                <div class="profile-hero-avatar-wrap">
+                    <div class="profile-hero-avatar">
+                        <%= teacher.fullName ? teacher.fullName.charAt(0).toUpperCase() : "T" %>
+                    </div>
+                    <span class="profile-avatar-badge" title="<%= teacher.role || 'Teacher' %>">
+                        <i class="fa-solid <%= teacher.role === 'ADMIN' ? 'fa-shield-halved' : (teacher.role === 'HOD' ? 'fa-user-tie' : 'fa-chalkboard-user') %>"></i>
+                    </span>
+                </div>
+                <div class="profile-hero-info">
+                    <div class="profile-hero-header-row">
+                        <h1><%= teacher.fullName %></h1>
+                        <span class="profile-hero-badge teacher">
+                            <% if (teacher.role === 'ADMIN') { %>
+                                <i class="fa-solid fa-shield-halved"></i> College Admin
+                            <% } else if (teacher.role === 'HOD') { %>
+                                <i class="fa-solid fa-user-tie"></i> Head of Department
+                            <% } else { %>
+                                <i class="fa-solid fa-chalkboard-user"></i> Faculty
+                            <% } %>
+                        </span>
+                    </div>
+                    <p class="profile-hero-email">
+                        <i class="fa-regular fa-envelope"></i> <%= teacher.email %>
+                        <span class="profile-hero-dot">·</span>
+                        <span class="profile-hero-access"><i class="fa-solid fa-id-badge"></i> ID: <%= teacher.employeeId || "N/A" %></span>
+                        <% if (teacher.department) { %>
+                            <span class="profile-hero-dot">·</span>
+                            <span class="profile-hero-access"><i class="fa-solid fa-graduation-cap"></i> <%= teacher.department %></span>
+                        <% } %>
+                        <% if (college) { %>
+                            <span class="profile-hero-dot">·</span>
+                            <span class="profile-hero-access"><i class="fa-solid fa-landmark"></i> <%= college.collegeName %><% if (college.collegeCode) { %> (<%= college.collegeCode %>)<% } %></span>
+                        <% } %>
+                    </p>
+                </div>
             </div>
-            <div class="profile-hero-info">
-                <h1><%= teacher.fullName %></h1>
-                <p><%= teacher.email %></p>
-                <span class="profile-hero-badge">
-                    <% if (teacher.role === 'ADMIN') { %>
-                        <i class="fa-solid fa-shield-halved"></i> College Admin
-                    <% } else if (teacher.role === 'HOD') { %>
-                        <i class="fa-solid fa-user-tie"></i> Head of Department
-                    <% } else { %>
-                        <i class="fa-solid fa-chalkboard-user"></i> Teacher
-                    <% } %>
-                </span>
+
+            <div class="profile-hero-status-tag">
+                <% if (teacher.isBlocked) { %>
+                    <span class="profile-status-badge blocked"><i class="fa-solid fa-ban"></i> Blocked</span>
+                <% } else { %>
+                    <span class="status-pulse-dot"></span>
+                    <span>Active Faculty</span>
+                <% } %>
             </div>
         </div>
 

@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Classrooms | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -31,7 +32,6 @@
         }
     </script>
 
-
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
     <script>
@@ -44,91 +44,141 @@
 </head>
 <body>
 
+<%
+    const safeClassrooms = (typeof classrooms !== "undefined" && classrooms) ? classrooms : [];
+    const activeBuildingsCount = new Set(safeClassrooms.map(r => r.buildingName).filter(Boolean)).size || 0;
+%>
+
 <div class="admin-layout">
 
-    <%- include("partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "" }) %>
+    <%- include("partials/sidebar", { activePage: "classrooms", currentCollege: typeof college !== "undefined" ? college : null }) %>
 
     <main class="admin-main">
 
         <header class="admin-header">
             <div>
                 <span class="admin-kicker">Admin Panel</span>
-                <h1>Classrooms</h1>
-                <p>Create, search, edit and manage classroom radius for attendance.</p>
+                <h1>Classrooms & Geofences</h1>
+                <p>Configure GPS boundaries, geofence radius allowances, and campus room infrastructure.</p>
             </div>
         </header>
 
         <% if (typeof message !== "undefined" && message) { %>
-            <div class="admin-alert <%= message && message && message.includes('successfully') ? 'success' : 'error' %>">
-                <%= typeof message !== "undefined" ? message : "" %>
+            <div class="admin-alert <%= message && message.includes('successfully') ? 'success' : 'error' %>">
+                <%= message %>
             </div>
         <% } %>
 
+        <!-- OVERVIEW STAT RADAR CARDS -->
+        <section class="adm-radar-grid">
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon room">
+                    <i class="fa-solid fa-door-open"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Total Classrooms</span>
+                    <span class="adm-radar-val"><%= safeClassrooms.length %> Configured</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon security">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Geofence Status</span>
+                    <span class="adm-radar-val" style="color: #10b981;">100% Active</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon sync">
+                    <i class="fa-solid fa-compass-drafting"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Default Radius</span>
+                    <span class="adm-radar-val">100m Allowed</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon dept">
+                    <i class="fa-solid fa-building-columns"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Active Buildings</span>
+                    <span class="adm-radar-val"><%= activeBuildingsCount %> <%= activeBuildingsCount === 1 ? 'Building' : 'Buildings' %></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADD CLASSROOM CARD -->
         <section class="admin-card">
             <div class="admin-card-head">
                 <div>
-                    <h3>Add Classroom</h3>
-                    <p>Teacher location will be captured automatically when attendance starts. Radius controls the allowed student range.</p>
+                    <h3><i class="fa-solid fa-square-plus" style="color: #6366f1; margin-right: 8px;"></i> Add Classroom</h3>
+                    <p>Teacher location will be captured automatically when attendance starts. Radius controls the allowed student verification range.</p>
                 </div>
             </div>
 
             <form action="/admin/classrooms/create" method="POST" class="admin-form-grid">
 
                 <div class="admin-field">
-                    <label>Classroom Name</label>
+                    <label><i class="fa-solid fa-door-open" style="opacity: 0.7; margin-right: 6px;"></i> Classroom Name</label>
                     <input
                         type="text"
                         name="classroomName"
-                        placeholder="Room 101"
+                        placeholder="e.g. Room 101, Lecture Hall A"
                         required
                     >
                 </div>
 
                 <div class="admin-field">
-                    <label>Building Name</label>
+                    <label><i class="fa-solid fa-building" style="opacity: 0.7; margin-right: 6px;"></i> Building Name</label>
                     <input
                         type="text"
                         name="buildingName"
-                        placeholder="CS Block"
+                        placeholder="e.g. CS Block, Main Wing"
                         required
                     >
                 </div>
 
                 <div class="admin-field">
-                    <label>Floor Number</label>
+                    <label><i class="fa-solid fa-stairs" style="opacity: 0.7; margin-right: 6px;"></i> Floor Number</label>
                     <input
                         type="number"
                         name="floorNumber"
-                        placeholder="1"
+                        placeholder="e.g. 1"
+                        value="1"
                         required
                     >
                 </div>
 
                 <div class="admin-field">
-                    <label>Latitude (Optional Preset)</label>
+                    <label><i class="fa-solid fa-map-pin" style="opacity: 0.7; margin-right: 6px;"></i> Latitude (Optional Preset)</label>
                     <input
                         type="number"
                         step="any"
                         name="latitude"
-                        placeholder="e.g. 37.7749"
+                        placeholder="e.g. 28.6139"
                     >
                 </div>
 
                 <div class="admin-field">
-                    <label>Longitude (Optional Preset)</label>
+                    <label><i class="fa-solid fa-location-arrow" style="opacity: 0.7; margin-right: 6px;"></i> Longitude (Optional Preset)</label>
                     <input
                         type="number"
                         step="any"
                         name="longitude"
-                        placeholder="e.g. -122.4194"
+                        placeholder="e.g. 77.2090"
                     >
-                    <button type="button" class="admin-secondary-btn js-get-location-btn" style="margin-top: 8px;">
-                        <i class="fa-solid fa-location-crosshairs"></i> Use my current location
+                    <button type="button" class="admin-secondary-btn js-get-location-btn" style="margin-top: 8px; width: 100%; justify-content: center;">
+                        <i class="fa-solid fa-location-crosshairs"></i> Use My Current Location
                     </button>
                 </div>
 
                 <div class="admin-field">
-                    <label>Allowed Radius</label>
+                    <label><i class="fa-solid fa-circle-notch" style="opacity: 0.7; margin-right: 6px;"></i> Allowed Radius (Meters)</label>
                     <input
                         type="number"
                         name="radius"
@@ -139,14 +189,19 @@
                         max="10000"
                         required
                     >
-                    <p class="admin-help-text js-radius-warning admin-radius-warning">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Browser GPS is not reliable for strict indoor accuracy. The app will use GPS accuracy allowance while still storing your configured radius.
+                    <div class="admin-radius-chips" style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
+                        <button type="button" class="admin-secondary-btn js-radius-preset" data-radius="50" style="padding: 4px 10px; font-size: 0.78rem;">50m</button>
+                        <button type="button" class="admin-secondary-btn js-radius-preset" data-radius="100" style="padding: 4px 10px; font-size: 0.78rem; font-weight: 800; border-color: #6366f1;">100m (Std)</button>
+                        <button type="button" class="admin-secondary-btn js-radius-preset" data-radius="150" style="padding: 4px 10px; font-size: 0.78rem;">150m</button>
+                        <button type="button" class="admin-secondary-btn js-radius-preset" data-radius="200" style="padding: 4px 10px; font-size: 0.78rem;">200m (Hall)</button>
+                    </div>
+                    <p class="admin-help-text js-radius-warning admin-radius-warning" style="display: none; margin-top: 8px; color: #f59e0b;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Radius under 50m may trigger false rejections due to normal mobile GPS drift.
                     </p>
                 </div>
 
-                <div class="admin-field admin-button-field">
-                    <label>&nbsp;</label>
-                    <button class="admin-primary-btn" type="submit">
+                <div class="admin-field admin-button-field" style="grid-column: 1 / -1;">
+                    <button class="admin-primary-btn" type="submit" style="min-height: 48px; font-size: 1rem; width: 100%; justify-content: center;">
                         <i class="fa-solid fa-plus"></i>
                         Add Classroom
                     </button>
@@ -155,6 +210,7 @@
             </form>
         </section>
 
+        <!-- CLASSROOM DIRECTORY -->
         <section class="admin-card">
 
             <div class="admin-toolbar">
@@ -162,162 +218,166 @@
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input
                         type="text"
+                        class="admin-search-input"
                         data-admin-search="classrooms"
                         placeholder="Search classroom by name, building, floor or radius..."
+                        style="border: none !important; background: transparent !important; outline: none !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; width: 100% !important; flex: 1 1 auto !important;"
                     >
                 </div>
 
-                <form
-                    action="/admin/classrooms/delete-all"
-                    method="POST"
-                    class="admin-toolbar-action"
-                    onsubmit="return uiConfirm(event, 'Delete all classrooms? Active sessions will be skipped and attendance history will be preserved.')"
-                >
-                    <button class="admin-secondary-btn danger" type="submit">
-                        <i class="fa-solid fa-trash"></i>
-                        Delete All
-                    </button>
-                </form>
+                <% if (safeClassrooms.length > 0) { %>
+                    <form
+                        action="/admin/classrooms/delete-all"
+                        method="POST"
+                        class="admin-toolbar-action"
+                        onsubmit="return uiConfirm(event, 'Delete all classrooms? Active sessions will be skipped and attendance history will be preserved.')"
+                    >
+                        <button class="admin-secondary-btn danger" type="submit">
+                            <i class="fa-solid fa-trash"></i>
+                            Delete All
+                        </button>
+                    </form>
+                <% } %>
 
                 <span class="admin-count-pill">
-                    <%= classrooms.length %> Classrooms
+                    <%= safeClassrooms.length %> <%= safeClassrooms.length === 1 ? 'Classroom' : 'Classrooms' %>
                 </span>
             </div>
 
-            <% if (!classrooms || classrooms.length === 0) { %>
+            <% if (safeClassrooms.length === 0) { %>
                 <div class="admin-empty">
-                    No classrooms found.
+                    <i class="fa-solid fa-door-closed" style="font-size: 2.2rem; opacity: 0.4; margin-bottom: 10px;"></i>
+                    <p>No classrooms configured yet. Fill out the form above to add your campus rooms.</p>
                 </div>
-            <% } %>
+            <% } else { %>
 
-            <div class="admin-grid">
+                <div class="admin-grid">
 
-                <% classrooms.forEach(function(room) { %>
+                    <% safeClassrooms.forEach(function(room) { %>
 
-                    <article class="admin-item-card admin-entity-card admin-classroom-card" data-search-group="classrooms">
+                        <article class="admin-item-card admin-entity-card admin-classroom-card" data-search-group="classrooms">
 
-                        <div class="admin-item-top">
-                            <div class="admin-item-icon">
-                                <i class="fa-solid fa-door-open"></i>
+                            <div class="admin-item-top">
+                                <div class="admin-item-icon" style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #ffffff;">
+                                    <i class="fa-solid fa-door-open"></i>
+                                </div>
+
+                                <form
+                                    action="/admin/classrooms/<%= room._id %>/delete"
+                                    method="POST"
+                                    onsubmit="return uiConfirm(event, 'Delete <%= room.classroomName %>?')"
+                                >
+                                    <button class="admin-delete-btn admin-delete-btn-icon" type="submit" title="Delete Classroom" aria-label="Delete Classroom">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
                             </div>
 
-                            <form
-                                action="/admin/classrooms/<%= room._id %>/delete"
-                                method="POST"
-                                onsubmit="return uiConfirm(event, 'Delete this classroom?')"
-                            >
-                                <button class="admin-delete-btn" type="submit">
-                                    Delete
-                                </button>
-                            </form>
-                        </div>
+                            <h4><%= room.classroomName %></h4>
+                            <p><i class="fa-solid fa-building" style="opacity: 0.6; margin-right: 4px;"></i> <%= room.buildingName %> · Floor <%= room.floorNumber %></p>
 
-                        <h4><%= room.classroomName %></h4>
-                        <p><%= room.buildingName %> · Floor <%= room.floorNumber %></p>
+                            <div class="admin-meta">
+                                <span class="admin-badge" style="background: rgba(6, 182, 212, 0.12); color: #0891b2; font-weight: 700;">
+                                    <i class="fa-solid fa-satellite-dish"></i> <%= room.radius %>m Radius
+                                </span>
 
-                        <div class="admin-meta">
-                            <span class="admin-badge">
-                                Radius: <%= room.radius %>m
-                            </span>
+                                <span class="admin-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-weight: 700;">
+                                    <i class="fa-solid fa-location-dot"></i> <%= (room.latitude && room.longitude) ? (Number(room.latitude).toFixed(4) + ', ' + Number(room.longitude).toFixed(4)) : 'Teacher live GPS' %>
+                                </span>
+                            </div>
 
-                            <span class="admin-badge">
-                                Location: Teacher live GPS
-                            </span>
-                        </div>
+                            <details class="admin-edit-box">
+                                <summary>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    Edit Classroom
+                                </summary>
 
-                        <details class="admin-edit-box">
-                            <summary>
-                                <i class="fa-solid fa-pen-to-square"></i>
-                                Edit Classroom
-                            </summary>
+                                <form
+                                    action="/admin/classrooms/<%= room._id %>/update"
+                                    method="POST"
+                                    class="admin-edit-form"
+                                >
+                                    <div class="admin-field">
+                                        <label>Classroom Name</label>
+                                        <input
+                                            type="text"
+                                            name="classroomName"
+                                            value="<%= room.classroomName %>"
+                                            required
+                                        >
+                                    </div>
 
-                            <form
-                                action="/admin/classrooms/<%= room._id %>/update"
-                                method="POST"
-                                class="admin-edit-form"
-                            >
-                                <div class="admin-field">
-                                    <label>Classroom Name</label>
-                                    <input
-                                        type="text"
-                                        name="classroomName"
-                                        value="<%= room.classroomName %>"
-                                        required
-                                    >
-                                </div>
+                                    <div class="admin-field">
+                                        <label>Building Name</label>
+                                        <input
+                                            type="text"
+                                            name="buildingName"
+                                            value="<%= room.buildingName %>"
+                                            required
+                                        >
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>Building Name</label>
-                                    <input
-                                        type="text"
-                                        name="buildingName"
-                                        value="<%= room.buildingName %>"
-                                        required
-                                    >
-                                </div>
+                                    <div class="admin-field">
+                                        <label>Floor Number</label>
+                                        <input
+                                            type="number"
+                                            name="floorNumber"
+                                            value="<%= room.floorNumber %>"
+                                            required
+                                        >
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>Floor Number</label>
-                                    <input
-                                        type="number"
-                                        name="floorNumber"
-                                        value="<%= room.floorNumber %>"
-                                        required
-                                    >
-                                </div>
+                                    <div class="admin-field">
+                                        <label>Latitude (Optional Preset)</label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            name="latitude"
+                                            value="<%= room.latitude !== 0 ? room.latitude : '' %>"
+                                            placeholder="e.g. 28.6139"
+                                        >
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>Latitude (Optional Preset)</label>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        name="latitude"
-                                        value="<%= room.latitude !== 0 ? room.latitude : '' %>"
-                                        placeholder="e.g. 37.7749"
-                                    >
-                                </div>
+                                    <div class="admin-field">
+                                        <label>Longitude (Optional Preset)</label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            name="longitude"
+                                            value="<%= room.longitude !== 0 ? room.longitude : '' %>"
+                                            placeholder="e.g. 77.2090"
+                                        >
+                                        <button type="button" class="admin-secondary-btn js-get-location-btn" style="margin-top: 8px; width: 100%; justify-content: center;">
+                                            <i class="fa-solid fa-location-crosshairs"></i> Use My Current Location
+                                        </button>
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>Longitude (Optional Preset)</label>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        name="longitude"
-                                        value="<%= room.longitude !== 0 ? room.longitude : '' %>"
-                                        placeholder="e.g. -122.4194"
-                                    >
-                                    <button type="button" class="admin-secondary-btn js-get-location-btn" style="margin-top: 8px;">
-                                        <i class="fa-solid fa-location-crosshairs"></i> Use my current location
+                                    <div class="admin-field">
+                                        <label>Allowed Radius (Meters)</label>
+                                        <input
+                                            type="number"
+                                            name="radius"
+                                            class="js-radius-input"
+                                            value="<%= room.radius %>"
+                                            min="50"
+                                            max="10000"
+                                            required
+                                        >
+                                    </div>
+
+                                    <button class="admin-primary-btn" type="submit" style="grid-column: 1 / -1; margin-top: 8px;">
+                                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
                                     </button>
-                                </div>
+                                </form>
+                            </details>
 
-                                <div class="admin-field">
-                                    <label>Allowed Radius</label>
-                                    <input
-                                        type="number"
-                                        name="radius"
-                                        class="js-radius-input"
-                                        value="<%= room.radius %>"
-                                        min="50"
-                                        max="10000"
-                                        required
-                                    >
-                                    <p class="admin-help-text js-radius-warning admin-radius-warning">
-                                        <i class="fa-solid fa-triangle-exclamation"></i> Browser GPS is not reliable for strict indoor accuracy. The app will use GPS accuracy allowance while still storing your configured radius.
-                                    </p>
-                                </div>
+                        </article>
 
-                                <button class="admin-primary-btn" type="submit">
-                                    Save Changes
-                                </button>
-                            </form>
-                        </details>
+                    <% }) %>
 
-                    </article>
+                </div>
 
-                <% }) %>
-
-            </div>
+            <% } %>
 
         </section>
 
@@ -330,14 +390,29 @@
 <script src="/js/uiShell.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Radius Preset Chips click handler
+    document.querySelectorAll(".js-radius-preset").forEach(chip => {
+        chip.addEventListener("click", function() {
+            const val = this.getAttribute("data-radius");
+            const form = this.closest("form");
+            const radInput = form.querySelector(".js-radius-input");
+            if (radInput) {
+                radInput.value = val;
+                radInput.dispatchEvent(new Event("input"));
+            }
+        });
+    });
+
     const inputs = document.querySelectorAll(".js-radius-input");
     inputs.forEach(input => {
         const warning = input.parentElement.querySelector(".js-radius-warning");
         function checkVal() {
-            if (Number(input.value) < 10) {
-                warning.style.display = "block";
-            } else {
-                warning.style.display = "none";
+            if (warning) {
+                if (Number(input.value) < 50) {
+                    warning.style.display = "block";
+                } else {
+                    warning.style.display = "none";
+                }
             }
         }
         input.addEventListener("input", checkVal);
@@ -351,11 +426,15 @@ document.addEventListener("DOMContentLoaded", function() {
     locButtons.forEach(btn => {
         btn.addEventListener("click", function() {
             if (!navigator.geolocation) {
-                uiAlert("Geolocation is not supported by your browser.");
+                if (typeof uiAlert === "function") {
+                    uiAlert("Geolocation is not supported by your browser.");
+                } else {
+                    alert("Geolocation is not supported by your browser.");
+                }
                 return;
             }
             const origHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Getting...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Getting GPS...';
             btn.disabled = true;
 
             navigator.geolocation.getCurrentPosition(
@@ -369,14 +448,18 @@ document.addEventListener("DOMContentLoaded", function() {
                         lonInput.value = position.coords.longitude.toFixed(6);
                     }
                     
-                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Found';
+                    btn.innerHTML = '<i class="fa-solid fa-check" style="color: #10b981;"></i> GPS Captured!';
                     setTimeout(() => {
                         btn.innerHTML = origHtml;
                         btn.disabled = false;
-                    }, 2000);
+                    }, 2500);
                 },
                 function(error) {
-                    uiAlert("Unable to retrieve your location. Please check browser permissions.");
+                    if (typeof uiAlert === "function") {
+                        uiAlert("Unable to retrieve your location. Please check browser permissions.");
+                    } else {
+                        alert("Unable to retrieve your location. Please check browser permissions.");
+                    }
                     btn.innerHTML = origHtml;
                     btn.disabled = false;
                 },

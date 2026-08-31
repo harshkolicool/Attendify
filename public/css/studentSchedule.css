@@ -353,9 +353,9 @@ h4 {
 }
 
 .class-action {
-    margin-top: 18px;
-    display: flex;
-    justify-content: space-between;
+    margin: 0;
+    display: inline-flex;
+    justify-content: center;
     align-items: center;
     gap: 14px;
 }
@@ -436,6 +436,12 @@ h4 {
 .status-badge.waiting {
     background: #f1f5f9;
     color: #64748b;
+}
+
+.status-badge.ongoing {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .status-badge.live {
@@ -1254,34 +1260,53 @@ h4 {
 .student-field input,
 .student-field select {
     width: 100%;
-    height: 52px;
+    height: 44px !important;
     border: 1px solid #dbe3ef;
-    border-radius: 16px;
-    padding: 0 14px;
+    border-radius: 12px !important;
+    padding: 0 14px !important;
     color: #0f172a;
     background: #ffffff;
     font-size: 14px;
-    font-weight: 800;
+    font-weight: 700;
     outline: none;
+    box-sizing: border-box !important;
+}
+
+.student-field input[type="date"],
+.student-history-filter-grid input[type="date"] {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+}
+
+.student-field input[type="date"]::-webkit-calendar-picker-indicator,
+.student-history-filter-grid input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer !important;
+    padding: 4px !important;
+    margin: 0 !important;
+    margin-right: 6px !important;
+    opacity: 0.75 !important;
+    filter: invert(0.8) !important;
+    transition: opacity 0.2s ease !important;
 }
 
 .student-field input:focus,
 .student-field select:focus {
     border-color: #2563eb;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .student-button-field .student-primary-btn,
 .student-button-field .student-secondary-btn {
-    height: 52px;
+    height: 44px !important;
 }
 
 .student-primary-btn,
 .student-secondary-btn {
     width: 100%;
-    border-radius: 16px;
+    height: 44px !important;
+    border-radius: 12px !important;
     font-size: 14px;
-    font-weight: 950;
+    font-weight: 800;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1289,6 +1314,7 @@ h4 {
     text-decoration: none;
     border: none;
     cursor: pointer;
+    box-sizing: border-box !important;
 }
 
 .student-primary-btn {
@@ -1305,45 +1331,52 @@ h4 {
 .student-history-summary-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: 12px;
+    margin-bottom: 20px;
 }
 
 .student-history-stat {
-    padding: 20px;
-    border-radius: 24px;
+    padding: 14px 16px;
+    border-radius: 16px;
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 14px 38px rgba(15, 23, 42, 0.07);
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 14px;
+    gap: 10px;
+    box-sizing: border-box;
 }
 
 .student-history-stat span {
     color: #64748b;
-    font-size: 13px;
-    font-weight: 900;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .student-history-stat strong {
     display: block;
-    margin-top: 8px;
+    margin-top: 4px;
     color: #0f172a;
-    font-size: 30px;
+    font-size: 22px;
     font-weight: 950;
     letter-spacing: -0.05em;
 }
 
 .student-history-stat i {
-    width: 50px;
-    height: 50px;
-    border-radius: 18px;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    min-height: 52px;
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
+    border-radius: 16px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 22px;
 }
 
 .student-history-stat.blue i {
@@ -1540,11 +1573,16 @@ h4 {
 }
 
 .student-history-subject-block .student-history-table-wrap {
-    margin: 0;
+    padding: 24px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
 }
 
 .student-history-subject-block .student-history-table {
     min-width: 720px;
+    width: 100% !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
 }
 
 .student-history-empty {
@@ -2111,24 +2149,13 @@ h4 {
         padding: 22px 14px;
     }
 
-    .dashboard-header,
-    .dashboard-panel-head {
+    .dashboard-header {
         display: flex !important;
         align-items: flex-start;
         flex-direction: column;
         gap: 16px;
         height: auto !important;
         min-height: auto !important;
-    }
-
-    .dashboard-panel-head > div {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-    
-    .dashboard-panel-head p {
-        margin: 0 !important;
     }
 
     .dashboard-action-btn {
@@ -2163,43 +2190,40 @@ h4 {
 /* Mobile stacking fixes */
 @media (max-width: 480px) {
     .class-card-top {
-        flex-wrap: wrap;
-        gap: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
     }
     .class-body, .class-content {
+        display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
+        align-items: stretch;
+        gap: 14px;
+    }
+    .class-action-group {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+        margin-left: 0;
     }
     .class-time {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: flex-start;
     }
-    .class-time span {
-        white-space: nowrap;
+    .class-action,
+    .js-schedule-action {
+        width: 100%;
+        margin: 0;
     }
-    .dashboard-class-card {
-        grid-template-columns: 1fr;
-    }
-    .dashboard-class-left {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .schedule-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
-    .class-info h3 {
-        font-size: 16px;
-        line-height: 1.4;
-    }
+    .view-btn,
     .js-schedule-action .view-btn {
         width: 100%;
-        margin-top: 8px;
+        min-width: 100%;
+        margin-top: 0;
     }
 }
 
@@ -2328,4 +2352,391 @@ html[data-theme="dark"] .student-main {
 
 [data-theme="dark"] .student-auth-option input:checked + .student-auth-content {
     background: #334155 !important;
+}
+
+/* ==========================================================================
+   FLATPICKR ULTRA LUXURY RESPONSIVE CALENDAR STYLING (STUDENT PORTAL)
+   ========================================================================== */
+
+.flatpickr-calendar {
+    width: 320px !important;
+    max-width: calc(100vw - 24px) !important;
+    background: #ffffff !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+    padding: 16px !important;
+    overflow: hidden !important;
+    font-family: inherit !important;
+    z-index: 99999 !important;
+}
+
+.flatpickr-calendar::before,
+.flatpickr-calendar::after {
+    display: none !important;
+}
+
+.flatpickr-months {
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    position: relative !important;
+    margin-bottom: 12px !important;
+    padding: 0 4px !important;
+}
+
+.flatpickr-month {
+    background: transparent !important;
+    color: #0f172a !important;
+    fill: #0f172a !important;
+    height: auto !important;
+}
+
+.flatpickr-current-month {
+    font-family: "Sora", sans-serif !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    position: static !important;
+    width: auto !important;
+}
+
+.flatpickr-current-month .cur-month {
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    margin-right: 4px !important;
+}
+
+.flatpickr-current-month select.cur-month {
+    background: transparent !important;
+    border: none !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    font-family: inherit !important;
+    padding: 2px 6px !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+}
+
+.flatpickr-current-month select.cur-month:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.flatpickr-current-month select.cur-month option {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+
+.flatpickr-current-month .numInputWrapper {
+    width: 60px !important;
+}
+
+.flatpickr-current-month input.cur-year {
+    font-weight: 800 !important;
+    color: #4f46e5 !important;
+    font-family: inherit !important;
+    background: transparent !important;
+}
+
+.flatpickr-current-month .numInputWrapper span {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.flatpickr-prev-month,
+.flatpickr-next-month {
+    position: static !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #4f46e5 !important;
+    fill: #4f46e5 !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+    background: #e0e7ff !important;
+    border-color: #6366f1 !important;
+    color: #4338ca !important;
+    fill: #4338ca !important;
+    transform: scale(1.05) !important;
+}
+
+.flatpickr-prev-month svg,
+.flatpickr-next-month svg {
+    width: 12px !important;
+    height: 12px !important;
+}
+
+.flatpickr-innerContainer {
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+.flatpickr-rContainer {
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+.flatpickr-weekdays {
+    background: transparent !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+.flatpickr-weekdaycontainer {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    width: 100% !important;
+    gap: 4px !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+span.flatpickr-weekday {
+    color: #64748b !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    height: 24px !important;
+    box-sizing: border-box !important;
+}
+
+.flatpickr-days {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+.dayContainer {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 4px !important;
+    box-sizing: border-box !important;
+    justify-items: center !important;
+    align-items: center !important;
+}
+
+.flatpickr-day {
+    color: #1e293b !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    width: 100% !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    max-width: none !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid transparent !important;
+    transition: all 0.15s ease !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+}
+
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #94a3b8 !important;
+    opacity: 0.45 !important;
+}
+
+.flatpickr-day:hover {
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    border-color: #c7d2fe !important;
+}
+
+.flatpickr-day.today {
+    border: 1.5px solid #6366f1 !important;
+    color: #4f46e5 !important;
+    background: rgba(99, 102, 241, 0.08) !important;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45) !important;
+}
+
+/* Attendance Status Indicators on Calendar */
+.flatpickr-day.attendance-status-present::after {
+    content: "" !important;
+    position: absolute !important;
+    bottom: 3px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: #10b981 !important;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.8) !important;
+}
+
+.flatpickr-day.attendance-status-absent::after {
+    content: "" !important;
+    position: absolute !important;
+    bottom: 3px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: #ef4444 !important;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.8) !important;
+}
+
+.flatpickr-day.attendance-status-unmarked::after {
+    content: "" !important;
+    position: absolute !important;
+    bottom: 3px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: #f59e0b !important;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.8) !important;
+}
+
+.flatpickr-attendance-legend {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    padding: 10px 8px 2px !important;
+    margin-top: 10px !important;
+    border-top: 1px solid #e2e8f0 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #64748b !important;
+}
+
+.flatpickr-attendance-legend .legend-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.flatpickr-attendance-legend .legend-dot {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+}
+
+.flatpickr-attendance-legend .legend-dot.green {
+    background: #10b981 !important;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.8) !important;
+}
+
+/* Attendance History Mobile Responsiveness */
+@media (max-width: 768px) {
+    .student-history-filter-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .student-history-summary-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    .student-history-summary-grid .student-history-stat:nth-child(5) {
+        grid-column: 1 / -1 !important;
+    }
+
+    .student-history-stat {
+        padding: 12px 14px !important;
+        border-radius: 14px !important;
+    }
+
+    .student-history-stat span {
+        font-size: 11px !important;
+    }
+
+    .student-history-stat strong {
+        font-size: 18px !important;
+    }
+
+    .student-history-stat i {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        font-size: 16px !important;
+        border-radius: 10px !important;
+    }
+
+    .student-history-profile-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding: 16px !important;
+    }
+
+    .student-history-filter-card,
+    .student-history-card {
+        padding: 16px !important;
+        border-radius: 18px !important;
+    }
+}
+
+.flatpickr-attendance-legend .legend-dot.red {
+    background: #ef4444 !important;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.8) !important;
+}
+
+.flatpickr-attendance-legend .legend-dot.yellow {
+    background: #f59e0b !important;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.8) !important;
+}
+
+@media (max-width: 480px) {
+    .flatpickr-calendar {
+        width: calc(100vw - 24px) !important;
+        padding: 12px !important;
+        border-radius: 16px !important;
+    }
+    .flatpickr-day {
+        height: 32px !important;
+        line-height: 32px !important;
+        font-size: 12px !important;
+    }
 }

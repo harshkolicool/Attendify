@@ -2,6 +2,9 @@
 <html lang="en">
 
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedule | Attendify</title>
@@ -12,9 +15,11 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
-    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260713">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260831_18">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8_18">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=20260831_18">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19_18">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -44,7 +49,7 @@
     };
     </script>
     <% } %>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/themes/dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 </head>
 
@@ -131,7 +136,7 @@
             if (isToday && typeof attendanceWindow !== "undefined" && attendanceWindow && typeof attendanceWindow.getStudentAttendanceAction === "function") {
                 actionResult = attendanceWindow.getStudentAttendanceAction({
                     record: attendanceInfo ? attendanceInfo.record : null,
-                    session: activeSession || todaySession,
+                    session: activeSession,
                     schedule: item
                 });
             }
@@ -139,28 +144,27 @@
             if (actionResult) {
                 if (actionResult.action === "PRESENT" || actionResult.action === "LATE") {
                     cardState = "present";
-                } else if (actionResult.canMark) {
+                } else if (actionResult.canMark && activeSession) {
                     cardState = "live";
-                    cardSessionId = activeSession
-                        ? activeSession._id.toString()
-                        : todaySession
-                            ? todaySession._id.toString()
-                            : "";
+                    cardSessionId = activeSession._id.toString();
                 } else if (actionResult.action === "AUTO_ABSENT_LOCKED" || actionResult.action === "MANUAL_ABSENT") {
                     cardState = "absent";
-                } else if (todaySession) {
+                } else if (attendanceInfo && attendanceInfo.status === "ABSENT") {
+                    cardState = "absent";
+                } else if (todaySession && !activeSession) {
                     cardState = "pending";
                     cardSessionId = todaySession._id.toString();
                 } else if (isLiveWindow) {
                     cardState = "ongoing";
                 } else if (isEndedWithoutAttendance) {
                     cardState = "unmarked";
+                } else if (!isToday) {
+                    cardState = "upcoming";
                 }
             } else {
                 if (attendanceInfo && (attendanceInfo.status === "PRESENT" || attendanceInfo.status === "LATE")) {
                     cardState = "present";
                 } else if (attendanceInfo && attendanceInfo.status === "ABSENT") {
-                    // If session is active, absent students can mark again
                     if (isToday && activeSession) {
                         cardState = "live";
                         cardSessionId = activeSession._id.toString();
@@ -196,11 +200,19 @@
         }
 
         function getStatusBadge(cardState) {
-            if (cardState === "live" || cardState === "ongoing") {
+            if (cardState === "live") {
                 return {
                     className: "status-badge live",
                     icon: "pulse-dot",
-                    label: "Live Class"
+                    label: "Live Attendance"
+                };
+            }
+
+            if (cardState === "ongoing") {
+                return {
+                    className: "status-badge ongoing",
+                    icon: "fa-solid fa-chalkboard-user",
+                    label: "Class In Session"
                 };
             }
 
@@ -298,152 +310,57 @@
                     <p>View today and upcoming classes for the next 7 days.</p>
                 </div>
 
-                <div class="header-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; width: 100%;">
-                    <div style="position: relative; width: 44px; height: 44px; flex-shrink: 0;">
-                        <input type="text" id="scheduleWeekPicker" class="dashboard-date-picker" value="<%= typeof targetDate !== 'undefined' ? targetDate : '' %>" readonly autocomplete="off" style="width: 100%; height: 100%; padding-right: 40px; cursor: pointer; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff;">
-                        <i class="fa-solid fa-calendar-days" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; font-size: 16px;"></i>
+                <div class="schedule-header-actions">
+                    <div class="schedule-datepicker-btn" id="scheduleDateBtn" title="Click to change date">
+                        <div class="schedule-datepicker-icon">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <div class="schedule-datepicker-text">
+                            <span class="schedule-datepicker-kicker">Selected Date</span>
+                            <span class="schedule-datepicker-val" id="scheduleDisplayDate">
+                                <%= typeof targetDate !== 'undefined' && targetDate ? new Date(targetDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today' %>
+                            </span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down schedule-datepicker-arrow"></i>
+                        <input type="text" id="scheduleWeekPicker" class="schedule-hidden-input" value="<%= typeof targetDate !== 'undefined' ? targetDate : '' %>" readonly autocomplete="off">
                     </div>
-                    <a href="/student/dashboard" class="dashboard-action-btn" style="flex-grow: 1;">
-                        <i class="fa-solid fa-house"></i> Dashboard
+
+                    <a href="/student/dashboard" class="schedule-dashboard-btn">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Dashboard</span>
                     </a>
                 </div>
             </header>
 
-            <style>
-                /* Flatpickr Global Overrides for Attendify Dark Theme */
-                .flatpickr-calendar {
-                    background: #1e293b !important;
-                    border: 1px solid #334155 !important;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
-                    font-family: inherit !important;
-                }
-                .flatpickr-months,
-                .flatpickr-months .flatpickr-month,
-                .flatpickr-current-month,
-                .flatpickr-current-month .numInputWrapper,
-                .flatpickr-weekdays,
-                .flatpickr-weekday {
-                    background: transparent !important;
-                }
-                .flatpickr-months {
-                    padding-top: 10px !important;
-                }
-                .flatpickr-current-month {
-                    padding-top: 0 !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                }
-                .flatpickr-current-month span.cur-month {
-                    display: none !important; /* Fix overlapping text */
-                }
-                .flatpickr-current-month .flatpickr-monthDropdown-months {
-                    background: transparent url('data:image/svg+xml;utf8,<svg fill="%23f8fafc" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 0px center !important;
-                    border: none !important;
-                    color: #f8fafc !important;
-                    font-size: 18px !important;
-                    font-weight: 800 !important;
-                    appearance: none !important;
-                    -webkit-appearance: none !important;
-                    margin: 0 10px 0 0 !important;
-                    padding: 0 20px 0 0 !important;
-                    height: auto !important;
-                    line-height: inherit !important;
-                    outline: none !important;
-                    box-shadow: none !important;
-                }
-                .flatpickr-current-month .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month {
-                    background-color: #1e293b !important;
-                    color: #f8fafc !important;
-                }
-                .flatpickr-current-month input.cur-year {
-                    font-weight: 800 !important;
-                    color: #f8fafc !important;
-                    background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    outline: none !important;
-                }
-                .flatpickr-months .flatpickr-prev-month,
-                .flatpickr-months .flatpickr-next-month {
-                    fill: #94a3b8 !important;
-                }
-                .flatpickr-months .flatpickr-prev-month:hover,
-                .flatpickr-months .flatpickr-next-month:hover {
-                    fill: #f8fafc !important;
-                }
-                /* Responsiveness for header buttons */
-                @media (max-width: 480px) {
-                    .dashboard-date-picker {
-                        flex: 1;
-                        min-width: 0;
-                    }
-                }
-                .flatpickr-day.attendance-present {
-                    background: rgba(34, 197, 94, 0.15) !important;
-                    border-radius: 8px !important;
-                    color: #4ade80 !important;
-                    font-weight: 800 !important;
-                    border-bottom: 3px solid #22c55e !important;
-                }
-                .flatpickr-day.attendance-absent {
-                    background: rgba(239, 68, 68, 0.15) !important;
-                    border-radius: 8px !important;
-                    color: #f87171 !important;
-                    font-weight: 800 !important;
-                    border-bottom: 3px solid #ef4444 !important;
-                }
-                
-                /* PREMIUM UI ENHANCEMENTS */
-                .weekly-day-panel {
-                    border: 1px solid rgba(226, 232, 240, 0.8) !important;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
-                    background: linear-gradient(to bottom, #ffffff, #f8fafc) !important;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                }
-                .weekly-day-panel:hover {
-                    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08) !important;
-                    transform: translateY(-2px) !important;
-                }
-                .dashboard-class-card {
-                    background: #ffffff !important;
-                    border: 1px solid #e2e8f0 !important;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.02) !important;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                    position: relative;
-                    overflow: hidden;
-                }
-                .dashboard-class-card::before {
-                    content: '';
-                    position: absolute;
-                    top: 0; left: 0; width: 4px; height: 100%;
-                    background: linear-gradient(to bottom, #3b82f6, #60a5fa);
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
-                }
-                .dashboard-class-card:hover {
-                    transform: translateX(4px) scale(1.01) !important;
-                    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1) !important;
-                    border-color: #bfdbfe !important;
-                }
-                .dashboard-class-card:hover::before {
-                    opacity: 1;
-                }
-                .date-highlight-badge {
-                    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-                    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3) !important;
-                    border: 1px solid rgba(255,255,255,0.2) !important;
-                }
-            </style>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const picker = document.getElementById("scheduleWeekPicker");
-                    const historyDates = <%- typeof historyDates !== 'undefined' ? historyDates : '{"present":[],"absent":[]}' %>;
+                    const dateBtn = document.getElementById("scheduleDateBtn");
+                    const historyDates = <%- typeof historyDates !== 'undefined' ? historyDates : '{"present":[],"absent":[],"unmarked":[]}' %>;
                     
-                    flatpickr(picker, {
+                    const fp = flatpickr(picker, {
                         dateFormat: "Y-m-d",
                         defaultDate: "<%= targetDate %>",
-                        disableMobile: true, // prevents native picker on mobile
+                        disableMobile: true,
+                        position: "auto right",
+                        locale: {
+                            weekdays: {
+                                shorthand: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+                                longhand: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                            }
+                        },
+                        onReady: function(selectedDates, dateStr, instance) {
+                            if (!instance.calendarContainer.querySelector(".flatpickr-attendance-legend")) {
+                                const legend = document.createElement("div");
+                                legend.className = "flatpickr-attendance-legend";
+                                legend.innerHTML = `
+                                    <span class="legend-item"><span class="legend-dot green"></span> Present</span>
+                                    <span class="legend-item"><span class="legend-dot red"></span> Absent</span>
+                                    <span class="legend-item"><span class="legend-dot yellow"></span> Unmarked</span>
+                                `;
+                                instance.calendarContainer.appendChild(legend);
+                            }
+                        },
                         onChange: function(selectedDates, dateStr, instance) {
                             if (dateStr) {
                                 window.location.href = '/student/schedule?date=' + dateStr;
@@ -453,17 +370,31 @@
                             const dateObj = dayElem.dateObj;
                             if (!dateObj) return;
                             
-                            // Adjust for local timezone
-                            const tzOffset = dateObj.getTimezoneOffset() * 60000;
-                            const localISOTime = (new Date(dateObj.getTime() - tzOffset)).toISOString().split('T')[0];
+                            const year = dateObj.getFullYear();
+                            const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+                            const day = String(dateObj.getDate()).padStart(2, "0");
+                            const localISOTime = year + "-" + month + "-" + day;
                             
-                            if (historyDates.present.includes(localISOTime)) {
-                                dayElem.classList.add("attendance-present");
-                            } else if (historyDates.absent.includes(localISOTime)) {
-                                dayElem.classList.add("attendance-absent");
+                            if (historyDates.present && historyDates.present.includes(localISOTime)) {
+                                dayElem.classList.add("attendance-status-present");
+                                dayElem.setAttribute("title", "Present (" + localISOTime + ")");
+                            } else if (historyDates.absent && historyDates.absent.includes(localISOTime)) {
+                                dayElem.classList.add("attendance-status-absent");
+                                dayElem.setAttribute("title", "Absent (" + localISOTime + ")");
+                            } else if (historyDates.unmarked && historyDates.unmarked.includes(localISOTime)) {
+                                dayElem.classList.add("attendance-status-unmarked");
+                                dayElem.setAttribute("title", "Unmarked (" + localISOTime + ")");
                             }
                         }
                     });
+
+                    if (dateBtn && fp) {
+                        dateBtn.addEventListener('click', function(e) {
+                            if (e.target !== picker) {
+                                fp.open();
+                            }
+                        });
+                    }
                 });
             </script>
 
@@ -481,11 +412,11 @@
 
             <% groups.forEach(function(group) { %>
                 <section class="dashboard-panel weekly-day-panel" data-day-offset="<%= group.offset %>">
-                    <div class="dashboard-panel-head" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div class="date-highlight-badge" style="background: var(--primary, #3b82f6); color: white; min-width: 60px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);">
-                                <span style="font-size: 24px; font-weight: 900; line-height: 1;"><%= new Date(group.date).getDate() %></span>
-                                <span style="font-size: 13px; font-weight: 700; text-transform: uppercase; margin-top: 2px;"><%= new Date(group.date).toLocaleString('default', { month: 'short' }) %></span>
+                    <div class="weekly-day-head">
+                        <div class="weekly-day-info">
+                            <div class="date-highlight-badge">
+                                <span class="date-highlight-day"><%= new Date(group.date).getDate() %></span>
+                                <span class="date-highlight-month"><%= new Date(group.date).toLocaleString('default', { month: 'short' }) %></span>
                             </div>
                             <div>
                                 <% 
@@ -494,10 +425,10 @@
                                     const isTomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toDateString() === cDate.toDateString();
                                     const displayTitle = isToday ? "Today" : (isTomorrow ? "Tomorrow" : cDate.toLocaleString('default', { weekday: 'long' }));
                                 %>
-                                <h3 style="margin: 0; font-size: 22px; font-weight: 800;">
+                                <h3 class="weekly-day-title">
                                     <%= displayTitle %>
                                 </h3>
-                                <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.8;">
+                                <p class="weekly-day-date">
                                     <%= cDate.toLocaleDateString("en-IN", { year: 'numeric', month: 'long', day: 'numeric' }) %>
                                     <% if (displayTitle === "Today" || displayTitle === "Tomorrow") { %>
                                         · <%= cDate.toLocaleString('default', { weekday: 'long' }) %>
@@ -507,13 +438,15 @@
                         </div>
 
                         <span class="panel-count">
-                            <%= group.schedules ? group.schedules.length : 0 %> Classes
+                            <i class="fa-solid fa-graduation-cap"></i>
+                            <%= group.schedules ? group.schedules.length : 0 %> <%= (group.schedules && group.schedules.length === 1) ? 'Class' : 'Classes' %>
                         </span>
                     </div>
 
                     <% if (!group.schedules || group.schedules.length === 0) { %>
                         <div class="student-history-empty">
-                            No classes scheduled.
+                            <i class="fa-regular fa-calendar-check"></i>
+                            <span>No classes scheduled for this day</span>
                         </div>
                     <% } else { %>
                         <% if (group.offset === 0) { %>
@@ -546,101 +479,123 @@
                                     data-day-offset="<%= group.offset %>"
                                 >
                                     <div class="class-card-top">
-                                        <span class="subject-pill">
-                                            <%= getSubjectCode(item) %>
-                                        </span>
+                                        <div class="class-card-badges">
+                                            <span class="subject-pill">
+                                                <%= getSubjectCode(item) %>
+                                            </span>
+                                        </div>
 
-                                        <span class="<%= badge.className %>">
-                                            <i class="<%= badge.icon %>"></i>
-                                            <%= badge.label %>
-                                        </span>
+                                        <div class="class-card-status-wrap">
+                                            <span class="<%= badge.className %>">
+                                                <i class="<%= badge.icon %>"></i>
+                                                <%= badge.label %>
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div class="class-content">
-                                        <div class="class-time">
-                                            <strong><%= item.startTime %></strong>
-                                            <span><%= item.endTime %></span>
-                                        </div>
-
                                         <div class="class-info">
                                             <h4><%= getSubjectName(item) %></h4>
 
-                                            <p>
-                                                <i class="fa-solid fa-user-tie"></i>
-                                                <%= getTeacherName(item) %>
-                                                ·
-                                                <i class="fa-solid fa-door-open"></i>
-                                                <%= getClassroomName(item) %>
-                                            </p>
+                                            <div class="class-meta-row">
+                                                <span class="class-meta-item">
+                                                    <i class="fa-solid fa-user-tie"></i>
+                                                    <%= getTeacherName(item) %>
+                                                </span>
+                                                <span class="class-meta-dot">·</span>
+                                                <span class="class-meta-item">
+                                                    <i class="fa-solid fa-door-open"></i>
+                                                    <%= getClassroomName(item) %>
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div class="js-schedule-action class-action">
-                                        <% if (state.actionResult) { %>
-                                            <% if (state.actionResult.canMark) { %>
-                                                <button
-                                                    class="view-btn live js-mark-attendance-btn"
-                                                    type="button"
-                                                    data-session-id="<%= state.cardSessionId %>"
-                                                >
-                                                    <%= state.actionResult.label %>
-                                                </button>
-                                            <% } else { %>
-                                                <%
-                                                    let btnClass = "view-btn";
+                                        <div class="class-action-group">
+                                            <div class="class-time">
+                                                <i class="fa-regular fa-clock"></i>
+                                                <span><%= item.startTime %> – <%= item.endTime %></span>
+                                            </div>
 
-                                                    if (state.cardState === "present" || state.cardState === "absent") {
-                                                        btnClass += " marked " + state.cardState;
-                                                    } else if (state.cardState === "unmarked") {
-                                                        btnClass += " unmarked";
-                                                    } else if (state.cardState === "pending") {
-                                                        btnClass += " pending";
-                                                    }
-                                                %>
+                                            <div class="js-schedule-action class-action">
+                                                <% if (state.actionResult) { %>
+                                                    <% if (state.actionResult.canMark) { %>
+                                                        <button
+                                                            class="view-btn live js-mark-attendance-btn"
+                                                            type="button"
+                                                            data-session-id="<%= state.cardSessionId %>"
+                                                        >
+                                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                                            <%= state.actionResult.label %>
+                                                        </button>
+                                                    <% } else { %>
+                                                        <%
+                                                            let btnClass = "view-btn";
 
-                                                <button class="<%= btnClass %>" type="button" disabled>
-                                                    <%= state.actionResult.label %>
-                                                </button>
-                                            <% } %>
-                                        <% } else { %>
-                                            <% if (state.cardState === "live") { %>
-                                                <button
-                                                    class="view-btn live js-mark-attendance-btn"
-                                                    type="button"
-                                                    data-session-id="<%= state.cardSessionId %>"
-                                                >
-                                                    Mark Attendance
-                                                </button>
-                                            <% } else if (state.cardState === "ongoing") { %>
-                                                <button class="view-btn" type="button" disabled>
-                                                    Teacher Not Started
-                                                </button>
-                                            <% } else if (state.cardState === "present") { %>
-                                                <button class="view-btn marked present" type="button" disabled>
-                                                    Attendance Marked
-                                                </button>
-                                            <% } else if (state.cardState === "absent") { %>
-                                                <button class="view-btn marked absent" type="button" disabled>
-                                                    Marked Absent
-                                                </button>
-                                            <% } else if (state.cardState === "unmarked") { %>
-                                                <button class="view-btn unmarked" type="button" disabled>
-                                                    Unmarked
-                                                </button>
-                                            <% } else if (state.cardState === "pending") { %>
-                                                <button class="view-btn pending" type="button" disabled>
-                                                    Pending
-                                                </button>
-                                            <% } else if (state.cardState === "upcoming") { %>
-                                                <button class="view-btn" type="button" disabled>
-                                                    Upcoming
-                                                </button>
-                                            <% } else { %>
-                                                <button class="view-btn" type="button" disabled>
-                                                    Not Started
-                                                </button>
-                                            <% } %>
-                                        <% } %>
+                                                            if (state.cardState === "present" || state.cardState === "absent") {
+                                                                btnClass += " marked " + state.cardState;
+                                                            } else if (state.cardState === "unmarked") {
+                                                                btnClass += " unmarked";
+                                                            } else if (state.cardState === "pending") {
+                                                                btnClass += " pending";
+                                                            }
+                                                        %>
+
+                                                        <button class="<%= btnClass %>" type="button" disabled>
+                                                            <% if (state.cardState === "present") { %>
+                                                                <i class="fa-solid fa-check"></i>
+                                                            <% } else if (state.cardState === "absent") { %>
+                                                                <i class="fa-solid fa-xmark"></i>
+                                                            <% } else if (state.cardState === "ongoing") { %>
+                                                                <i class="fa-solid fa-hourglass-half"></i>
+                                                            <% } %>
+                                                            <%= state.actionResult.label %>
+                                                        </button>
+                                                    <% } %>
+                                                <% } else { %>
+                                                    <% if (state.cardState === "live") { %>
+                                                        <button
+                                                            class="view-btn live js-mark-attendance-btn"
+                                                            type="button"
+                                                            data-session-id="<%= state.cardSessionId %>"
+                                                        >
+                                                            <i class="fa-solid fa-location-crosshairs"></i>
+                                                            Mark Attendance
+                                                        </button>
+                                                    <% } else if (state.cardState === "ongoing") { %>
+                                                        <button class="view-btn" type="button" disabled>
+                                                            <i class="fa-solid fa-hourglass-half"></i>
+                                                            Teacher Not Started
+                                                        </button>
+                                                    <% } else if (state.cardState === "present") { %>
+                                                        <button class="view-btn marked present" type="button" disabled>
+                                                            <i class="fa-solid fa-check"></i>
+                                                            Attendance Marked
+                                                        </button>
+                                                    <% } else if (state.cardState === "absent") { %>
+                                                        <button class="view-btn marked absent" type="button" disabled>
+                                                            <i class="fa-solid fa-xmark"></i>
+                                                            Marked Absent
+                                                        </button>
+                                                    <% } else if (state.cardState === "unmarked") { %>
+                                                        <button class="view-btn unmarked" type="button" disabled>
+                                                            Unmarked
+                                                        </button>
+                                                    <% } else if (state.cardState === "pending") { %>
+                                                        <button class="view-btn pending" type="button" disabled>
+                                                            Pending
+                                                        </button>
+                                                    <% } else if (state.cardState === "upcoming") { %>
+                                                        <button class="view-btn" type="button" disabled>
+                                                            Upcoming
+                                                        </button>
+                                                    <% } else { %>
+                                                        <button class="view-btn" type="button" disabled>
+                                                            Not Started
+                                                        </button>
+                                                    <% } %>
+                                                <% } %>
+                                            </div>
+                                        </div>
                                     </div>
                                 </article>
                             <% }) %>
@@ -715,7 +670,7 @@
         };
     </script>
 
-    <% if (currentRealtimeMode === "socket") { %>
+    <% if (currentRealtimeMode === "socket" || currentRealtimeMode === "auto") { %>
         <script src="/socket.io/socket.io.js"></script>
     <% } %>
 

@@ -226,7 +226,7 @@ async function createAbsentRecordsForMissingStudents(session, options) {
                     }
                 },
                 {
-                    new: true,
+                    returnDocument: 'after',
                     upsert: true,
                     setDefaultsOnInsert: true
                 }
@@ -475,13 +475,34 @@ async function finalizePendingAbsenceSessions() {
     return finalizedCount;
 }
 
+const jobLock = require("./jobLock");
+
 function startAttendanceExpiryJob() {
-    closeExpiredAttendanceSessions().catch(function (err) {
+    const LOCK_NAME = "attendance-expiry-job";
+    const LOCK_TTL_MS = 55 * 1000; // slightly shorter than the 60s interval
+
+    async function runWithLock() {
+        const acquired = await jobLock.acquireLock(LOCK_NAME, LOCK_TTL_MS);
+
+        if (!acquired) {
+            logger.debug("Attendance expiry job: lock not acquired — another worker is running it.");
+            return;
+        }
+
+        try {
+            await closeExpiredAttendanceSessions();
+        } catch (err) {
+            logger.error("ATTENDANCE EXPIRY JOB ERROR", { msg: err.message });
+        }
+    }
+
+    // Run once immediately on startup, then every 60 seconds
+    runWithLock().catch(function (err) {
         logger.error("INITIAL ATTENDANCE EXPIRY JOB ERROR", { msg: err.message });
     });
 
     setInterval(function () {
-        closeExpiredAttendanceSessions().catch(function (err) {
+        runWithLock().catch(function (err) {
             logger.error("ATTENDANCE EXPIRY JOB ERROR", { msg: err.message });
         });
     }, 60 * 1000);
@@ -495,3 +516,4 @@ module.exports = {
     finalizeAbsencesForSession,
     createAbsentRecordsForMissingStudents
 };
+

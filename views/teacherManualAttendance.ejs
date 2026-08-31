@@ -1,35 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manual Attendance | Attendify</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/teacherDashboard.css">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <!-- Preconnect to external CDNs -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/teacherDashboard.css?v=1783707422685">
+    <link rel="stylesheet" href="/css/teacherManualAttendance.css?v=20260831">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
-    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" type="image/png" href="/favicon.png">
 
-    <!-- SweetAlert2 for Custom UI Alerts -->
+    <!-- Flatpickr Date Picker -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <script src="/js/customAlerts.js" defer></script>
 
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-            });
-        }
-    </script>
-
 
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
@@ -49,276 +58,382 @@
 
     <main class="teacher-main teacher-manual-page">
 
+        <!-- Executive Header Deck -->
         <header class="teacher-header">
-            <div>
-                <span class="teacher-kicker">Teacher Panel</span>
-                <h1>Manual Attendance</h1>
-                <p>Mark attendance manually after class time has ended.</p>
+            <div class="teacher-header-left">
+                <div class="teacher-avatar-badge">
+                    <%= typeof teacher !== "undefined" && teacher.name ? teacher.name.charAt(0).toUpperCase() : "T" %>
+                    <span class="teacher-online-dot" title="Active"></span>
+                </div>
+                <div class="teacher-header-titles">
+                    <div class="teacher-header-badge-row">
+                        <span class="teacher-kicker">Faculty Portal</span>
+                        <span class="teacher-dept-chip">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            Manual Entry Mode
+                        </span>
+                    </div>
+                    <h1>Manual Attendance</h1>
+                    <p>
+                        Mark and adjust attendance for completed and past class lectures.
+                    </p>
+                </div>
+            </div>
+
+            <div class="teacher-header-actions">
+                <a href="/teacher/dashboard" class="teacher-header-action-btn secondary" title="Back to Live Dashboard">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/teacher/reports" class="teacher-header-action-btn primary" title="View Detailed Reports">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
             </div>
         </header>
 
         <% if (typeof error !== "undefined" && error) { %>
-            <div class="alert-box error">
-                <i class="fa-solid fa-circle-exclamation"></i>
-                <%= typeof error !== "undefined" ? error : "" %>
-            </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    if (typeof window.showToast === "function") {
+                        window.showToast(<%- JSON.stringify(error) %>, "error");
+                    } else if (typeof Swal !== "undefined") {
+                        Swal.fire({ toast: true, position: "top-end", icon: "error", title: <%- JSON.stringify(error) %>, showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                    }
+                    try {
+                        const url = new URL(window.location);
+                        url.searchParams.delete("error");
+                        window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : ""));
+                    } catch(e) {}
+                });
+            </script>
         <% } %>
 
         <% if (typeof message !== "undefined" && message) { %>
-            <div class="alert-box success">
-                <i class="fa-solid fa-circle-check"></i>
-                <%= typeof message !== "undefined" ? message : "" %>
-            </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    if (typeof window.showToast === "function") {
+                        window.showToast(<%- JSON.stringify(message) %>, "success");
+                    } else if (typeof Swal !== "undefined") {
+                        Swal.fire({ toast: true, position: "top-end", icon: "success", title: <%- JSON.stringify(message) %>, showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                    }
+                    try {
+                        const url = new URL(window.location);
+                        url.searchParams.delete("message");
+                        window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : ""));
+                    } catch(e) {}
+                });
+            </script>
         <% } %>
 
         <%
             const manualDateBasePath = "/teacher/manual-attendance";
         %>
 
-        <section class="teacher-card manual-date-switcher-card">
-            <div class="manual-date-nav-row">
-                <a
-                    href="<%= manualDateBasePath %>?date=<%= manualDatePreviousInput %>"
-                    class="teacher-secondary-btn manual-date-nav-btn"
-                >
-                    <i class="fa-solid fa-chevron-left"></i>
-                    Previous Day
-                </a>
-
-                <button
-                    type="button"
-                    class="teacher-primary-btn manual-date-picker-btn"
-                    onclick="openManualDatePicker()"
-                >
-                    <i class="fa-regular fa-calendar-plus"></i>
-                    Choose Past Date
-                </button>
-
-                <% if (manualDateNextInput) { %>
+        <!-- Date Navigator & Quick Ribbon Deck -->
+        <section class="manual-nav-deck">
+            <div class="manual-nav-top-row">
+                <div class="manual-nav-stepper">
                     <a
-                        href="<%= manualDateBasePath %>?date=<%= manualDateNextInput %>"
-                        class="teacher-secondary-btn manual-date-nav-btn"
+                        href="<%= manualDateBasePath %>?date=<%= manualDatePreviousInput %>"
+                        class="manual-step-btn"
+                        title="Go to Previous Day"
                     >
-                        Next Day
-                        <i class="fa-solid fa-chevron-right"></i>
+                        <i class="fa-solid fa-chevron-left"></i>
+                        Previous Day
                     </a>
-                <% } else { %>
-                    <span class="manual-date-nav-btn disabled">
-                        Next Day
-                        <i class="fa-solid fa-chevron-right"></i>
-                    </span>
-                <% } %>
+
+                    <% if (manualDateNextInput) { %>
+                        <a
+                            href="<%= manualDateBasePath %>?date=<%= manualDateNextInput %>"
+                            class="manual-step-btn"
+                            title="Go to Next Day"
+                        >
+                            Next Day
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    <% } else { %>
+                        <span class="manual-step-btn disabled" title="Cannot select future dates">
+                            Next Day
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </span>
+                    <% } %>
+                </div>
+
+                <div>
+                    <button
+                        type="button"
+                        class="manual-calendar-trigger-btn"
+                        id="manualDateTriggerBtn"
+                    >
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <span>Calendar Picker</span>
+                    </button>
+                    <input
+                        type="text"
+                        id="manualDateFlatpickr"
+                        class="manual-flatpickr-hidden"
+                        value="<%= selectedDateInput %>"
+                    >
+                </div>
             </div>
 
-            <input
-                type="date"
-                id="manualDatePicker"
-                class="manual-date-hidden-input"
-                value="<%= selectedDateInput %>"
-                min="<%= manualDateMinInput %>"
-                max="<%= manualDateMaxInput %>"
-                onchange="changeManualDate(this.value)"
-            >
-
-            <p class="manual-date-helper">
-                Use buttons or calendar picker to mark attendance for any previous date.
-            </p>
+            <!-- Date Chips Horizontal Ribbon -->
+            <% if (manualDateOptions && manualDateOptions.length > 0) { %>
+                <div class="manual-date-ribbon-wrap">
+                    <div class="manual-date-ribbon">
+                        <% manualDateOptions.forEach(function(option) { %>
+                            <a
+                                href="/teacher/manual-attendance?date=<%= option.dateInput %>"
+                                class="manual-ribbon-chip <%= selectedDateInput === option.dateInput ? 'active' : '' %>"
+                                title="<%= option.label %>"
+                            >
+                                <span class="chip-kicker"><%= option.quickLabel || option.dayName %></span>
+                                <span class="chip-date"><%= option.shortLabel || option.label %></span>
+                            </a>
+                        <% }) %>
+                    </div>
+                </div>
+            <% } %>
         </section>
 
         <% if (!selectedSchedule) { %>
 
-            <section class="teacher-card">
-                <div class="teacher-card-header">
-                    <div>
-                        <h3>Classes Available for Manual Attendance</h3>
-                        <p>Classes are organized by date. Select a date first, then mark attendance.</p>
+            <!-- Date Overview & Status KPI Card -->
+            <section class="manual-overview-card">
+                <div class="manual-overview-header">
+                    <div class="manual-overview-date-title">
+                        <div class="manual-date-icon-box">
+                            <i class="fa-regular fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <h2><%= selectedDayName %>, <%= selectedDateLabel %></h2>
+                            <p>Select a completed lecture below to record or modify student attendance.</p>
+                        </div>
                     </div>
-                </div>
 
-                <div class="manual-date-filter-row">
-                    <% if (manualDateOptions && manualDateOptions.length > 0) { %>
-                        <% manualDateOptions.forEach(function(option) { %>
-                            <a
-                                href="/teacher/manual-attendance?date=<%= option.dateInput %>"
-                                class="manual-date-chip <%= selectedDateInput === option.dateInput ? 'active' : '' %>"
-                            >
-                                <span><%= option.quickLabel || option.dayName %></span>
-                                <strong><%= option.shortLabel || option.label %></strong>
-                            </a>
-                        <% }) %>
+                    <% if (manualSummary) { %>
+                        <div class="manual-kpi-pill-group">
+                            <span class="manual-kpi-pill indigo" title="Total scheduled classes">
+                                <strong><%= manualSummary.totalClasses %></strong> Total Classes
+                            </span>
+
+                            <span class="manual-kpi-pill sky" title="Classes that have ended and are eligible">
+                                <strong><%= manualSummary.manualEligibleClasses %></strong> Eligible
+                            </span>
+
+                            <span class="manual-kpi-pill emerald" title="Attendance recorded">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <strong><%= manualSummary.recordedClasses %></strong> Recorded
+                            </span>
+
+                            <% if (manualSummary.pendingClasses > 0) { %>
+                                <span class="manual-kpi-pill amber" title="Awaiting manual attendance">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                    <strong><%= manualSummary.pendingClasses %></strong> Pending
+                                </span>
+                            <% } %>
+                        </div>
                     <% } %>
                 </div>
 
-                <div class="manual-date-heading">
-                    <h4><%= selectedDateLabel %></h4>
-                    <span class="manual-date-pill">
-                        <i class="fa-regular fa-calendar"></i>
-                        <%= selectedDayName %>
-                    </span>
+                <div class="manual-instruction-banner">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Manual attendance is accessible for all lectures after their scheduled class end time.</span>
                 </div>
+            </section>
 
-                <% if (manualSummary) { %>
-                    <div class="manual-summary-row">
-                        <span class="manual-summary-pill">
-                            <strong><%= manualSummary.totalClasses %></strong>
-                            Total Classes
-                        </span>
-
-                        <span class="manual-summary-pill">
-                            <strong><%= manualSummary.manualEligibleClasses %></strong>
-                            Eligible (Ended)
-                        </span>
-
-                        <span class="manual-summary-pill success">
-                            <strong><%= manualSummary.recordedClasses %></strong>
-                            Recorded
-                        </span>
-
-                        <span class="manual-summary-pill warning">
-                            <strong><%= manualSummary.pendingClasses %></strong>
-                            Pending
-                        </span>
+            <!-- Schedule Cards Grid -->
+            <% if (!manualSchedules || manualSchedules.length === 0) { %>
+                <div class="manual-empty-card">
+                    <div class="manual-empty-icon">
+                        <i class="fa-regular fa-calendar-xmark"></i>
                     </div>
-                <% } %>
+                    <h3>No Classes Found For This Date</h3>
+                    <p>There are no completed lectures eligible for manual attendance on <%= selectedDateLabel %>.</p>
+                </div>
+            <% } else { %>
 
-                <% if (!manualSchedules || manualSchedules.length === 0) { %>
-                    <div class="teacher-empty">
-                        No class is available for manual attendance on this date.
-                    </div>
-                <% } else { %>
+                <section class="manual-schedule-grid">
+                    <% manualSchedules.forEach(function(item) { %>
+                        <% const schedule = item.schedule; %>
 
-                    <div class="manual-schedule-grid">
-
-                        <% manualSchedules.forEach(function(item) { %>
-                            <% const schedule = item.schedule; %>
-
-                            <article class="manual-schedule-card">
-                                <div>
-                                    <span class="manual-time">
-                                        <%= schedule.startTime %> - <%= schedule.endTime %>
-                                    </span>
-
-                                    <h3>
-                                        <%= schedule.subject ? schedule.subject.subjectName : "Subject Missing" %>
-                                    </h3>
-
-                                    <p>
-                                        <i class="fa-solid fa-users"></i>
-                                        <%= schedule.classGroup ? schedule.classGroup.name : "Class Missing" %>
-                                    </p>
-
-                                    <p>
-                                        <i class="fa-solid fa-location-dot"></i>
-                                        <%= schedule.classroom ? schedule.classroom.classroomName : "Room Missing" %>
-                                    </p>
-                                </div>
+                        <article class="manual-lecture-card">
+                            <div class="manual-card-top-row">
+                                <span class="manual-time-badge">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <%= schedule.startTime %> - <%= schedule.endTime %>
+                                </span>
 
                                 <% if (item.isRecorded) { %>
-                                    <a href="/teacher/manual-attendance/<%= schedule._id %>?date=<%= selectedDateInput %>" class="manual-edit-link">
+                                    <span class="manual-status-badge recorded">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                        Recorded
+                                    </span>
+                                <% } else { %>
+                                    <span class="manual-status-badge pending">
+                                        <i class="fa-solid fa-clock-rotate-left"></i>
+                                        Awaiting Entry
+                                    </span>
+                                <% } %>
+                            </div>
+
+                            <div class="manual-card-body">
+                                <div class="manual-subject-title-row">
+                                    <h3><%= schedule.subject ? schedule.subject.subjectName : "Subject Missing" %></h3>
+                                    <% if (schedule.subject && schedule.subject.subjectCode) { %>
+                                        <span class="manual-code-chip"><%= schedule.subject.subjectCode %></span>
+                                    <% } %>
+                                </div>
+
+                                <div class="manual-meta-chips-row">
+                                    <span class="manual-meta-chip">
+                                        <i class="fa-solid fa-users"></i>
+                                        <%= schedule.classGroup ? schedule.classGroup.name : "Class Missing" %>
+                                    </span>
+
+                                    <span class="manual-meta-chip">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        <%= schedule.classroom ? schedule.classroom.classroomName : "Room Missing" %>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <% if (item.isRecorded) { %>
+                                    <a
+                                        href="/teacher/manual-attendance/<%= schedule._id %>?date=<%= selectedDateInput %>"
+                                        class="manual-card-action-btn edit"
+                                    >
                                         <i class="fa-solid fa-pen-to-square"></i>
-                                        Edit Attendance
+                                        <span>Edit Attendance</span>
                                     </a>
                                 <% } else { %>
-                                    <a href="/teacher/manual-attendance/<%= schedule._id %>?date=<%= selectedDateInput %>" class="manual-mark-link">
+                                    <a
+                                        href="/teacher/manual-attendance/<%= schedule._id %>?date=<%= selectedDateInput %>"
+                                        class="manual-card-action-btn mark"
+                                    >
                                         <i class="fa-solid fa-clipboard-check"></i>
-                                        Mark Attendance
+                                        <span>Mark Attendance</span>
                                     </a>
                                 <% } %>
-                            </article>
+                            </div>
+                        </article>
+                    <% }) %>
+                </section>
 
-                        <% }) %>
-
-                    </div>
-
-                <% } %>
-            </section>
+            <% } %>
 
         <% } else { %>
 
-            <section class="teacher-card manual-attendance-form-card">
-                <div class="teacher-card-header">
-                    <div>
-                        <h3>
-                            <%= selectedSchedule.subject ? selectedSchedule.subject.subjectName : "Subject Missing" %>
-                        </h3>
-
-                        <p>
-                            <%= selectedDateLabel %>
-                            ·
-                            <%= selectedSchedule.classGroup ? selectedSchedule.classGroup.name : "Class Missing" %>
-                            ·
-                            <%= selectedSchedule.classroom ? selectedSchedule.classroom.classroomName : "Room Missing" %>
-                            ·
-                            <%= selectedSchedule.startTime %> - <%= selectedSchedule.endTime %>
-                        </p>
+            <!-- Student Roll / Marking Section -->
+            <section class="manual-roster-hero-card">
+                <div class="manual-roster-hero-top">
+                    <div class="manual-roster-class-info">
+                        <h2><%= selectedSchedule.subject ? selectedSchedule.subject.subjectName : "Subject Missing" %></h2>
+                        <div class="manual-roster-tags-row">
+                            <span class="manual-roster-tag">
+                                <i class="fa-regular fa-calendar"></i>
+                                <%= selectedDateLabel %>
+                            </span>
+                            <span class="manual-roster-tag">
+                                <i class="fa-solid fa-users"></i>
+                                <%= selectedSchedule.classGroup ? selectedSchedule.classGroup.name : "Class Missing" %>
+                            </span>
+                            <span class="manual-roster-tag">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <%= selectedSchedule.classroom ? selectedSchedule.classroom.classroomName : "Room Missing" %>
+                            </span>
+                            <span class="manual-roster-tag">
+                                <i class="fa-regular fa-clock"></i>
+                                <%= selectedSchedule.startTime %> - <%= selectedSchedule.endTime %>
+                            </span>
+                        </div>
                     </div>
 
-                    <a href="/teacher/manual-attendance?date=<%= selectedDateInput %>" class="teacher-secondary-btn manual-back-btn">
+                    <a href="/teacher/manual-attendance?date=<%= selectedDateInput %>" class="manual-roster-back-btn">
                         <i class="fa-solid fa-arrow-left"></i>
-                        Back
+                        <span>Back to Class List</span>
                     </a>
                 </div>
 
                 <% if (!students || students.length === 0) { %>
-                    <div class="teacher-empty">
-                        No students found in this class group.
+                    <div class="manual-empty-card">
+                        <div class="manual-empty-icon">
+                            <i class="fa-solid fa-user-slash"></i>
+                        </div>
+                        <h3>No Students Enrolled</h3>
+                        <p>There are no active students mapped to <%= selectedSchedule.classGroup ? selectedSchedule.classGroup.name : "this class group" %>.</p>
                     </div>
                 <% } else { %>
 
                     <form
                         action="/teacher/manual-attendance/<%= selectedSchedule._id %>?date=<%= selectedDateInput %>"
                         method="POST"
-                        class="manual-attendance-form"
+                        id="manualAttendanceForm"
                     >
-
-                        <div class="manual-toolbar">
-                            <div>
-                                <h4>Students</h4>
-                                <p>Checked students will be marked Present. Unchecked students will be marked Absent.</p>
+                        <div class="manual-roster-toolbar">
+                            <div class="manual-roster-toolbar-left">
+                                <h4>Student Roll</h4>
+                                <span class="manual-roster-count-badge" id="rosterCountBadge">
+                                    <%= students.length %> Students
+                                </span>
                             </div>
 
-                            <div class="manual-toolbar-actions">
-                                <button type="button" class="manual-small-btn" onclick="setAllManualStudents(true)">
-                                    Mark All Present
+                            <div class="manual-bulk-actions">
+                                <button type="button" class="manual-bulk-btn all-present" onclick="setAllManualStudents(true)">
+                                    <i class="fa-solid fa-check-double"></i>
+                                    <span>Mark All Present</span>
                                 </button>
 
-                                <button type="button" class="manual-small-btn danger" onclick="setAllManualStudents(false)">
-                                    Clear All
+                                <button type="button" class="manual-bulk-btn clear-all" onclick="setAllManualStudents(false)">
+                                    <i class="fa-solid fa-xmark"></i>
+                                    <span>Clear All</span>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="manual-student-grid">
+                        <div class="manual-student-grid" style="margin-top: 16px;">
                             <% students.forEach(function(student) { %>
                                 <%
                                     const existingStatus = existingRecordsByStudent[student._id.toString()];
                                     const checked = existingStatus === "PRESENT";
+                                    const studentInitials = student.fullName
+                                        ? student.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                                        : "ST";
                                 %>
 
-                                <label class="manual-student-card">
+                                <label class="manual-student-card <%= checked ? 'checked' : '' %>">
                                     <input
                                         type="checkbox"
                                         name="presentStudents"
                                         value="<%= student._id %>"
                                         <%= checked ? "checked" : "" %>
+                                        onchange="updateStudentCardState(this)"
                                     >
 
-                                    <span class="manual-student-check">
+                                    <div class="manual-student-check-box">
                                         <i class="fa-solid fa-check"></i>
-                                    </span>
+                                    </div>
 
-                                    <span>
+                                    <div class="manual-student-avatar">
+                                        <%= studentInitials %>
+                                    </div>
+
+                                    <div class="manual-student-info">
                                         <strong><%= typeof student !== "undefined" && student.fullName %></strong>
                                         <small><%= student.enrollmentNumber %></small>
-                                    </span>
+                                    </div>
                                 </label>
                             <% }) %>
                         </div>
 
-                        <button class="teacher-primary-btn manual-save-main-btn" type="submit">
-                            <i class="fa-solid fa-floppy-disk"></i>
-                            Save Manual Attendance
-                        </button>
+                        <div class="manual-save-bar">
+                            <button class="manual-save-submit-btn" type="submit">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>Save Attendance Record</span>
+                            </button>
+                        </div>
 
                     </form>
 
@@ -332,41 +447,76 @@
 </div>
 
 <script>
-    function changeManualDate(dateInput) {
-        if (!dateInput) {
-            return;
+    document.addEventListener("DOMContentLoaded", function () {
+        // Flatpickr initialization
+        const hiddenPicker = document.getElementById("manualDateFlatpickr");
+        const triggerBtn = document.getElementById("manualDateTriggerBtn");
+
+        if (hiddenPicker && window.flatpickr) {
+            const fp = flatpickr(hiddenPicker, {
+                dateFormat: "Y-m-d",
+                defaultDate: "<%= selectedDateInput %>",
+                maxDate: "<%= manualDateMaxInput %>",
+                minDate: "<%= manualDateMinInput %>",
+                disableMobile: true,
+                onChange: function (selectedDates, dateStr) {
+                    if (dateStr) {
+                        window.location.href = "<%= manualDateBasePath %>?date=" + encodeURIComponent(dateStr);
+                    }
+                }
+            });
+
+            if (triggerBtn && fp) {
+                triggerBtn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    fp.open();
+                });
+            }
         }
 
-        const basePath = "<%= manualDateBasePath %>";
-        window.location.href = basePath + "?date=" + encodeURIComponent(dateInput);
-    }
+        updateRosterCount();
+    });
 
-    function openManualDatePicker() {
-        const pickerInput = document.getElementById("manualDatePicker");
-
-        if (!pickerInput) {
-            return;
+    function updateStudentCardState(checkbox) {
+        const card = checkbox.closest(".manual-student-card");
+        if (card) {
+            if (checkbox.checked) {
+                card.classList.add("checked");
+            } else {
+                card.classList.remove("checked");
+            }
         }
-
-        if (typeof pickerInput.showPicker === "function") {
-            pickerInput.showPicker();
-            return;
-        }
-
-        pickerInput.click();
+        updateRosterCount();
     }
 
     function setAllManualStudents(checked) {
         document.querySelectorAll("input[name='presentStudents']").forEach(function (input) {
             input.checked = checked;
+            const card = input.closest(".manual-student-card");
+            if (card) {
+                if (checked) {
+                    card.classList.add("checked");
+                } else {
+                    card.classList.remove("checked");
+                }
+            }
         });
+        updateRosterCount();
+    }
+
+    function updateRosterCount() {
+        const total = document.querySelectorAll("input[name='presentStudents']").length;
+        const present = document.querySelectorAll("input[name='presentStudents']:checked").length;
+        const badge = document.getElementById("rosterCountBadge");
+        if (badge && total > 0) {
+            badge.textContent = present + " / " + total + " Present";
+        }
     }
 </script>
 
 <script src="/js/uiShell.js"></script>
-
-    <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
-    <script src="/js/teacherNav.js" defer></script>
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js" defer></script>
+<script src="/js/teacherNav.js" defer></script>
 </body>
 </html>

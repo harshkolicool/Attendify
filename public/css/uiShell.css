@@ -1,5 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800;900&family=Sora:wght@600;700;800&display=swap");
-@import url("/css/darkMode.css?v=20260617g");
+@import url("/css/darkMode.css?v=20260831c");
 
 :root {
     /* Layout Variables */
@@ -180,28 +180,33 @@ body {
 
 .select-shell-icon,
 .select-shell-chevron {
-    position: absolute;
-    pointer-events: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #64748b;
-    line-height: 1;
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #64748b !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .select-shell-icon {
-    left: 14px;
-    font-size: 15px;
+    left: 14px !important;
+    font-size: 15px !important;
 }
 
 .select-shell-chevron {
-    right: 14px;
-    font-size: 12px;
+    right: 14px !important;
+    font-size: 12px !important;
 }
 
 .select-shell:focus-within .select-shell-icon,
 .select-shell:focus-within .select-shell-chevron {
-    color: #2563eb;
+    color: #2563eb !important;
+    transform: translateY(-50%) !important;
 }
 
 .select-shell.is-disabled {
@@ -315,8 +320,19 @@ body.ui-sidebar-open {
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
     margin-top: 8px;
-    padding-right: 2px;
+    padding-right: 0;
+}
+
+.shell-sidebar-nav::-webkit-scrollbar,
+.ui-sidebar nav::-webkit-scrollbar,
+.ui-sidebar::-webkit-scrollbar,
+.admin-sidebar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .shell-sidebar-nav > a,
@@ -460,9 +476,9 @@ body.ui-sidebar-open {
 .ui-sidebar .platform-menu a.active,
 .ui-sidebar .platform-nav-link.active,
 .ui-sidebar .shell-footer-link.active {
-    background: var(--shell-primary) !important;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
     color: #ffffff !important;
-    box-shadow: none !important;
+    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.35) !important;
 }
 
 .ui-sidebar .menu-link.active i,
@@ -480,38 +496,62 @@ body.ui-sidebar-open {
 .platform-sidebar a.platform-logo,
 .schedule-sidebar .student-welcome {
     width: 100%;
-    min-height: 72px;
-    padding: 18px !important;
-    border-radius: 20px !important;
+    min-height: 64px;
+    padding: 14px 16px !important;
+    border-radius: 18px !important;
     display: flex !important;
     align-items: center !important;
     gap: 14px !important;
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(30, 41, 59, 0.6) !important;
     border: 1px solid rgba(255, 255, 255, 0.10) !important;
     color: #ffffff !important;
     margin-bottom: 0 !important;
 }
 
 .teacher-sidebar .brand-box .brand-box-icon,
-.teacher-sidebar .teacher-brand i,
-.student-sidebar .student-brand i,
-.admin-sidebar .admin-brand i,
-.platform-sidebar .platform-logo i,
+.teacher-sidebar .teacher-brand-icon,
+.student-sidebar .student-brand-icon,
+.admin-sidebar .admin-brand-icon,
+.platform-sidebar .platform-brand-icon-sm,
 .schedule-sidebar .welcome-icon {
-    width: 52px !important;
-    height: 52px !important;
-    min-width: 52px !important;
-    border-radius: 16px !important;
-    background: var(--shell-primary) !important;
-    color: #ffffff !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(99, 102, 241, 0.1) 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+    color: #818cf8 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    flex-shrink: 0 !important;
+}
+
+.teacher-sidebar .brand-box .brand-box-icon i,
+.teacher-sidebar .teacher-brand i,
+.student-sidebar .student-brand i,
+.admin-sidebar .admin-brand i,
+.admin-sidebar .admin-brand-icon i,
+.platform-sidebar .platform-logo i,
+.schedule-sidebar .welcome-icon i {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: auto !important;
+    display: inline-block !important;
+    font-size: 18px !important;
+    color: #818cf8 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .teacher-sidebar .brand-box .brand-box-text {
     width: auto !important;
     min-width: 0 !important;
+
     height: auto !important;
     border-radius: 0 !important;
     background: transparent !important;
@@ -534,18 +574,18 @@ body.ui-sidebar-open {
     gap: 12px;
     padding: 10px 14px;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(30, 41, 59, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-avatar {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-    border-radius: 12px;
-    background: var(--shell-primary);
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: #ffffff;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 900;
     display: flex;
     align-items: center;
@@ -601,45 +641,56 @@ body.ui-sidebar-collapsed .sidebar-greeting {
 /* Removed old logout button CSS to unify with menu-link */
 
 /* =========================
-   HAMBURGER
+   HAMBURGER TOGGLE BUTTON
 ========================= */
 
 .ui-sidebar-toggle,
 .admin-sidebar-toggle {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    border-radius: 14px !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #ffffff !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #cbd5e1 !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     padding: 0 !important;
-    margin: 0 0 14px 0 !important;
+    margin: 0 0 16px 0 !important;
     cursor: pointer;
     box-shadow: none !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .ui-sidebar-toggle:hover,
 .admin-sidebar-toggle:hover {
-    background: var(--shell-primary) !important;
+    background: rgba(37, 99, 235, 0.2) !important;
+    border-color: rgba(37, 99, 235, 0.5) !important;
+    color: #60a5fa !important;
+    transform: scale(1.05);
 }
 
 .ui-sidebar-toggle-lines {
-    width: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+    width: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3.5px !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s ease;
 }
 
 .ui-sidebar-toggle-lines span {
-    display: block;
-    width: 100%;
-    height: 3px;
-    border-radius: 99px;
-    background: currentColor;
+    display: block !important;
+    width: 100% !important;
+    height: 2px !important;
+    min-height: 2px !important;
+    border-radius: 99px !important;
+    background: currentColor !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s ease;
 }
 
 .ui-mobile-sidebar-toggle {
@@ -681,86 +732,222 @@ body.ui-sidebar-collapsed .sidebar-greeting {
     body.ui-sidebar-collapsed .admin-layout,
     body.ui-sidebar-collapsed .student-layout,
     body.ui-sidebar-collapsed .platform-layout,
-    body.ui-sidebar-collapsed .teacher-page {
-        grid-template-columns: var(--shell-sidebar-collapsed) minmax(0, 1fr) !important;
-    }
-
+    body.ui-sidebar-collapsed .teacher-page,
     body.ui-sidebar-collapsed .schedule-layout,
     body.ui-sidebar-collapsed .teacher-layout {
-        grid-template-columns: var(--shell-sidebar-collapsed) minmax(0, 1fr) !important;
+        grid-template-columns: 80px minmax(0, 1fr) !important;
     }
 
     body.ui-sidebar-collapsed .ui-sidebar {
-        width: var(--shell-sidebar-collapsed) !important;
-        padding: 24px 8px !important;
+        width: 80px !important;
+        min-width: 80px !important;
+        max-width: 80px !important;
+        padding: 20px 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
         align-items: center !important;
-        gap: 10px !important;
-    }
-
-    body.ui-sidebar-collapsed .ui-sidebar a,
-    body.ui-sidebar-collapsed .ui-sidebar button:not(.ui-sidebar-toggle) {
-        width: 56px !important;
-        min-width: 56px !important;
-        max-width: 56px !important;
-        height: 56px !important;
-        padding: 0 !important;
-        justify-content: center !important;
+        gap: 8px !important;
         overflow: hidden !important;
-        align-self: center !important;
     }
 
-    body.ui-sidebar-collapsed .ui-sidebar .ui-sidebar-toggle {
-        align-self: center !important;
-        margin-bottom: 14px !important;
-    }
-
-    body.ui-sidebar-collapsed .ui-sidebar form {
-        width: 56px !important;
-        align-self: center !important;
-    }
-
-    /* Center the nav list itself when collapsed */
-    body.ui-sidebar-collapsed .shell-sidebar-nav,
-    body.ui-sidebar-collapsed .ui-sidebar .sidebar-menu,
-    body.ui-sidebar-collapsed .ui-sidebar .admin-menu,
-    body.ui-sidebar-collapsed .ui-sidebar .platform-menu {
+    body.ui-sidebar-collapsed .ui-sidebar .ui-sidebar-toggle,
+    body.ui-sidebar-collapsed .admin-sidebar-toggle {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        border-radius: 14px !important;
+        margin: 0 auto 8px auto !important;
+        display: flex !important;
         align-items: center !important;
+        justify-content: center !important;
+        align-self: center !important;
+        flex-shrink: 0 !important;
+    }
+
+    body.ui-sidebar-collapsed .admin-brand,
+    body.ui-sidebar-collapsed .platform-logo,
+    body.ui-sidebar-collapsed .brand-box,
+    body.ui-sidebar-collapsed .student-welcome {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        border-radius: 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 auto 12px auto !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        flex-shrink: 0 !important;
+        align-self: center !important;
+    }
+
+    body.ui-sidebar-collapsed .admin-brand-icon,
+    body.ui-sidebar-collapsed .platform-brand-icon-sm,
+    body.ui-sidebar-collapsed .platform-logo i,
+    body.ui-sidebar-collapsed .brand-box-icon,
+    body.ui-sidebar-collapsed .welcome-icon {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        border-radius: 14px !important;
+        background: #2563eb !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 20px !important;
+        margin: 0 !important;
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3) !important;
+    }
+
+    body.ui-sidebar-collapsed .admin-brand-icon i,
+    body.ui-sidebar-collapsed .platform-brand-icon-sm i,
+    body.ui-sidebar-collapsed .platform-logo i,
+    body.ui-sidebar-collapsed .brand-box-icon i,
+    body.ui-sidebar-collapsed .welcome-icon i {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: auto !important;
+        font-size: 20px !important;
+        color: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    body.ui-sidebar-collapsed .sidebar-greeting {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        padding: 0 !important;
+        margin: 0 auto 8px auto !important;
+        justify-content: center !important;
+        border-radius: 14px !important;
+    }
+
+    body.ui-sidebar-collapsed .shell-sidebar-nav,
+    body.ui-sidebar-collapsed .platform-menu,
+    body.ui-sidebar-collapsed .admin-menu,
+    body.ui-sidebar-collapsed .sidebar-menu,
+    body.ui-sidebar-collapsed .student-nav,
+    body.ui-sidebar-collapsed .teacher-nav {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    body.ui-sidebar-collapsed .shell-sidebar-nav > a,
+    body.ui-sidebar-collapsed .ui-sidebar .menu-link,
+    body.ui-sidebar-collapsed .ui-sidebar .menu-item,
+    body.ui-sidebar-collapsed .ui-sidebar .platform-nav-link,
+    body.ui-sidebar-collapsed .ui-sidebar .admin-menu a,
+    body.ui-sidebar-collapsed .ui-sidebar .student-nav a,
+    body.ui-sidebar-collapsed .ui-sidebar .teacher-nav a,
+    body.ui-sidebar-collapsed .ui-sidebar .shell-footer-link {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        max-width: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        border-radius: 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        color: #94a3b8 !important;
+        background: transparent !important;
+        align-self: center !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative !important;
+    }
+
+    body.ui-sidebar-collapsed .ui-sidebar .menu-link:hover,
+    body.ui-sidebar-collapsed .ui-sidebar .menu-item:hover,
+    body.ui-sidebar-collapsed .ui-sidebar .platform-nav-link:hover,
+    body.ui-sidebar-collapsed .ui-sidebar .admin-menu a:hover,
+    body.ui-sidebar-collapsed .ui-sidebar .shell-footer-link:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #ffffff !important;
+        transform: scale(1.06) !important;
+    }
+
+    body.ui-sidebar-collapsed .ui-sidebar .menu-link.active,
+    body.ui-sidebar-collapsed .ui-sidebar .menu-item.active,
+    body.ui-sidebar-collapsed .ui-sidebar .platform-nav-link.active,
+    body.ui-sidebar-collapsed .ui-sidebar .admin-menu a.active,
+    body.ui-sidebar-collapsed .ui-sidebar .shell-footer-link.active {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4) !important;
+        transform: none !important;
+    }
+
+    body.ui-sidebar-collapsed .ui-sidebar i {
+        font-size: 18px !important;
+        width: auto !important;
+        min-width: auto !important;
+        text-align: center !important;
+        margin: 0 !important;
     }
 
     body.ui-sidebar-collapsed .shell-sidebar-footer {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
         align-items: center !important;
-        width: 100%;
-        border-top: none;
-        padding-top: 4px;
-        margin-top: auto;
-    }
-
-    /* In collapsed mode, kill all individual margins/gaps on brand-block */
-    body.ui-sidebar-collapsed .sidebar-brand-block {
-        gap: 10px !important;
-        margin-bottom: 0 !important;
-        align-items: center;
-        width: 100%;
-    }
-
-    /* Toggle also participates in the 10px gap flow */
-    body.ui-sidebar-collapsed .ui-sidebar .ui-sidebar-toggle {
-        margin: 0 !important;
+        margin-top: auto !important;
+        padding: 12px 0 0 0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
         align-self: center !important;
     }
 
-    body.ui-sidebar-collapsed .ui-sidebar .sidebar-greeting {
-        width: 56px !important;
-        height: 56px !important;
-        min-width: 56px !important;
-        padding: 0 !important;
-        justify-content: center;
-        border-radius: 18px;
-        border: 1px solid rgba(255,255,255,0.1);
-        background: rgba(255,255,255,0.08);
+    body.ui-sidebar-collapsed .sidebar-logout-form {
+        width: 48px !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-self: center !important;
     }
 
-    body.ui-sidebar-collapsed .ui-sidebar span:not(.ui-sidebar-toggle-lines):not(.ui-sidebar-toggle-lines span):not(.brand-box-icon):not(.sidebar-avatar),
+    body.ui-sidebar-collapsed .sidebar-logout-button {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        max-width: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        border-radius: 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        color: #94a3b8 !important;
+        background: transparent !important;
+        margin: 0 auto !important;
+        align-self: center !important;
+        transition: all 0.2s ease !important;
+    }
+
+    body.ui-sidebar-collapsed .sidebar-logout-button:hover {
+        background: rgba(239, 68, 68, 0.18) !important;
+        color: #f87171 !important;
+        transform: scale(1.06) !important;
+    }
+
+    /* Hide text nodes cleanly */
+    body.ui-sidebar-collapsed .ui-sidebar span:not(.ui-sidebar-toggle-lines):not(.ui-sidebar-toggle-lines span):not(.brand-box-icon):not(.sidebar-avatar):not(.admin-brand-icon),
     body.ui-sidebar-collapsed .ui-sidebar p,
     body.ui-sidebar-collapsed .ui-sidebar h1,
     body.ui-sidebar-collapsed .ui-sidebar h2,
@@ -770,9 +957,9 @@ body.ui-sidebar-collapsed .sidebar-greeting {
     body.ui-sidebar-collapsed .ui-sidebar .shell-text,
     body.ui-sidebar-collapsed .ui-sidebar .sidebar-greeting-text,
     body.ui-sidebar-collapsed .ui-sidebar .admin-brand-text,
-    body.ui-sidebar-collapsed .platform-link-text,
-    body.ui-sidebar-collapsed .platform-logo-text,
-    body.ui-sidebar-collapsed .shell-settings-label,
+    body.ui-sidebar-collapsed .ui-sidebar .platform-link-text,
+    body.ui-sidebar-collapsed .ui-sidebar .platform-logo-text,
+    body.ui-sidebar-collapsed .ui-sidebar .shell-settings-label,
     body.ui-sidebar-collapsed .student-sidebar-attendance-card {
         display: none !important;
         opacity: 0 !important;
@@ -781,46 +968,6 @@ body.ui-sidebar-collapsed .sidebar-greeting {
         height: 0 !important;
         overflow: hidden !important;
         padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    body.ui-sidebar-collapsed .shell-sidebar-footer {
-        border-top: none;
-        padding-top: 8px;
-    }
-
-    body.ui-sidebar-collapsed .teacher-sidebar .brand-box,
-    body.ui-sidebar-collapsed .teacher-sidebar .teacher-brand,
-    body.ui-sidebar-collapsed .student-sidebar .student-brand,
-    body.ui-sidebar-collapsed .admin-sidebar .admin-brand,
-    body.ui-sidebar-collapsed .platform-sidebar .platform-logo,
-    body.ui-sidebar-collapsed .platform-sidebar a.platform-logo,
-    body.ui-sidebar-collapsed .schedule-sidebar .student-welcome {
-        width: 56px !important;
-        min-width: 56px !important;
-        height: 56px !important;
-        min-height: 56px !important;
-        padding: 0 !important;
-        justify-content: center !important;
-        overflow: hidden !important;
-    }
-
-
-
-    body.ui-sidebar-collapsed .teacher-sidebar .brand-box .brand-box-icon,
-    body.ui-sidebar-collapsed .teacher-sidebar .teacher-brand i,
-    body.ui-sidebar-collapsed .student-sidebar .student-brand i,
-    body.ui-sidebar-collapsed .admin-sidebar .admin-brand i,
-    body.ui-sidebar-collapsed .platform-sidebar .platform-logo i,
-    body.ui-sidebar-collapsed .schedule-sidebar .welcome-icon {
-        margin: 0 !important;
-    }
-
-    body.ui-sidebar-collapsed .platform-sidebar a.platform-logo {
-        display: flex !important;
-    }
-
-    body.ui-sidebar-collapsed .ui-sidebar i {
         margin: 0 !important;
     }
 }
@@ -1142,30 +1289,27 @@ body.ui-sidebar-collapsed .sidebar-greeting {
 
 .class-body,
 .class-content {
-    display: grid !important;
-    grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     gap: 18px !important;
-    align-items: start !important;
+    width: 100% !important;
 }
 
 .class-info,
 .class-body > div {
+    flex: 1 1 auto;
     min-width: 0;
 }
 
 .schedule-main .class-content .class-info {
-    justify-self: stretch;
     text-align: left;
-}
-
-.schedule-main .class-content {
-    gap: 26px !important;
 }
 
 .schedule-main .class-time {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .class-body h3,
@@ -1187,17 +1331,15 @@ body.ui-sidebar-collapsed .sidebar-greeting {
 }
 
 .class-action {
-    margin-top: 18px !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
-    justify-content: space-between !important;
+    justify-content: center !important;
     gap: 14px !important;
-    flex-wrap: wrap !important;
+    margin: 0 !important;
 }
 
 .schedule-main .class-action {
-    justify-content: flex-start !important;
-    margin-top: 22px !important;
+    margin: 0 !important;
 }
 
 .view-btn,
@@ -1281,6 +1423,12 @@ body.ui-sidebar-collapsed .sidebar-greeting {
     border: 1px solid #bae6fd !important;
 }
 
+.status-badge.ongoing {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+}
+
 .status-badge.waiting {
     background: #f1f5f9 !important;
     color: #64748b !important;
@@ -1312,8 +1460,7 @@ body.ui-sidebar-collapsed .sidebar-greeting {
     .stats-row,
     .content-area,
     .manual-schedule-grid,
-    .class-body,
-    .class-content {
+    .class-body {
         grid-template-columns: 1fr !important;
     }
 
@@ -1322,17 +1469,11 @@ body.ui-sidebar-collapsed .sidebar-greeting {
     }
 
     .schedule-main .class-card {
-        padding: 22px 20px !important;
+        padding: 20px 18px !important;
     }
 
     .schedule-main .schedule-list {
         gap: 16px !important;
-    }
-
-    .class-card-top,
-    .class-action {
-        align-items: flex-start !important;
-        flex-direction: column !important;
     }
 }
 
@@ -1462,8 +1603,7 @@ a {
     .manual-date-filter-row,
     .manual-schedule-grid,
     .manual-student-grid,
-    .class-body,
-    .class-content {
+    .class-body {
         grid-template-columns: 1fr !important;
     }
 
@@ -1480,8 +1620,6 @@ a {
         border-radius: 18px !important;
     }
 
-    .class-card-top,
-    .class-action,
     .teacher-filter-actions,
     .manual-toolbar-actions,
     .student-export-actions,
@@ -1505,8 +1643,8 @@ a {
     .admin-secondary-btn,
     .platform-primary-btn,
     .platform-primary-link,
-    .admin-warning-btn,
-    .admin-delete-btn {
+    .admin-warning-btn:not(.admin-delete-btn-icon):not(.admin-icon-btn),
+    .admin-delete-btn:not(.admin-delete-btn-icon):not(.admin-icon-btn) {
         width: 100% !important;
         justify-content: center !important;
     }
@@ -1753,13 +1891,14 @@ a {
 .gps-distance-pill {
     display: inline-flex;
     align-items: center;
-    min-height: 30px;
-    padding: 0 11px;
+    min-height: 26px;
+    padding: 2px 10px;
     border-radius: 999px;
-    background: #dcfce7;
-    color: #15803d;
-    font-size: 12px;
-    font-weight: 950;
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+    font-size: 11.5px;
+    font-weight: 700;
     white-space: nowrap;
 }
 
@@ -1953,64 +2092,191 @@ a {
 }
 
 /* =========================
-   ENHANCED SWEETALERT
+   ENHANCED SWEETALERT MODAL CENTERING
 ========================= */
-.shell-enhanced-alert {
+.swal2-container,
+.swal2-container.shell-enhanced-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    background: rgba(15, 23, 42, 0.75) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    z-index: 999999 !important;
+    overflow-y: auto !important;
+}
+
+.swal2-popup.shell-enhanced-alert {
+    position: relative !important;
+    margin: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
     border-radius: 24px !important;
-    padding: 32px 24px 24px !important;
-    box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.15) !important;
+    padding: 32px 24px 28px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
     font-family: var(--shell-font) !important;
+    max-width: 440px !important;
+    width: calc(100% - 32px) !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    transform: none !important;
+    overflow: hidden !important;
+}
+
+.swal2-icon:not([style*="display: none"]):not([style*="display:none"]) {
+    margin: 0 auto 16px auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.swal2-icon[style*="display: none"],
+.swal2-icon[style*="display:none"],
+.swal2-icon.swal2-hidden,
+.swal2-icon:empty {
+    display: none !important;
+    margin: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    border: none !important;
+}
+
+.swal2-popup,
+.swal2-popup.shell-enhanced-alert {
+    border-radius: 24px !important;
+    font-family: var(--shell-font, "Plus Jakarta Sans", sans-serif) !important;
+}
+
+.swal2-input-label,
+.shell-enhanced-input-label {
+    display: block !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+    margin: 16px 0 8px 0 !important;
+    text-align: left !important;
+    width: 100% !important;
+}
+
+.swal2-textarea,
+.shell-enhanced-textarea,
+.swal2-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-family: inherit !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border-radius: 14px !important;
+    padding: 12px 14px !important;
+    box-sizing: border-box !important;
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    color: #0f172a !important;
+    outline: none !important;
+    resize: vertical !important;
+    min-height: 80px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.swal2-textarea:focus,
+.shell-enhanced-textarea:focus,
+.swal2-input:focus {
+    background: #ffffff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.18) !important;
 }
 
 .shell-enhanced-title {
-    font-family: var(--shell-heading-font) !important;
-    font-size: 26px !important;
+    font-family: var(--shell-heading-font, "Sora", sans-serif) !important;
+    font-size: 22px !important;
     font-weight: 800 !important;
-    color: var(--shell-text) !important;
-    margin-top: 16px !important;
+    color: #0f172a !important;
+    margin: 0 0 10px 0 !important;
+    padding: 0 !important;
+    text-align: center !important;
+    width: 100% !important;
 }
 
 .shell-enhanced-text {
-    font-size: 16px !important;
-    color: var(--shell-muted) !important;
-    margin-top: 8px !important;
+    font-size: 14.5px !important;
+    line-height: 1.55 !important;
+    color: #64748b !important;
+    margin: 0 0 18px 0 !important;
+    padding: 0 8px !important;
+    text-align: center !important;
+    width: 100% !important;
 }
 
-.shell-enhanced-actions {
-    margin-top: 32px !important;
+.shell-enhanced-actions,
+.swal2-actions {
+    margin: 20px 0 0 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     gap: 12px !important;
+    width: 100% !important;
 }
 
-.shell-enhanced-confirm {
-    background: var(--shell-primary) !important;
+.shell-enhanced-confirm,
+.swal2-confirm {
+    height: 44px !important;
+    padding: 0 22px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
     color: #ffffff !important;
-    border-radius: 14px !important;
-    padding: 14px 28px !important;
-    font-weight: 800 !important;
-    font-size: 15px !important;
-    box-shadow: 0 8px 16px -4px rgba(11, 99, 246, 0.25) !important;
-    transition: all 0.2s ease !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+    border: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.shell-enhanced-confirm:hover {
-    background: var(--shell-primary-dark) !important;
-    transform: translateY(-2px) !important;
+.shell-enhanced-confirm:hover,
+.swal2-confirm:hover {
+    transform: translateY(-1.5px) !important;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4) !important;
 }
 
-.shell-enhanced-cancel {
-    background: #ffffff !important;
-    color: var(--shell-text) !important;
-    border: 1px solid #dbe5f0 !important;
-    border-radius: 14px !important;
-    padding: 14px 28px !important;
-    font-weight: 800 !important;
-    font-size: 15px !important;
-    transition: all 0.2s ease !important;
+.shell-enhanced-cancel,
+.swal2-cancel {
+    height: 44px !important;
+    padding: 0 18px !important;
+    border-radius: 12px !important;
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.shell-enhanced-cancel:hover {
-    background: #f8fafc !important;
-    border-color: #cbd5e1 !important;
+.shell-enhanced-cancel:hover,
+.swal2-cancel:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    transform: translateY(-1.5px) !important;
 }
 
 /* Make the warning icon match the design */
@@ -2022,18 +2288,100 @@ a {
     color: #fba341 !important;
 }
 
+/* Dark Mode SweetAlert */
+[data-theme="dark"] .swal2-popup,
+[data-theme="dark"] .swal2-popup.shell-enhanced-alert,
+body.dark-mode .swal2-popup,
+body.dark-mode .swal2-popup.shell-enhanced-alert {
+    background: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .shell-enhanced-title,
+[data-theme="dark"] .swal2-title,
+body.dark-mode .shell-enhanced-title,
+body.dark-mode .swal2-title {
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .shell-enhanced-text,
+[data-theme="dark"] .swal2-html-container,
+body.dark-mode .shell-enhanced-text,
+body.dark-mode .swal2-html-container {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .swal2-input-label,
+[data-theme="dark"] .shell-enhanced-input-label,
+body.dark-mode .swal2-input-label,
+body.dark-mode .shell-enhanced-input-label {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .swal2-textarea,
+[data-theme="dark"] .shell-enhanced-textarea,
+[data-theme="dark"] .swal2-input,
+body.dark-mode .swal2-textarea,
+body.dark-mode .shell-enhanced-textarea,
+body.dark-mode .swal2-input {
+    background: #0b0f19 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .swal2-textarea:focus,
+[data-theme="dark"] .shell-enhanced-textarea:focus,
+[data-theme="dark"] .swal2-input:focus,
+body.dark-mode .swal2-textarea:focus,
+body.dark-mode .shell-enhanced-textarea:focus,
+body.dark-mode .swal2-input:focus {
+    background: #0f172a !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-theme="dark"] .shell-enhanced-cancel,
+[data-theme="dark"] .swal2-cancel,
+body.dark-mode .shell-enhanced-cancel,
+body.dark-mode .swal2-cancel {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .shell-enhanced-cancel:hover,
+[data-theme="dark"] .swal2-cancel:hover,
+body.dark-mode .shell-enhanced-cancel:hover,
+body.dark-mode .swal2-cancel:hover {
+    background: rgba(255, 255, 255, 0.14) !important;
+    color: #ffffff !important;
+}
+
 /* ============================================================
    Performance & Smoothness Enhancements
    ============================================================ */
 
-/* Page fade-in on load */
+/* Page fade-in on load (opacity only - NEVER use transform on body as it breaks position: fixed) */
 @keyframes pageEntrance {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 body {
-    animation: pageEntrance 0.22s ease-out both;
+    animation: pageEntrance 0.2s ease-out;
+}
+
+html,
+body,
+.admin-layout,
+.student-layout,
+.teacher-layout,
+.platform-layout,
+.schedule-layout {
+    transform: none !important;
+    perspective: none !important;
 }
 
 /* GPU-accelerate animated elements */

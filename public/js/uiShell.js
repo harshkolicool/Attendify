@@ -1,6 +1,6 @@
 (function () {
     const STORAGE_VERSION_KEY = "attendifyUiShellVersion";
-    const CURRENT_VERSION = "2026-05-24-final-ui-stable-8";
+    const CURRENT_VERSION = "2026-08-30-ui-shell-v5-perfect-align";
 
     function resetOldBrokenStateOnce() {
         if (localStorage.getItem(STORAGE_VERSION_KEY) === CURRENT_VERSION) {
@@ -100,7 +100,8 @@
     }
 
     function normalizeExistingToggle(sidebar) {
-        let button = document.getElementById("adminSidebarToggle");
+        let button = document.getElementById("adminSidebarToggle") ||
+                     document.getElementById("platformSidebarToggle");
 
         if (!button) {
             button = sidebar.querySelector(".admin-sidebar-toggle, .ui-sidebar-toggle");
@@ -922,29 +923,38 @@
         }
     }
 
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+            if (document.body) document.body.classList.add('dark-mode');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+            if (document.body) document.body.classList.remove('dark-mode');
+        }
+    }
+
     function installThemeToggle() {
         const savedTheme = localStorage.getItem('attendifyTheme') || 'light';
-        if (savedTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
+        applyTheme(savedTheme);
 
         // Attach logic to any existing toggle buttons (e.g. on My Profile pages)
         const toggleButtons = document.querySelectorAll('.js-theme-toggle');
         toggleButtons.forEach(btn => {
             // Initialize button state
-            btn.innerHTML = savedTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+            btn.innerHTML = savedTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> <span>Light Mode</span>' : '<i class="fa-solid fa-moon"></i> <span>Dark Mode</span>';
             
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
                 const newTheme = currentTheme === 'light' ? 'dark' : 'light';
                 
-                document.documentElement.setAttribute('data-theme', newTheme);
+                applyTheme(newTheme);
                 localStorage.setItem('attendifyTheme', newTheme);
                 
                 // Update all buttons on the page
                 document.querySelectorAll('.js-theme-toggle').forEach(b => {
-                    b.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+                    b.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> <span>Light Mode</span>' : '<i class="fa-solid fa-moon"></i> <span>Dark Mode</span>';
                 });
             });
         });
@@ -957,7 +967,7 @@
 
         const btn = document.createElement('button');
         btn.className = 'theme-toggle-btn secondary-btn js-theme-toggle';
-        btn.innerHTML = savedTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+        btn.innerHTML = savedTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> <span>Light Mode</span>' : '<i class="fa-solid fa-moon"></i> <span>Dark Mode</span>';
         btn.title = 'Toggle Theme';
         btn.style = 'padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #94a3b8; color: #475569; background: transparent; cursor: pointer; width: 100%; margin-top: 6px;';
 
@@ -966,12 +976,12 @@
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
             
-            document.documentElement.setAttribute('data-theme', newTheme);
+            applyTheme(newTheme);
             localStorage.setItem('attendifyTheme', newTheme);
             
             // Update all buttons on the page
             document.querySelectorAll('.js-theme-toggle').forEach(b => {
-                b.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> Toggle Light Mode' : '<i class="fa-solid fa-moon"></i> Toggle Dark Mode';
+                b.innerHTML = newTheme === 'dark' ? '<i class="fa-solid fa-sun"></i> <span>Light Mode</span>' : '<i class="fa-solid fa-moon"></i> <span>Dark Mode</span>';
             });
         });
 
@@ -981,7 +991,7 @@
     // Apply theme as fast as possible
     const initialTheme = localStorage.getItem('attendifyTheme');
     if (initialTheme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
+        applyTheme('dark');
     }
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -989,47 +999,28 @@
         wrapSelects();
         installRealtime();
         installThemeToggle();
-        installPageTransitions();
     });
 
-    // Smooth page-exit fade when navigating away
-    function installPageTransitions() {
-        // Only run on regular anchor clicks (not same-page hashes, not forms)
-        document.addEventListener('click', function(e) {
-            const anchor = e.target.closest('a[href]');
-            if (!anchor) return;
+    // Clean transient message/error query parameters so page refresh is clean
+    if (window.history && window.history.replaceState && window.location.search) {
+        try {
+            const currentUrl = new URL(window.location.href);
+            const transientParams = ["message", "error", "success", "status"];
+            let hasTransient = false;
 
-            const href = anchor.getAttribute('href');
-            if (!href) return;
+            transientParams.forEach(function (param) {
+                if (currentUrl.searchParams.has(param)) {
+                    currentUrl.searchParams.delete(param);
+                    hasTransient = true;
+                }
+            });
 
-            // Skip hash links, javascript: links, new-tab links
-            if (
-                href.startsWith('#') ||
-                href.startsWith('javascript') ||
-                anchor.target === '_blank' ||
-                e.metaKey || e.ctrlKey || e.shiftKey
-            ) return;
-
-            // Skip external links
-            try {
-                const url = new URL(href, window.location.origin);
-                if (url.origin !== window.location.origin) return;
-                // Skip same-page navigation
-                if (url.pathname === window.location.pathname && url.hash) return;
-            } catch (err) {
-                return;
+            if (hasTransient) {
+                const cleanUrl = currentUrl.pathname + (currentUrl.searchParams.toString() ? "?" + currentUrl.searchParams.toString() : "") + currentUrl.hash;
+                setTimeout(function () {
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }, 800);
             }
-
-            e.preventDefault();
-            const destination = href;
-
-            // Fade out the body
-            document.body.style.transition = 'opacity 0.18s ease';
-            document.body.style.opacity = '0';
-
-            setTimeout(function() {
-                window.location.href = destination;
-            }, 180);
-        });
+        } catch (err) {}
     }
 })();

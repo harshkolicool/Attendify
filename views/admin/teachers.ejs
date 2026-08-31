@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teachers | Admin</title>
+    <title>Teachers & Faculty | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -31,7 +32,6 @@
         }
     </script>
 
-
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
     <script>
@@ -44,63 +44,115 @@
 </head>
 <body>
 
+<%
+    const safeTeachers = (typeof teachers !== "undefined" && teachers) ? teachers : [];
+    const safeDepartments = (typeof departments !== "undefined" && departments) ? departments : [];
+    
+    const hodCount = safeTeachers.filter(t => t.role === "HOD").length;
+    const uniqueDeptsCount = new Set(safeTeachers.map(t => t.department).filter(Boolean)).size || safeDepartments.length;
+    const totalAssignedSubjects = safeTeachers.reduce((acc, t) => acc + ((t.subjects && t.subjects.length) || 0), 0);
+%>
+
 <div class="admin-layout">
 
-    <%- include("partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "" }) %>
+    <%- include("partials/sidebar", { activePage: "teachers", currentCollege: typeof college !== "undefined" ? college : null }) %>
 
     <main class="admin-main">
 
         <header class="admin-header">
             <div>
                 <span class="admin-kicker">Admin Panel</span>
-                <h1>Teachers</h1>
-                <p>Create, search, edit and manage teacher accounts.</p>
+                <h1>Faculty & Teachers Directory</h1>
+                <p>Register faculty, assign departmental roles, and manage institutional teaching accounts.</p>
             </div>
         </header>
 
         <% if (typeof message !== "undefined" && message) { %>
-            <div class="admin-alert <%= message && message && message.includes('successfully') ? 'success' : 'error' %>">
-                <%= typeof message !== "undefined" ? message : "" %>
+            <div class="admin-alert <%= (message.includes('successfully') || message.includes('created') || message.includes('updated')) ? 'success' : 'error' %>">
+                <%= message %>
             </div>
         <% } %>
 
+        <!-- OVERVIEW STAT RADAR CARDS -->
+        <section class="adm-radar-grid">
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon room">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Total Faculty</span>
+                    <span class="adm-radar-val"><%= safeTeachers.length %> Verified</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon security">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">HOD Leadership</span>
+                    <span class="adm-radar-val" style="color: #6366f1;"><%= hodCount %> <%= hodCount === 1 ? 'Lead' : 'Leads' %></span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon dept">
+                    <i class="fa-solid fa-building-columns"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Departments</span>
+                    <span class="adm-radar-val"><%= uniqueDeptsCount %> <%= uniqueDeptsCount === 1 ? 'Branch' : 'Branches' %></span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon sync">
+                    <i class="fa-solid fa-book-open-reader"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Teaching Roster</span>
+                    <span class="adm-radar-val"><%= totalAssignedSubjects %> <%= totalAssignedSubjects === 1 ? 'Subject' : 'Subjects' %></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADD TEACHER COMMAND CARD -->
         <section class="admin-card">
             <div class="admin-card-head">
                 <div>
-                    <h3>Add Teacher</h3>
-                    <p>Create teacher or HOD accounts for this college.</p>
+                    <h3><i class="fa-solid fa-user-plus" style="color: #6366f1; margin-right: 8px;"></i> Add Faculty Member</h3>
+                    <p>Create professor, lecturer, or departmental HOD administrative credentials.</p>
                 </div>
             </div>
 
             <form action="/admin/teachers/create" method="POST" class="admin-form-grid">
                 <div class="admin-field">
-                    <label>Full Name</label>
-                    <input type="text" name="fullName" placeholder="Aman Sir" required>
+                    <label><i class="fa-solid fa-user" style="opacity: 0.7; margin-right: 6px;"></i> Full Name</label>
+                    <input type="text" name="fullName" placeholder="e.g. Dr. Aditya Prasad" required>
                 </div>
 
                 <div class="admin-field">
-                    <label>Email</label>
-                    <input type="email" name="email" placeholder="teacher@college.com" required>
+                    <label><i class="fa-solid fa-envelope" style="opacity: 0.7; margin-right: 6px;"></i> Official Email</label>
+                    <input type="email" name="email" placeholder="faculty@institution.edu" required>
                 </div>
 
                 <div class="admin-field">
-                    <label>Password</label>
+                    <label><i class="fa-solid fa-lock" style="opacity: 0.7; margin-right: 6px;"></i> Portal Password</label>
                     <input type="password" name="password" placeholder="Minimum 6 characters" required>
                 </div>
 
                 <div class="admin-field">
-                    <label>Employee ID</label>
-                    <input type="text" name="employeeId" placeholder="EMP101" required>
+                    <label><i class="fa-solid fa-id-badge" style="opacity: 0.7; margin-right: 6px;"></i> Employee ID</label>
+                    <input type="text" name="employeeId" placeholder="EMP-104" required>
                 </div>
 
                 <div class="admin-field">
-                    <label>Department</label>
-
+                    <label><i class="fa-solid fa-building-columns" style="opacity: 0.7; margin-right: 6px;"></i> Department</label>
                     <select name="department" required>
                         <option value="">Select Department</option>
 
-                        <% if (departments && departments.length > 0) { %>
-                            <% departments.forEach(function(department) { %>
+                        <% if (safeDepartments.length > 0) { %>
+                            <% safeDepartments.forEach(function(department) { %>
                                 <option value="<%= department %>">
                                     <%= department %>
                                 </option>
@@ -114,23 +166,23 @@
                 </div>
 
                 <div class="admin-field">
-                    <label>Role</label>
+                    <label><i class="fa-solid fa-shield-halved" style="opacity: 0.7; margin-right: 6px;"></i> Institutional Role</label>
                     <select name="role" required>
-                        <option value="TEACHER">Teacher</option>
-                        <option value="HOD">HOD</option>
+                        <option value="TEACHER">Teacher / Lecturer</option>
+                        <option value="HOD">Head of Department (HOD)</option>
                     </select>
                 </div>
 
-                <div class="admin-field admin-button-field">
-                    <label>&nbsp;</label>
-                    <button class="admin-primary-btn" type="submit">
-                        <i class="fa-solid fa-plus"></i>
-                        Add Teacher
+                <div class="admin-field admin-button-field" style="grid-column: 1 / -1;">
+                    <button class="admin-primary-btn" type="submit" style="min-height: 48px; font-size: 1rem; width: 100%; justify-content: center;">
+                        <i class="fa-solid fa-user-plus"></i>
+                        Register Faculty Member
                     </button>
                 </div>
             </form>
         </section>
 
+        <!-- TEACHER DIRECTORY -->
         <section class="admin-card">
 
             <div class="admin-toolbar">
@@ -138,178 +190,196 @@
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input
                         type="text"
+                        class="admin-search-input"
                         data-admin-search="teachers"
                         placeholder="Search teacher by name, email, employee ID, department, role or subject..."
+                        style="border: none !important; background: transparent !important; outline: none !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; width: 100% !important; flex: 1 1 auto !important;"
                     >
                 </div>
 
-                <form
-                    action="/admin/teachers/delete-all"
-                    method="POST"
-                    class="admin-toolbar-action"
-                    onsubmit="return uiConfirm(event, 'Delete all teachers? Active sessions will be skipped and attendance history will be preserved.')"
-                >
-                    <button class="admin-secondary-btn danger" type="submit">
-                        <i class="fa-solid fa-trash"></i>
-                        Delete All
-                    </button>
-                </form>
+                <% if (safeTeachers.length > 0) { %>
+                    <form
+                        action="/admin/teachers/delete-all"
+                        method="POST"
+                        class="admin-toolbar-action"
+                        onsubmit="return uiConfirm(event, 'Delete all teachers? Active sessions will be skipped and attendance history will be preserved.')"
+                    >
+                        <button class="admin-secondary-btn danger" type="submit">
+                            <i class="fa-solid fa-trash"></i>
+                            Delete All
+                        </button>
+                    </form>
+                <% } %>
 
                 <span class="admin-count-pill">
-                    <%= teachers.length %> Teachers
+                    <%= safeTeachers.length %> <%= safeTeachers.length === 1 ? 'Faculty' : 'Faculty' %>
                 </span>
             </div>
 
-            <% if (!teachers || teachers.length === 0) { %>
+            <% if (safeTeachers.length === 0) { %>
                 <div class="admin-empty">
-                    No teachers found.
+                    <i class="fa-solid fa-chalkboard-user" style="font-size: 2.2rem; opacity: 0.4; margin-bottom: 10px;"></i>
+                    <p>No teachers registered yet. Use the form above to enroll faculty members.</p>
                 </div>
-            <% } %>
+            <% } else { %>
 
-            <div class="admin-grid">
+                <div class="admin-grid">
 
-                <% teachers.forEach(function(teacher) { %>
+                    <% safeTeachers.forEach(function(teacher) { %>
 
-                    <article class="admin-item-card admin-entity-card admin-teacher-card" data-search-group="teachers">
+                        <article class="admin-item-card admin-entity-card admin-teacher-card" data-search-group="teachers">
 
-                        <div class="admin-item-top">
-                            <div class="admin-item-icon">
-                                <i class="fa-solid fa-chalkboard-user"></i>
+                            <div class="admin-item-top">
+                                <div class="admin-item-icon" style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); color: #ffffff;">
+                                    <i class="fa-solid fa-chalkboard-user"></i>
+                                </div>
+
+                                <form
+                                    action="/admin/teachers/<%= teacher._id %>/delete"
+                                    method="POST"
+                                    onsubmit="return uiConfirm(event, 'Delete faculty member <%= teacher.fullName %>?')"
+                                >
+                                    <button class="admin-delete-btn admin-delete-btn-icon" type="submit" title="Delete Faculty" aria-label="Delete Faculty">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
                             </div>
 
-                            <form
-                                action="/admin/teachers/<%= teacher._id %>/delete"
-                                method="POST"
-                                onsubmit="return uiConfirm(event, 'Delete this teacher?')"
-                            >
-                                <button class="admin-delete-btn" type="submit">
-                                    Delete
-                                </button>
-                            </form>
-                        </div>
+                            <h4><%= teacher.fullName %></h4>
+                            <p><i class="fa-solid fa-envelope" style="opacity: 0.6; margin-right: 4px;"></i> <%= teacher.email %></p>
 
-                        <h4><%= teacher.fullName %></h4>
-                        <p><%= teacher.email %></p>
+                            <div class="admin-meta">
+                                <span class="admin-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-weight: 700;">
+                                    <i class="fa-solid fa-id-badge"></i> <%= teacher.employeeId %>
+                                </span>
+                                <span class="admin-badge" style="background: rgba(6, 182, 212, 0.12); color: #0891b2; font-weight: 700;">
+                                    <i class="fa-solid fa-building-columns"></i> <%= teacher.department %>
+                                </span>
+                                <span class="admin-badge <%= teacher.role === 'HOD' ? 'gold' : '' %>" style="background: <%= teacher.role === 'HOD' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.12)' %>; color: <%= teacher.role === 'HOD' ? '#d97706' : '#059669' %>; font-weight: 800;">
+                                    <i class="fa-solid <%= teacher.role === 'HOD' ? 'fa-crown' : 'fa-user-tie' %>"></i> <%= teacher.role %>
+                                </span>
 
-                        <div class="admin-meta">
-                            <span class="admin-badge">ID: <%= teacher.employeeId %></span>
-                            <span class="admin-badge"><%= teacher.department %></span>
-                            <span class="admin-badge"><%= teacher.role %></span>
+                                <% if (teacher.subjects && teacher.subjects.length > 0) { %>
+                                    <span class="admin-badge" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed; font-weight: 700;">
+                                        <i class="fa-solid fa-book"></i> <%= teacher.subjects.length %> Courses
+                                    </span>
+                                <% } else { %>
+                                    <span class="admin-badge muted">
+                                        No Courses Assigned
+                                    </span>
+                                <% } %>
+                            </div>
 
                             <% if (teacher.subjects && teacher.subjects.length > 0) { %>
-                                <span class="admin-badge"><%= teacher.subjects.length %> Subjects</span>
-                            <% } else { %>
-                                <span class="admin-badge">No Subjects</span>
+                                <div class="admin-meta" style="margin-top: 8px; align-items: center; gap: 6px;">
+                                    <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 700;">Assigned:</span>
+                                    <% teacher.subjects.forEach(function(subject) { %>
+                                        <span class="admin-badge" style="font-size: 0.74rem; background: rgba(99, 102, 241, 0.14); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.28);">
+                                            <i class="fa-solid fa-book-bookmark"></i> <%= subject.subjectName %>
+                                        </span>
+                                    <% }) %>
+                                </div>
                             <% } %>
-                        </div>
 
-                        <% if (teacher.subjects && teacher.subjects.length > 0) { %>
-                            <div class="admin-meta">
-                                <% teacher.subjects.forEach(function(subject) { %>
-                                    <span class="admin-badge">
-                                        <%= subject.subjectName %>
-                                    </span>
-                                <% }) %>
-                            </div>
-                        <% } %>
+                            <details class="admin-edit-box">
+                                <summary>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    Edit Faculty Info
+                                </summary>
 
-                        <details class="admin-edit-box">
-                            <summary>
-                                <i class="fa-solid fa-pen-to-square"></i>
-                                Edit Teacher
-                            </summary>
+                                <form
+                                    action="/admin/teachers/<%= teacher._id %>/update"
+                                    method="POST"
+                                    class="admin-edit-form"
+                                >
+                                    <div class="admin-field">
+                                        <label>Full Name</label>
+                                        <input
+                                            type="text"
+                                            name="fullName"
+                                            value="<%= teacher.fullName %>"
+                                            required
+                                        >
+                                    </div>
 
-                            <form
-                                action="/admin/teachers/<%= teacher._id %>/update"
-                                method="POST"
-                                class="admin-edit-form"
-                            >
-                                <div class="admin-field">
-                                    <label>Full Name</label>
-                                    <input
-                                        type="text"
-                                        name="fullName"
-                                        value="<%= teacher.fullName %>"
-                                        required
-                                    >
-                                </div>
+                                    <div class="admin-field">
+                                        <label>Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value="<%= teacher.email %>"
+                                            required
+                                        >
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>Email</label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value="<%= teacher.email %>"
-                                        required
-                                    >
-                                </div>
+                                    <div class="admin-field">
+                                        <label>New Password</label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            placeholder="Leave blank to keep old password"
+                                        >
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>New Password</label>
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        placeholder="Leave blank to keep old password"
-                                    >
-                                </div>
+                                    <div class="admin-field">
+                                        <label>Employee ID</label>
+                                        <input
+                                            type="text"
+                                            name="employeeId"
+                                            value="<%= teacher.employeeId %>"
+                                            required
+                                        >
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>Employee ID</label>
-                                    <input
-                                        type="text"
-                                        name="employeeId"
-                                        value="<%= teacher.employeeId %>"
-                                        required
-                                    >
-                                </div>
+                                    <div class="admin-field">
+                                        <label>Department</label>
 
-                                <div class="admin-field">
-                                    <label>Department</label>
+                                        <select name="department" required>
+                                            <option value="">Select Department</option>
 
-                                    <select name="department" required>
-                                        <option value="">Select Department</option>
-
-                                        <% if (departments && departments.length > 0) { %>
-                                            <% departments.forEach(function(department) { %>
-                                                <option
-                                                    value="<%= department %>"
-                                                    <%= teacher.department === department ? "selected" : "" %>
-                                                >
-                                                    <%= department %>
+                                            <% if (safeDepartments.length > 0) { %>
+                                                <% safeDepartments.forEach(function(department) { %>
+                                                    <option
+                                                        value="<%= department %>"
+                                                        <%= teacher.department === department ? "selected" : "" %>
+                                                    >
+                                                        <%= department %>
+                                                    </option>
+                                                <% }) %>
+                                            <% } else { %>
+                                                <option value="<%= teacher.department %>" selected>
+                                                    <%= teacher.department %>
                                                 </option>
-                                            <% }) %>
-                                        <% } else { %>
-                                            <option value="<%= teacher.department %>" selected>
-                                                <%= teacher.department %>
+                                            <% } %>
+                                        </select>
+                                    </div>
+
+                                    <div class="admin-field">
+                                        <label>Role</label>
+                                        <select name="role" required>
+                                            <option value="TEACHER" <%= teacher.role === "TEACHER" ? "selected" : "" %>>
+                                                Teacher
                                             </option>
-                                        <% } %>
-                                    </select>
-                                </div>
 
-                                <div class="admin-field">
-                                    <label>Role</label>
-                                    <select name="role" required>
-                                        <option value="TEACHER" <%= teacher.role === "TEACHER" ? "selected" : "" %>>
-                                            Teacher
-                                        </option>
+                                            <option value="HOD" <%= teacher.role === "HOD" ? "selected" : "" %>>
+                                                HOD
+                                            </option>
+                                        </select>
+                                    </div>
 
-                                        <option value="HOD" <%= teacher.role === "HOD" ? "selected" : "" %>>
-                                            HOD
-                                        </option>
-                                    </select>
-                                </div>
+                                    <button class="admin-primary-btn" type="submit" style="grid-column: 1 / -1; margin-top: 8px;">
+                                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                                    </button>
+                                </form>
+                            </details>
 
-                                <button class="admin-primary-btn" type="submit">
-                                    Save Changes
-                                </button>
-                            </form>
-                        </details>
+                        </article>
 
-                    </article>
+                    <% }) %>
 
-                <% }) %>
+                </div>
 
-            </div>
+            <% } %>
 
         </section>
 
@@ -322,7 +392,7 @@
 <script src="/js/uiShell.js"></script>
 
     <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
+    <script src="/js/selectEnhancer.js?v=3" defer></script>
     <script src="/js/adminRealtime.js"></script>
 </body>
 </html>

@@ -1,99 +1,463 @@
-<aside class="ui-sidebar admin-sidebar" id="adminSidebar">
+<style>
+/* ==========================================================================
+   DESKTOP ADMIN SIDEBAR (> 860px)
+   ========================================================================== */
+@media (min-width: 861px) {
+    #adminSidebar.ui-sidebar,
+    aside#adminSidebar,
+    .ui-sidebar.admin-sidebar,
+    .schedule-sidebar.admin-sidebar {
+        position: fixed !important;
+        top: 0px !important;
+        left: 0px !important;
+        bottom: 0px !important;
+        width: 270px !important;
+        min-width: 270px !important;
+        max-width: 270px !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        z-index: 99999 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        overflow: hidden !important;
+        transform: none !important;
+        margin: 0 !important;
+        background: #0d1b2e !important;
+    }
 
-    <button class="ui-sidebar-toggle" id="adminSidebarToggle" type="button" aria-label="Toggle sidebar"></button>
+    #adminSidebar .shell-sidebar-nav,
+    #adminSidebar .admin-menu,
+    #adminSidebar .sidebar-menu {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        scrollbar-width: none !important;
+    }
 
-    <a href="/admin/dashboard" class="admin-brand">
-        <div class="admin-brand-icon">
-            <i class="fa-solid fa-shield-halved"></i>
-        </div>
+    #adminSidebar .shell-sidebar-footer {
+        flex-shrink: 0 !important;
+        margin-top: auto !important;
+    }
 
-        <div class="admin-brand-text">
-            <h2>Attendify</h2>
-            <% if (typeof currentCollege !== "undefined" && currentCollege && currentCollege.collegeCode) { %>
-                <p>
-                    Admin Panel
-                    <span class="admin-college-code-badge"><%= currentCollege.collegeCode %></span>
-                </p>
-            <% } else { %>
-                <p>Admin Panel</p>
-            <% } %>
-        </div>
-    </a>
+    .admin-layout .admin-main,
+    .admin-main {
+        margin-left: 270px !important;
+        width: calc(100% - 270px) !important;
+        min-height: 100vh !important;
+        box-sizing: border-box !important;
+    }
 
-    <nav class="admin-menu shell-sidebar-nav">
-        <a href="/admin/dashboard" class="<%= activePage === 'dashboard' ? 'active' : '' %>">
-            <i class="fa-solid fa-house"></i>
-            <span class="admin-link-text">Dashboard</span>
+    .admin-mobile-nav-bar,
+    .admin-sidebar-close-action,
+    .admin-mobile-backdrop {
+        display: none !important;
+    }
+}
+
+/* ==========================================================================
+   MOBILE ADMIN NAVIGATION (<= 860px)
+   ========================================================================== */
+.admin-mobile-nav-bar {
+    display: none;
+}
+
+/* Suppress any default fixed floating toggles injected by uiShell */
+.ui-mobile-sidebar-toggle,
+body > .ui-mobile-sidebar-toggle {
+    display: none !important;
+}
+
+@media (max-width: 860px) {
+    .admin-mobile-nav-bar {
+        display: flex !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 52px !important;
+        background: #0b1320 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        z-index: 99990 !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        padding: 0 14px !important;
+        box-sizing: border-box !important;
+    }
+
+    .admin-mobile-menu-btn {
+        display: inline-flex !important;
+        position: relative !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        border-radius: 9px !important;
+        background: rgba(255, 255, 255, 0.07) !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        color: #ffffff !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1rem !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        margin: 0 12px 0 0 !important;
+        flex-shrink: 0 !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .admin-mobile-menu-btn:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    .admin-mobile-brand-title {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        font-size: 1.05rem !important;
+        font-weight: 800 !important;
+        color: #ffffff !important;
+        margin-right: auto !important;
+    }
+
+    .admin-mobile-brand-title i {
+        color: #6366f1 !important;
+    }
+
+    .admin-mobile-college-badge {
+        font-size: 0.7rem !important;
+        font-weight: 700 !important;
+        padding: 2px 8px !important;
+        border-radius: 6px !important;
+        background: rgba(99, 102, 241, 0.15) !important;
+        color: #818cf8 !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
+        font-family: monospace !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Mobile Drawer */
+    #adminSidebar.ui-sidebar,
+    aside#adminSidebar,
+    .ui-sidebar.admin-sidebar,
+    .schedule-sidebar.admin-sidebar,
+    .admin-sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 275px !important;
+        max-width: 85vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 100000 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        background: #0d1b2e !important;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.7) !important;
+        transform: translateX(-105%) !important;
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        margin: 0 !important;
+    }
+
+    body.ui-sidebar-open #adminSidebar.ui-sidebar,
+    body.ui-sidebar-open aside#adminSidebar,
+    body.ui-sidebar-open .ui-sidebar.admin-sidebar,
+    body.ui-sidebar-open .schedule-sidebar.admin-sidebar,
+    body.ui-sidebar-open .admin-sidebar {
+        transform: translateX(0) !important;
+    }
+
+    .admin-mobile-backdrop {
+        display: none;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 99995 !important;
+        background: rgba(15, 23, 42, 0.75) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+    }
+
+    body.ui-sidebar-open .admin-mobile-backdrop {
+        display: block !important;
+    }
+
+    .admin-layout .admin-main,
+    .admin-main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        min-height: 100vh !important;
+        box-sizing: border-box !important;
+        padding-top: 60px !important;
+    }
+}
+
+/* Sidebar Brand Card Layout */
+.admin-brand-shell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+    margin: 12px 12px 6px 12px !important;
+    background: rgba(30, 41, 59, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    box-sizing: border-box !important;
+    width: calc(100% - 24px) !important;
+    flex-shrink: 0 !important;
+}
+
+.admin-brand-shell .admin-brand-link {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    text-decoration: none !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+}
+
+.admin-brand-shell .welcome-icon {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0.12) 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+    color: #818cf8 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.05rem !important;
+    flex-shrink: 0 !important;
+}
+
+.admin-brand-shell .admin-brand-text {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+}
+
+.admin-brand-shell .admin-brand-text h2 {
+    margin: 0 !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+}
+
+.admin-brand-shell .admin-brand-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-top: 2px !important;
+}
+
+.admin-sidebar-close-action {
+    display: none !important;
+}
+
+@media (max-width: 860px) {
+    .admin-sidebar-close-action {
+        display: inline-flex !important;
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        border-radius: 8px !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.9rem !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        margin-left: 6px !important;
+        transition: all 0.2s ease !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+    }
+
+    .admin-sidebar-close-action:hover {
+        background: rgba(239, 68, 68, 0.25) !important;
+        border-color: rgba(239, 68, 68, 0.4) !important;
+        color: #ef4444 !important;
+    }
+}
+</style>
+
+<!-- Mobile Sticky Top Navigation Bar -->
+<header class="admin-mobile-nav-bar" id="adminMobileNavBar">
+    <button class="admin-mobile-menu-btn" id="adminMobileToggleBtn" type="button" aria-label="Open Navigation Menu" title="Open Menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="admin-mobile-brand-title">
+        <i class="fa-solid fa-building-columns"></i>
+        <span>Attendify</span>
+    </div>
+
+    <% if (typeof currentCollege !== "undefined" && currentCollege && currentCollege.collegeCode) { %>
+        <span class="admin-mobile-college-badge"><%= currentCollege.collegeCode %></span>
+    <% } %>
+</header>
+
+<!-- Mobile Backdrop Overlay -->
+<div class="admin-mobile-backdrop" id="adminMobileBackdrop"></div>
+
+<aside class="ui-sidebar schedule-sidebar admin-sidebar" id="adminSidebar">
+
+    <!-- Unified Brand Header Shell with Embedded Close Button -->
+    <div class="admin-brand-shell">
+        <a href="/admin/dashboard" class="admin-brand-link">
+            <div class="welcome-icon admin-brand-icon">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+
+            <div class="admin-brand-text">
+                <h2>Attendify</h2>
+                <div class="admin-brand-meta">
+                    <span class="admin-brand-role" style="font-size: 0.72rem; color: #94a3b8;">Admin Panel</span>
+                    <% if (typeof currentCollege !== "undefined" && currentCollege && currentCollege.collegeCode) { %>
+                        <span class="admin-college-code-badge" style="font-size: 0.68rem; padding: 1px 6px; border-radius: 4px; background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 700;"><%= currentCollege.collegeCode %></span>
+                    <% } %>
+                </div>
+            </div>
         </a>
 
-        <a href="/admin/class-groups" class="<%= activePage === 'class-groups' ? 'active' : '' %>">
+        <!-- Mobile Close Button: completely enclosed inside the card shell -->
+        <button class="admin-sidebar-close-action" id="adminSidebarCloseBtn" type="button" aria-label="Close Navigation Menu" title="Close Menu">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <nav class="sidebar-menu admin-menu shell-sidebar-nav">
+        <a href="/admin/dashboard" class="menu-item menu-link <%= activePage === 'dashboard' ? 'active' : '' %>" title="Dashboard">
+            <i class="fa-solid fa-chart-line"></i>
+            <span class="shell-text admin-link-text">Dashboard</span>
+        </a>
+
+        <a href="/admin/class-groups" class="menu-item menu-link <%= activePage === 'class-groups' ? 'active' : '' %>" title="Class Groups">
             <i class="fa-solid fa-layer-group"></i>
-            <span class="admin-link-text">Class Groups</span>
+            <span class="shell-text admin-link-text">Class Groups</span>
         </a>
 
-        <a href="/admin/classrooms" class="<%= activePage === 'classrooms' ? 'active' : '' %>">
+        <a href="/admin/classrooms" class="menu-item menu-link <%= activePage === 'classrooms' ? 'active' : '' %>" title="Classrooms">
             <i class="fa-solid fa-door-open"></i>
-            <span class="admin-link-text">Classrooms</span>
+            <span class="shell-text admin-link-text">Classrooms</span>
         </a>
 
-        <a href="/admin/subjects" class="<%= activePage === 'subjects' ? 'active' : '' %>">
+        <a href="/admin/subjects" class="menu-item menu-link <%= activePage === 'subjects' ? 'active' : '' %>" title="Subjects">
             <i class="fa-solid fa-book"></i>
-            <span class="admin-link-text">Subjects</span>
+            <span class="shell-text admin-link-text">Subjects</span>
         </a>
 
-        <a href="/admin/teachers" class="<%= activePage === 'teachers' ? 'active' : '' %>">
+        <a href="/admin/teachers" class="menu-item menu-link <%= activePage === 'teachers' ? 'active' : '' %>" title="Teachers">
             <i class="fa-solid fa-chalkboard-user"></i>
-            <span class="admin-link-text">Teachers</span>
+            <span class="shell-text admin-link-text">Teachers</span>
         </a>
 
-        <a href="/admin/students" class="<%= activePage === 'students' ? 'active' : '' %>">
+        <a href="/admin/students" class="menu-item menu-link <%= activePage === 'students' ? 'active' : '' %>" title="Students">
             <i class="fa-solid fa-user-graduate"></i>
-            <span class="admin-link-text">Students</span>
+            <span class="shell-text admin-link-text">Students</span>
         </a>
 
-        <a href="/admin/students/pending" class="<%= activePage === 'pendingStudents' ? 'active' : '' %>">
+        <a href="/admin/students/pending" class="menu-item menu-link <%= activePage === 'pendingStudents' ? 'active' : '' %>" title="Pending Approvals">
             <i class="fa-solid fa-user-clock"></i>
-            <span class="admin-link-text">Pending Approvals</span>
+            <span class="shell-text admin-link-text">Pending Approvals</span>
         </a>
 
-        <a href="/admin/schedules" class="<%= activePage === 'schedules' ? 'active' : '' %>">
+        <a href="/admin/schedules" class="menu-item menu-link <%= activePage === 'schedules' ? 'active' : '' %>" title="Schedules">
             <i class="fa-solid fa-calendar-days"></i>
-            <span class="admin-link-text">Schedules</span>
+            <span class="shell-text admin-link-text">Schedules</span>
         </a>
 
-        <a href="/admin/reports" class="<%= activePage === 'reports' ? 'active' : '' %>">
+        <a href="/admin/reports" class="menu-item menu-link <%= activePage === 'reports' ? 'active' : '' %>" title="Reports">
             <i class="fa-solid fa-chart-column"></i>
-            <span class="admin-link-text">Reports</span>
+            <span class="shell-text admin-link-text">Reports</span>
         </a>
 
-        <a href="/admin/notifications" class="<%= activePage === 'notifications' ? 'active' : '' %>">
+        <a href="/admin/notifications" class="menu-item menu-link <%= activePage === 'notifications' ? 'active' : '' %>" title="Notifications">
             <i class="fa-solid fa-bell"></i>
-            <span class="admin-link-text">Notifications</span>
+            <span class="shell-text admin-link-text">Notifications</span>
             <span class="ui-notification-badge js-notification-badge"></span>
         </a>
 
-        <a href="/admin/profile" class="<%= activePage === 'profile' ? 'active' : '' %>">
+        <a href="/admin/profile" class="menu-item menu-link <%= activePage === 'profile' ? 'active' : '' %>" title="My Profile">
             <i class="fa-solid fa-circle-user"></i>
-            <span class="admin-link-text">My Profile</span>
+            <span class="shell-text admin-link-text">My Profile</span>
         </a>
     </nav>
 
     <div class="shell-sidebar-footer">
-        <p class="shell-settings-label">Settings</p>
+        <p class="shell-settings-label shell-text">Settings</p>
+
+        <button type="button" class="menu-item menu-link sidebar-theme-toggle-btn js-theme-toggle" title="Toggle Theme">
+            <i class="fa-solid fa-moon"></i>
+            <span class="shell-text admin-link-text">Dark Mode</span>
+        </button>
 
         <a
             href="/admin/change-password"
-            class="shell-footer-link <%= activePage === 'change-password' ? 'active' : '' %>"
+            class="menu-item menu-link shell-footer-link <%= activePage === 'change-password' ? 'active' : '' %>"
+            title="Change Password"
         >
             <i class="fa-solid fa-key"></i>
-            <span class="admin-link-text">Change Password</span>
+            <span class="shell-text admin-link-text">Change Password</span>
         </a>
 
         <form action="/logout" method="POST" class="sidebar-logout-form">
-            <button class="menu-link sidebar-logout-button" type="submit">
+            <button class="menu-item menu-link sidebar-logout-button" type="submit" title="Log Out">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                <span class="admin-logout-text">Log Out</span>
+                <span class="shell-text admin-logout-text">Log Out</span>
             </button>
         </form>
     </div>
 </aside>
+
+<script>
+(function() {
+    function initMobileNav() {
+        var toggleBtn = document.getElementById('adminMobileToggleBtn');
+        var closeBtn = document.getElementById('adminSidebarCloseBtn');
+        var backdrop = document.getElementById('adminMobileBackdrop');
+
+        if (toggleBtn) {
+            toggleBtn.onclick = function(e) {
+                e.stopPropagation();
+                document.body.classList.toggle('ui-sidebar-open');
+            };
+        }
+
+        if (closeBtn) {
+            closeBtn.onclick = function(e) {
+                e.stopPropagation();
+                document.body.classList.remove('ui-sidebar-open');
+            };
+        }
+
+        if (backdrop) {
+            backdrop.onclick = function() {
+                document.body.classList.remove('ui-sidebar-open');
+            };
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.body.classList.remove('ui-sidebar-open');
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMobileNav);
+    } else {
+        initMobileNav();
+    }
+})();
+</script>

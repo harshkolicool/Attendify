@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Class Groups | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
 
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -134,8 +136,10 @@
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input
                         type="text"
+                        class="admin-search-input"
                         data-admin-search="class-groups"
                         placeholder="Search class group by name, department, semester or section..."
+                        style="border: none !important; background: transparent !important; outline: none !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; width: 100% !important; flex: 1 1 auto !important;"
                     >
                 </div>
 
@@ -178,26 +182,29 @@
                                 method="POST"
                                 onsubmit="return uiConfirm(event, 'Delete this class group? Future schedules will be removed. Existing attendance history stays safe.')"
                             >
-                                <button class="admin-delete-btn" type="submit">
-                                    Delete
+                                <button class="admin-delete-btn admin-delete-btn-icon" type="submit" title="Delete Class Group" aria-label="Delete Class Group">
+                                    <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </form>
                         </div>
 
                         <h4><%= item.name %></h4>
-                        <p><%= item.department %> · Semester <%= item.semester %> · Section <%= item.section %></p>
+                        <p class="admin-entity-subtitle"><%= item.department %> · Semester <%= item.semester %> · Section <%= item.section %></p>
 
                         <div class="admin-meta">
                             <span class="admin-badge">
-                                Department: <%= item.department %>
+                                <i class="fa-solid fa-building"></i>
+                                <%= item.department %>
                             </span>
 
                             <span class="admin-badge">
+                                <i class="fa-solid fa-graduation-cap"></i>
                                 Sem <%= item.semester %>
                             </span>
 
                             <span class="admin-badge">
-                                Section <%= item.section %>
+                                <i class="fa-solid fa-users-rectangle"></i>
+                                Sec <%= item.section %>
                             </span>
                         </div>
 

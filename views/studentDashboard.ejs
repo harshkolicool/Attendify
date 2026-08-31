@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard | Attendify</title>
@@ -13,12 +16,14 @@
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
     <!-- Preload critical CSS so browser starts fetching before parser reaches link tags -->
-    <link rel="preload" href="/css/uiShell.css?v=20260711" as="style">
-    <link rel="preload" href="/css/studentSchedule.css?v=20260713" as="style">
+    <link rel="preload" href="/css/uiShell.css?v=20260901_fixed3" as="style">
+    <link rel="preload" href="/css/studentSchedule.css?v=20260831_18" as="style">
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
-    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260713">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260831_18">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8_18">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=20260831_18">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19_18">
 
     <link
         rel="stylesheet"
@@ -53,6 +58,8 @@
     };
     </script>
     <% } %>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 </head>
 <body>
 
@@ -72,6 +79,7 @@
     let presentCountView = typeof presentCount !== "undefined" ? presentCount : 0;
     let absentCountView = typeof absentCount !== "undefined" ? absentCount : 0;
     let percentageView = typeof attendancePercentage !== "undefined" ? attendancePercentage : 0;
+    let totalSessionsView = typeof totalAttendanceSessions !== "undefined" ? totalAttendanceSessions : (presentCountView + absentCountView);
     const dashboardNow = new Date();
     const dashboardNowMinutes = (dashboardNow.getHours() * 60) + dashboardNow.getMinutes();
 
@@ -138,11 +146,95 @@
                 <p>Mark your attendance when your teacher starts a session.</p>
             </div>
 
-            <a href="/student/schedule" class="dashboard-action-btn">
-                <i class="fa-solid fa-calendar-days"></i>
-                View Schedule
-            </a>
+            <div class="schedule-header-actions">
+                <div class="schedule-datepicker-btn" id="studentDashboardDateBtn" title="Click to view attendance calendar">
+                    <div class="schedule-datepicker-icon">
+                        <i class="fa-solid fa-calendar-days"></i>
+                    </div>
+                    <div class="schedule-datepicker-text">
+                        <span class="schedule-datepicker-kicker">Calendar</span>
+                        <span class="schedule-datepicker-val">
+                            <%= typeof today !== 'undefined' && today ? new Date(today + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today' %>
+                        </span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down schedule-datepicker-arrow"></i>
+                    <input type="text" id="studentDashboardDatePicker" class="schedule-hidden-input" value="<%= typeof today !== 'undefined' ? today : '' %>" readonly autocomplete="off">
+                </div>
+
+                <a href="/student/schedule" class="dashboard-action-btn">
+                    <i class="fa-solid fa-calendar-week"></i>
+                    View Schedule
+                </a>
+            </div>
         </header>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const picker = document.getElementById("studentDashboardDatePicker");
+                const dateBtn = document.getElementById("studentDashboardDateBtn");
+                const historyDates = <%- typeof historyDates !== 'undefined' ? historyDates : '{"present":[],"absent":[],"unmarked":[]}' %>;
+                
+                if (picker) {
+                    const fp = flatpickr(picker, {
+                        dateFormat: "Y-m-d",
+                        defaultDate: "<%= typeof today !== 'undefined' ? today : '' %>",
+                        disableMobile: true,
+                        position: "auto right",
+                        locale: {
+                            weekdays: {
+                                shorthand: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+                                longhand: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                            }
+                        },
+                        onReady: function(selectedDates, dateStr, instance) {
+                            if (!instance.calendarContainer.querySelector(".flatpickr-attendance-legend")) {
+                                const legend = document.createElement("div");
+                                legend.className = "flatpickr-attendance-legend";
+                                legend.innerHTML = `
+                                    <span class="legend-item"><span class="legend-dot green"></span> Present</span>
+                                    <span class="legend-item"><span class="legend-dot red"></span> Absent</span>
+                                    <span class="legend-item"><span class="legend-dot yellow"></span> Unmarked</span>
+                                `;
+                                instance.calendarContainer.appendChild(legend);
+                            }
+                        },
+                        onChange: function(selectedDates, dateStr, instance) {
+                            if (dateStr) {
+                                window.location.href = '/student/schedule?date=' + dateStr;
+                            }
+                        },
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const dateObj = dayElem.dateObj;
+                            if (!dateObj) return;
+                            
+                            const year = dateObj.getFullYear();
+                            const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+                            const day = String(dateObj.getDate()).padStart(2, "0");
+                            const localISOTime = year + "-" + month + "-" + day;
+                            
+                            if (historyDates.present && historyDates.present.includes(localISOTime)) {
+                                dayElem.classList.add("attendance-status-present");
+                                dayElem.setAttribute("title", "Present (" + localISOTime + ")");
+                            } else if (historyDates.absent && historyDates.absent.includes(localISOTime)) {
+                                dayElem.classList.add("attendance-status-absent");
+                                dayElem.setAttribute("title", "Absent (" + localISOTime + ")");
+                            } else if (historyDates.unmarked && historyDates.unmarked.includes(localISOTime)) {
+                                dayElem.classList.add("attendance-status-unmarked");
+                                dayElem.setAttribute("title", "Unmarked (" + localISOTime + ")");
+                            }
+                        }
+                    });
+
+                    if (dateBtn && fp) {
+                        dateBtn.addEventListener('click', function(e) {
+                            if (e.target !== picker) {
+                                fp.open();
+                            }
+                        });
+                    }
+                }
+            });
+        </script>
 
         <section class="dashboard-stats-grid">
             <div class="dashboard-stat-card">
@@ -155,7 +247,7 @@
                 </div>
             </div>
 
-            <button id="enablePushBtn" class="primary-btn" style="padding: 10px 16px; border-radius: 8px; border: none; color: #fff; background: linear-gradient(135deg, #4f46e5, #7c3aed); cursor: pointer; display: none; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); grid-column: 1 / -1; margin-bottom: 1rem;">
+            <button id="enablePushBtn" class="student-enable-push-pill" style="display: none;" title="Enable Notifications">
                 <i class="fa-solid fa-bell"></i> Enable Notifications
             </button>
 
@@ -200,11 +292,11 @@
             </div>
 
             <div class="dashboard-stat-card">
-                <div class="stat-icon blue">
+                <div class="stat-icon <%= totalSessionsView > 0 ? (percentageView >= 75 ? 'green' : 'red') : 'blue' %>">
                     <i class="fa-solid fa-chart-simple"></i>
                 </div>
                 <div>
-                    <span>Attendance</span>
+                    <span>Overall Attendance</span>
                     <h2><%= percentageView %>%</h2>
                 </div>
             </div>
@@ -237,7 +329,7 @@
                                 <th>Total</th>
                                 <th>Present</th>
                                 <th>Absent</th>
-                                <th>Attendance</th>
+                                <th>Attendance Rate</th>
                             </tr>
                         </thead>
 
@@ -245,14 +337,19 @@
                             <% subjectSummary.forEach(function(item) { %>
                                 <tr>
                                     <td><strong><%= item.name %></strong></td>
-                                    <td><%= item.code || "-" %></td>
+                                    <td><span class="subject-code-chip"><%= item.code || "-" %></span></td>
                                     <td><%= item.total %></td>
-                                    <td class="student-success"><%= item.present %></td>
-                                    <td class="student-danger"><%= item.absent %></td>
+                                    <td class="student-success"><strong><%= item.present %></strong></td>
+                                    <td class="student-danger"><strong><%= item.absent %></strong></td>
                                     <td>
-                                        <span class="student-percent-pill <%= item.percentage >= 75 ? 'good' : 'bad' %>">
-                                            <%= item.percentage %>%
-                                        </span>
+                                        <div class="student-progress-wrapper">
+                                            <span class="student-percent-pill <%= item.percentage >= 75 ? 'good' : (item.percentage >= 60 ? 'warning' : 'bad') %>">
+                                                <%= item.percentage %>%
+                                            </span>
+                                            <div class="student-progress-track">
+                                                <div class="student-progress-bar <%= item.percentage >= 75 ? 'good' : (item.percentage >= 60 ? 'warning' : 'bad') %>" style="width: <%= Math.min(item.percentage, 100) %>%;"></div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             <% }) %>
@@ -274,10 +371,18 @@
                 <label class="student-auth-option" id="studentAuthPasskeyLabel">
                     <input type="radio" name="auth_preference" value="passkey">
                     <div class="student-auth-content">
-                        <i class="fa-solid fa-fingerprint"></i>
-                        <div>
-                            <strong>Use Passkey (Recommended)</strong>
-                            <p>Verify attendance securely using biometrics (Face ID/Touch ID).</p>
+                        <div class="student-auth-icon-box passkey">
+                            <i class="fa-solid fa-fingerprint"></i>
+                        </div>
+                        <div class="student-auth-text">
+                            <div class="student-auth-title-row">
+                                <strong>Use Passkey</strong>
+                                <span class="student-auth-rec-badge">Recommended</span>
+                            </div>
+                            <p>Verify attendance securely using biometrics (Face ID / Touch ID).</p>
+                        </div>
+                        <div class="student-auth-check-indicator">
+                            <i class="fa-solid fa-circle-check"></i>
                         </div>
                     </div>
                 </label>
@@ -285,10 +390,18 @@
                 <label class="student-auth-option" id="studentAuthTrustedLabel">
                     <input type="radio" name="auth_preference" value="trusted_browser">
                     <div class="student-auth-content">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <div>
-                            <strong>Use Trusted Browser</strong>
-                            <p>Verify instantly using browser trust (Skip Passkey).</p>
+                        <div class="student-auth-icon-box trusted">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="student-auth-text">
+                            <div class="student-auth-title-row">
+                                <strong>Use Trusted Browser</strong>
+                                <span class="student-auth-badge neutral">Instant</span>
+                            </div>
+                            <p>Verify instantly using browser trust (Skip biometric prompt).</p>
+                        </div>
+                        <div class="student-auth-check-indicator">
+                            <i class="fa-solid fa-circle-check"></i>
                         </div>
                     </div>
                 </label>
@@ -302,7 +415,7 @@
                     <p>Your classes for <%= typeof today !== "undefined" ? today : "" %></p>
                 </div>
 
-                <span class="panel-count"><%= scheduleList.length %> Events</span>
+                <span class="panel-count"><i class="fa-solid fa-calendar-day"></i> <%= scheduleList.length %> <%= scheduleList.length === 1 ? 'Event' : 'Events' %></span>
             </div>
 
             <div id="messageBox" class="schedule-message"></div>
@@ -329,7 +442,9 @@
             <% } else { %>
                 <div class="gps-help-banner">
                     <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-                    <strong>GPS Tip:</strong> For best accuracy, use mobile Chrome, enable precise location, turn off battery saver, and wait 5–10 seconds.
+                    <div>
+                        <strong>GPS Tip:</strong> For best accuracy, use mobile Chrome, enable precise location, turn off battery saver, and wait 5–10 seconds.
+                    </div>
                 </div>
                 <div class="schedule-list">
                     <% scheduleList.forEach(function(item) { %>
@@ -360,10 +475,10 @@
                                 && !attendanceInfo;
 
                             let actionResult = null;
-                            if (typeof attendanceWindow !== "undefined") {
+                            if (typeof attendanceWindow !== "undefined" && attendanceWindow && typeof attendanceWindow.getStudentAttendanceAction === "function") {
                                 actionResult = attendanceWindow.getStudentAttendanceAction({
                                     record: attendanceInfo ? attendanceInfo.record : null,
-                                    session: activeSession || todaySession,
+                                    session: activeSession,
                                     schedule: item
                                 });
                             }
@@ -371,12 +486,14 @@
                             if (actionResult) {
                                 if (actionResult.action === "PRESENT" || actionResult.action === "LATE") {
                                     cardState = "present";
-                                } else if (actionResult.canMark) {
+                                } else if (actionResult.canMark && activeSession) {
                                     cardState = "live";
-                                    cardSessionId = activeSession ? activeSession._id.toString() : (todaySession ? todaySession._id.toString() : "");
+                                    cardSessionId = activeSession._id.toString();
                                 } else if (actionResult.action === "AUTO_ABSENT_LOCKED" || actionResult.action === "MANUAL_ABSENT") {
                                     cardState = "absent";
-                                } else if (todaySession) {
+                                } else if (attendanceInfo && attendanceInfo.status === "ABSENT") {
+                                    cardState = "absent";
+                                } else if (todaySession && !activeSession) {
                                     cardState = "pending";
                                     cardSessionId = todaySession._id.toString();
                                 } else if (isLiveWindow) {
@@ -389,7 +506,6 @@
                                 if (attendanceInfo && (attendanceInfo.status === "PRESENT" || attendanceInfo.status === "LATE")) {
                                     cardState = "present";
                                 } else if (attendanceInfo && attendanceInfo.status === "ABSENT") {
-                                    // If session is active, absent students can mark again
                                     if (activeSession) {
                                         cardState = "live";
                                         cardSessionId = activeSession._id.toString();
@@ -420,118 +536,115 @@
                             data-classroom-radius="<%= item.classroom ? (item.classroom.radius || 100) : 100 %>"
                         >
                             <div class="class-card-top">
-                                <span class="subject-pill">
-                                    <%= item.subject ? item.subject.subjectCode || item.subject.subjectName : "Subject" %>
-                                </span>
+                                <div class="class-card-badges">
+                                    <span class="subject-pill">
+                                        <%= item.subject ? item.subject.subjectCode || item.subject.subjectName : "Subject" %>
+                                    </span>
+                                </div>
 
-                                <% if (cardState === "live" || cardState === "ongoing") { %>
-                                    <span class="status-badge live">
-                                        <span class="pulse-dot"></span>
-                                        Live Class
-                                    </span>
-                                <% } else if (cardState === "present") { %>
-                                    <span class="status-badge present">
-                                        <i class="fa-solid fa-circle-check"></i>
-                                        Present
-                                    </span>
-                                <% } else if (cardState === "absent") { %>
-                                    <span class="status-badge absent">
-                                        <i class="fa-solid fa-circle-xmark"></i>
-                                        Absent
-                                    </span>
-                                <% } else if (cardState === "unmarked") { %>
-                                    <span class="status-badge unmarked">
-                                        <i class="fa-solid fa-triangle-exclamation"></i>
-                                        Unmarked
-                                    </span>
-                                <% } else if (cardState === "pending") { %>
-                                    <span class="status-badge pending">
-                                        <i class="fa-solid fa-hourglass-half"></i>
-                                        Pending
-                                    </span>
-                                <% } else { %>
-                                    <span class="status-badge waiting">
-                                        <i class="fa-solid fa-clock"></i>
-                                        Waiting
-                                    </span>
-                                <% } %>
+                                <div class="class-card-status-wrap">
+                                    <% if (cardState === "live") { %>
+                                        <span class="status-badge live">
+                                            <span class="pulse-dot"></span>
+                                            Live Attendance
+                                        </span>
+                                    <% } else if (cardState === "ongoing") { %>
+                                        <span class="status-badge ongoing">
+                                            <i class="fa-solid fa-chalkboard-user"></i>
+                                            In Session
+                                        </span>
+                                    <% } else if (cardState === "present") { %>
+                                        <span class="status-badge present">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                            Present
+                                        </span>
+                                    <% } else if (cardState === "absent") { %>
+                                        <span class="status-badge absent">
+                                            <i class="fa-solid fa-circle-xmark"></i>
+                                            Absent
+                                        </span>
+                                    <% } else if (cardState === "unmarked") { %>
+                                        <span class="status-badge unmarked">
+                                            <i class="fa-solid fa-triangle-exclamation"></i>
+                                            Unmarked
+                                        </span>
+                                    <% } else if (cardState === "pending") { %>
+                                        <span class="status-badge pending">
+                                            <i class="fa-solid fa-hourglass-half"></i>
+                                            Pending
+                                        </span>
+                                    <% } else { %>
+                                        <span class="status-badge waiting">
+                                            <i class="fa-solid fa-clock"></i>
+                                            Upcoming
+                                        </span>
+                                    <% } %>
+                                </div>
                             </div>
 
                             <div class="class-content">
-                                <div class="class-time">
-                                    <strong><%= item.startTime %></strong>
-                                    <span><%= item.endTime %></span>
-                                </div>
-
                                 <div class="class-info">
                                     <h4><%= item.subject ? item.subject.subjectName : "Subject Missing" %></h4>
-                                    <p>
-                                        <i class="fa-solid fa-user-tie"></i>
-                                        <%= item.teacher ? item.teacher.fullName : "Teacher Missing" %>
-                                        ·
-                                        <i class="fa-solid fa-door-open"></i>
-                                        <%= item.classroom ? item.classroom.classroomName : "Room Missing" %>
-                                    </p>
+                                    <div class="class-meta-row">
+                                        <span class="class-meta-item">
+                                            <i class="fa-solid fa-user-tie"></i>
+                                            <%= item.teacher ? item.teacher.fullName : "Teacher Missing" %>
+                                        </span>
+                                        <span class="class-meta-dot">·</span>
+                                        <span class="class-meta-item">
+                                            <i class="fa-solid fa-door-open"></i>
+                                            <%= item.classroom ? item.classroom.classroomName : "Room Missing" %>
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
 
-                                <div class="js-schedule-action class-action">
-                                    <% if (actionResult) { %>
-                                        <% if (actionResult.canMark) { %>
+                                <div class="class-action-group">
+                                    <div class="class-time">
+                                        <i class="fa-regular fa-clock"></i>
+                                        <span><%= item.startTime %> – <%= item.endTime %></span>
+                                    </div>
+
+                                    <div class="js-schedule-action class-action">
+                                        <% if (cardState === "live") { %>
                                             <button
                                                 class="view-btn live js-mark-attendance-btn"
                                                 type="button"
                                                 data-session-id="<%= cardSessionId %>"
                                             >
-                                                <%= actionResult.label %>
+                                                <i class="fa-solid fa-location-crosshairs"></i>
+                                                Mark Attendance
+                                            </button>
+                                        <% } else if (cardState === "ongoing") { %>
+                                            <button class="view-btn" type="button" disabled title="Attendance not yet started by teacher">
+                                                <i class="fa-solid fa-hourglass-half"></i>
+                                                Waiting for Teacher
+                                            </button>
+                                        <% } else if (cardState === "present") { %>
+                                            <button class="view-btn marked" type="button" disabled>
+                                                <i class="fa-solid fa-check"></i>
+                                                Attendance Marked
+                                            </button>
+                                        <% } else if (cardState === "absent") { %>
+                                            <button class="view-btn marked absent" type="button" disabled>
+                                                <i class="fa-solid fa-xmark"></i>
+                                                Marked Absent
+                                            </button>
+                                        <% } else if (cardState === "unmarked") { %>
+                                            <button class="view-btn unmarked" type="button" disabled>
+                                                Unmarked
+                                            </button>
+                                        <% } else if (cardState === "pending") { %>
+                                            <button class="view-btn pending" type="button" disabled>
+                                                Pending Review
                                             </button>
                                         <% } else { %>
-                                            <% 
-                                                let btnClass = "view-btn";
-                                                if (cardState === "present" || cardState === "absent") btnClass += " marked " + cardState;
-                                                else if (cardState === "unmarked") btnClass += " unmarked";
-                                                else if (cardState === "pending") btnClass += " pending";
-                                            %>
-                                            <button class="<%= btnClass %>" type="button" disabled>
-                                                <%= actionResult.label %>
+                                            <button class="view-btn" type="button" disabled>
+                                                Upcoming
                                             </button>
                                         <% } %>
-                                    <% } else { %>
-                                        <% if (cardState === "live") { %>
-                                        <button
-                                            class="view-btn live js-mark-attendance-btn"
-                                            type="button"
-                                            data-session-id="<%= cardSessionId %>"
-                                        >
-                                            Mark Attendance
-                                        </button>
-                                    <% } else if (cardState === "ongoing") { %>
-                                        <button class="view-btn" type="button" disabled>
-                                            Teacher Not Started
-                                        </button>
-                                    <% } else if (cardState === "present") { %>
-                                        <button class="view-btn marked" type="button" disabled>
-                                            Attendance Marked
-                                        </button>
-                                    <% } else if (cardState === "absent") { %>
-                                        <button class="view-btn marked absent" type="button" disabled>
-                                            Marked Absent
-                                        </button>
-                                    <% } else if (cardState === "unmarked") { %>
-                                        <button class="view-btn unmarked" type="button" disabled>
-                                            Unmarked
-                                        </button>
-                                    <% } else if (cardState === "pending") { %>
-                                        <button class="view-btn pending" type="button" disabled>
-                                            Pending
-                                        </button>
-                                    <% } else { %>
-                                        <button class="view-btn" type="button" disabled>
-                                            Not Started
-                                        </button>
-                                    <% } %>
-                                    <% } %>
+                                    </div>
                                 </div>
+                            </div>
                         </article>
                     <% }) %>
                 </div>
@@ -589,7 +702,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                             method: 'POST',
                             headers: { 
                                 'Content-Type': 'application/json',
-                                'CSRF-Token': '<%= csrfToken %>'
+                                'CSRF-Token': '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>'
                             },
                             body: JSON.stringify(newSubscription)
                         });
@@ -603,7 +716,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'CSRF-Token': '<%= csrfToken %>'
+                        'CSRF-Token': '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>'
                     },
                     body: JSON.stringify(subscription)
                 });
@@ -623,7 +736,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 
 </script>
 
-<% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>
+<% if (typeof realtimeMode === 'undefined' || realtimeMode === 'socket' || realtimeMode === 'auto') { %>
 <script src="/socket.io/socket.io.js"></script>
 <% } %>
 <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
@@ -678,40 +791,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     const btn = document.getElementById("enablePushBtn");
     if (!btn || !window.PushManagerHelper) return;
     
-    const status = await window.PushManagerHelper.init("student");
-    if (status.supported && !status.subscribed) {
-        if (Notification.permission === 'granted') {
-            try { 
-                await window.PushManagerHelper.subscribe("student"); 
-            } catch (err) {
-                // If it's granted but subscribe fails (e.g., cleared data, CSRF missing), we MUST show the button to let them retry
-                btn.style.display = "block";
-                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Subscription Failed. Click to Retry';
+    try {
+        const status = await window.PushManagerHelper.init("student");
+        if (status.supported && !status.subscribed) {
+            if (Notification.permission === 'granted') {
+                try { 
+                    await window.PushManagerHelper.subscribe("student"); 
+                } catch (err) {
+                    console.warn("Auto-subscribe on granted permission:", err);
+                }
+                btn.style.display = "none";
+            } else if (Notification.permission === 'default' || !Notification.permission) {
+                btn.style.display = "inline-flex";
+            } else {
+                btn.style.display = "none";
             }
-        } else if (Notification.permission === 'default' || !Notification.permission) {
-            btn.style.display = "block";
+            
+            // Attach listener for click
+            btn.addEventListener("click", async () => {
+                if (Notification.permission === 'denied') {
+                    alert("You have blocked notifications in your browser settings. Please enable them to continue.");
+                    return;
+                }
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
+                btn.disabled = true;
+                try {
+                    await window.PushManagerHelper.subscribe("student");
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
+                    setTimeout(() => { btn.style.display = "none"; }, 1500);
+                } catch (err) {
+                    btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error: ' + (err.message || 'Failed');
+                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
+                }
+            });
+        } else {
+            btn.style.display = "none";
         }
-        
-        // Always attach listener if button could ever be shown
-        btn.addEventListener("click", async () => {
-            if (Notification.permission === 'denied') {
-                alert("You have blocked notifications in your browser settings. Please enable them to continue.");
-                return;
-            }
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enabling...';
-            btn.disabled = true;
-            try {
-                await window.PushManagerHelper.subscribe("student");
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> Enabled';
-                setTimeout(() => btn.style.display = "none", 2000);
-            } catch (err) {
-                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error: ' + (err.message || 'Failed');
-                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 3000);
-            }
-        });
-    } else if (status.supported && status.subscribed) {
-        // Explicitly hide it just in case
+    } catch (e) {
         btn.style.display = "none";
     }
 });

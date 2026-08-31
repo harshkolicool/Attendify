@@ -433,6 +433,13 @@ document.addEventListener("DOMContentLoaded", function init() {
         lastSentLat = sendLat;
         lastSentLon = sendLon;
 
+        window.AttendifyLatestPosition = {
+            latitude: sendLat,
+            longitude: sendLon,
+            accuracy: sendAccuracy,
+            timestamp: now
+        };
+
         const payload = {
             sessionId: activeSessionId,
             deviceId: deviceId,

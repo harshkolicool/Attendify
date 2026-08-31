@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Reports | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
 
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -59,14 +61,15 @@
         </header>
 
         <%
+            const safeFilters = (typeof filters !== "undefined" && filters) ? filters : {};
             const exportQuery = [
-                "fromDate=" + encodeURIComponent(filters.fromDate),
-                "toDate=" + encodeURIComponent(filters.toDate),
-                "classGroupId=" + encodeURIComponent(filters.classGroupId),
-                "subjectId=" + encodeURIComponent(filters.subjectId),
-                "teacherId=" + encodeURIComponent(filters.teacherId),
-                "studentId=" + encodeURIComponent(filters.studentId),
-                "status=" + encodeURIComponent(filters.status)
+                "fromDate=" + encodeURIComponent(safeFilters.fromDate || ""),
+                "toDate=" + encodeURIComponent(safeFilters.toDate || ""),
+                "classGroupId=" + encodeURIComponent(safeFilters.classGroupId || ""),
+                "subjectId=" + encodeURIComponent(safeFilters.subjectId || ""),
+                "teacherId=" + encodeURIComponent(safeFilters.teacherId || ""),
+                "studentId=" + encodeURIComponent(safeFilters.studentId || ""),
+                "status=" + encodeURIComponent(safeFilters.status || "")
             ].join("&");
         %>
 
@@ -167,7 +170,7 @@
                     <select name="teacherId">
                         <option value="all">All Teachers</option>
 
-                        <% teachers.forEach(function(teacher) { %>
+                        <% (typeof teachers !== "undefined" && teachers ? teachers : []).forEach(function(teacher) { %>
                             <option
                                 value="<%= teacher._id %>"
                                 <%= filters.teacherId === teacher._id.toString() ? "selected" : "" %>
@@ -183,7 +186,7 @@
                     <select name="studentId">
                         <option value="all">All Students</option>
 
-                        <% students.forEach(function(student) { %>
+                        <% (typeof students !== "undefined" && students ? students : []).forEach(function(student) { %>
                             <option
                                 value="<%= student._id %>"
                                 <%= filters.studentId === student._id.toString() ? "selected" : "" %>
@@ -226,11 +229,12 @@
         </section>
 
         <section class="reports-summary-grid">
+            <% const safeSummary = (typeof summary !== "undefined" && summary) ? summary : { totalSessions: 0, totalPresent: 0, totalAbsent: 0, attendancePercentage: 0 }; %>
 
             <article class="report-stat-card blue">
                 <div>
                     <span>Total Sessions</span>
-                    <strong><%= summary.totalSessions %></strong>
+                    <strong><%= safeSummary.totalSessions || 0 %></strong>
                 </div>
                 <i class="fa-solid fa-calendar-check"></i>
             </article>
@@ -238,7 +242,7 @@
             <article class="report-stat-card green">
                 <div>
                     <span>Present</span>
-                    <strong><%= summary.totalPresent %></strong>
+                    <strong><%= safeSummary.totalPresent || 0 %></strong>
                 </div>
                 <i class="fa-solid fa-user-check"></i>
             </article>
@@ -246,7 +250,7 @@
             <article class="report-stat-card red">
                 <div>
                     <span>Absent</span>
-                    <strong><%= summary.totalAbsent %></strong>
+                    <strong><%= safeSummary.totalAbsent || 0 %></strong>
                 </div>
                 <i class="fa-solid fa-user-xmark"></i>
             </article>
@@ -254,7 +258,7 @@
             <article class="report-stat-card purple">
                 <div>
                     <span>Attendance</span>
-                    <strong><%= summary.attendancePercentage %>%</strong>
+                    <strong><%= safeSummary.attendancePercentage || 0 %>%</strong>
                 </div>
                 <i class="fa-solid fa-chart-line"></i>
             </article>
@@ -262,7 +266,7 @@
             <article class="report-stat-card orange">
                 <div>
                     <span>Suspicious</span>
-                    <strong><%= summary.suspiciousCount %></strong>
+                    <strong><%= safeSummary.suspiciousCount || 0 %></strong>
                 </div>
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </article>
@@ -277,7 +281,7 @@
                 </div>
             </div>
 
-            <% if (!subjectSummary || subjectSummary.length === 0) { %>
+            <% if (typeof subjectSummary === "undefined" || !subjectSummary || subjectSummary.length === 0) { %>
                 <div class="admin-empty">No subject report found for selected filters.</div>
             <% } else { %>
                 <div class="report-table-wrap">
@@ -322,7 +326,7 @@
                 </div>
             </div>
 
-            <% if (!classSummary || classSummary.length === 0) { %>
+            <% if (typeof classSummary === "undefined" || !classSummary || classSummary.length === 0) { %>
                 <div class="admin-empty">No class report found for selected filters.</div>
             <% } else { %>
                 <div class="report-table-wrap">
@@ -365,7 +369,7 @@
                 </div>
             </div>
 
-            <% if (!studentSummary || studentSummary.length === 0) { %>
+            <% if (typeof studentSummary === "undefined" || !studentSummary || studentSummary.length === 0) { %>
                 <div class="admin-empty">No student report found for selected filters.</div>
             <% } else { %>
                 <div class="report-table-wrap">
@@ -410,11 +414,11 @@
                 </div>
 
                 <span class="admin-count-pill">
-                    <%= attendanceRecords.length %> Records
+                    <%= (typeof attendanceRecords !== "undefined" && attendanceRecords) ? attendanceRecords.length : 0 %> Records
                 </span>
             </div>
 
-            <% if (!attendanceRecords || attendanceRecords.length === 0) { %>
+            <% if (typeof attendanceRecords === "undefined" || !attendanceRecords || attendanceRecords.length === 0) { %>
                 <div class="admin-empty">No attendance records found.</div>
             <% } else { %>
                 <div class="report-table-wrap">
@@ -532,11 +536,11 @@
                 </div>
 
                 <span class="admin-count-pill danger">
-                    <%= suspiciousAttempts.length %> Attempts
+                    <%= (typeof suspiciousAttempts !== "undefined" && suspiciousAttempts) ? suspiciousAttempts.length : 0 %> Attempts
                 </span>
             </div>
 
-            <% if (!suspiciousAttempts || suspiciousAttempts.length === 0) { %>
+            <% if (typeof suspiciousAttempts === "undefined" || !suspiciousAttempts || suspiciousAttempts.length === 0) { %>
                 <div class="admin-empty">No suspicious attempts found.</div>
             <% } else { %>
                 <div class="report-table-wrap">

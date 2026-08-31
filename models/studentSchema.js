@@ -189,6 +189,18 @@ const studentSchema = new mongoose.Schema({
         default: null
     },
 
+    // Expiry for the auto-login token — null means no token or already expired
+    autoLoginTokenExpiresAt: {
+        type: Date,
+        default: null
+    },
+
+    // Increment this to invalidate all previously issued auto-login tokens (rotation)
+    autoLoginTokenVersion: {
+        type: Number,
+        default: 0
+    },
+
     passkeys: [studentPasskeySchema],
     trustedDevices: [trustedDeviceSchema],
 

@@ -5,6 +5,7 @@ const Teacher = require("../models/teacherSchema");
 const PlatformAdmin = require("../models/platformAdminSchema");
 const AttendanceSession = require("../models/attendanceSessionSchema");
 const liveLocationStore = require("./liveLocationStore");
+const logger = require("./logger");
 const {
     evaluateLocationRange,
     computeVerificationRadius
@@ -13,6 +14,19 @@ const gpsPeerCalibration = require("./gpsPeerCalibration");
 
 const LOCATION_PERSIST_INTERVAL_MS = 30000;
 const locationPersistedAt = new Map();
+
+// ── locationPersistedAt cleanup — prevents unbounded Map growth ───────────────
+// Each entry is keyed by sessionId:studentId:deviceId. Sessions can last hours
+// and generate thousands of entries. Sweep expired keys every 10 minutes.
+setInterval(function cleanLocationPersistedAt() {
+    const staleThreshold = Date.now() - LOCATION_PERSIST_INTERVAL_MS * 10;
+    locationPersistedAt.forEach(function (ts, key) {
+        if (ts < staleThreshold) {
+            locationPersistedAt.delete(key);
+        }
+    });
+}, 10 * 60 * 1000).unref();
+
 
 function getId(value) {
     if (!value) {
@@ -27,17 +41,27 @@ function getId(value) {
 }
 
 function getSessionUser(socket) {
-    if (
-        !socket ||
-        !socket.request ||
-        !socket.request.session ||
-        !socket.request.session.passport ||
-        !socket.request.session.passport.user
-    ) {
+    if (!socket || !socket.request) {
         return null;
     }
 
-    return socket.request.session.passport.user;
+    if (
+        socket.request.session &&
+        socket.request.session.passport &&
+        socket.request.session.passport.user
+    ) {
+        return socket.request.session.passport.user;
+    }
+
+    if (socket.request.user) {
+        return socket.request.user;
+    }
+
+    if (socket.request.session && socket.request.session.user) {
+        return socket.request.session.user;
+    }
+
+    return null;
 }
 
 function getPlatformAdminSessionId(socket) {
@@ -281,14 +305,12 @@ async function persistOfflineDevice(payload) {
 function initializeSocket(io) {
     ioInstance = io;
 
-    io.on("connection", function (socket) {
-        const isWaitingStudent = socket.handshake.query && socket.handshake.query.waitingId;
-
-        if (!getSessionUser(socket) && !getPlatformAdminSessionId(socket) && !isWaitingStudent) {
-            emitSocketError(socket, "Login required for realtime updates.");
-            socket.disconnect(true);
-            return;
+    io.on("connection", async function (socket) {
+        if (!getSessionUser(socket) && !getPlatformAdminSessionId(socket)) {
+            await reloadSocketSession(socket);
         }
+
+        const isWaitingStudent = socket.handshake.query && socket.handshake.query.waitingId;
 
         if (isWaitingStudent) {
             const waitingId = String(socket.handshake.query.waitingId || "");
@@ -310,6 +332,27 @@ function initializeSocket(io) {
             socket.data.waitingId = waitingId;
             return;
         }
+
+        // Grace period for client to send role join event after session reload
+        const authTimer = setTimeout(function () {
+            if (
+                socket.connected &&
+                !socket.data.studentJoined &&
+                !socket.data.teacherJoined &&
+                !socket.data.adminJoined &&
+                !socket.data.platformAdminJoined &&
+                !socket.data.isWaitingStudent &&
+                !getSessionUser(socket) &&
+                !getPlatformAdminSessionId(socket)
+            ) {
+                emitSocketError(socket, "Login required for realtime updates.");
+                socket.disconnect(true);
+            }
+        }, 10000);
+
+        socket.on("disconnect", function () {
+            clearTimeout(authTimer);
+        });
 
         socket.on("student:join", async function () {
             try {
@@ -354,8 +397,7 @@ function initializeSocket(io) {
                     collegeId: student.college ? student.college.toString() : ""
                 });
             } catch (err) {
-                console.log("SOCKET STUDENT JOIN ERROR:");
-                console.log(err.message);
+                logger.error("SOCKET STUDENT JOIN ERROR", { msg: err.message });
             }
         });
 
@@ -405,8 +447,7 @@ function initializeSocket(io) {
                     collegeId: teacher.college ? teacher.college.toString() : ""
                 });
             } catch (err) {
-                console.log("SOCKET TEACHER JOIN ERROR:");
-                console.log(err.message);
+                logger.error("SOCKET TEACHER JOIN ERROR", { msg: err.message });
             }
         });
 
@@ -448,8 +489,7 @@ function initializeSocket(io) {
                     collegeId: admin.college.toString()
                 });
             } catch (err) {
-                console.log("SOCKET ADMIN JOIN ERROR:");
-                console.log(err.message);
+                logger.error("SOCKET ADMIN JOIN ERROR", { msg: err.message });
             }
         });
 
@@ -489,8 +529,7 @@ function initializeSocket(io) {
                     email: platformAdmin.email || ""
                 });
             } catch (err) {
-                console.log("SOCKET PLATFORM ADMIN JOIN ERROR:");
-                console.log(err.message);
+                logger.error("SOCKET PLATFORM ADMIN JOIN ERROR", { msg: err.message });
             }
         });
 
@@ -542,7 +581,7 @@ function initializeSocket(io) {
                         .lean();
                 }
 
-                const memorySnapshot = liveLocationStore.getSnapshot(session._id);
+                const memorySnapshot = await liveLocationStore.getSnapshot(session._id);
                 const persistedSnapshot = getPersistedLocationSnapshot(session);
 
                 const sessionRadius = Number(session.radius || 0);
@@ -574,12 +613,11 @@ function initializeSocket(io) {
                     snapshot: memorySnapshot.length > 0 ? memorySnapshot : persistedSnapshot
                 });
             } catch (err) {
-                console.log("SOCKET TEACHER WATCH SESSION ERROR:");
-                console.log(err.message);
+                logger.error("SOCKET TEACHER WATCH SESSION ERROR", { msg: err.message });
             }
         });
 
-        socket.on("disconnect", function () {
+        socket.on("disconnect", async function () {
             try {
                 if (!socket.data || socket.data.studentJoined !== true || !socket.data.studentId) {
                     return;
@@ -599,7 +637,8 @@ function initializeSocket(io) {
 
                     for (let j = 0; j < devices.length; j++) {
                         const trackedDevice = devices[j];
-                        const offlineDevices = liveLocationStore.markDeviceOffline(
+                        // Await the async store — returns array of devices that went offline
+                        const offlineDevices = await liveLocationStore.markDeviceOffline(
                             sessionId,
                             trackedDevice.studentId,
                             trackedDevice.deviceId,
@@ -638,8 +677,7 @@ function initializeSocket(io) {
                     }
                 }
             } catch (err) {
-                console.log("SOCKET STUDENT DISCONNECT LOCATION ERROR:");
-                console.log(err.message);
+                logger.error("SOCKET STUDENT DISCONNECT LOCATION ERROR", { msg: err.message });
             }
         });
 
@@ -733,7 +771,7 @@ function initializeSocket(io) {
                     return;
                 }
 
-                const peerSnapshot = liveLocationStore.getSnapshot(session._id);
+                const peerSnapshot = await liveLocationStore.getSnapshot(session._id);
 
                 const locationMeta = payload && payload.locationMeta ? payload.locationMeta : null;
 
@@ -811,7 +849,10 @@ function initializeSocket(io) {
                     online: true
                 };
 
-                liveLocationStore.upsertDevice(session._id, eventPayload, socket.id);
+                // Fire-and-forget: don't await so we don't block the location pipeline
+                liveLocationStore.upsertDevice(session._id, eventPayload, socket.id).catch(function (e) {
+                    logger.warn("liveLocationStore upsert failed", { msg: e.message });
+                });
 
                 if (!socket.data.trackedSessionIds) {
                     socket.data.trackedSessionIds = [];
@@ -831,16 +872,14 @@ function initializeSocket(io) {
                 );
 
                 persistLiveDeviceLocation(eventPayload).catch(function (persistErr) {
-                    console.log("LIVE LOCATION PERSIST ERROR:");
-                    console.log(persistErr.message);
+                    logger.warn("LIVE LOCATION PERSIST ERROR", { msg: persistErr.message });
                 });
 
                 const teacherId = session.teacher.toString();
                 io.to(getTeacherRoom(teacherId)).emit("student:location:update", eventPayload);
                 io.to(getSessionRoom(session._id)).emit("student:location:update", eventPayload);
             } catch (err) {
-                console.log("SOCKET STUDENT LOCATION UPDATE ERROR:");
-                console.log(err.message);
+                logger.error("SOCKET STUDENT LOCATION UPDATE ERROR", { msg: err.message });
             }
         });
     });
@@ -1005,7 +1044,7 @@ function emitAttendanceRecordUpdated(session, student, attendanceRecord, updated
             const webpush = require("web-push");
             if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
                 webpush.setVapidDetails(
-                    "mailto:harshkoli@example.com",
+                    process.env.VAPID_SUBJECT || "mailto:admin@attendify.com",
                     process.env.VAPID_PUBLIC_KEY,
                     process.env.VAPID_PRIVATE_KEY
                 );
@@ -1035,7 +1074,7 @@ function emitAttendanceRecordUpdated(session, student, attendanceRecord, updated
                     ));
                 }
             }
-        } catch(e) { console.log("Push error:", e.message); }
+        } catch(e) { logger.warn("Push notification error (attendance:record-updated)", { msg: e.message }); }
     }, 100);
 }
 
@@ -1049,8 +1088,8 @@ function emitAttendanceEnded(session) {
     const sessionId = getId(session._id);
     if (!sessionId) return;
     
-    // Clear the memory leak!
-    liveLocationStore.clearSession(sessionId);
+    // Clear live location store — fire-and-forget (don't block event emission)
+    liveLocationStore.clearSession(sessionId).catch(function () {});
 
     const classGroupId = getId(session.classGroup);
     const teacherId = getId(session.teacher);
@@ -1084,7 +1123,7 @@ function emitAttendanceEnded(session) {
         io.to(getAdminCollegeRoom(collegeId)).emit("attendance:ended:admin", payload);
     }
 
-    liveLocationStore.clearSession(getId(session._id));
+    liveLocationStore.clearSession(getId(session._id)).catch(function () {});
     AttendanceSession.updateOne(
         { _id: getId(session._id), liveDevices: { $exists: true, $ne: [] } },
         {
@@ -1140,7 +1179,7 @@ function emitAttendanceMarked(session, student, attendanceRecord, distance, upda
             const webpush = require("web-push");
             if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
                 webpush.setVapidDetails(
-                    "mailto:harshkoli@example.com",
+                    process.env.VAPID_SUBJECT || "mailto:admin@attendify.com",
                     process.env.VAPID_PUBLIC_KEY,
                     process.env.VAPID_PRIVATE_KEY
                 );
@@ -1162,7 +1201,7 @@ function emitAttendanceMarked(session, student, attendanceRecord, distance, upda
                     ));
                 }
             }
-        } catch(e) { console.log("Push error:", e.message); }
+        } catch(e) { logger.warn("Push notification error (attendance:marked)", { msg: e.message }); }
     }, 100);
 }
 

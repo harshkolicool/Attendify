@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subjects | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -31,7 +32,6 @@
         }
     </script>
 
-
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
     <script>
@@ -44,32 +44,86 @@
 </head>
 <body>
 
+<%
+    const safeSubjects = (typeof subjects !== "undefined" && subjects) ? subjects : [];
+    const safeClassGroups = (typeof classGroups !== "undefined" && classGroups) ? classGroups : [];
+    const safeTeachers = (typeof teachers !== "undefined" && teachers) ? teachers : [];
+    
+    const uniqueGroupsCount = new Set(safeSubjects.map(s => s.classGroup && (s.classGroup._id || s.classGroup)).filter(Boolean)).size || 0;
+    const uniqueDeptsCount = new Set(safeSubjects.map(s => s.department).filter(Boolean)).size || 0;
+    const uniqueTeachersCount = new Set(safeSubjects.flatMap(s => (s.teachers || []).map(t => t._id || t)).filter(Boolean)).size || 0;
+%>
+
 <div class="admin-layout">
 
-    <%- include("partials/sidebar", { activePage: typeof activePage !== "undefined" ? activePage : "" }) %>
+    <%- include("partials/sidebar", { activePage: "subjects", currentCollege: typeof college !== "undefined" ? college : null }) %>
 
     <main class="admin-main">
 
         <header class="admin-header">
             <div>
                 <span class="admin-kicker">Admin Panel</span>
-                <h1>Subjects</h1>
-                <p>Create, edit and assign subjects to class groups.</p>
+                <h1>Course & Subject Catalog</h1>
+                <p>Create, manage curriculum courses, and map faculty instructors to student cohorts.</p>
             </div>
         </header>
 
         <% if (typeof message !== "undefined" && message) { %>
-            <div class="admin-alert <%= message && message && message.includes('successfully') || message && message && message.includes('created') || message && message && message.includes('updated') ? 'success' : 'error' %>">
-                <%= typeof message !== "undefined" ? message : "" %>
+            <div class="admin-alert <%= (message.includes('successfully') || message.includes('created') || message.includes('updated')) ? 'success' : 'error' %>">
+                <%= message %>
             </div>
         <% } %>
 
+        <!-- OVERVIEW STAT RADAR CARDS -->
+        <section class="adm-radar-grid">
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon room">
+                    <i class="fa-solid fa-book-bookmark"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Total Subjects</span>
+                    <span class="adm-radar-val"><%= safeSubjects.length %> Active Courses</span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon sync">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Assigned Cohorts</span>
+                    <span class="adm-radar-val"><%= uniqueGroupsCount %> <%= uniqueGroupsCount === 1 ? 'Group' : 'Groups' %></span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon security">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Faculty Leads</span>
+                    <span class="adm-radar-val"><%= uniqueTeachersCount %> <%= uniqueTeachersCount === 1 ? 'Teacher' : 'Teachers' %></span>
+                </div>
+            </div>
+
+            <div class="adm-radar-card">
+                <div class="adm-radar-icon dept">
+                    <i class="fa-solid fa-building-columns"></i>
+                </div>
+                <div class="adm-radar-info">
+                    <span class="adm-radar-label">Departments</span>
+                    <span class="adm-radar-val"><%= uniqueDeptsCount %> <%= uniqueDeptsCount === 1 ? 'Faculty' : 'Faculties' %></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADD SUBJECT COMMAND CARD -->
         <section class="admin-card">
 
             <div class="admin-card-head">
                 <div>
-                    <h3>Add Subject</h3>
-                    <p>Select a class group first. Department and semester will fill automatically.</p>
+                    <h3><i class="fa-solid fa-square-plus" style="color: #6366f1; margin-right: 8px;"></i> Add Curriculum Subject</h3>
+                    <p>Select a class group first. Department and semester will auto-populate immediately.</p>
                 </div>
             </div>
 
@@ -80,56 +134,57 @@
             >
 
                 <div class="admin-field">
-                    <label>Subject Name</label>
+                    <label><i class="fa-solid fa-book" style="opacity: 0.7; margin-right: 6px;"></i> Subject Name</label>
                     <input
                         type="text"
                         name="subjectName"
-                        placeholder="Data Structures"
+                        placeholder="e.g. Data Structures & Algorithms"
                         required
                     >
                 </div>
 
                 <div class="admin-field">
-                    <label>Subject Code</label>
+                    <label><i class="fa-solid fa-barcode" style="opacity: 0.7; margin-right: 6px;"></i> Subject Code</label>
                     <input
                         type="text"
                         name="subjectCode"
-                        placeholder="DSA2026"
+                        placeholder="e.g. CS-301 / DSA2026"
                         required
                     >
                 </div>
 
                 <div class="admin-field">
-                    <label>Class Group</label>
+                    <label><i class="fa-solid fa-layer-group" style="opacity: 0.7; margin-right: 6px;"></i> Target Class Group</label>
                     <select name="classGroupId" class="js-subject-class-group" required>
                         <option value="">Select Class Group</option>
 
-                        <% classGroups.forEach(function(group) { %>
+                        <% safeClassGroups.forEach(function(group) { %>
                             <option
                                 value="<%= group._id %>"
                                 data-department="<%= group.department %>"
                                 data-semester="<%= group.semester %>"
                             >
-                                <%= group.name %> - Sem <%= group.semester %> <%= group.section %>
+                                <%= group.name %> - Sem <%= group.semester %> <%= group.section %> (<%= group.department %>)
                             </option>
                         <% }) %>
                     </select>
                 </div>
 
                 <div class="admin-field">
-                    <label>Department</label>
+                    <label><i class="fa-solid fa-building-columns" style="opacity: 0.7; margin-right: 6px;"></i> Department</label>
                     <input
                         type="text"
                         name="department"
                         class="js-subject-department"
-                        placeholder="Auto-filled"
+                        placeholder="Auto-filled from Class Group"
                         readonly
                         required
+                        style="opacity: 0.85; background: rgba(15, 23, 42, 0.4);"
                     >
                 </div>
 
                 <div class="admin-field">
-                    <label>Semester</label>
+                    <label><i class="fa-solid fa-stairs" style="opacity: 0.7; margin-right: 6px;"></i> Semester</label>
                     <input
                         type="number"
                         name="semester"
@@ -137,16 +192,17 @@
                         placeholder="Auto-filled"
                         readonly
                         required
+                        style="opacity: 0.85; background: rgba(15, 23, 42, 0.4);"
                     >
                 </div>
 
                 <div class="admin-field">
-                    <label>Assign Teacher</label>
-                    <select name="teacherIds" class="js-subject-teacher" multiple required>
-                        <option value="">Select Teachers</option>
+                    <label><i class="fa-solid fa-chalkboard-user" style="opacity: 0.7; margin-right: 6px;"></i> Assign Faculty Instructor</label>
+                    <select name="teacherIds" class="js-subject-teacher" required>
+                        <option value="">Select Faculty Member</option>
 
-                        <% if (teachers && teachers.length > 0) { %>
-                            <% teachers.forEach(function(teacher) { %>
+                        <% if (safeTeachers.length > 0) { %>
+                            <% safeTeachers.forEach(function(teacher) { %>
                                 <option
                                     value="<%= teacher._id %>"
                                     data-department="<%= teacher.department %>"
@@ -155,20 +211,19 @@
                                 </option>
                             <% }) %>
                         <% } else { %>
-                            <option value="" disabled>No teachers available</option>
+                            <option value="" disabled>No verified teachers available</option>
                         <% } %>
                     </select>
 
-                    <small class="admin-input-help">
-                        Teachers are filtered by selected class group department.
+                    <small class="admin-input-help" style="font-size: 0.78rem; opacity: 0.75; margin-top: 4px; display: block;">
+                        Faculty list filters dynamically based on the selected cohort department.
                     </small>
                 </div>
 
-                <div class="admin-field admin-button-field">
-                    <label>&nbsp;</label>
-                    <button class="admin-primary-btn" type="submit">
+                <div class="admin-field admin-button-field" style="grid-column: 1 / -1;">
+                    <button class="admin-primary-btn" type="submit" style="min-height: 48px; font-size: 1rem; width: 100%; justify-content: center;">
                         <i class="fa-solid fa-plus"></i>
-                        Add Subject
+                        Add Subject to Catalog
                     </button>
                 </div>
 
@@ -176,6 +231,7 @@
 
         </section>
 
+        <!-- SUBJECT DIRECTORY -->
         <section class="admin-card">
 
             <div class="admin-toolbar">
@@ -183,197 +239,198 @@
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input
                         type="text"
+                        class="admin-search-input"
                         data-admin-search="subjects"
                         placeholder="Search subject by name, code, class group, department or teacher..."
+                        style="border: none !important; background: transparent !important; outline: none !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; width: 100% !important; flex: 1 1 auto !important;"
                     >
                 </div>
 
                 <span class="admin-count-pill">
-                    <%= subjects.length %> Subjects
+                    <%= safeSubjects.length %> <%= safeSubjects.length === 1 ? 'Subject' : 'Subjects' %>
                 </span>
             </div>
 
-            <% if (!subjects || subjects.length === 0) { %>
+            <% if (safeSubjects.length === 0) { %>
                 <div class="admin-empty">
-                    No subjects created yet.
+                    <i class="fa-solid fa-book-open" style="font-size: 2.2rem; opacity: 0.4; margin-bottom: 10px;"></i>
+                    <p>No subjects created yet. Use the form above to add courses to your academic catalog.</p>
                 </div>
-            <% } %>
+            <% } else { %>
 
-            <div class="admin-grid">
+                <div class="admin-grid">
 
-                <% subjects.forEach(function(subject) { %>
+                    <% safeSubjects.forEach(function(subject) { %>
 
-                    <%
-                        let selectedTeacherId = "";
+                        <%
+                            let selectedTeacherId = "";
 
-                        if (subject.teachers && subject.teachers.length > 0) {
-                            if (subject.teachers[0]._id) {
-                                selectedTeacherId = subject.teachers[0]._id.toString();
-                            } else {
-                                selectedTeacherId = subject.teachers[0].toString();
+                            if (subject.teachers && subject.teachers.length > 0) {
+                                if (subject.teachers[0]._id) {
+                                    selectedTeacherId = subject.teachers[0]._id.toString();
+                                } else {
+                                    selectedTeacherId = subject.teachers[0].toString();
+                                }
                             }
-                        }
-                    %>
+                        %>
 
-                    <article class="admin-item-card admin-entity-card admin-subject-card" data-search-group="subjects">
+                        <article class="admin-item-card admin-entity-card admin-subject-card" data-search-group="subjects">
 
-                        <div class="admin-item-top">
-                            <div class="admin-item-icon">
-                                <i class="fa-solid fa-book"></i>
+                            <div class="admin-item-top">
+                                <div class="admin-item-icon" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #ffffff;">
+                                    <i class="fa-solid fa-book"></i>
+                                </div>
+
+                                <form
+                                    action="/admin/subjects/<%= subject._id %>/delete"
+                                    method="POST"
+                                    onsubmit="return uiConfirm(event, 'Delete <%= subject.subjectName %>?')"
+                                >
+                                    <button class="admin-delete-btn admin-delete-btn-icon" type="submit" title="Delete Subject" aria-label="Delete Subject">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
                             </div>
 
-                            <form
-                                action="/admin/subjects/<%= subject._id %>/delete"
-                                method="POST"
-                                onsubmit="return uiConfirm(event, 'Delete this subject?')"
-                            >
-                                <button class="admin-delete-btn" type="submit">
-                                    Delete
-                                </button>
-                            </form>
-                        </div>
+                            <h4><%= subject.subjectName %></h4>
 
-                        <h4><%= subject.subjectName %></h4>
+                            <p>
+                                <strong style="color: #818cf8;"><%= subject.subjectCode %></strong>
+                                ·
+                                <span><%= subject.department %></span>
+                                ·
+                                <span>Sem <%= subject.semester %></span>
+                            </p>
 
-                        <p>
-                            <%= subject.subjectCode %>
-                            ·
-                            <%= subject.department %>
-                            ·
-                            Sem <%= subject.semester %>
-                        </p>
-
-                        <div class="admin-meta">
-                            <% if (subject.classGroup) { %>
-                                <span class="admin-badge">
-                                    <i class="fa-solid fa-layer-group"></i>
-                                    <%= subject.classGroup.name %>
-                                </span>
-                            <% } else { %>
-                                <span class="admin-badge">
-                                    Class Missing
-                                </span>
-                            <% } %>
-
-                            <% if (subject.teachers && subject.teachers.length > 0) { %>
-                                <% subject.teachers.forEach(function(teacher) { %>
-                                    <span class="admin-badge">
-                                        <i class="fa-solid fa-chalkboard-user"></i>
-                                        <%= teacher.fullName %>
+                            <div class="admin-meta">
+                                <% if (subject.classGroup) { %>
+                                    <span class="admin-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-weight: 700;">
+                                        <i class="fa-solid fa-layer-group"></i>
+                                        <%= subject.classGroup.name %>
                                     </span>
-                                <% }) %>
-                            <% } else { %>
-                                <span class="admin-badge">
-                                    No Teacher Assigned
-                                </span>
-                            <% } %>
-                        </div>
+                                <% } else { %>
+                                    <span class="admin-badge muted">
+                                        Class Missing
+                                    </span>
+                                <% } %>
 
-                        <details class="admin-edit-box">
-                            <summary>
-                                <i class="fa-solid fa-pen-to-square"></i>
-                                Edit Subject
-                            </summary>
+                                <% if (subject.teachers && subject.teachers.length > 0) { %>
+                                    <% subject.teachers.forEach(function(teacher) { %>
+                                        <span class="admin-badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-weight: 700;">
+                                            <i class="fa-solid fa-chalkboard-user"></i>
+                                            <%= teacher.fullName %>
+                                        </span>
+                                    <% }) %>
+                                <% } else { %>
+                                    <span class="admin-badge" style="background: rgba(245, 158, 11, 0.12); color: #d97706;">
+                                        No Teacher Assigned
+                                    </span>
+                                <% } %>
+                            </div>
 
-                            <form
-                                action="/admin/subjects/<%= subject._id %>/update"
-                                method="POST"
-                                class="admin-edit-form js-subject-form"
-                            >
-                                <div class="admin-field">
-                                    <label>Subject Name</label>
-                                    <input
-                                        type="text"
-                                        name="subjectName"
-                                        value="<%= subject.subjectName %>"
-                                        required
-                                    >
-                                </div>
+                            <details class="admin-edit-box">
+                                <summary>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    Edit Subject
+                                </summary>
 
-                                <div class="admin-field">
-                                    <label>Subject Code</label>
-                                    <input
-                                        type="text"
-                                        name="subjectCode"
-                                        value="<%= subject.subjectCode %>"
-                                        required
-                                    >
-                                </div>
+                                <form
+                                    action="/admin/subjects/<%= subject._id %>/update"
+                                    method="POST"
+                                    class="admin-edit-form js-subject-form"
+                                >
+                                    <div class="admin-field">
+                                        <label>Subject Name</label>
+                                        <input
+                                            type="text"
+                                            name="subjectName"
+                                            value="<%= subject.subjectName %>"
+                                            required
+                                        >
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>Class Group</label>
-                                    <select name="classGroupId" class="js-subject-class-group" required>
-                                        <option value="">Select Class Group</option>
+                                    <div class="admin-field">
+                                        <label>Subject Code</label>
+                                        <input
+                                            type="text"
+                                            name="subjectCode"
+                                            value="<%= subject.subjectCode %>"
+                                            required
+                                        >
+                                    </div>
 
-                                        <% classGroups.forEach(function(group) { %>
-                                            <option
-                                                value="<%= group._id %>"
-                                                data-department="<%= group.department %>"
-                                                data-semester="<%= group.semester %>"
-                                                <%= subject.classGroup && subject.classGroup._id.toString() === group._id.toString() ? "selected" : "" %>
-                                            >
-                                                <%= group.name %> - Sem <%= group.semester %> <%= group.section %>
-                                            </option>
-                                        <% }) %>
-                                    </select>
-                                </div>
+                                    <div class="admin-field">
+                                        <label>Class Group</label>
+                                        <select name="classGroupId" class="js-subject-class-group" required>
+                                            <option value="">Select Class Group</option>
 
-                                <div class="admin-field">
-                                    <label>Department</label>
-                                    <input
-                                        type="text"
-                                        name="department"
-                                        class="js-subject-department"
-                                        value="<%= subject.department %>"
-                                        readonly
-                                        required
-                                    >
-                                </div>
+                                            <% safeClassGroups.forEach(function(group) { %>
+                                                <option
+                                                    value="<%= group._id %>"
+                                                    data-department="<%= group.department %>"
+                                                    data-semester="<%= group.semester %>"
+                                                    <%= (subject.classGroup && (subject.classGroup._id || subject.classGroup).toString() === group._id.toString()) ? "selected" : "" %>
+                                                >
+                                                    <%= group.name %> - Sem <%= group.semester %> <%= group.section %>
+                                                </option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>Semester</label>
-                                    <input
-                                        type="number"
-                                        name="semester"
-                                        class="js-subject-semester"
-                                        value="<%= subject.semester %>"
-                                        readonly
-                                        required
-                                    >
-                                </div>
+                                    <div class="admin-field">
+                                        <label>Department</label>
+                                        <input
+                                            type="text"
+                                            name="department"
+                                            class="js-subject-department"
+                                            value="<%= subject.department %>"
+                                            readonly
+                                            required
+                                        >
+                                    </div>
 
-                                <div class="admin-field">
-                                    <label>Assign Teacher</label>
-                                    <select name="teacherIds" class="js-subject-teacher" multiple required>
-                                        <option value="">Select Teachers</option>
+                                    <div class="admin-field">
+                                        <label>Semester</label>
+                                        <input
+                                            type="number"
+                                            name="semester"
+                                            class="js-subject-semester"
+                                            value="<%= subject.semester %>"
+                                            readonly
+                                            required
+                                        >
+                                    </div>
 
-                                        <% teachers.forEach(function(teacher) { %>
-                                            <option
-                                                value="<%= teacher._id %>"
-                                                data-department="<%= teacher.department %>"
-                                                <%= selectedTeacherId === teacher._id.toString() ? "selected" : "" %>
-                                            >
-                                                <%= teacher.fullName %> - <%= teacher.department %>
-                                            </option>
-                                        <% }) %>
-                                    </select>
+                                    <div class="admin-field">
+                                        <label>Assign Teacher</label>
+                                        <select name="teacherIds" class="js-subject-teacher" required>
+                                            <option value="">Select Faculty Member</option>
 
-                                    <small class="admin-input-help">
-                                        Teacher must belong to the selected department.
-                                    </small>
-                                </div>
+                                            <% safeTeachers.forEach(function(teacher) { %>
+                                                <option
+                                                    value="<%= teacher._id %>"
+                                                    data-department="<%= teacher.department %>"
+                                                    <%= selectedTeacherId === teacher._id.toString() ? "selected" : "" %>
+                                                >
+                                                    <%= teacher.fullName %> - <%= teacher.department %>
+                                                </option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
 
-                                <button class="admin-primary-btn" type="submit">
-                                    Save Changes
-                                </button>
-                            </form>
-                        </details>
+                                    <button class="admin-primary-btn" type="submit" style="grid-column: 1 / -1; margin-top: 8px;">
+                                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                                    </button>
+                                </form>
+                            </details>
 
-                    </article>
+                        </article>
 
-                <% }) %>
+                    <% }) %>
 
-            </div>
+                </div>
+
+            <% } %>
 
         </section>
 
@@ -387,8 +444,7 @@
 <script src="/js/uiShell.js"></script>
 
     <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
-    <script src="/js/multiSelectDropdown.js?v=2" defer></script>
+    <script src="/js/selectEnhancer.js?v=3" defer></script>
     <script src="/js/adminRealtime.js"></script>
 </body>
 </html>

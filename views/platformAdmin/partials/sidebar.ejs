@@ -1,9 +1,11 @@
-<aside class="ui-sidebar platform-sidebar">
-    <button class="ui-sidebar-toggle" type="button" aria-label="Toggle sidebar"></button>
+<aside class="ui-sidebar platform-sidebar" id="platformSidebar">
+    <button class="ui-sidebar-toggle" id="platformSidebarToggle" type="button" aria-label="Toggle sidebar"></button>
 
-    <a href="/platform-admin/dashboard" class="platform-logo">
-        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-        <div class="platform-logo-text">
+    <a href="/platform-admin/dashboard" class="platform-logo admin-brand">
+        <div class="admin-brand-icon">
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        </div>
+        <div class="admin-brand-text platform-logo-text">
             <h2>Attendify</h2>
             <p>Super Admin</p>
         </div>
@@ -12,35 +14,35 @@
     <nav class="platform-menu shell-sidebar-nav" aria-label="Platform navigation">
         <a
             href="/platform-admin/dashboard"
-            class="platform-nav-link <%= activePage === 'dashboard' ? 'active' : '' %>"
+            class="menu-link platform-nav-link <%= activePage === 'dashboard' ? 'active' : '' %>"
         >
             <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-            <span class="platform-link-text">Dashboard</span>
+            <span class="platform-link-text shell-text">Dashboard</span>
         </a>
 
         <a
             href="/platform-admin/requests?status=PENDING"
-            class="platform-nav-link <%= activePage === 'requests' ? 'active' : '' %>"
+            class="menu-link platform-nav-link <%= activePage === 'requests' ? 'active' : '' %>"
         >
             <i class="fa-solid fa-building-circle-check" aria-hidden="true"></i>
-            <span class="platform-link-text">College Requests</span>
+            <span class="platform-link-text shell-text">College Requests</span>
         </a>
 
         <a
             href="/platform-admin/notifications"
-            class="platform-nav-link <%= activePage === 'notifications' ? 'active' : '' %>"
+            class="menu-link platform-nav-link <%= activePage === 'notifications' ? 'active' : '' %>"
         >
             <i class="fa-solid fa-bell" aria-hidden="true"></i>
-            <span class="platform-link-text">Notifications</span>
+            <span class="platform-link-text shell-text">Notifications</span>
             <span class="ui-notification-badge js-notification-badge"></span>
         </a>
 
         <a
             href="/platform-admin/profile"
-            class="platform-nav-link <%= activePage === 'profile' ? 'active' : '' %>"
+            class="menu-link platform-nav-link <%= activePage === 'profile' ? 'active' : '' %>"
         >
             <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
-            <span class="platform-link-text">My Profile</span>
+            <span class="platform-link-text shell-text">My Profile</span>
         </a>
     </nav>
 
@@ -50,8 +52,9 @@
         <form action="/platform-admin/logout" method="POST" class="sidebar-logout-form">
             <button class="menu-link sidebar-logout-button" type="submit">
                 <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-                <span class="platform-link-text">Log Out</span>
+                <span class="platform-link-text shell-text">Log Out</span>
             </button>
         </form>
     </div>
 </aside>
+

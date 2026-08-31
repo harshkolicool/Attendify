@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard | Attendify</title>
@@ -13,12 +16,14 @@
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
     <!-- Preload critical CSS -->
-    <link rel="preload" href="/css/uiShell.css?v=20260711" as="style">
+    <link rel="preload" href="/css/uiShell.css?v=20260901_fixed3" as="style">
     <link rel="preload" href="/css/teacherDashboard.css?v=1783707422685?v=20260617d" as="style">
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
     <link rel="stylesheet" href="/css/teacherDashboard.css?v=1783707422685?v=20260617d">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -60,12 +65,20 @@
     };
     </script>
     <% } %>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 </head>
 <body>
 
 <%
     const now = new Date();
     const currentDate = now.getDate();
+    const currentHour = now.getHours();
+    let greeting = "Good morning";
+    if (currentHour >= 12 && currentHour < 17) greeting = "Good afternoon";
+    else if (currentHour >= 17) greeting = "Good evening";
+
+    const teacherName = typeof teacher !== "undefined" && teacher && teacher.fullName ? teacher.fullName : "Teacher";
 
     function parseTeacherTimeToMinutes(timeValue) {
         if (!timeValue) {
@@ -278,63 +291,176 @@
     <main class="teacher-main teacher-dashboard-page">
 
         <header class="teacher-header">
-            <div>
-                <span class="teacher-kicker">Teacher Panel</span>
-                <h1>Today's Schedule</h1>
-                <p>
-                    <i class="fa-regular fa-calendar"></i>
-                    <%= today %> — manage class attendance
-                </p>
+            <div class="teacher-header-left">
+                <div class="teacher-avatar-badge">
+                    <span><%= teacherName.charAt(0).toUpperCase() %></span>
+                    <span class="teacher-online-dot" title="Online"></span>
+                </div>
+                <div class="teacher-header-titles">
+                    <div class="teacher-header-badge-row">
+                        <span class="teacher-kicker"><i class="fa-solid fa-chalkboard-user"></i> Faculty Portal</span>
+                        <% if (typeof teacher !== "undefined" && teacher && teacher.department) { %>
+                            <span class="teacher-dept-chip"><i class="fa-solid fa-graduation-cap"></i> <%= teacher.department %></span>
+                        <% } %>
+                        <% if (activeSessions.length > 0) { %>
+                            <span class="teacher-live-now-chip"><span class="pulse-dot"></span> <%= activeSessions.length %> <%= activeSessions.length === 1 ? 'Session' : 'Sessions' %> Active</span>
+                        <% } %>
+                    </div>
+                    <h1><%= greeting %>, <%= teacherName %>!</h1>
+                    <p>
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <span><%= today %></span> &bull; <span class="teacher-highlight-count"><%= schedules.length %> <%= schedules.length === 1 ? 'class' : 'classes' %> scheduled</span>
+                    </p>
+                </div>
             </div>
 
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="date" id="teacherDatePicker" class="dashboard-date-picker" value="<%= typeof targetDate !== 'undefined' ? targetDate : '' %>">
+            <div class="teacher-header-actions">
+                <button id="enablePushBtn" class="teacher-enable-push-pill" style="display: none;" title="Enable Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span>Enable Alerts</span>
+                </button>
+
+                <div class="teacher-datepicker-btn" id="teacherDateBtn" title="Click to change date">
+                    <div class="teacher-datepicker-icon">
+                        <i class="fa-solid fa-calendar-days"></i>
+                    </div>
+                    <div class="teacher-datepicker-text">
+                        <span class="teacher-datepicker-kicker">Date Filter</span>
+                        <span class="teacher-datepicker-val" id="teacherDisplayDate">
+                            <%= typeof targetDate !== 'undefined' && targetDate ? new Date(targetDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today' %>
+                        </span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down teacher-datepicker-arrow"></i>
+                    <input type="text" id="teacherDatePicker" class="teacher-hidden-input" value="<%= typeof targetDate !== 'undefined' ? targetDate : '' %>" readonly autocomplete="off">
+                </div>
+
+                <a href="/teacher/reports" class="teacher-reports-quick-btn" title="View Detailed Reports">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
             </div>
         </header>
 
         <script>
-            document.getElementById('teacherDatePicker').addEventListener('change', function(e) {
-                if (e.target.value) {
-                    window.location.href = '/teacher/dashboard?date=' + e.target.value;
+            document.addEventListener('DOMContentLoaded', function() {
+                const picker = document.getElementById("teacherDatePicker");
+                const dateBtn = document.getElementById("teacherDateBtn");
+                
+                const fp = flatpickr(picker, {
+                    dateFormat: "Y-m-d",
+                    defaultDate: "<%= typeof targetDate !== 'undefined' ? targetDate : '' %>",
+                    disableMobile: true,
+                    position: "auto right",
+                    locale: {
+                        weekdays: {
+                            shorthand: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+                            longhand: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                        }
+                    },
+                    onChange: function(selectedDates, dateStr, instance) {
+                        if (dateStr) {
+                            window.location.href = '/teacher/dashboard?date=' + dateStr;
+                        }
+                    }
+                });
+
+                if (dateBtn && fp) {
+                    dateBtn.addEventListener('click', function(e) {
+                        if (e.target !== picker) {
+                            fp.open();
+                        }
+                    });
                 }
             });
         </script>
 
         <% if (typeof error !== "undefined" && error) { %>
-            <div class="alert-box error">
-                <i class="fa-solid fa-circle-exclamation"></i>
-                <%= typeof error !== "undefined" ? error : "" %>
-            </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    if (typeof window.showToast === "function") {
+                        window.showToast(<%- JSON.stringify(error) %>, "error");
+                    } else if (typeof Swal !== "undefined") {
+                        Swal.fire({ toast: true, position: "top-end", icon: "error", title: <%- JSON.stringify(error) %>, showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                    }
+                    try {
+                        const url = new URL(window.location);
+                        url.searchParams.delete("error");
+                        window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : ""));
+                    } catch(e) {}
+                });
+            </script>
         <% } %>
 
         <% if (typeof message !== "undefined" && message) { %>
-            <div class="alert-box success">
-                <i class="fa-solid fa-circle-check"></i>
-                <%= typeof message !== "undefined" ? message : "" %>
-            </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    if (typeof window.showToast === "function") {
+                        window.showToast(<%- JSON.stringify(message) %>, "success");
+                    } else if (typeof Swal !== "undefined") {
+                        Swal.fire({ toast: true, position: "top-end", icon: "success", title: <%- JSON.stringify(message) %>, showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                    }
+                    try {
+                        const url = new URL(window.location);
+                        url.searchParams.delete("message");
+                        window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : ""));
+                    } catch(e) {}
+                });
+            </script>
         <% } %>
 
-        <button id="enablePushBtn" class="teacher-primary-btn" style="padding: 10px 16px; border-radius: 8px; width: 100%; margin-bottom: 1rem; display: none;">
-            <i class="fa-solid fa-bell"></i> Enable Notifications
-        </button>
+        <section class="teacher-stats-grid">
+            <article class="teacher-stat-card blue">
+                <div class="teacher-stat-glow-orb blue"></div>
+                <div class="teacher-stat-icon-tile blue">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div class="teacher-stat-content">
+                    <span class="teacher-stat-label">Today's Classes</span>
+                    <div class="teacher-stat-val-row">
+                        <strong class="teacher-stat-value"><%= schedules.length %></strong>
+                        <span class="teacher-stat-badge blue"><i class="fa-solid fa-book-open"></i> Schedule</span>
+                    </div>
+                    <span class="teacher-stat-subtext"><%= schedules.length === 1 ? '1 lecture scheduled' : schedules.length + ' lectures scheduled' %></span>
+                </div>
+            </article>
 
-        <section class="stats-row">
+            <article class="teacher-stat-card <%= activeSessions.length > 0 ? 'sky active-pulse' : 'sky' %>">
+                <div class="teacher-stat-glow-orb sky"></div>
+                <div class="teacher-stat-icon-tile sky">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                </div>
+                <div class="teacher-stat-content">
+                    <span class="teacher-stat-label">Active Sessions</span>
+                    <div class="teacher-stat-val-row">
+                        <strong class="teacher-stat-value"><%= activeSessions.length %></strong>
+                        <% if (activeSessions.length > 0) { %>
+                            <span class="teacher-stat-badge sky"><span class="pulse-dot"></span> Live</span>
+                        <% } else { %>
+                            <span class="teacher-stat-badge slate">Standby</span>
+                        <% } %>
+                    </div>
+                    <span class="teacher-stat-subtext"><%= activeSessions.length > 0 ? 'Realtime telemetry active' : 'No active session' %></span>
+                </div>
+            </article>
 
-            <div class="stat-box">
-                <span>Today's Classes</span>
-                <h3><%= schedules.length %></h3>
-            </div>
-
-            <div class="stat-box">
-                <span>Active Sessions</span>
-                <h3><%= activeSessions.length %></h3>
-            </div>
-
-            <div class="stat-box">
-                <span>Manual Pending</span>
-                <h3><%= manualAttendanceList.length %></h3>
-            </div>
-
+            <article class="teacher-stat-card <%= manualAttendanceList.length > 0 ? 'amber' : 'purple' %>">
+                <div class="teacher-stat-glow-orb <%= manualAttendanceList.length > 0 ? 'amber' : 'purple' %>"></div>
+                <div class="teacher-stat-icon-tile <%= manualAttendanceList.length > 0 ? 'amber' : 'purple' %>">
+                    <i class="fa-solid fa-clipboard-user"></i>
+                </div>
+                <div class="teacher-stat-content">
+                    <span class="teacher-stat-label">Manual Entries</span>
+                    <div class="teacher-stat-val-row">
+                        <strong class="teacher-stat-value"><%= manualAttendanceList.length %></strong>
+                        <% if (manualAttendanceList.length > 0) { %>
+                            <span class="teacher-stat-badge amber"><i class="fa-solid fa-clock-rotate-left"></i> Pending</span>
+                        <% } else { %>
+                            <span class="teacher-stat-badge purple"><i class="fa-solid fa-circle-check"></i> Clean</span>
+                        <% } %>
+                    </div>
+                    <span class="teacher-stat-subtext"><%= manualAttendanceList.length > 0 ? 'Awaiting manual entry' : 'All classes recorded' %></span>
+                </div>
+            </article>
         </section>
 
         <section class="content-area">
@@ -344,11 +470,11 @@
                     <div>
                         <h3 class="panel-title">
                             <i class="fa-solid fa-list-check"></i>
-                            Schedule
+                            Class Schedule
                         </h3>
 
                         <p class="panel-subtitle">
-                            Live attendance can be started only during the scheduled class time.
+                            Start and monitor GPS-verified attendance during scheduled class hours.
                         </p>
                     </div>
                 </div>
@@ -375,7 +501,7 @@
                                 <input
                                     id="teacherScheduleSearchInput"
                                     type="text"
-                                    placeholder="Search subject, class group, room or state..."
+                                    placeholder="Search subject, class group, room or status..."
                                     data-teacher-schedule-search
                                 >
                             </div>
@@ -416,12 +542,12 @@
                             </div>
 
                             <div class="teacher-schedule-filter-field">
-                                <label for="teacherScheduleStateFilter">State</label>
+                                <label for="teacherScheduleStateFilter">Status</label>
 
                                 <div class="select-shell">
                                     <i class="fa-solid fa-filter select-shell-icon"></i>
                                     <select id="teacherScheduleStateFilter" data-teacher-schedule-filter="state">
-                                        <option value="">All States</option>
+                                        <option value="">All Statuses</option>
 
                                         <% scheduleStateOptions.forEach(function(option) { %>
                                             <option value="<%= option.value %>"><%= option.label %></option>
@@ -486,7 +612,7 @@
                                     </div>
 
                                     <span class="teacher-count-pill" data-teacher-schedule-visible-count>
-                                        <%= group.cards.length %> Classes
+                                        <%= group.cards.length %> <%= group.cards.length === 1 ? 'Class' : 'Classes' %>
                                     </span>
                                 </summary>
 
@@ -519,31 +645,24 @@
 
                                             <div class="class-info teacher-schedule-class-info">
 
-                                                <% if (item.subject) { %>
-                                                    <h4><%= item.subject.subjectName %></h4>
-                                                <% } else { %>
-                                                    <h4>Subject Missing</h4>
-                                                <% } %>
-
-                                                <p>
-                                                    <% if (item.classGroup) { %>
-                                                        <span>
-                                                            <i class="fa-solid fa-users"></i>
-                                                            <%= item.classGroup.name %>
-                                                        </span>
-                                                    <% } else { %>
-                                                        <span>Class Missing</span>
+                                                <div class="teacher-card-subject-row">
+                                                    <h4><%= item.subject ? item.subject.subjectName : 'Subject Missing' %></h4>
+                                                    <% if (item.subject && item.subject.subjectCode) { %>
+                                                        <span class="subject-code-chip"><%= item.subject.subjectCode %></span>
                                                     <% } %>
+                                                </div>
 
-                                                    <% if (item.classroom) { %>
-                                                        <span>
-                                                            <i class="fa-solid fa-location-dot"></i>
-                                                            <%= item.classroom.classroomName %>
-                                                        </span>
-                                                    <% } else { %>
-                                                        <span>Room Missing</span>
-                                                    <% } %>
-                                                </p>
+                                                <div class="teacher-card-meta-row">
+                                                    <span class="teacher-meta-tag group">
+                                                        <i class="fa-solid fa-users"></i>
+                                                        <%= item.classGroup ? item.classGroup.name : 'Class Missing' %>
+                                                    </span>
+
+                                                    <span class="teacher-meta-tag room">
+                                                        <i class="fa-solid fa-location-dot"></i>
+                                                        <%= item.classroom ? item.classroom.classroomName : 'Room Missing' %>
+                                                    </span>
+                                                </div>
 
                                             </div>
 
@@ -574,34 +693,29 @@
                                                         <input type="hidden" name="teacherAccuracy" value="">
                                                         <input type="hidden" name="classroomRadius" value="<%= item.classroom.radius || 100 %>">
 
-                                                        <button class="start-btn" type="submit">
-                                                            <% if (card.canRestart) { %>
-                                                                <i class="fa-solid fa-rotate-right"></i>
-                                                                Start Again
-                                                            <% } else { %>
-                                                                <i class="fa-solid fa-play"></i>
-                                                                Start
-                                                            <% } %>
+                                                        <button class="start-btn teacher-start-btn" type="submit">
+                                                            <i class="fa-solid <%= card.canRestart ? 'fa-rotate-right' : 'fa-play' %>"></i>
+                                                            <span><%= card.canRestart ? 'Start Again' : 'Start Attendance' %></span>
                                                         </button>
                                                     </form>
 
                                                 <% } else if (card.showManual) { %>
 
-                                                    <a href="/teacher/manual-attendance/<%= item._id %>" class="manual-link-btn">
-                                                        <i class="fa-solid fa-pen"></i>
-                                                        Manual
+                                                    <a href="/teacher/manual-attendance/<%= item._id %>" class="teacher-manual-btn">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
+                                                        <span>Manual</span>
                                                     </a>
 
                                                 <% } else if (card.todaySession) { %>
 
-                                                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                                                    <div class="teacher-recorded-actions">
                                                         <span class="status-badge done">
                                                             <i class="fa-solid fa-circle-check"></i>
-                                                            Recorded
+                                                            <span>Recorded</span>
                                                         </span>
-                                                        <a href="/teacher/attendance/export/<%= card.todaySession._id %>" class="manual-link-btn" style="background:#f1f5f9; color:#475569;">
+                                                        <a href="/teacher/attendance/export/<%= card.todaySession._id %>" class="teacher-export-btn" title="Export CSV Report">
                                                             <i class="fa-solid fa-file-csv"></i>
-                                                            Export
+                                                            <span>Export</span>
                                                         </a>
                                                     </div>
 
@@ -609,14 +723,14 @@
 
                                                     <span class="status-badge upcoming">
                                                         <i class="fa-regular fa-clock"></i>
-                                                        Upcoming
+                                                        <span>Upcoming</span>
                                                     </span>
 
                                                 <% } else if (card.timeStatus === "ended") { %>
 
                                                     <span class="status-badge ended">
                                                         <i class="fa-solid fa-ban"></i>
-                                                        Time Over
+                                                        <span>Time Over</span>
                                                     </span>
 
                                                 <% } else { %>
@@ -642,39 +756,44 @@
                 <% } %>
             </div>
 
-            <div class="panel-box" id="attendance-section">
-                <h3 class="panel-title">
-                    <i class="fa-solid fa-user-check"></i>
-                    Live Attendance
-                </h3>
+            <div class="panel-box teacher-live-panel" id="attendance-section">
+                <div class="teacher-panel-header">
+                    <div>
+                        <h3 class="panel-title">
+                            <i class="fa-solid fa-satellite-dish" style="color: #34d399;"></i>
+                            Live Attendance
+                        </h3>
 
-                <p class="panel-subtitle">
-                    Active sessions and realtime present count.
-                </p>
+                        <p class="panel-subtitle">
+                            Active sessions and realtime present count.
+                        </p>
+                    </div>
+                    <% if (activeSessions.length > 0) { %>
+                        <span class="teacher-live-pill-badge">
+                            <span class="pulse-dot"></span>
+                            <%= activeSessions.length %> LIVE
+                        </span>
+                    <% } %>
+                </div>
 
                 <% if (activeSessions.length === 0) { %>
-                    <div class="empty-box small">
-                        <p>No live session running</p>
+                    <div class="teacher-live-empty-box">
+                        <div class="teacher-live-empty-icon-wrap">
+                            <i class="fa-solid fa-satellite-dish"></i>
+                        </div>
+                        <h4>No live session running</h4>
+                        <p>Start attendance from your scheduled class when ready</p>
                     </div>
                 <% } %>
 
                 <% activeSessions.forEach(function(session) { %>
 
-                    <div class="live-card" data-session-id="<%= session._id %>">
+                    <div class="live-card teacher-live-active-card" data-session-id="<%= session._id %>">
 
                         <div class="live-top">
                             <div class="live-course-info">
-                                <% if (session.subject) { %>
-                                    <h4><%= session.subject.subjectName %></h4>
-                                <% } else { %>
-                                    <h4>Subject Missing</h4>
-                                <% } %>
-
-                                <% if (session.classGroup) { %>
-                                    <p><%= session.classGroup.name %></p>
-                                <% } else { %>
-                                    <p>Class Missing</p>
-                                <% } %>
+                                <h4><%= session.subject ? session.subject.subjectName : 'Subject Missing' %></h4>
+                                <p><%= session.classGroup ? session.classGroup.name : 'Class Missing' %></p>
                             </div>
 
                             <div class="live-badge-modern">
@@ -731,17 +850,17 @@
                             <% } %>
                         </ul>
 
-                        <div style="display: flex; gap: 8px;">
-                            <form action="/teacher/attendance/end/<%= session._id %>" method="POST" style="flex: 1;">
-                                <button class="end-btn" type="submit" style="width: 100%;">
-                                    <i class="fa-solid fa-square"></i>
-                                    End Early
+                        <div class="teacher-live-actions-row">
+                            <form action="/teacher/attendance/end/<%= session._id %>" method="POST" class="teacher-live-action-form">
+                                <button class="teacher-end-btn" type="submit">
+                                    <i class="fa-solid fa-stop"></i>
+                                    <span>End Early</span>
                                 </button>
                             </form>
-                            <form action="/teacher/attendance/force-end/<%= session._id %>" method="POST" style="flex: 1;" onsubmit="return confirm('Force ending will immediately mark all remaining students ABSENT. Are you sure?');">
-                                <button class="end-btn" type="submit" style="width: 100%; background-color: #dc2626; color: white;">
+                            <form action="/teacher/attendance/force-end/<%= session._id %>" method="POST" class="teacher-live-action-form" onsubmit="return confirm('Force ending will immediately mark all remaining students ABSENT. Are you sure?');">
+                                <button class="teacher-force-end-btn" type="submit">
                                     <i class="fa-solid fa-power-off"></i>
-                                    Force End
+                                    <span>Force End</span>
                                 </button>
                             </form>
                         </div>
@@ -753,71 +872,113 @@
 
         </section>
 
-        <section class="teacher-card manual-shortcut-card">
-            <div class="teacher-card-header">
-                <div>
-                    <h3>Manual Attendance</h3>
-                    <p>
-                        If class time has ended and live attendance was not completed, mark attendance manually from the dedicated page.
+        <div class="teacher-secondary-grid">
+            <section class="teacher-card manual-shortcut-card">
+                <div class="teacher-card-header">
+                    <div class="teacher-card-title-group">
+                        <div class="teacher-card-icon-tile blue">
+                            <i class="fa-solid fa-clipboard-user"></i>
+                        </div>
+                        <div>
+                            <h3>Manual Attendance</h3>
+                            <p>Direct roll-call entry &amp; roster updates</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="manual-shortcut-body">
+                    <p class="manual-shortcut-desc">
+                        If class time has ended and live attendance was not captured, record or update attendance records manually.
                     </p>
+                    <a href="/teacher/manual-attendance" class="manual-link-btn">
+                        <span>Open Manual Register</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </section>
+
+            <section class="teacher-card suspicious-attempts-card">
+                <div class="teacher-card-header">
+                    <div class="teacher-card-title-group">
+                        <div class="teacher-card-icon-tile rose">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <h3>Suspicious Attempts</h3>
+                            <p>Rejected attendance attempts today</p>
+                        </div>
+                    </div>
+
+                    <span class="suspicious-count-pill" id="suspiciousAttemptCount">
+                        0 Alerts
+                    </span>
                 </div>
 
-                <a href="/teacher/manual-attendance" class="manual-link-btn">
-                    <i class="fa-solid fa-clipboard-list"></i>
-                    Open Manual Page
-                </a>
-            </div>
-        </section>
-
-        <section class="teacher-card suspicious-attempts-card">
-            <div class="teacher-card-header">
-                <div>
-                    <h3>Suspicious Attempts</h3>
-                    <p>Realtime rejected attendance attempts for today.</p>
+                <div class="suspicious-empty" id="suspiciousEmptyState">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <p>No suspicious attempts detected yet.</p>
                 </div>
 
-                <span class="suspicious-count-pill" id="suspiciousAttemptCount">
-                    0 Alerts
-                </span>
-            </div>
+                <ul class="suspicious-attempt-list" id="suspiciousAttemptList"></ul>
+            </section>
 
-            <div class="suspicious-empty" id="suspiciousEmptyState">
-                <i class="fa-solid fa-shield-halved"></i>
-                <p>No suspicious attempts detected yet.</p>
-            </div>
-
-            <ul class="suspicious-attempt-list" id="suspiciousAttemptList"></ul>
-        </section>
-
-
-
-        <section class="teacher-card" id="pendingReviewsSection" style="display:none;">
-            <div class="teacher-card-header">
-                <div>
-                    <h3><i class="fa-solid fa-flag" style="color:#f59e0b;"></i> Pending Attendance Reviews</h3>
-                    <p>Students who have requested a review of their absent record.</p>
+            <section class="teacher-card" id="pendingReviewsSection">
+                <div class="teacher-card-header">
+                    <div class="teacher-card-title-group">
+                        <div class="teacher-card-icon-tile amber">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                        <div>
+                            <h3>Pending Reviews</h3>
+                            <p>Student absence dispute requests</p>
+                        </div>
+                    </div>
+                    <span class="suspicious-count-pill" id="pendingReviewCount">0 Pending</span>
                 </div>
-                <span class="suspicious-count-pill" id="pendingReviewCount" style="background:#fef3c7;color:#92400e;">0 Pending</span>
-            </div>
-            <div id="pendingReviewsEmpty" class="suspicious-empty" style="display:none;">
-                <i class="fa-solid fa-circle-check" style="color:#22c55e;"></i>
-                <p>No pending reviews.</p>
-            </div>
-            <div id="pendingReviewsList"></div>
-        </section>
+                <div id="pendingReviewsEmpty" class="suspicious-empty">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    <p>No pending review requests.</p>
+                </div>
+                <div id="pendingReviewsList"></div>
+            </section>
+        </div>
 
 
         <%
+            let defaultMapCenter = null;
+            if (classrooms && classrooms.length > 0) {
+                const roomWithGeo = classrooms.find(r => r.latitude && r.longitude && Number(r.latitude) !== 0);
+                if (roomWithGeo) {
+                    defaultMapCenter = {
+                        latitude: Number(roomWithGeo.latitude),
+                        longitude: Number(roomWithGeo.longitude),
+                        radius: Number(roomWithGeo.radius || 100),
+                        name: roomWithGeo.classroomName || "Campus Classroom"
+                    };
+                }
+            }
+            if (!defaultMapCenter && schedules && schedules.length > 0) {
+                const schedWithGeo = schedules.find(s => s.classroom && s.classroom.latitude && s.classroom.longitude && Number(s.classroom.latitude) !== 0);
+                if (schedWithGeo) {
+                    defaultMapCenter = {
+                        latitude: Number(schedWithGeo.classroom.latitude),
+                        longitude: Number(schedWithGeo.classroom.longitude),
+                        radius: Number(schedWithGeo.classroom.radius || 100),
+                        name: schedWithGeo.classroom.classroomName || "Campus Classroom"
+                    };
+                }
+            }
+
             const liveMapBootstrap = (activeSessions || []).map(function (session) {
                 return {
                     sessionId: session._id.toString(),
                     subjectName: session.subject ? session.subject.subjectName : "Subject",
                     classGroupName: session.classGroup ? session.classGroup.name : "Class",
-                    latitude: Number(session.latitude || 0),
-                    longitude: Number(session.longitude || 0),
-                    radius: Number(session.radius || 0),
-                    configuredRadius: Number(session.radius || 0),
-                    effectiveRadius: Number(session.radius || 0)
+                    latitude: Number(session.latitude || (session.classroom && session.classroom.latitude) || 0),
+                    longitude: Number(session.longitude || (session.classroom && session.classroom.longitude) || 0),
+                    radius: Number(session.radius || (session.classroom && session.classroom.radius) || 100),
+                    configuredRadius: Number(session.radius || 100),
+                    effectiveRadius: Number(session.radius || 100)
                 };
             });
         %>
@@ -844,14 +1005,27 @@
             </div>
 
             <div class="teacher-map-toolbar">
-                <label class="teacher-map-select-label" for="teacherMapSessionSelect">Session</label>
-                <div class="select-shell">
-                    <i class="fa-solid fa-calendar-check select-shell-icon"></i>
-                    <select id="teacherMapSessionSelect" class="teacher-map-select" aria-label="Select live session"></select>
-                    <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                <div class="teacher-map-session-control">
+                    <label class="teacher-map-select-label" for="teacherMapSessionSelect">Session</label>
+                    <div class="select-shell teacher-map-select-shell">
+                        <i class="fa-solid fa-calendar-check select-shell-icon"></i>
+                        <select id="teacherMapSessionSelect" class="teacher-map-select" aria-label="Select live session"></select>
+                        <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
+                    </div>
                 </div>
 
                 <div class="teacher-map-actions" role="group" aria-label="Map controls">
+                    <button
+                        id="teacherMapLocateBtn"
+                        class="teacher-map-icon-button highlight"
+                        type="button"
+                        title="Get my live GPS location"
+                        aria-label="Locate me"
+                    >
+                        <i class="fa-solid fa-location-crosshairs"></i>
+                        <span>Locate Me</span>
+                    </button>
+
                     <button
                         id="teacherMapFitButton"
                         class="teacher-map-icon-button"
@@ -860,6 +1034,7 @@
                         aria-label="Fit live devices"
                     >
                         <i class="fa-solid fa-expand"></i>
+                        <span>Fit All</span>
                     </button>
 
                     <button
@@ -870,25 +1045,33 @@
                         aria-label="Center classroom"
                     >
                         <i class="fa-solid fa-crosshairs"></i>
+                        <span>Center</span>
                     </button>
                 </div>
             </div>
 
             <div class="teacher-map-layout">
                 <div class="teacher-map-wrapper">
-                    <div id="teacherMapOverlay" class="teacher-map-overlay">
-                        <div class="teacher-map-overlay-inner">
-                            <i class="fa-solid fa-map-location-dot teacher-map-overlay-icon" aria-hidden="true"></i>
-                            <strong>Map preview is ready.</strong>
-                            <span>Start attendance to begin live tracking.</span>
+                    <div id="teacherMapOverlay" class="teacher-map-overlay" style="display: none;">
+                        <div class="teacher-map-radar-hud">
+                            <div class="radar-hud-badge">
+                                <span class="pulse-dot"></span>
+                                GPS RADAR STANDBY
+                            </div>
+                            <h4>Live Telemetry Radar</h4>
+                            <p>Real-time geofence radar activates when you start an attendance session.</p>
                         </div>
                     </div>
-                    <div class="teacher-map" id="teacherLiveMap"></div>
+                    <div
+                        class="teacher-map"
+                        id="teacherLiveMap"
+                        data-default-center="<%- defaultMapCenter ? JSON.stringify(defaultMapCenter).replace(/"/g, '&quot;') : '' %>"
+                    ></div>
                 </div>
                 <div class="teacher-map-roster-wrap">
                     <div class="teacher-map-roster-header">
                         <h4 class="teacher-map-roster-title">Student devices</h4>
-                        <div class="teacher-search-box">
+                        <div class="teacher-search-box teacher-map-roster-search">
                             <i class="fa-solid fa-magnifying-glass"></i>
                             <input id="teacherMapSearch" type="text" placeholder="Search students...">
                         </div>
@@ -952,7 +1135,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                             method: 'POST',
                             headers: { 
                                 'Content-Type': 'application/json',
-                                'CSRF-Token': '<%= csrfToken %>'
+                                'CSRF-Token': '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>'
                             },
                             body: JSON.stringify(newSubscription)
                         });
@@ -965,7 +1148,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'CSRF-Token': '<%= csrfToken %>'
+                        'CSRF-Token': '<%= typeof csrfToken !== "undefined" ? csrfToken : "" %>'
                     },
                     body: JSON.stringify(subscription)
                 });
@@ -975,7 +1158,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 }
 </script>
 
-<% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>
+<% if (typeof realtimeMode === 'undefined' || realtimeMode === 'socket' || realtimeMode === 'auto') { %>
 <script src="/socket.io/socket.io.js"></script>
 <% } %>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -984,7 +1167,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <script src="/js/teacherRealtime.js"></script>
 <script src="/js/teacherNav.js"></script>
 <script src="/js/teacherPanels.js"></script>
-<script src="/js/teacherLiveMap.js?v=20260617j" defer></script>
+<script src="/js/teacherLiveMap.js?v=20260901_fixed" defer></script>
 <script src="/js/uiShell.js"></script>
 <script src="/js/dashboardTimeSync.js"></script>
 
@@ -1068,9 +1251,20 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                     title: 'Approve Review?',
                     text: 'This will mark the student as PRESENT.',
                     icon: 'question',
+                    iconColor: '#22c55e',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, Approve',
-                    confirmButtonColor: '#22c55e'
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#22c55e',
+                    customClass: {
+                        container: 'shell-enhanced-container',
+                        popup: 'shell-enhanced-alert',
+                        title: 'shell-enhanced-title',
+                        htmlContainer: 'shell-enhanced-text',
+                        actions: 'shell-enhanced-actions',
+                        confirmButton: 'shell-enhanced-confirm',
+                        cancelButton: 'shell-enhanced-cancel'
+                    }
                 }).then(function(result) {
                     if (!result.isConfirmed) return;
                     fetch('/teacher/reviews/' + recordId + '/approve', {
@@ -1082,13 +1276,47 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data.success) {
-                            Swal.fire({ title: 'Approved!', text: data.message, icon: 'success', timer: 2000, showConfirmButton: false });
+                            Swal.fire({
+                                title: 'Approved!',
+                                text: data.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                customClass: {
+                                    container: 'shell-enhanced-container',
+                                    popup: 'shell-enhanced-alert',
+                                    title: 'shell-enhanced-title',
+                                    htmlContainer: 'shell-enhanced-text'
+                                }
+                            });
                             loadPendingReviews();
                         } else {
-                            Swal.fire('Error', data.message || 'Could not approve.', 'error');
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.message || 'Could not approve.',
+                                icon: 'error',
+                                customClass: {
+                                    container: 'shell-enhanced-container',
+                                    popup: 'shell-enhanced-alert',
+                                    title: 'shell-enhanced-title',
+                                    htmlContainer: 'shell-enhanced-text'
+                                }
+                            });
                         }
                     })
-                    .catch(function() { Swal.fire('Error', 'Network error.', 'error'); });
+                    .catch(function() {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Network error.',
+                            icon: 'error',
+                            customClass: {
+                                container: 'shell-enhanced-container',
+                                popup: 'shell-enhanced-alert',
+                                title: 'shell-enhanced-title',
+                                htmlContainer: 'shell-enhanced-text'
+                            }
+                        });
+                    });
                 });
             });
         });
@@ -1100,12 +1328,26 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                 Swal.fire({
                     title: 'Reject Review?',
                     text: 'Student will remain marked ABSENT.',
+                    icon: 'warning',
+                    iconColor: '#ef4444',
                     input: 'textarea',
                     inputLabel: 'Reason for rejection (optional)',
                     inputPlaceholder: 'e.g. Insufficient proof provided',
                     showCancelButton: true,
                     confirmButtonText: 'Reject',
-                    confirmButtonColor: '#dc2626'
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#dc2626',
+                    customClass: {
+                        container: 'shell-enhanced-container',
+                        popup: 'shell-enhanced-alert attendify-review-modal',
+                        title: 'shell-enhanced-title',
+                        htmlContainer: 'shell-enhanced-text',
+                        inputLabel: 'shell-enhanced-input-label',
+                        input: 'shell-enhanced-textarea',
+                        actions: 'shell-enhanced-actions',
+                        confirmButton: 'shell-enhanced-confirm',
+                        cancelButton: 'shell-enhanced-cancel'
+                    }
                 }).then(function(result) {
                     if (!result.isConfirmed) return;
                     fetch('/teacher/reviews/' + recordId + '/reject', {
@@ -1117,13 +1359,47 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data.success) {
-                            Swal.fire({ title: 'Rejected', text: data.message, icon: 'info', timer: 2000, showConfirmButton: false });
+                            Swal.fire({
+                                title: 'Rejected',
+                                text: data.message,
+                                icon: 'info',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                customClass: {
+                                    container: 'shell-enhanced-container',
+                                    popup: 'shell-enhanced-alert',
+                                    title: 'shell-enhanced-title',
+                                    htmlContainer: 'shell-enhanced-text'
+                                }
+                            });
                             loadPendingReviews();
                         } else {
-                            Swal.fire('Error', data.message || 'Could not reject.', 'error');
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.message || 'Could not reject.',
+                                icon: 'error',
+                                customClass: {
+                                    container: 'shell-enhanced-container',
+                                    popup: 'shell-enhanced-alert',
+                                    title: 'shell-enhanced-title',
+                                    htmlContainer: 'shell-enhanced-text'
+                                }
+                            });
                         }
                     })
-                    .catch(function() { Swal.fire('Error', 'Network error.', 'error'); });
+                    .catch(function() {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Network error.',
+                            icon: 'error',
+                            customClass: {
+                                container: 'shell-enhanced-container',
+                                popup: 'shell-enhanced-alert',
+                                title: 'shell-enhanced-title',
+                                htmlContainer: 'shell-enhanced-text'
+                            }
+                        });
+                    });
                 });
             });
         });

@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Reports | Attendify</title>
@@ -13,7 +16,9 @@
 
     <link rel="stylesheet" href="/css/uiShell.css">
     <link rel="stylesheet" href="/css/teacherDashboard.css">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link
         rel="stylesheet"
@@ -46,6 +51,9 @@
     };
     </script>
     <% } %>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 
     <style>
         @media print {
@@ -241,244 +249,251 @@
             });
         %>
 
-        <section class="teacher-card teacher-report-overview-card">
-            <div class="teacher-report-overview-top">
-                <div>
-                    <h3>Report Window</h3>
-                    <p><%= filters.fromDate %> to <%= filters.toDate %></p>
+        <!-- Header Banner & Active Context Bar -->
+        <section class="teacher-report-header-banner">
+            <div class="teacher-report-header-main">
+                <div class="teacher-report-window-context">
+                    <span class="teacher-report-live-badge">
+                        <i class="fa-solid fa-chart-line"></i> Live Analytics
+                    </span>
+                    <span class="teacher-report-date-pill">
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <%= filters.fromDate %> &mdash; <%= filters.toDate %>
+                    </span>
+                    <span class="teacher-report-chip-pill">
+                        <i class="fa-solid fa-users-rectangle"></i>
+                        <%= selectedClassGroup ? selectedClassGroup.name : "All Classes" %>
+                    </span>
+                    <span class="teacher-report-chip-pill">
+                        <i class="fa-solid fa-book"></i>
+                        <%= selectedSubject ? selectedSubject.subjectName : "All Subjects" %>
+                    </span>
+                    <span class="teacher-report-chip-pill">
+                        <i class="fa-solid fa-filter"></i>
+                        <%= activeFilterCount %> Filters Active
+                    </span>
                 </div>
 
-                <span class="teacher-count-pill">
-                    <%= activeFilterCount %> Active Filters
-                </span>
-            </div>
-
-            <div class="teacher-report-overview-chips">
-                <span class="teacher-report-chip">
-                    <i class="fa-solid fa-users-rectangle"></i>
-                    <%= selectedClassGroup ? selectedClassGroup.name : "All Class Groups" %>
-                </span>
-
-                <span class="teacher-report-chip">
-                    <i class="fa-solid fa-book"></i>
-                    <% if (selectedSubject) { %>
-                        <%= selectedSubject.subjectName %>
-                    <% } else { %>
-                        All Subjects
-                    <% } %>
-                </span>
-
-                <span class="teacher-report-chip">
-                    <i class="fa-solid fa-list-check"></i>
-                    <%= filters.status === "all" ? "All Status" : filters.status %>
-                </span>
+                <div class="teacher-report-quick-exports">
+                    <a href="/teacher/reports/export-attendance?<%= exportQuery %>" class="teacher-report-export-pill" title="Export as CSV">
+                        <i class="fa-solid fa-file-csv"></i> CSV
+                    </a>
+                    <a href="/teacher/reports/export-excel?<%= exportQuery %>" class="teacher-report-export-pill excel" title="Export as Excel">
+                        <i class="fa-solid fa-file-excel"></i> Excel
+                    </a>
+                    <a href="/teacher/reports/export-suspicious?<%= exportQuery %>" class="teacher-report-export-pill danger" title="Export Suspicious CSV">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Security
+                    </a>
+                    <button type="button" class="teacher-report-export-pill pdf" id="pdfPrintBtn" onclick="prepareAndPrint()" title="Generate PDF">
+                        <i class="fa-solid fa-file-pdf"></i> PDF
+                    </button>
+                </div>
             </div>
         </section>
 
-        <section class="teacher-card teacher-report-nav-card" role="tablist" aria-label="Attendance report sections">
+        <!-- 5-KPI Intelligence Metric Grid -->
+        <section class="teacher-report-summary-grid">
+
+            <article class="teacher-report-kpi-tile blue">
+                <div class="teacher-kpi-head">
+                    <span class="teacher-kpi-label">Total Sessions</span>
+                    <div class="teacher-kpi-icon blue">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                </div>
+                <div class="teacher-kpi-value"><%= summary.totalSessions %></div>
+                <div class="teacher-kpi-foot">
+                    <span class="teacher-kpi-pill blue"><i class="fa-solid fa-signal"></i> Recorded</span>
+                    <span class="teacher-kpi-subtext">Date Window</span>
+                </div>
+            </article>
+
+            <article class="teacher-report-kpi-tile emerald">
+                <div class="teacher-kpi-head">
+                    <span class="teacher-kpi-label">Present Marks</span>
+                    <div class="teacher-kpi-icon emerald">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                </div>
+                <div class="teacher-kpi-value"><%= summary.totalPresent %></div>
+                <div class="teacher-kpi-foot">
+                    <span class="teacher-kpi-pill emerald"><i class="fa-solid fa-circle-check"></i> Verified</span>
+                    <span class="teacher-kpi-subtext">Attended</span>
+                </div>
+            </article>
+
+            <article class="teacher-report-kpi-tile rose">
+                <div class="teacher-kpi-head">
+                    <span class="teacher-kpi-label">Absent Marks</span>
+                    <div class="teacher-kpi-icon rose">
+                        <i class="fa-solid fa-user-xmark"></i>
+                    </div>
+                </div>
+                <div class="teacher-kpi-value"><%= summary.totalAbsent %></div>
+                <div class="teacher-kpi-foot">
+                    <span class="teacher-kpi-pill rose"><i class="fa-solid fa-circle-xmark"></i> Missed</span>
+                    <span class="teacher-kpi-subtext">Unmarked</span>
+                </div>
+            </article>
+
+            <article class="teacher-report-kpi-tile purple">
+                <div class="teacher-kpi-head">
+                    <span class="teacher-kpi-label">Attendance Rate</span>
+                    <div class="teacher-kpi-icon purple">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                </div>
+                <div class="teacher-kpi-value"><%= summary.attendancePercentage %>%</div>
+                <div class="teacher-kpi-foot">
+                    <span class="teacher-kpi-pill purple"><i class="fa-solid fa-chart-line"></i> Average</span>
+                    <span class="teacher-kpi-subtext">Overall</span>
+                </div>
+            </article>
+
+            <article class="teacher-report-kpi-tile amber">
+                <div class="teacher-kpi-head">
+                    <span class="teacher-kpi-label">Security Flags</span>
+                    <div class="teacher-kpi-icon amber">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                </div>
+                <div class="teacher-kpi-value"><%= summary.suspiciousCount %></div>
+                <div class="teacher-kpi-foot">
+                    <span class="teacher-kpi-pill amber"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</span>
+                    <span class="teacher-kpi-subtext">Geo-Fence</span>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- Command Filter Deck -->
+        <section class="teacher-report-filter-bar-card">
+            <div class="teacher-filter-bar-header">
+                <div class="teacher-filter-bar-title">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Filter & Query Data</span>
+                </div>
+                <div class="teacher-filter-presets">
+                    <span class="teacher-filter-presets-label">Presets:</span>
+                    <button type="button" class="teacher-preset-chip" onclick="setReportDatePreset('today')">Today</button>
+                    <button type="button" class="teacher-preset-chip" onclick="setReportDatePreset('week')">7 Days</button>
+                    <button type="button" class="teacher-preset-chip" onclick="setReportDatePreset('month')">Month</button>
+                    <button type="button" class="teacher-preset-chip" onclick="setReportDatePreset('semester')">Semester</button>
+                </div>
+            </div>
+
+            <form action="/teacher/reports" method="GET" class="teacher-report-filter-grid">
+
+                <div class="teacher-field">
+                    <label>From Date</label>
+                    <input type="date" name="fromDate" value="<%= filters.fromDate %>" required>
+                </div>
+
+                <div class="teacher-field">
+                    <label>To Date</label>
+                    <input type="date" name="toDate" value="<%= filters.toDate %>" required>
+                </div>
+
+                <div class="teacher-field">
+                    <label>Class Group</label>
+                    <select name="classGroupId">
+                        <option value="all">All Class Groups</option>
+                        <% classGroups.forEach(function(group) { %>
+                            <option
+                                value="<%= group._id %>"
+                                <%= filters.classGroupId === group._id.toString() ? "selected" : "" %>
+                            >
+                                <%= group.name %> - Sem <%= group.semester %> <%= group.section %>
+                            </option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div class="teacher-field">
+                    <label>Subject</label>
+                    <select name="subjectId">
+                        <option value="all">All Subjects</option>
+                        <% subjects.forEach(function(subject) { %>
+                            <option
+                                value="<%= subject._id %>"
+                                <%= filters.subjectId === subject._id.toString() ? "selected" : "" %>
+                            >
+                                <%= subject.subjectName %>
+                                <% if (subject.subjectCode) { %>
+                                    - <%= subject.subjectCode %>
+                                <% } %>
+                            </option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div class="teacher-field">
+                    <label>Classroom</label>
+                    <select name="classroomId">
+                        <option value="all">All Classrooms</option>
+                        <% classrooms.forEach(function(classroom) { %>
+                            <option
+                                value="<%= classroom._id %>"
+                                <%= filters.classroomId === classroom._id.toString() ? "selected" : "" %>
+                            >
+                                <%= classroom.classroomName %>
+                            </option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div class="teacher-field">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="all" <%= filters.status === "all" ? "selected" : "" %>>All Status</option>
+                        <option value="PRESENT" <%= filters.status === "PRESENT" ? "selected" : "" %>>Present Only</option>
+                        <option value="ABSENT" <%= filters.status === "ABSENT" ? "selected" : "" %>>Absent Only</option>
+                    </select>
+                </div>
+
+                <div class="teacher-filter-actions">
+                    <button class="teacher-primary-btn" type="submit">
+                        <i class="fa-solid fa-filter"></i>
+                        Apply
+                    </button>
+
+                    <a href="/teacher/reports" class="teacher-secondary-btn" title="Reset all filters">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        Reset
+                    </a>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- Horizontal Segmented Tab Strip -->
+        <nav class="teacher-report-nav-bar" role="tablist" aria-label="Attendance report sections">
             <button type="button" class="teacher-report-nav-link is-active" data-report-tab="subject-summary">
                 <i class="fa-solid fa-book-open"></i>
                 Subject Summary
+                <span class="teacher-tab-count-badge"><%= subjectSummary ? subjectSummary.length : 0 %></span>
             </button>
             <button type="button" class="teacher-report-nav-link" data-report-tab="class-summary">
                 <i class="fa-solid fa-users"></i>
                 Class Summary
+                <span class="teacher-tab-count-badge"><%= classSummary ? classSummary.length : 0 %></span>
             </button>
             <button type="button" class="teacher-report-nav-link" data-report-tab="student-summary">
                 <i class="fa-solid fa-user-graduate"></i>
                 Student Summary
+                <span class="teacher-tab-count-badge"><%= studentSummary ? studentSummary.length : 0 %></span>
             </button>
             <button type="button" class="teacher-report-nav-link" data-report-tab="detailed-records">
                 <i class="fa-solid fa-table-list"></i>
                 Detailed Records
+                <span class="teacher-tab-count-badge"><%= attendanceRecords ? attendanceRecords.length : 0 %></span>
             </button>
             <button type="button" class="teacher-report-nav-link danger" data-report-tab="suspicious-attempts">
-                <i class="fa-solid fa-triangle-exclamation"></i>
+                <i class="fa-solid fa-shield-halved"></i>
                 Suspicious Attempts
+                <span class="teacher-tab-count-badge danger"><%= summary.suspiciousCount || 0 %></span>
             </button>
-        </section>
-
-        <div class="teacher-report-control-grid">
-            <section class="teacher-card teacher-export-card">
-                <div class="teacher-export-content">
-                    <div>
-                        <h3>Export Reports</h3>
-                        <p>Download attendance and suspicious attempt files using selected filters.</p>
-                    </div>
-
-                    <div class="teacher-export-actions">
-                        <a
-                            href="/teacher/reports/export-attendance?<%= exportQuery %>"
-                            class="teacher-secondary-btn"
-                        >
-                            <i class="fa-solid fa-file-csv"></i>
-                            Export Attendance CSV
-                        </a>
-
-                        <a
-                            href="/teacher/reports/export-excel?<%= exportQuery %>"
-                            class="teacher-secondary-btn"
-                            style="border-color: #16a34a; color: #16a34a;"
-                        >
-                            <i class="fa-solid fa-file-excel"></i>
-                            Export Attendance Excel
-                        </a>
-
-                        <a
-                            href="/teacher/reports/export-suspicious?<%= exportQuery %>"
-                            class="teacher-secondary-btn danger"
-                        >
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                            Export Suspicious CSV
-                        </a>
-
-                        <button type="button" class="teacher-secondary-btn" id="pdfPrintBtn" onclick="prepareAndPrint()">
-                            <i class="fa-solid fa-file-pdf"></i>
-                            Export PDF Report
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <section class="teacher-card teacher-report-filter-card">
-                <div class="teacher-card-header">
-                    <div>
-                        <h3>Filter Reports</h3>
-                        <p>Select date range, class group, subject or status.</p>
-                    </div>
-                </div>
-
-                <form action="/teacher/reports" method="GET" class="teacher-report-filter-grid">
-
-                    <div class="teacher-field">
-                        <label>From Date</label>
-                        <input type="date" name="fromDate" value="<%= filters.fromDate %>" required>
-                    </div>
-
-                    <div class="teacher-field">
-                        <label>To Date</label>
-                        <input type="date" name="toDate" value="<%= filters.toDate %>" required>
-                    </div>
-
-                    <div class="teacher-field">
-                        <label>Class Group</label>
-                        <select name="classGroupId">
-                            <option value="all">All Class Groups</option>
-
-                            <% classGroups.forEach(function(group) { %>
-                                <option
-                                    value="<%= group._id %>"
-                                    <%= filters.classGroupId === group._id.toString() ? "selected" : "" %>
-                                >
-                                    <%= group.name %> - Sem <%= group.semester %> <%= group.section %>
-                                </option>
-                            <% }) %>
-                        </select>
-                    </div>
-
-                    <div class="teacher-field">
-                        <label>Subject</label>
-                        <select name="subjectId">
-                            <option value="all">All Subjects</option>
-
-                            <% subjects.forEach(function(subject) { %>
-                                <option
-                                    value="<%= subject._id %>"
-                                    <%= filters.subjectId === subject._id.toString() ? "selected" : "" %>
-                                >
-                                    <%= subject.subjectName %>
-                                    <% if (subject.subjectCode) { %>
-                                        - <%= subject.subjectCode %>
-                                    <% } %>
-                                </option>
-                            <% }) %>
-                        </select>
-                    </div>
-
-                    <div class="teacher-field">
-                        <label>Classroom</label>
-                        <select name="classroomId">
-                            <option value="all">All Classrooms</option>
-
-                            <% classrooms.forEach(function(classroom) { %>
-                                <option
-                                    value="<%= classroom._id %>"
-                                    <%= filters.classroomId === classroom._id.toString() ? "selected" : "" %>
-                                >
-                                    <%= classroom.classroomName %>
-                                </option>
-                            <% }) %>
-                        </select>
-                    </div>
-
-                    <div class="teacher-field">
-                        <label>Status</label>
-                        <select name="status">
-                            <option value="all" <%= filters.status === "all" ? "selected" : "" %>>All</option>
-                            <option value="PRESENT" <%= filters.status === "PRESENT" ? "selected" : "" %>>Present</option>
-                            <option value="ABSENT" <%= filters.status === "ABSENT" ? "selected" : "" %>>Absent</option>
-                        </select>
-                    </div>
-
-                    <div class="teacher-filter-actions">
-                        <button class="teacher-primary-btn" type="submit">
-                            <i class="fa-solid fa-filter"></i>
-                            Apply Filters
-                        </button>
-
-                        <a href="/teacher/reports" class="teacher-secondary-btn">
-                            <i class="fa-solid fa-rotate-left"></i>
-                            Reset
-                        </a>
-                    </div>
-
-                </form>
-            </section>
-        </div>
-
-        <section class="teacher-report-summary-grid">
-
-            <article class="teacher-report-stat blue">
-                <div>
-                    <span>Sessions</span>
-                    <strong><%= summary.totalSessions %></strong>
-                </div>
-                <i class="fa-solid fa-calendar-check"></i>
-            </article>
-
-            <article class="teacher-report-stat green">
-                <div>
-                    <span>Present</span>
-                    <strong><%= summary.totalPresent %></strong>
-                </div>
-                <i class="fa-solid fa-user-check"></i>
-            </article>
-
-            <article class="teacher-report-stat red">
-                <div>
-                    <span>Absent</span>
-                    <strong><%= summary.totalAbsent %></strong>
-                </div>
-                <i class="fa-solid fa-user-xmark"></i>
-            </article>
-
-            <article class="teacher-report-stat purple">
-                <div>
-                    <span>Attendance</span>
-                    <strong><%= summary.attendancePercentage %>%</strong>
-                </div>
-                <i class="fa-solid fa-chart-line"></i>
-            </article>
-
-            <article class="teacher-report-stat orange">
-                <div>
-                    <span>Suspicious</span>
-                    <strong><%= summary.suspiciousCount %></strong>
-                </div>
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </article>
-
-        </section>
+        </nav>
 
         <div class="teacher-report-panels-shell" id="teacher-report-panels">
             <section class="teacher-card teacher-report-panel is-active" id="report-subject-summary" data-report-panel="subject-summary">
@@ -505,7 +520,7 @@
                                     <th>Total</th>
                                     <th>Present</th>
                                     <th>Absent</th>
-                                    <th>Attendance</th>
+                                    <th>Attendance Rate</th>
                                 </tr>
                             </thead>
 
@@ -513,14 +528,19 @@
                                 <% subjectSummary.forEach(function(item) { %>
                                     <tr>
                                         <td><strong><%= item.name %></strong></td>
-                                        <td><%= item.code || "-" %></td>
+                                        <td><span class="teacher-dept-chip"><%= item.code || "-" %></span></td>
                                         <td><%= item.total %></td>
                                         <td class="teacher-success"><%= item.present %></td>
                                         <td class="teacher-danger"><%= item.absent %></td>
                                         <td>
-                                            <span class="teacher-percent-pill <%= item.percentage >= 75 ? 'good' : 'bad' %>">
-                                                <%= item.percentage %>%
-                                            </span>
+                                            <div class="teacher-rate-wrap">
+                                                <span class="teacher-percent-pill <%= item.percentage >= 75 ? 'good' : 'bad' %>">
+                                                    <%= item.percentage %>%
+                                                </span>
+                                                <div class="teacher-progress-track">
+                                                    <div class="teacher-progress-fill <%= item.percentage >= 75 ? 'good' : 'bad' %>" style="width: <%= Math.min(item.percentage, 100) %>%;"></div>
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 <% }) %>
@@ -553,7 +573,7 @@
                                     <th>Total</th>
                                     <th>Present</th>
                                     <th>Absent</th>
-                                    <th>Attendance</th>
+                                    <th>Attendance Rate</th>
                                 </tr>
                             </thead>
 
@@ -565,9 +585,14 @@
                                         <td class="teacher-success"><%= item.present %></td>
                                         <td class="teacher-danger"><%= item.absent %></td>
                                         <td>
-                                            <span class="teacher-percent-pill <%= item.percentage >= 75 ? 'good' : 'bad' %>">
-                                                <%= item.percentage %>%
-                                            </span>
+                                            <div class="teacher-rate-wrap">
+                                                <span class="teacher-percent-pill <%= item.percentage >= 75 ? 'good' : 'bad' %>">
+                                                    <%= item.percentage %>%
+                                                </span>
+                                                <div class="teacher-progress-track">
+                                                    <div class="teacher-progress-fill <%= item.percentage >= 75 ? 'good' : 'bad' %>" style="width: <%= Math.min(item.percentage, 100) %>%;"></div>
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 <% }) %>
@@ -601,22 +626,36 @@
                                     <th>Total</th>
                                     <th>Present</th>
                                     <th>Absent</th>
-                                    <th>Attendance</th>
+                                    <th>Attendance Rate</th>
                                 </tr>
                             </thead>
 
                             <tbody>
                                 <% studentSummary.forEach(function(item) { %>
                                     <tr>
-                                        <td><strong><%= item.name %></strong></td>
-                                        <td><%= item.enrollmentNumber || "-" %></td>
+                                        <td>
+                                            <div class="teacher-student-cell">
+                                                <div class="teacher-student-avatar-mini">
+                                                    <%= (item.name || "S").charAt(0).toUpperCase() %>
+                                                </div>
+                                                <div>
+                                                    <strong><%= item.name %></strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="teacher-dept-chip"><%= item.enrollmentNumber || "-" %></span></td>
                                         <td><%= item.total %></td>
                                         <td class="teacher-success"><%= item.present %></td>
                                         <td class="teacher-danger"><%= item.absent %></td>
                                         <td>
-                                            <span class="teacher-percent-pill <%= item.percentage >= 75 ? 'good' : 'bad' %>">
-                                                <%= item.percentage %>%
-                                            </span>
+                                            <div class="teacher-rate-wrap">
+                                                <span class="teacher-percent-pill <%= item.percentage >= 75 ? 'good' : 'bad' %>">
+                                                    <%= item.percentage %>%
+                                                </span>
+                                                <div class="teacher-progress-track">
+                                                    <div class="teacher-progress-fill <%= item.percentage >= 75 ? 'good' : 'bad' %>" style="width: <%= Math.min(item.percentage, 100) %>%;"></div>
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 <% }) %>
@@ -999,6 +1038,50 @@
                 }
             }, 300);
         }
+
+        function setReportDatePreset(preset) {
+            const fromInput = document.querySelector("input[name='fromDate']");
+            const toInput = document.querySelector("input[name='toDate']");
+            if (!fromInput || !toInput) return;
+
+            const now = new Date();
+            const toDateStr = now.toISOString().slice(0, 10);
+            let fromDateStr = toDateStr;
+
+            if (preset === 'week') {
+                const weekAgo = new Date();
+                weekAgo.setDate(now.getDate() - 7);
+                fromDateStr = weekAgo.toISOString().slice(0, 10);
+            } else if (preset === 'month') {
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                fromDateStr = monthStart.toISOString().slice(0, 10);
+            } else if (preset === 'semester') {
+                const semesterStart = new Date(now.getFullYear(), now.getMonth() >= 6 ? 6 : 0, 1);
+                fromDateStr = semesterStart.toISOString().slice(0, 10);
+            }
+
+            if (fromInput._flatpickr) {
+                fromInput._flatpickr.setDate(fromDateStr, true);
+            } else {
+                fromInput.value = fromDateStr;
+            }
+
+            if (toInput._flatpickr) {
+                toInput._flatpickr.setDate(toDateStr, true);
+            } else {
+                toInput.value = toDateStr;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.flatpickr) {
+                flatpickr("input[name='fromDate'], input[name='toDate']", {
+                    dateFormat: "Y-m-d",
+                    disableMobile: true,
+                    position: "auto center"
+                });
+            }
+        });
     </script>
 </body>
 </html>

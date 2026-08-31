@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function(){try{var t=localStorage.getItem('attendifyTheme')||localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark-mode');document.documentElement.style.backgroundColor='#0b0f19';}else{document.documentElement.setAttribute('data-theme','light');document.documentElement.classList.remove('dark-mode');document.documentElement.style.backgroundColor='#f8fafc';}}catch(e){}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance History | Student</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260713">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
+    <link rel="stylesheet" href="/css/studentSchedule.css?v=20260831_18">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8_18">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=20260831_18">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19_18">
+
 
     <link
         rel="stylesheet"
@@ -95,7 +101,7 @@
                 </p>
             </div>
 
-            <span>
+            <span class="student-history-overall-pill">
                 <i class="fa-solid fa-user-graduate"></i>
                 <%= summary.attendancePercentage %>% Overall
             </span>
@@ -234,7 +240,7 @@
                                 <th>Total</th>
                                 <th>Present</th>
                                 <th>Absent</th>
-                                <th>Attendance</th>
+                                <th>Attendance Rate</th>
                             </tr>
                         </thead>
 
@@ -242,14 +248,19 @@
                             <% subjectSummary.forEach(function(item) { %>
                                 <tr>
                                     <td><strong><%= item.name %></strong></td>
-                                    <td><%= item.code || "-" %></td>
+                                    <td><span class="subject-code-chip"><%= item.code || "-" %></span></td>
                                     <td><%= item.total %></td>
-                                    <td class="student-success"><%= item.present %></td>
-                                    <td class="student-danger"><%= item.absent %></td>
+                                    <td class="student-success"><strong><%= item.present %></strong></td>
+                                    <td class="student-danger"><strong><%= item.absent %></strong></td>
                                     <td>
-                                        <span class="student-percent-pill <%= item.percentage >= 75 ? 'good' : 'bad' %>">
-                                            <%= item.percentage %>%
-                                        </span>
+                                        <div class="student-progress-wrapper">
+                                            <span class="student-percent-pill <%= item.percentage >= 75 ? 'good' : (item.percentage >= 60 ? 'warning' : 'bad') %>">
+                                                <%= item.percentage %>%
+                                            </span>
+                                            <div class="student-progress-track">
+                                                <div class="student-progress-bar <%= item.percentage >= 75 ? 'good' : (item.percentage >= 60 ? 'warning' : 'bad') %>" style="width: <%= Math.min(item.percentage, 100) %>%;"></div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             <% }) %>
@@ -364,23 +375,26 @@
                                                 </td>
 
                                                 <td>
-                                                    <span class="student-status <%= record.status === 'PRESENT' ? 'present' : (record.status === 'PENDING_REVIEW' ? 'review' : 'absent') %>">
-                                                        <%= record.status === 'PENDING_REVIEW' ? 'Under Review' : record.status %>
-                                                    </span>
-                                                    <% if (record.status === 'ABSENT' && !record.isFinalLocked) { %>
-                                                        <button
-                                                            class="student-review-request-btn"
-                                                            type="button"
-                                                            data-record-id="<%= record._id %>"
-                                                        >
-                                                            <i class="fa-solid fa-flag"></i>
-                                                            Request Review
-                                                        </button>
-                                                    <% } else if (record.status === 'PENDING_REVIEW') { %>
-                                                        <span class="student-review-pending-badge">
-                                                            <i class="fa-solid fa-clock"></i> Pending
+                                                    <div class="student-status-actions-cell">
+                                                        <span class="student-status <%= record.status === 'PRESENT' ? 'present' : (record.status === 'PENDING_REVIEW' ? 'review' : 'absent') %>">
+                                                            <%= record.status === 'PENDING_REVIEW' ? 'Under Review' : record.status %>
                                                         </span>
-                                                    <% } %>
+                                                        <% if (record.status === 'ABSENT' && !record.isFinalLocked) { %>
+                                                            <button
+                                                                class="student-review-request-btn"
+                                                                type="button"
+                                                                data-record-id="<%= record._id %>"
+                                                                title="Request attendance review from teacher"
+                                                            >
+                                                                <i class="fa-solid fa-flag"></i>
+                                                                <span>Request Review</span>
+                                                            </button>
+                                                        <% } else if (record.status === 'PENDING_REVIEW') { %>
+                                                            <span class="student-review-pending-badge">
+                                                                <i class="fa-solid fa-clock"></i> Pending
+                                                            </span>
+                                                        <% } %>
+                                                    </div>
                                                 </td>
 
                                                 <td>
@@ -494,7 +508,7 @@
     };
 </script>
 
-<% if (typeof realtimeMode !== 'undefined' && realtimeMode === 'socket') { %>
+<% if (typeof realtimeMode === 'undefined' || realtimeMode === 'socket' || realtimeMode === 'auto') { %>
 <script src="/socket.io/socket.io.js"></script>
 <% } %>
 <script src="/js/kalmanFilter.js"></script>
@@ -508,38 +522,82 @@
     <script src="/js/selectEnhancer.js" defer></script>
 
 <style>
+.student-status-actions-cell {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+}
+
 .student-review-request-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 6px;
-    padding: 5px 12px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    background: #fff7ed;
-    color: #c2410c;
-    border: 1.5px solid #fb923c;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 5px 12px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    background: #eff6ff !important;
+    color: #2563eb !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
-.student-review-request-btn:hover { background: #ffedd5; }
+
+.student-review-request-btn:hover {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+}
+
+.student-review-request-btn i {
+    font-size: 11px !important;
+}
+
+[data-theme="dark"] .student-review-request-btn,
+body.dark-mode .student-review-request-btn {
+    background: rgba(37, 99, 235, 0.15) !important;
+    color: #60a5fa !important;
+    border-color: rgba(37, 99, 235, 0.32) !important;
+}
+
+[data-theme="dark"] .student-review-request-btn:hover,
+body.dark-mode .student-review-request-btn:hover {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
 .student-review-pending-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 6px;
-    padding: 5px 10px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    background: #fef3c7;
-    color: #92400e;
-    border-radius: 8px;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 5px 12px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #f59e0b !important;
+    border: 1px solid rgba(245, 158, 11, 0.28) !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
 }
+
 .student-status.review {
-    background: #fef3c7;
-    color: #92400e;
-    border-color: #fde68a;
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #f59e0b !important;
+    border: 1px solid rgba(245, 158, 11, 0.28) !important;
+    border-radius: 999px !important;
+    padding: 5px 12px !important;
+    font-size: 11.5px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
 }
 </style>
 
@@ -560,13 +618,27 @@
         Swal.fire({
             title: 'Request Attendance Review',
             text: 'Briefly explain why you should be marked Present. Your teacher will be notified.',
+            icon: 'question',
+            iconColor: '#3b82f6',
             input: 'textarea',
-            inputLabel: 'Your reason',
-            inputPlaceholder: 'e.g. I was present but GPS failed to detect my location',
+            inputLabel: 'Reason for Review',
+            inputPlaceholder: 'e.g. I was present in class but GPS was unable to detect accurate location...',
             inputAttributes: { maxlength: 500 },
             showCancelButton: true,
             confirmButtonText: 'Submit Request',
-            confirmButtonColor: '#f59e0b',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#2563eb',
+            customClass: {
+                container: 'shell-enhanced-container',
+                popup: 'shell-enhanced-alert attendify-review-modal',
+                title: 'shell-enhanced-title',
+                htmlContainer: 'shell-enhanced-text',
+                inputLabel: 'shell-enhanced-input-label',
+                input: 'shell-enhanced-textarea',
+                actions: 'shell-enhanced-actions',
+                confirmButton: 'shell-enhanced-confirm',
+                cancelButton: 'shell-enhanced-cancel'
+            },
             inputValidator: function(value) {
                 if (!value || !value.trim()) return 'Please provide a reason.';
             }
@@ -590,7 +662,13 @@
                         text: data.message,
                         icon: 'success',
                         timer: 2500,
-                        showConfirmButton: false
+                        showConfirmButton: false,
+                        customClass: {
+                            container: 'shell-enhanced-container',
+                            popup: 'shell-enhanced-alert',
+                            title: 'shell-enhanced-title',
+                            htmlContainer: 'shell-enhanced-text'
+                        }
                     });
                     // Update the UI in-place
                     const td = btn.closest('td');
@@ -606,11 +684,35 @@
                         }));
                     }
                 } else {
-                    Swal.fire('Not Submitted', data.message || 'Could not submit review.', 'warning');
+                    Swal.fire({
+                        title: 'Not Submitted',
+                        text: data.message || 'Could not submit review.',
+                        icon: 'warning',
+                        customClass: {
+                            container: 'shell-enhanced-container',
+                            popup: 'shell-enhanced-alert',
+                            title: 'shell-enhanced-title',
+                            htmlContainer: 'shell-enhanced-text',
+                            actions: 'shell-enhanced-actions',
+                            confirmButton: 'shell-enhanced-confirm'
+                        }
+                    });
                 }
             })
             .catch(function() {
-                Swal.fire('Error', 'Network error. Please try again.', 'error');
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Network error. Please try again.',
+                    icon: 'error',
+                    customClass: {
+                        container: 'shell-enhanced-container',
+                        popup: 'shell-enhanced-alert',
+                        title: 'shell-enhanced-title',
+                        htmlContainer: 'shell-enhanced-text',
+                        actions: 'shell-enhanced-actions',
+                        confirmButton: 'shell-enhanced-confirm'
+                    }
+                });
             });
         });
     });

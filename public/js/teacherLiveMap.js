@@ -202,18 +202,214 @@ function initTeacherLiveMap() {
 
     }
 
+    let currentTileLayer = null;
+
+    function applyMapTheme() {
+        if (!map) return;
+        if (!currentTileLayer) {
+            currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        }
+    }
+
+    function getInitialCenterCoords() {
+        if (mapEl) {
+            const rawCenter = mapEl.getAttribute("data-default-center");
+            if (rawCenter) {
+                try {
+                    const parsed = JSON.parse(rawCenter);
+                    if (parsed && parsed.latitude && parsed.longitude && Number(parsed.latitude) !== 0) {
+                        return { lat: Number(parsed.latitude), lon: Number(parsed.longitude), zoom: 16, name: parsed.name || "Campus Classroom", radius: Number(parsed.radius || 100) };
+                    }
+                } catch (e) {}
+            }
+        }
+
+        const boot = readBootstrap();
+        if (boot.length > 0 && boot[0].latitude && boot[0].longitude && Number(boot[0].latitude) !== 0) {
+            return { lat: Number(boot[0].latitude), lon: Number(boot[0].longitude), zoom: 17, name: boot[0].subjectName, radius: Number(boot[0].radius || 100) };
+        }
+
+        return { lat: 28.6139, lon: 77.2090, zoom: 15, name: "Campus", radius: 100 };
+    }
+
+    let standbyCircle = null;
+    let standbyMarker = null;
+
+    function drawStandbyCampusCircle(initial) {
+        if (!map || !initial || !initial.lat || !initial.lon || initial.lat === 0) return;
+        if (standbyCircle) {
+            try { standbyCircle.remove(); } catch (e) {}
+        }
+        if (standbyMarker) {
+            try { standbyMarker.remove(); } catch (e) {}
+        }
+
+        standbyCircle = L.circle([initial.lat, initial.lon], {
+            radius: initial.radius || 100,
+            color: '#6366f1',
+            fillColor: '#6366f1',
+            fillOpacity: 0.12,
+            weight: 2,
+            dashArray: '6, 8'
+        }).addTo(map);
+
+        const campusIcon = L.divIcon({
+            className: "custom-campus-marker",
+            html: '<div class="teacher-map-center-marker" style="background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 0 16px rgba(99,102,241,0.6);"><i class="fa-solid fa-location-dot"></i></div>',
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+        });
+
+        standbyMarker = L.marker([initial.lat, initial.lon], {
+            icon: campusIcon
+        }).addTo(map);
+
+        standbyMarker.bindPopup("<b>" + escapeHtml(initial.name) + "</b><br><small style='color: #6366f1; font-weight: 700;'>Campus Location • Geofence Ready</small>");
+    }
+
+    let userLiveGpsMarker = null;
+    let userLiveGpsCircle = null;
+
+    function requestTeacherLiveGps(autoCenter) {
+        if (!navigator.geolocation) {
+            console.warn("Geolocation not supported by browser.");
+            return;
+        }
+
+        const locateBtn = document.getElementById("teacherMapLocateBtn");
+        if (locateBtn) {
+            locateBtn.classList.add("loading");
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                if (locateBtn) locateBtn.classList.remove("loading");
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                const accuracy = pos.coords.accuracy || 20;
+
+                window.teacherLiveLocation = { lat: lat, lon: lon, accuracy: accuracy };
+
+                // Auto-fill hidden inputs on start attendance forms
+                document.querySelectorAll(".js-teacher-start-form").forEach(function(f) {
+                    const latInput = f.querySelector("input[name='teacherLatitude']");
+                    const lonInput = f.querySelector("input[name='teacherLongitude']");
+                    const accInput = f.querySelector("input[name='teacherAccuracy']");
+                    if (latInput) latInput.value = lat;
+                    if (lonInput) lonInput.value = lon;
+                    if (accInput) accInput.value = accuracy;
+                });
+
+                if (!map) return;
+
+                // Remove generic standby circle/marker if any
+                if (standbyCircle) {
+                    try { standbyCircle.remove(); } catch (e) {}
+                    standbyCircle = null;
+                }
+                if (standbyMarker) {
+                    try { standbyMarker.remove(); } catch (e) {}
+                    standbyMarker = null;
+                }
+
+                // If session center teacherMarker exists, remove it so there is only ONE teacher marker
+                if (teacherMarker) {
+                    try { teacherMarker.remove(); } catch (e) {}
+                    teacherMarker = null;
+                }
+
+                // Draw / update Live Teacher GPS marker
+                if (userLiveGpsMarker) {
+                    try { userLiveGpsMarker.remove(); } catch (e) {}
+                }
+                if (userLiveGpsCircle) {
+                    try { userLiveGpsCircle.remove(); } catch (e) {}
+                }
+
+                userLiveGpsCircle = L.circle([lat, lon], {
+                    radius: Math.max(accuracy, 30),
+                    color: '#10b981',
+                    fillColor: '#10b981',
+                    fillOpacity: 0.15,
+                    weight: 2
+                }).addTo(map);
+
+                const teacherIcon = L.divIcon({
+                    className: "custom-teacher-marker",
+                    html: '<div class="teacher-map-center-marker teacher-live-beacon"><span class="beacon-halo"></span><i class="fa-solid fa-chalkboard-user"></i></div>',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18]
+                });
+
+                userLiveGpsMarker = L.marker([lat, lon], {
+                    icon: teacherIcon,
+                    zIndexOffset: 1000
+                }).addTo(map);
+
+                userLiveGpsMarker.bindPopup(
+                    "<b>Your Live Location</b><br><small style='color: #059669; font-weight: 700;'>GPS Accuracy: ±" + Math.round(accuracy) + "m</small>"
+                );
+
+                if (autoCenter) {
+                    map.flyTo([lat, lon], 17, {
+                        animate: true,
+                        duration: 1.2
+                    });
+                    setTimeout(function() {
+                        if (userLiveGpsMarker) userLiveGpsMarker.openPopup();
+                    }, 1200);
+                }
+
+                setHint("Teacher GPS acquired (±" + Math.round(accuracy) + "m). Ready to verify student proximity.");
+            },
+            function (err) {
+                if (locateBtn) locateBtn.classList.remove("loading");
+                console.warn("Teacher location error:", err.message);
+                setHint("Click 'Locate Me' and allow browser location access to pinpoint your position.");
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 30000
+            }
+        );
+    }
+
     // Always initialize map
     if (!mapInitialized) {
+        const initial = getInitialCenterCoords();
         map = L.map(mapEl, {
             zoomControl: true,
             scrollWheelZoom: true
-        }).setView([0, 0], 2);
+        }).setView([initial.lat, initial.lon], initial.zoom);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 20,
-            attribution: "&copy; OpenStreetMap contributors"
-        }).addTo(map);
-        
+        applyMapTheme();
+
+        const bootstrapData = readBootstrap();
+        if (bootstrapData.length === 0) {
+            drawStandbyCampusCircle(initial);
+            // Proactively request teacher's actual GPS
+            requestTeacherLiveGps(true);
+        }
+
+        // Listen for theme toggles to switch tiles dynamically
+        const themeObserver = new MutationObserver(function() {
+            applyMapTheme();
+        });
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+        window.addEventListener('attendify:theme-changed', applyMapTheme);
+
+        const locateBtn = document.getElementById("teacherMapLocateBtn");
+        if (locateBtn) {
+            locateBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                requestTeacherLiveGps(true);
+            });
+        }
+
         if (typeof L.markerClusterGroup !== "undefined") {
             studentClusterGroup = L.markerClusterGroup({
                 maxClusterRadius: 40,
@@ -238,12 +434,22 @@ function initTeacherLiveMap() {
             if (map) map.invalidateSize();
         }, 300);
         
-        // Recalculate map size after window resize OR sidebar toggle
+        // Recalculate map size after window resize OR sidebar toggle OR orientation change
         function invalidateMap() {
             if (map) map.invalidateSize();
         }
         window.addEventListener('resize', invalidateMap);
+        window.addEventListener('orientationchange', invalidateMap);
         window.addEventListener('attendify:layout-changed', invalidateMap);
+
+        if (window.ResizeObserver && mapEl) {
+            const ro = new ResizeObserver(function() {
+                if (map) map.invalidateSize();
+            });
+            ro.observe(mapEl);
+            const wrap = mapEl.closest('.teacher-map-wrapper');
+            if (wrap) ro.observe(wrap);
+        }
     }
 
     function removeDeviceLayers() {
@@ -265,7 +471,7 @@ function initTeacherLiveMap() {
     }
 
     function fitMapToLiveData() {
-        if (!map || !activeSessionId) return;
+        if (!map) return;
 
         const bounds = L.latLngBounds([]);
 
@@ -273,6 +479,8 @@ function initTeacherLiveMap() {
             bounds.extend(radiusCircle.getBounds());
         } else if (sessionCenter) {
             bounds.extend([sessionCenter.lat, sessionCenter.lon]);
+        } else if (window.teacherLiveLocation) {
+            bounds.extend([window.teacherLiveLocation.lat, window.teacherLiveLocation.lon]);
         }
 
         deviceMarkers.forEach(function (marker) {
@@ -283,7 +491,10 @@ function initTeacherLiveMap() {
             }
         });
 
-        if (!bounds.isValid()) return;
+        if (!bounds.isValid()) {
+            centerOnSession();
+            return;
+        }
 
         map.fitBounds(bounds, {
             padding: [36, 36],
@@ -293,26 +504,36 @@ function initTeacherLiveMap() {
     }
 
     function centerOnSession() {
-        if (!map || !sessionCenter) return;
+        if (!map) return;
 
-        map.setView([sessionCenter.lat, sessionCenter.lon], 18, {
-            animate: true
-        });
+        if (sessionCenter) {
+            map.flyTo([sessionCenter.lat, sessionCenter.lon], 18, {
+                animate: true
+            });
 
-        if (teacherMarker) {
-            teacherMarker.openPopup();
+            if (teacherMarker) {
+                teacherMarker.openPopup();
+            }
+        } else if (window.teacherLiveLocation) {
+            map.flyTo([window.teacherLiveLocation.lat, window.teacherLiveLocation.lon], 17, {
+                animate: true
+            });
+            if (userLiveGpsMarker) {
+                userLiveGpsMarker.openPopup();
+            }
+        } else {
+            requestTeacherLiveGps(true);
         }
     }
 
     function addSeatMarker(sessionId, studentId, fullName, lat, lon) {
         if (!window.seatClusterGroup || !map || sessionId !== activeSessionId || !studentId || !lat || !lon) return;
 
-        // Custom icon for a fixed seat (blue pin)
         const seatIcon = L.divIcon({
-            html: '<div style="background-color: #2563eb; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 12px; transform: translate(-50%, -50%);"><i class="fa-solid fa-chair"></i></div>',
-            className: "",
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            className: "custom-seat-marker",
+            html: '<div class="teacher-map-seat-marker"><i class="fa-solid fa-chair"></i></div>',
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]
         });
 
         // Check if marker exists to avoid duplicates
@@ -507,14 +728,20 @@ function initTeacherLiveMap() {
 
         if (mapOverlay) mapOverlay.style.display = "none";
 
-        if (teacherMarker) {
+        if (userLiveGpsMarker) {
+            // Live GPS marker is active; do not duplicate teacherMarker
+            if (teacherMarker) {
+                try { teacherMarker.remove(); } catch (e) {}
+                teacherMarker = null;
+            }
+        } else if (teacherMarker) {
             teacherMarker.setLatLng([lat, lon]);
         } else {
             const teacherIcon = L.divIcon({
                 className: "custom-teacher-marker",
                 html: '<div class="teacher-map-center-marker"><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i></div>',
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
             });
             teacherMarker = L.marker([lat, lon], { icon: teacherIcon, title: "Teacher Location", zIndexOffset: 1000 }).addTo(map);
             teacherMarker.bindPopup(
@@ -532,11 +759,11 @@ function initTeacherLiveMap() {
         } else {
             radiusCircle = L.circle([lat, lon], {
                 radius: adminRadius,
-                color: "#ea580c",
+                color: "#f59e0b",
                 weight: 2,
-                fillColor: "#fb923c",
+                fillColor: "#f59e0b",
                 fillOpacity: 0.06,
-                dashArray: "4, 6"
+                dashArray: "5, 8"
             }).addTo(map);
         }
 
@@ -546,10 +773,10 @@ function initTeacherLiveMap() {
         } else {
             effectiveRadiusCircle = L.circle([lat, lon], {
                 radius: verificationRadius,
-                color: "#16a34a",
-                weight: 2,
-                fillColor: "#22c55e",
-                fillOpacity: 0.08
+                color: "#10b981",
+                weight: 2.5,
+                fillColor: "#10b981",
+                fillOpacity: 0.14
             }).addTo(map);
         }
 
@@ -850,9 +1077,9 @@ function initTeacherLiveMap() {
             // Custom circular div icon
             const markerIcon = L.divIcon({
                 className: "custom-student-marker",
-                html: `<div class="teacher-map-device-marker teacher-map-device-marker-${colors.key}">${initial}</div>`,
-                iconSize: [28, 28],
-                iconAnchor: [14, 14]
+                html: `<div class="teacher-map-device-marker teacher-map-device-marker-${colors.key}"><span>${initial}</span></div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
             });
 
             // Determine z-index: Teacher is 1000, Inside is 500, Near is 400, Outside/Poor is 300

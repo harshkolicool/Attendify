@@ -1,121 +1,45 @@
-const SYNC_DB_NAME = "AttendifyOfflineDB";
-const SYNC_STORE_NAME = "attendanceQueue";
-
-function initOfflineDB() {
-    return new Promise(function(resolve, reject) {
-        const request = indexedDB.open(SYNC_DB_NAME, 1);
-        request.onupgradeneeded = function(e) {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(SYNC_STORE_NAME)) {
-                db.createObjectStore(SYNC_STORE_NAME, { keyPath: "id", autoIncrement: true });
-            }
-        };
-        request.onsuccess = function() { resolve(request.result); };
-        request.onerror = function() { reject(request.error); };
-    });
-}
-
-async function saveToOfflineQueue(payload) {
-    const db = await initOfflineDB();
-    return new Promise(function(resolve, reject) {
-        const tx = db.transaction(SYNC_STORE_NAME, "readwrite");
-        const store = tx.objectStore(SYNC_STORE_NAME);
-        store.add({ payload: payload, timestamp: Date.now() });
-        tx.oncomplete = function() { resolve(); };
-        tx.onerror = function() { reject(tx.error); };
-    });
-}
-
-async function getOfflineQueue() {
-    const db = await initOfflineDB();
-    return new Promise(function(resolve, reject) {
-        const tx = db.transaction(SYNC_STORE_NAME, "readonly");
-        const store = tx.objectStore(SYNC_STORE_NAME);
-        const req = store.getAll();
-        req.onsuccess = function() { resolve(req.result); };
-        req.onerror = function() { reject(req.error); };
-    });
-}
-
-async function clearOfflineQueueItem(id) {
-    const db = await initOfflineDB();
-    return new Promise(function(resolve, reject) {
-        const tx = db.transaction(SYNC_STORE_NAME, "readwrite");
-        const store = tx.objectStore(SYNC_STORE_NAME);
-        store.delete(id);
-        tx.oncomplete = function() { resolve(); };
-        tx.onerror = function() { reject(tx.error); };
-    });
-}
-
-let isSyncing = false;
-async function processOfflineQueue() {
-    if (!navigator.onLine || isSyncing) return;
-    
-    try {
-        const queue = await getOfflineQueue();
-        if (!queue || queue.length === 0) return;
-
-        isSyncing = true;
-        let syncedCount = 0;
-
-        for (let i = 0; i < queue.length; i++) {
-            const item = queue[i];
-            try {
-                const response = await fetch("/student/attendance/mark", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    credentials: "same-origin",
-                    body: JSON.stringify(item.payload)
-                });
-                
-                await clearOfflineQueueItem(item.id);
-                syncedCount++;
-
-                const data = await response.json().catch(() => ({}));
-            } catch (err) {
-                console.log("Network dropped during sync, pausing.");
-                break;
-            }
-        }
-
-        if (syncedCount > 0) {
-            showMessage(syncedCount + " offline attendance record(s) synced!", "success");
-            setTimeout(function() { window.location.reload(); }, 2000);
-        }
-    } catch (e) {
-        console.error("Queue sync error:", e);
-    } finally {
-        isSyncing = false;
-    }
-}
-
-window.addEventListener('online', processOfflineQueue);
-document.addEventListener('DOMContentLoaded', processOfflineQueue);
+// Attendify Student Location & Attendance Client Engine
 
 function showMessage(message, type) {
     const messageBox = document.getElementById("messageBox");
 
     if (!messageBox) {
-        uiAlert(message);
+        if (typeof Swal !== "undefined") {
+            Swal.fire({
+                title: type === "success" ? "Success" : (type === "info" ? "Notice" : "Error"),
+                text: message,
+                icon: type === "success" ? "success" : (type === "info" ? "info" : "error"),
+                confirmButtonColor: "#2563eb",
+                customClass: {
+                    container: "shell-enhanced-container",
+                    popup: "shell-enhanced-alert",
+                    title: "shell-enhanced-title",
+                    htmlContainer: "shell-enhanced-text",
+                    actions: "shell-enhanced-actions",
+                    confirmButton: "shell-enhanced-confirm"
+                }
+            });
+        } else if (typeof uiAlert === "function") {
+            uiAlert(message);
+        } else {
+            alert(message);
+        }
         return;
     }
 
     messageBox.textContent = "";
 
     const div = document.createElement("div");
-    div.className = type === "success" ? "success-box" : "error-box";
+    div.className = type === "success" ? "success-box" : (type === "info" ? "info-box" : "error-box");
     div.textContent = message;
 
     messageBox.appendChild(div);
 
     setTimeout(function () {
         div.remove();
-    }, 5000);
+    }, 6000);
 }
+
 function getBrowserFingerprint() {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown";
     const languageToken = Array.isArray(navigator.languages) && navigator.languages.length > 0
@@ -318,12 +242,17 @@ async function getBestAttendanceToken(sessionId, button) {
         return await getAttendanceTokenWithTrustedDevice(sessionId);
     }
 
-    button.innerHTML = '<i class="fa-solid fa-fingerprint"></i> Verify Passkey...';
-
     try {
         return await getAttendanceTokenWithPasskey(sessionId);
     } catch (err) {
-        // Enforce passkey choice. Do not fall back to trusted device if they cancel the passkey prompt.
+        const msg = String(err && err.message ? err.message : err);
+        const isTlsOrEnvironmentError = /TLS|certificate|insecure|not supported|relying party|NotAllowedError|InvalidStateError|SecurityError|network/i.test(msg);
+        
+        if (isTlsOrEnvironmentError) {
+            console.warn("Passkey unavailable in current browser/tunnel TLS environment. Falling back to Trusted Browser verification...", err);
+            button.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Trusted Browser...';
+            return await getAttendanceTokenWithTrustedDevice(sessionId);
+        }
         throw err;
     }
 }
@@ -341,17 +270,57 @@ function resetAttendanceButton(button, oldHtml) {
 
 function getFastGpsPosition() {
     return new Promise(function(resolve, reject) {
+        // 1. Check window.AttendifyLatestPosition from active location stream
+        if (window.AttendifyLatestPosition && Number.isFinite(window.AttendifyLatestPosition.latitude)) {
+            const age = Date.now() - (window.AttendifyLatestPosition.timestamp || 0);
+            if (age < 90000) {
+                return resolve({
+                    coords: {
+                        latitude: window.AttendifyLatestPosition.latitude,
+                        longitude: window.AttendifyLatestPosition.longitude,
+                        accuracy: window.AttendifyLatestPosition.accuracy || 15
+                    },
+                    timestamp: window.AttendifyLatestPosition.timestamp
+                });
+            }
+        }
+
+        // 2. Check window.AttendifyLiveStream buffer
         if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.getBestFreshPosition === 'function') {
-            const cached = window.AttendifyLiveStream.getBestFreshPosition(20000);
+            const cached = window.AttendifyLiveStream.getBestFreshPosition(60000);
             if (cached) {
                 return resolve({ coords: cached });
             }
         }
 
+        if (!navigator.geolocation) {
+            return reject(new Error("Geolocation is not supported by your browser."));
+        }
+
+        // 3. High-accuracy query with maximumAge: 30000 to leverage active GPS hardware lock
         navigator.geolocation.getCurrentPosition(
             function(pos) { resolve(pos); },
-            function(err) { reject(err); },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            function(err) {
+                // 4. Fallback query with enableHighAccuracy: false
+                navigator.geolocation.getCurrentPosition(
+                    function(fallbackPos) { resolve(fallbackPos); },
+                    function(fallbackErr) {
+                        // Last resort: if any location was captured during session
+                        if (window.AttendifyLatestPosition && Number.isFinite(window.AttendifyLatestPosition.latitude)) {
+                            return resolve({
+                                coords: {
+                                    latitude: window.AttendifyLatestPosition.latitude,
+                                    longitude: window.AttendifyLatestPosition.longitude,
+                                    accuracy: window.AttendifyLatestPosition.accuracy || 30
+                                }
+                            });
+                        }
+                        reject(fallbackErr || err);
+                    },
+                    { enableHighAccuracy: false, timeout: 6000, maximumAge: 60000 }
+                );
+            },
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
         );
     });
 }

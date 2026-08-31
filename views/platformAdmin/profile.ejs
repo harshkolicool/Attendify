@@ -11,7 +11,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="/css/uiShell.css?v=20260711">
     <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
-    <link rel="stylesheet" href="/css/profilePage.css?v=20260617f">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=1">
+    <link rel="stylesheet" href="/css/profilePage.css?v=20260830b">
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
@@ -27,83 +29,108 @@
     <main class="profile-page-main">
 
         <!-- Hero Banner -->
-        <div class="profile-hero" style="background: linear-gradient(135deg, #92400e 0%, #ea580c 100%);">
-            <div class="profile-hero-avatar">
-                <%= platformAdmin.fullName ? platformAdmin.fullName.charAt(0).toUpperCase() : "P" %>
+        <div class="profile-hero platform-admin-hero">
+            <div class="profile-hero-content">
+                <div class="profile-hero-avatar-wrap">
+                    <div class="profile-hero-avatar">
+                        <%= platformAdmin.fullName ? platformAdmin.fullName.charAt(0).toUpperCase() : "P" %>
+                    </div>
+                    <span class="profile-avatar-badge" title="Root Super Administrator">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </span>
+                </div>
+                <div class="profile-hero-info">
+                    <div class="profile-hero-header-row">
+                        <h1><%= platformAdmin.fullName %></h1>
+                        <span class="profile-hero-badge super-admin">
+                            <i class="fa-solid fa-crown"></i> Super Admin
+                        </span>
+                    </div>
+                    <p class="profile-hero-email">
+                        <i class="fa-regular fa-envelope"></i> <%= platformAdmin.email %>
+                        <span class="profile-hero-dot">·</span>
+                        <span class="profile-hero-access"><i class="fa-solid fa-bolt"></i> Root Privileges</span>
+                    </p>
+                </div>
             </div>
-            <div class="profile-hero-info">
-                <h1><%= platformAdmin.fullName %></h1>
-                <p><%= platformAdmin.email %></p>
-                <span class="profile-hero-badge">
-                    <i class="fa-solid fa-crown"></i> Platform Super Admin
-                </span>
+
+            <div class="profile-hero-status-tag">
+                <span class="status-pulse-dot"></span>
+                <span>Active Session</span>
             </div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="profile-stat-row">
+        <!-- Quick Stats (4 Full-Width Columns) -->
+        <div class="profile-stat-row platform-profile-stats">
             <div class="profile-stat-chip">
-                <div class="profile-stat-chip-value" style="color:#ea580c;"><%= collegesCount %></div>
-                <div class="profile-stat-chip-label">Colleges</div>
+                <div class="profile-stat-chip-icon blue"><i class="fa-solid fa-building-columns"></i></div>
+                <div class="profile-stat-chip-value"><%= collegesCount %></div>
+                <div class="profile-stat-chip-label">Total Colleges</div>
             </div>
             <div class="profile-stat-chip">
-                <div class="profile-stat-chip-value" style="color:#16a34a;"><%= approvedCount %></div>
-                <div class="profile-stat-chip-label">Approved</div>
+                <div class="profile-stat-chip-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="profile-stat-chip-value"><%= approvedCount %></div>
+                <div class="profile-stat-chip-label">Approved Colleges</div>
             </div>
             <div class="profile-stat-chip">
-                <div class="profile-stat-chip-value" style="color:#f59e0b;"><%= pendingCount %></div>
-                <div class="profile-stat-chip-label">Pending</div>
+                <div class="profile-stat-chip-icon amber"><i class="fa-solid fa-hourglass-half"></i></div>
+                <div class="profile-stat-chip-value"><%= pendingCount %></div>
+                <div class="profile-stat-chip-label">Pending Requests</div>
             </div>
             <div class="profile-stat-chip">
-                <div class="profile-stat-chip-value" style="color:#dc2626;"><%= rejectedCount %></div>
-                <div class="profile-stat-chip-label">Rejected</div>
+                <div class="profile-stat-chip-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+                <div class="profile-stat-chip-value"><%= rejectedCount %></div>
+                <div class="profile-stat-chip-label">Rejected Requests</div>
             </div>
         </div>
 
-        <!-- Actions -->
+        <!-- Actions Bar -->
         <div class="profile-actions-row">
             <button type="button" class="profile-action-btn ghost js-theme-toggle">
                 <i class="fa-solid fa-moon"></i> Toggle Theme
             </button>
             <a href="/platform-admin/dashboard" class="profile-action-btn ghost">
-                <i class="fa-solid fa-house"></i> Dashboard
+                <i class="fa-solid fa-chart-line"></i> Dashboard
             </a>
             <a href="/platform-admin/requests?status=PENDING" class="profile-action-btn ghost">
                 <i class="fa-solid fa-building-circle-check"></i> College Requests
             </a>
+            <a href="/platform-admin/notifications" class="profile-action-btn ghost">
+                <i class="fa-solid fa-bell"></i> Notifications
+            </a>
             <form action="/platform-admin/logout" method="POST">
                 <button type="submit" class="profile-action-btn danger">
-                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out
                 </button>
             </form>
         </div>
 
-        <!-- Account Details -->
-        <p class="profile-section-heading">Account Details</p>
+        <!-- Account Details (2 Balanced Columns) -->
+        <p class="profile-section-heading">Account & System Details</p>
         <div class="profile-grid">
 
             <div class="profile-card-block">
                 <div class="profile-card-block-header">
-                    <div class="profile-card-block-icon orange"><i class="fa-solid fa-crown"></i></div>
-                    <span class="profile-card-block-title">Identity</span>
+                    <div class="profile-card-block-icon blue"><i class="fa-solid fa-id-card"></i></div>
+                    <span class="profile-card-block-title">Identity & Credentials</span>
                 </div>
                 <ul class="profile-field-list">
                     <li>
                         <span class="profile-field-label">Full Name</span>
-                        <span class="profile-field-value"><%= platformAdmin.fullName %></span>
+                        <span class="profile-field-value"><strong><%= platformAdmin.fullName %></strong></span>
                     </li>
                     <li>
-                        <span class="profile-field-label">Email</span>
-                        <span class="profile-field-value"><%= platformAdmin.email %></span>
+                        <span class="profile-field-label">Email Address</span>
+                        <span class="profile-field-value mono-text"><%= platformAdmin.email %></span>
                     </li>
                     <li>
-                        <span class="profile-field-label">Role</span>
+                        <span class="profile-field-label">Role Privilege</span>
                         <span class="profile-field-value">
                             <span class="profile-status-badge platform"><i class="fa-solid fa-crown"></i> Super Admin</span>
                         </span>
                     </li>
                     <li>
-                        <span class="profile-field-label">Status</span>
+                        <span class="profile-field-label">Account Status</span>
                         <span class="profile-field-value">
                             <% if (platformAdmin.isBlocked) { %>
                                 <span class="profile-status-badge blocked"><i class="fa-solid fa-ban"></i> Blocked</span>
@@ -115,11 +142,11 @@
                     <li>
                         <span class="profile-field-label">Last Login</span>
                         <span class="profile-field-value">
-                            <%= platformAdmin.lastLogin ? new Date(platformAdmin.lastLogin).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "Never" %>
+                            <%= platformAdmin.lastLogin ? new Date(platformAdmin.lastLogin).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Recently Active" %>
                         </span>
                     </li>
                     <li>
-                        <span class="profile-field-label">Account Created</span>
+                        <span class="profile-field-label">Member Since</span>
                         <span class="profile-field-value">
                             <%= new Date(platformAdmin.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %>
                         </span>
@@ -129,25 +156,39 @@
 
             <div class="profile-card-block">
                 <div class="profile-card-block-header">
-                    <div class="profile-card-block-icon indigo"><i class="fa-solid fa-building-columns"></i></div>
-                    <span class="profile-card-block-title">Platform Overview</span>
+                    <div class="profile-card-block-icon indigo"><i class="fa-solid fa-network-wired"></i></div>
+                    <span class="profile-card-block-title">Platform Infrastructure</span>
                 </div>
                 <ul class="profile-field-list">
                     <li>
-                        <span class="profile-field-label">Total Colleges</span>
-                        <span class="profile-field-value"><%= collegesCount %></span>
+                        <span class="profile-field-label">Registered Colleges</span>
+                        <span class="profile-field-value"><strong><%= collegesCount %></strong> Institutions</span>
                     </li>
                     <li>
-                        <span class="profile-field-label">Pending Requests</span>
-                        <span class="profile-field-value"><%= pendingCount %></span>
+                        <span class="profile-field-label">Pending Verifications</span>
+                        <span class="profile-field-value">
+                            <span class="badge-pill <%= pendingCount > 0 ? 'badge-amber' : 'badge-neutral' %>">
+                                <%= pendingCount %> Pending
+                            </span>
+                        </span>
                     </li>
                     <li>
                         <span class="profile-field-label">Approved Colleges</span>
-                        <span class="profile-field-value"><%= approvedCount %></span>
+                        <span class="profile-field-value">
+                            <span class="badge-pill badge-green"><%= approvedCount %> Approved</span>
+                        </span>
                     </li>
                     <li>
                         <span class="profile-field-label">Rejected Requests</span>
-                        <span class="profile-field-value"><%= rejectedCount %></span>
+                        <span class="profile-field-value">
+                            <span class="badge-pill badge-red"><%= rejectedCount %> Rejected</span>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="profile-field-label">Platform Engine</span>
+                        <span class="profile-field-value">
+                            <span class="badge-pill badge-blue"><i class="fa-solid fa-server"></i> Multi-Tenant Node.js</span>
+                        </span>
                     </li>
                 </ul>
             </div>
@@ -161,3 +202,5 @@
 <script src="/js/csrfAuto.js" defer></script>
 </body>
 </html>
+
+

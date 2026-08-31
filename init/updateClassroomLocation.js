@@ -31,7 +31,7 @@ const updateClassroomLocation = async () => {
                 radius: radius
             },
             {
-                new: true
+                returnDocument: 'after'
             }
         );
 

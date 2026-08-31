@@ -6,10 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Students | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
 
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -43,7 +45,7 @@
 
 <body>
 
-    <% const classroomsMap=classroomsByClassGroup || {}; const studentGroupMap={}; (students ||
+    <% const classroomsMap=(typeof classroomsByClassGroup !== "undefined" && classroomsByClassGroup) ? classroomsByClassGroup : {}; const studentGroupMap={}; (students ||
         []).forEach(function(student) { let groupId="missing" ; let groupName="Class Group Missing" ; let
         groupMeta="Students without linked class group" ; let groupSort="zzz-missing" ; let groupDepartment="UNASSIGNED"
         ; let groupSemester="" ; let groupSection="" ; let groupClassrooms=[]; if (student.classGroup &&
@@ -77,54 +79,67 @@
 
         <div class="admin-layout">
 
-            <%- include("partials/sidebar", { activePage: typeof activePage !=="undefined" ? activePage : "" }) %>
+            <%- include("partials/sidebar", { activePage: "students", currentCollege: typeof college !== "undefined" ? college : null }) %>
 
                 <main class="admin-main admin-students-page">
 
                     <header class="admin-header">
                         <div>
                             <span class="admin-kicker">Admin Panel</span>
-                            <h1>Students</h1>
-                            <p>Create, search, edit and manage student accounts.</p>
+                            <h1>Enrolled Students Directory</h1>
+                            <p>Manage student enrollment, class group mapping, biometric passkeys, and bulk CSV ingestion.</p>
                         </div>
                     </header>
 
                     <% if (typeof message !=="undefined" && message) { %>
                         <div
-                            class="admin-alert <%= message && message && message.includes('successfully') ? 'success' : 'error' %>">
-                            <%= typeof message !=="undefined" ? message : "" %>
+                            class="admin-alert <%= (message.includes('successfully') || message.includes('imported') || message.includes('created')) ? 'success' : 'error' %>">
+                            <%= message %>
                         </div>
-                        <% } %>
+                    <% } %>
 
-                            <section class="admin-students-overview-row">
-                                <article class="admin-students-overview-pill">
-                                    <span>Total Students</span>
-                                    <strong>
-                                        <%= totalStudentsCount %>
-                                    </strong>
-                                </article>
+                    <!-- OVERVIEW STAT RADAR CARDS -->
+                    <section class="adm-radar-grid">
+                        <div class="adm-radar-card">
+                            <div class="adm-radar-icon room">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                            <div class="adm-radar-info">
+                                <span class="adm-radar-label">Total Students</span>
+                                <span class="adm-radar-val"><%= totalStudentsCount %> Enrolled</span>
+                            </div>
+                        </div>
 
-                                <article class="admin-students-overview-pill">
-                                    <span>Class Groups</span>
-                                    <strong>
-                                        <%= mappedGroupsCount %>
-                                    </strong>
-                                </article>
+                        <div class="adm-radar-card">
+                            <div class="adm-radar-icon sync">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            <div class="adm-radar-info">
+                                <span class="adm-radar-label">Class Groups</span>
+                                <span class="adm-radar-val"><%= mappedGroupsCount %> Active</span>
+                            </div>
+                        </div>
 
-                                <article class="admin-students-overview-pill">
-                                    <span>Mapped Classrooms</span>
-                                    <strong>
-                                        <%= mappedClassroomNames.length %>
-                                    </strong>
-                                </article>
+                        <div class="adm-radar-card">
+                            <div class="adm-radar-icon dept">
+                                <i class="fa-solid fa-door-open"></i>
+                            </div>
+                            <div class="adm-radar-info">
+                                <span class="adm-radar-label">Mapped Rooms</span>
+                                <span class="adm-radar-val"><%= mappedClassroomNames.length %> <%= mappedClassroomNames.length === 1 ? 'Room' : 'Rooms' %></span>
+                            </div>
+                        </div>
 
-                                <article class="admin-students-overview-pill warning">
-                                    <span>Unassigned Students</span>
-                                    <strong>
-                                        <%= unassignedStudentsCount %>
-                                    </strong>
-                                </article>
-                            </section>
+                        <div class="adm-radar-card">
+                            <div class="adm-radar-icon <%= unassignedStudentsCount > 0 ? 'gps' : 'security' %>">
+                                <i class="fa-solid <%= unassignedStudentsCount > 0 ? 'fa-triangle-exclamation' : 'fa-circle-check' %>"></i>
+                            </div>
+                            <div class="adm-radar-info">
+                                <span class="adm-radar-label">Unassigned Pool</span>
+                                <span class="adm-radar-val" style="color: <%= unassignedStudentsCount > 0 ? '#f59e0b' : '#10b981' %>;"><%= unassignedStudentsCount %> Students</span>
+                            </div>
+                        </div>
+                    </section>
 
                             <div class="admin-students-control-grid">
                                 <section class="admin-card admin-csv-card">
@@ -135,7 +150,7 @@
                                         </div>
                                     </div>
 
-                                    <% if (csvImportResult) { %>
+                                    <% if (typeof csvImportResult !== "undefined" && csvImportResult) { %>
                                         <div class="admin-csv-result <%= csvImportResult.type %>">
                                             <strong>
                                                 <%= csvImportResult.title %>
@@ -297,8 +312,11 @@
                                 <div class="admin-toolbar">
                                     <div class="admin-search-box">
                                         <i class="fa-solid fa-magnifying-glass"></i>
-                                        <input type="text" data-admin-search="students"
-                                            placeholder="Search student by name, email, or enrollment number...">
+                                        <input type="text"
+                                            class="admin-search-input"
+                                            data-admin-search="students"
+                                            placeholder="Search student by name, email, or enrollment number..."
+                                            style="border: none !important; background: transparent !important; outline: none !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; width: 100% !important; flex: 1 1 auto !important;">
                                     </div>
 
                                     <form action="/admin/students/delete-all" method="POST" class="admin-toolbar-action"
@@ -541,10 +559,11 @@
                                                                                 data-confirm="Allow passkey setup for <%= student.fullName || 'this student' %> for 30 minutes?"
                                                                                 onsubmit="return uiConfirm(event, this.dataset.confirm)">
                                                                                 <button class="admin-secondary-btn"
-                                                                                    type="submit">
+                                                                                    type="submit"
+                                                                                    title="Allow Passkey Setup for 30 minutes">
                                                                                     <i
                                                                                         class="fa-solid fa-user-shield"></i>
-                                                                                    Allow Passkey Setup
+                                                                                    Allow Passkey
                                                                                 </button>
                                                                             </form>
 
@@ -554,9 +573,10 @@
                                                                                 data-confirm="Allow trusted browser fallback for <%= student.fullName || 'this student' %> for 30 minutes? Use this only if passkeys are not supported."
                                                                                 onsubmit="return uiConfirm(event, this.dataset.confirm)">
                                                                                 <button class="admin-secondary-btn"
-                                                                                    type="submit">
+                                                                                    type="submit"
+                                                                                    title="Allow Trusted Browser for 30 minutes">
                                                                                     <i class="fa-solid fa-laptop"></i>
-                                                                                    Allow Trusted Browser
+                                                                                    Allow Browser
                                                                                 </button>
                                                                             </form>
 
@@ -566,7 +586,8 @@
                                                                                 data-confirm="Reset all passkeys for <%= student.fullName || 'this student' %>? Student will need to register a new passkey."
                                                                                 onsubmit="return uiConfirm(event, this.dataset.confirm)">
                                                                                 <button class="admin-warning-btn"
-                                                                                    type="submit">
+                                                                                    type="submit"
+                                                                                    title="Reset all registered passkeys for this student">
                                                                                     <i
                                                                                         class="fa-solid fa-fingerprint"></i>
                                                                                     Reset Passkeys

@@ -959,14 +959,7 @@ router.get("/live-map/global", isTeacher, async function (req, res) {
                     enrollmentNumber: student.enrollmentNumber || student.email || ""
                 };
             }),
-            seatMap: session.presentStudents ? session.presentStudents.map(function (ps) {
-                return {
-                    studentId: ps.student ? ps.student.toString() : "",
-                    fullName: ps.fullName || "Student",
-                    latitude: ps.latitude || null,
-                    longitude: ps.longitude || null
-                };
-            }).filter(s => s.latitude && s.longitude) : [],
+            seatMap: [],
             snapshot: snapshot
         });
     } catch (err) {
@@ -981,8 +974,8 @@ router.get("/live-map/global", isTeacher, async function (req, res) {
 router.post("/attendance/start", isTeacher, async (req, res) => {
     try {
         let durationMinutes = Number(req.body.durationMinutes);
-        if (!Number.isFinite(durationMinutes) || durationMinutes < 1) durationMinutes = 1;
-        if (durationMinutes > 15) durationMinutes = 15;
+        if (!Number.isFinite(durationMinutes) || durationMinutes < 1) durationMinutes = 60;
+        if (durationMinutes > 180) durationMinutes = 180;
 
         const teacherLatitude = req.body.teacherLatitude;
         const teacherLongitude = req.body.teacherLongitude;
@@ -1090,18 +1083,19 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
         }
 
         const classEndTime = getScheduleDateTimeForToday(scheduleItem.endTime);
-        const requestedEndTime = new Date(Date.now() + durationMinutes * 60 * 1000);
+        let sessionEndTime = classEndTime;
 
-        let sessionEndTime = requestedEndTime;
-
-        if (classEndTime && requestedEndTime > classEndTime) {
-            sessionEndTime = classEndTime;
+        // If classEndTime is valid and in the future, keep session open until scheduled class end time
+        if (sessionEndTime && sessionEndTime.getTime() > Date.now()) {
+            // Keep until scheduled class end time
+        } else {
+            // Fallback duration
+            sessionEndTime = new Date(Date.now() + Math.max(durationMinutes || 60, 30) * 60 * 1000);
         }
 
-        // Ensure the session is active for at least 1 minute, even if the class has formally ended
-        // This prevents the session from being immediately closed by cron or hidden from the UI.
-        if (sessionEndTime.getTime() - Date.now() < 60000) {
-            sessionEndTime = new Date(Date.now() + 60000);
+        // Ensure the session is active for at least 3 minutes
+        if (sessionEndTime.getTime() - Date.now() < 180000) {
+            sessionEndTime = new Date(Date.now() + 180000);
         }
 
         let attendanceSession;
@@ -1175,7 +1169,7 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
                         isActive: true
                     }
                 },
-                { upsert: true, new: true, rawResult: true }
+                { upsert: true, returnDocument: 'after', rawResult: true }
             );
             
             attendanceSession = rawResult.value || rawResult;
@@ -2590,7 +2584,7 @@ router.post("/manual-attendance/:scheduleId", isTeacher, async function (req, re
                     }
                 },
                 {
-                    new: true,
+                    returnDocument: 'after',
                     upsert: true,
                     setDefaultsOnInsert: true
                 }

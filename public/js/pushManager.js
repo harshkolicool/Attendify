@@ -69,12 +69,21 @@ window.PushManagerHelper = {
                 applicationServerKey: urlBase64ToUint8Array(publicKey)
             });
 
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken) {
+                headers['X-CSRF-Token'] = csrfToken;
+            }
+
             // Send to backend
             const saveResponse = await fetch(`${baseUrl}/push/subscribe`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: headers,
+                credentials: 'same-origin',
                 body: JSON.stringify(subscription)
             });
 

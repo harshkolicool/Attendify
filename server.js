@@ -1,4 +1,5 @@
 process.env.TZ = process.env.TZ || "Asia/Kolkata";
+
 require("dotenv").config();
 
 const http = require("http");
@@ -158,6 +159,10 @@ function isOriginAllowed(origin) {
 
     const normalizedOrigin = normalizeOrigin(origin);
 
+    if (!isProduction) {
+        return true;
+    }
+
     const matchedByRule = compiledOriginRules.some(function (rule) {
         return rule.match(normalizedOrigin);
     });
@@ -170,14 +175,20 @@ function isOriginAllowed(origin) {
         const parsed = new URL(normalizedOrigin);
         const host = parsed.hostname.toLowerCase();
 
-        if (host.endsWith(".onrender.com") || host.endsWith(".trycloudflare.com")) {
+        if (
+            host.endsWith(".onrender.com") ||
+            host.endsWith(".trycloudflare.com") ||
+            host.endsWith(".ngrok-free.app") ||
+            host.endsWith(".ngrok.io") ||
+            host.endsWith(".ngrok-free.dev") ||
+            host.endsWith(".loca.lt") ||
+            host.endsWith(".twingate.com")
+        ) {
             return true;
         }
 
-        if (!isProduction) {
-            if (isDevFriendlyHost(host) || host.endsWith(".ngrok-free.dev")) {
-                return true;
-            }
+        if (isDevFriendlyHost(host)) {
+            return true;
         }
     } catch (err) {
         // ignore invalid URL parsing
@@ -203,10 +214,17 @@ async function startServer() {
                             return callback(null, true);
                         }
 
+                        logger.warn("Socket origin rejected by CORS: " + origin);
                         return callback(new Error("Socket origin not allowed by CORS"));
                     },
-                    credentials: true
-                }
+                    credentials: true,
+                    methods: ["GET", "POST"]
+                },
+                allowEIO3: true,
+                pingTimeout: 30000,
+                pingInterval: 15000,
+                connectTimeout: 20000,
+                transports: ["websocket", "polling"]
             });
 
             if (process.env.RUNNING_IN_CLUSTER === 'true') {
@@ -226,18 +244,31 @@ async function startServer() {
         }
 
         /*
-            Important fix:
-            Start this job only after MongoDB connection is ready.
+            Background jobs (expiry, reminders) must only run on a single worker.
+            In cluster mode: only CLUSTER_WORKER_ID=1 runs them.
+            Without cluster: always run them.
+            Each job also acquires a distributed lock (Redis or worker-ID fallback)
+            so two workers can never execute the same job simultaneously.
         */
-        if (typeof startAttendanceExpiryJob === "function") {
-            startAttendanceExpiryJob();
-        }
+        const isJobWorker =
+            process.env.RUNNING_IN_CLUSTER !== "true" ||
+            process.env.CLUSTER_WORKER_ID === "1";
 
-        try {
-            const { startTeacherRemindersJob } = require("./utils/teacherReminders");
-            startTeacherRemindersJob();
-        } catch (err) {
-            logger.warn("Teacher reminders job not loaded", { msg: err.message });
+        if (isJobWorker) {
+            if (typeof startAttendanceExpiryJob === "function") {
+                startAttendanceExpiryJob();
+            }
+
+            try {
+                const { startTeacherRemindersJob } = require("./utils/teacherReminders");
+                startTeacherRemindersJob();
+            } catch (err) {
+                logger.warn("Teacher reminders job not loaded", { msg: err.message });
+            }
+        } else {
+            logger.info("Skipping background jobs on this worker", {
+                workerId: process.env.CLUSTER_WORKER_ID
+            });
         }
 
         server.on("error", function (err) {
@@ -260,6 +291,31 @@ async function startServer() {
                 logger.info("Server running", { url: "http://localhost:" + PORT });
             });
         }
+
+        // ── Graceful shutdown ────────────────────────────────────────────────
+        function gracefulShutdown(signal) {
+            logger.info("Received " + signal + ", shutting down gracefully...");
+
+            server.close(function () {
+                logger.info("HTTP server closed.");
+
+                const mongoose = require("mongoose");
+                mongoose.connection.close(false, function () {
+                    logger.info("MongoDB connection closed.");
+                    process.exit(0);
+                });
+
+                // Force exit after 10s if graceful shutdown hangs
+                setTimeout(function () {
+                    logger.error("Graceful shutdown timed out. Forcing exit.");
+                    process.exit(1);
+                }, 10000).unref();
+            });
+        }
+
+        process.once("SIGTERM", function () { gracefulShutdown("SIGTERM"); });
+        process.once("SIGINT",  function () { gracefulShutdown("SIGINT"); });
+
     } catch (err) {
         logger.error("SERVER STARTUP FAILED", { msg: err.message });
         process.exit(1);
