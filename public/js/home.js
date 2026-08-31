@@ -1,117 +1,136 @@
+/**
+ * Attendify Homepage Interactive Engine
+ * Handles interactive tabs, live simulated radar telemetry, and smooth scroll triggers.
+ */
+
 document.addEventListener("DOMContentLoaded", function () {
+    // 1. Mobile Menu Handling
     const menuButton = document.getElementById("homeMenuBtn");
     const navLinks = document.getElementById("homeNavLinks");
     const navOverlay = document.getElementById("homeNavOverlay");
     const homePage = document.querySelector(".home-page");
 
-    if (!menuButton || !navLinks) {
-        return;
-    }
-
-    function syncMenuUi(isOpen) {
-        navLinks.classList.toggle("open", isOpen);
-        document.body.classList.toggle("home-nav-open", isOpen);
-        if (homePage) {
-            homePage.classList.toggle("home-nav-open", isOpen);
-        }
-        if (navOverlay) {
-            navOverlay.classList.toggle("open", isOpen);
-        }
-        menuButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
-        const icon = menuButton.querySelector("i");
-        if (icon) {
-            if (isOpen) {
-                icon.classList.remove("fa-bars");
-                icon.classList.add("fa-xmark");
-            } else {
-                icon.classList.remove("fa-xmark");
-                icon.classList.add("fa-bars");
+    if (menuButton && navLinks) {
+        function syncMenuUi(isOpen) {
+            navLinks.classList.toggle("open", isOpen);
+            document.body.classList.toggle("home-nav-open", isOpen);
+            if (homePage) homePage.classList.toggle("home-nav-open", isOpen);
+            if (navOverlay) navOverlay.classList.toggle("open", isOpen);
+            menuButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
+            const icon = menuButton.querySelector("i");
+            if (icon) {
+                if (isOpen) {
+                    icon.classList.remove("fa-bars");
+                    icon.classList.add("fa-xmark");
+                } else {
+                    icon.classList.remove("fa-xmark");
+                    icon.classList.add("fa-bars");
+                }
             }
         }
+
+        menuButton.addEventListener("click", function () {
+            syncMenuUi(!navLinks.classList.contains("open"));
+        });
+
+        if (navOverlay) {
+            navOverlay.addEventListener("click", function () {
+                syncMenuUi(false);
+            });
+        }
+
+        navLinks.addEventListener("click", function (e) {
+            if (e.target && e.target.tagName === "A" && window.innerWidth <= 820) {
+                syncMenuUi(false);
+            }
+        });
     }
 
-    function closeMenu() {
-        syncMenuUi(false);
+    // 2. Interactive Hero Tab Switcher
+    const tabButtons = document.querySelectorAll(".sim-tab-btn");
+    const tabContents = document.querySelectorAll(".sim-tab-content");
+
+    tabButtons.forEach(button => {
+        button.addEventListener("click", function () {
+            const targetTab = this.getAttribute("data-tab");
+
+            tabButtons.forEach(btn => btn.classList.remove("active"));
+            tabContents.forEach(content => content.classList.remove("active"));
+
+            this.classList.add("active");
+            const activeContent = document.getElementById("simTab-" + targetTab);
+            if (activeContent) {
+                activeContent.classList.add("active");
+            }
+        });
+    });
+
+    // 3. Interactive Biometric Scanner Demo
+    const demoFingerprintBtn = document.getElementById("demoFingerprintBtn");
+    const demoScanResult = document.getElementById("demoScanResult");
+
+    if (demoFingerprintBtn && demoScanResult) {
+        demoFingerprintBtn.addEventListener("click", function () {
+            const icon = this.querySelector(".fingerprint-icon");
+            if (icon) {
+                icon.style.color = "#10b981";
+                icon.style.transform = "scale(1.2)";
+            }
+
+            demoScanResult.style.transform = "scale(1.04)";
+            demoScanResult.style.borderColor = "#10b981";
+
+            if (typeof window.uiToast === "function") {
+                window.uiToast("FIDO2 Biometric signature verified via Apple Secure Enclave!", "success", "Passkey Authenticated");
+            }
+
+            setTimeout(() => {
+                if (icon) {
+                    icon.style.color = "#38bdf8";
+                    icon.style.transform = "scale(1)";
+                }
+                demoScanResult.style.transform = "scale(1)";
+            }, 1200);
+        });
     }
 
-    menuButton.addEventListener("click", function () {
-        syncMenuUi(!navLinks.classList.contains("open"));
-    });
+    // 4. Live Simulated Telemetry Ticker (Auto-increments check-in counter)
+    let currentPresent = 44;
+    const totalClass = 50;
+    const counterDisplay = document.getElementById("simCounterDisplay");
+    const presentDisplay = document.getElementById("simPresentCount");
+    const absentDisplay = document.getElementById("simAbsentCount");
+    const progressFill = document.querySelector(".progress-fill");
 
-    if (navOverlay) {
-        navOverlay.addEventListener("click", closeMenu);
+    function updateSimulatedCheckin() {
+        if (currentPresent < 49) {
+            currentPresent += 1;
+            const absent = totalClass - currentPresent;
+            const percentage = Math.round((currentPresent / totalClass) * 100);
+
+            if (counterDisplay) counterDisplay.textContent = currentPresent + " / " + totalClass + " Present";
+            if (presentDisplay) presentDisplay.textContent = currentPresent;
+            if (absentDisplay) absentDisplay.textContent = absent;
+            if (progressFill) progressFill.style.width = percentage + "%";
+        }
     }
 
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape" && navLinks.classList.contains("open")) {
-            closeMenu();
-        }
-    });
+    // Trigger subtle real-time simulation updates every 8 seconds
+    setInterval(updateSimulatedCheckin, 8000);
 
-    document.addEventListener("click", function (event) {
-        if (!navLinks.classList.contains("open")) {
-            return;
-        }
-
-        if (menuButton.contains(event.target) || navLinks.contains(event.target)) {
-            return;
-        }
-
-        closeMenu();
-    });
-
-    window.addEventListener("resize", function () {
-        if (window.innerWidth > 820 && navLinks.classList.contains("open")) {
-            closeMenu();
-        }
-    });
-
-    navLinks.addEventListener("click", function (event) {
-        const target = event.target;
-        if (
-            target &&
-            target.tagName === "A" &&
-            navLinks.classList.contains("open") &&
-            window.innerWidth <= 820
-        ) {
-            closeMenu();
-        }
-    });
-
-    const scrollObserverOptions = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.15
-    };
-
+    // 5. Scroll Animation Observer
     const scrollObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('in-view');
+                entry.target.classList.add("in-view");
                 observer.unobserve(entry.target);
             }
         });
-    }, scrollObserverOptions);
-
-    document.querySelectorAll('.scroll-animate').forEach(el => {
-        scrollObserver.observe(el);
+    }, {
+        threshold: 0.12
     });
 
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-
-    function updateScrollState() {
-        document.documentElement.style.setProperty('--scroll-y', `${lastScrollY}px`);
-        ticking = false;
-    }
-
-    window.addEventListener('scroll', () => {
-        lastScrollY = window.scrollY;
-        if (!ticking) {
-            window.requestAnimationFrame(updateScrollState);
-            ticking = true;
-        }
-    }, { passive: true });
-    
-    updateScrollState();
+    document.querySelectorAll(".scroll-animate").forEach(el => {
+        scrollObserver.observe(el);
+    });
 });
