@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Platform Admin Login | Attendify</title>
+    <title>Platform Superadmin Login | Attendify</title>
+    
     <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/platformAdmin.css">
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+    <link rel="stylesheet" href="/css/authPages.css?v=20260901_1">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <!-- SweetAlert2 for Custom UI Alerts -->
@@ -19,21 +17,10 @@
     <script src="/js/customAlerts.js" defer></script>
 
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#06b6d4">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-            });
-        }
-    </script>
-
 
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=1">
     <% if (typeof realtimeMode !== "undefined") { %>
     <script>
     window.AttendifyRealtimeConfig = {
@@ -42,75 +29,97 @@
     };
     </script>
     <% } %>
-    <script>
-        const initialTheme = localStorage.getItem('attendifyTheme');
-        if (initialTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    </script>
 </head>
-<body class="auth-bg-dark">
+<body class="auth-redesign-body">
 
-<div class="auth-page">
-    <div class="auth-split">
-        <aside class="auth-brand-panel" style="background: linear-gradient(135deg, #0f172a, #1e293b);">
-            <a href="/" class="brand-logo light">
-                <span><i class="fa-solid fa-shield-halved"></i></span>
-                Attendify
-            </a>
-            <h2>Platform Admin</h2>
-            <p>Review and approve new college registrations securely.</p>
-            <ul class="auth-perks">
-                <li><i class="fa-solid fa-check"></i> Manage registration requests</li>
-                <li><i class="fa-solid fa-check"></i> Oversee all colleges</li>
-                <li><i class="fa-solid fa-check"></i> System-wide controls</li>
+<div class="auth-bg-ambient">
+    <div class="auth-grid-overlay"></div>
+</div>
+
+<div class="auth-container">
+    <div class="auth-card-split">
+
+        <!-- LEFT BRAND PANEL -->
+        <aside class="auth-hero-pane platform-admin">
+            <div class="auth-brand-top">
+                <a href="/" class="auth-brand-header">
+                    <span class="auth-brand-icon platform-admin">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </span>
+                    <span class="auth-brand-title">ATTENDIFY</span>
+                </a>
+            </div>
+
+            <div class="auth-hero-body">
+                <span class="auth-role-pill platform-admin">
+                    <i class="fa-solid fa-server"></i> PLATFORM SUPERADMIN
+                </span>
+                <h2>Global System Command</h2>
+                <p>Verify and approve new institution registrations, monitor platform-wide telemetry, and manage global tenant parameters.</p>
+            </div>
+
+            <ul class="auth-perks-list platform-admin">
+                <li><i class="fa-solid fa-check"></i> Institutional Verification & Onboarding</li>
+                <li><i class="fa-solid fa-check"></i> Multi-Tenant Global Security Controls</li>
+                <li><i class="fa-solid fa-check"></i> Platform Audit Trails & System Health</li>
             </ul>
         </aside>
 
-        <div class="auth-card">
-            <div class="auth-header compact">
-                <div class="auth-icon" style="background: #e2e8f0; color: #0f172a;"><i class="fa-solid fa-shield-halved"></i></div>
-                <h2>Superadmin Login</h2>
-                <p>Enter your platform credentials</p>
+        <!-- RIGHT FORM CARD -->
+        <div class="auth-form-pane">
+            <div>
+                <div class="auth-form-header">
+                    <div class="auth-icon-badge platform-admin">
+                        <i class="fa-solid fa-user-lock"></i>
+                    </div>
+                    <h3>Superadmin Login</h3>
+                    <p>Enter your master platform credentials</p>
+                </div>
+
+                <% if (typeof message !== "undefined" && message) { %>
+                    <div class="auth-alert-box">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span><%= message %></span>
+                    </div>
+                <% } %>
+
+                <form action="/platform-admin/login" method="POST" class="modern-auth-form">
+                    <div class="form-group-modern">
+                        <label for="superAdminEmail">Platform Email</label>
+                        <div class="input-field-wrap">
+                            <i class="fa-regular fa-envelope field-icon"></i>
+                            <input type="email" id="superAdminEmail" name="email" placeholder="superadmin@attendify.com" required autocomplete="email">
+                        </div>
+                    </div>
+
+                    <div class="form-group-modern">
+                        <label for="superAdminPassword">Master Password</label>
+                        <div class="input-field-wrap">
+                            <i class="fa-solid fa-lock field-icon"></i>
+                            <input type="password" id="superAdminPassword" name="password" placeholder="Enter master password" required autocomplete="current-password">
+                            <button type="button" class="password-toggle-btn" aria-label="Toggle password visibility">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="auth-submit-btn platform-admin">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                        <span>Authenticate Superadmin</span>
+                    </button>
+                </form>
             </div>
 
-            <% if (typeof message !== "undefined" && message) { %>
-                <div class="error-box auth-alert">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <%= typeof message !== "undefined" ? message : "" %>
-                </div>
-            <% } %>
-
-            <form action="/platform-admin/login" method="POST" class="auth-form">
-                <div class="input-group">
-                    <label>Email Address</label>
-                    <div class="input-wrap">
-                        <i class="fa-regular fa-envelope"></i>
-                        <input type="email" name="email" placeholder="superadmin@attendify.com" required>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>Password</label>
-                    <div class="input-wrap">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" name="password" placeholder="Enter password" required>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-full">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                    Login
-                </button>
-            </form>
-
-            <div class="auth-footer" style="justify-content: center;">
-                <a href="/college/register">College registration page</a>
+            <div class="auth-card-footer">
+                <a href="/"><i class="fa-solid fa-arrow-left"></i> Home</a>
+                <a href="/college/register" class="role-switch-link">College Registration Page <i class="fa-solid fa-arrow-right"></i></a>
             </div>
         </div>
+
     </div>
 </div>
 
+<script src="/js/authHelper.js" defer></script>
 <script src="/js/csrfAuto.js" defer></script>
 <script src="/js/selectEnhancer.js" defer></script>
 </body>
