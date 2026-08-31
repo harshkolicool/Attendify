@@ -1,10 +1,9 @@
 /**
- * Attendify Homepage Interactive Engine
- * Handles interactive tabs, live simulated radar telemetry, and smooth scroll triggers.
+ * Attendify Homepage Interactive Engine (v3)
  */
 
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Mobile Menu Handling
+    // 1. Mobile Navigation Menu Toggle
     const menuButton = document.getElementById("homeMenuBtn");
     const navLinks = document.getElementById("homeNavLinks");
     const navOverlay = document.getElementById("homeNavOverlay");
@@ -46,42 +45,42 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 2. Interactive Hero Tab Switcher
-    const tabButtons = document.querySelectorAll(".sim-tab-btn");
-    const tabContents = document.querySelectorAll(".sim-tab-content");
+    // 2. Interactive Terminal Showcase Tabs
+    const tabButtons = document.querySelectorAll(".showcase-tab");
+    const tabPanels = document.querySelectorAll(".tab-panel");
 
     tabButtons.forEach(button => {
         button.addEventListener("click", function () {
             const targetTab = this.getAttribute("data-tab");
 
             tabButtons.forEach(btn => btn.classList.remove("active"));
-            tabContents.forEach(content => content.classList.remove("active"));
+            tabPanels.forEach(panel => panel.classList.remove("active"));
 
             this.classList.add("active");
-            const activeContent = document.getElementById("simTab-" + targetTab);
-            if (activeContent) {
-                activeContent.classList.add("active");
+            const activePanel = document.getElementById("tabContent-" + targetTab);
+            if (activePanel) {
+                activePanel.classList.add("active");
             }
         });
     });
 
     // 3. Interactive Biometric Scanner Demo
-    const demoFingerprintBtn = document.getElementById("demoFingerprintBtn");
-    const demoScanResult = document.getElementById("demoScanResult");
+    const heroFingerprintScanner = document.getElementById("heroFingerprintScanner");
+    const heroAuthResult = document.getElementById("heroAuthResult");
 
-    if (demoFingerprintBtn && demoScanResult) {
-        demoFingerprintBtn.addEventListener("click", function () {
-            const icon = this.querySelector(".fingerprint-icon");
+    if (heroFingerprintScanner && heroAuthResult) {
+        heroFingerprintScanner.addEventListener("click", function () {
+            const icon = this.querySelector(".fp-icon");
             if (icon) {
                 icon.style.color = "#10b981";
-                icon.style.transform = "scale(1.2)";
+                icon.style.transform = "scale(1.15)";
             }
 
-            demoScanResult.style.transform = "scale(1.04)";
-            demoScanResult.style.borderColor = "#10b981";
+            heroAuthResult.style.transform = "scale(1.02)";
+            heroAuthResult.style.borderColor = "#10b981";
 
             if (typeof window.uiToast === "function") {
-                window.uiToast("FIDO2 Biometric signature verified via Apple Secure Enclave!", "success", "Passkey Authenticated");
+                window.uiToast("FIDO2 Biometric signature verified via Secure Enclave!", "success", "Passkey Authenticated");
             }
 
             setTimeout(() => {
@@ -89,34 +88,33 @@ document.addEventListener("DOMContentLoaded", function () {
                     icon.style.color = "#38bdf8";
                     icon.style.transform = "scale(1)";
                 }
-                demoScanResult.style.transform = "scale(1)";
-            }, 1200);
+                heroAuthResult.style.transform = "scale(1)";
+            }, 1000);
         });
     }
 
     // 4. Live Simulated Telemetry Ticker (Auto-increments check-in counter)
     let currentPresent = 44;
-    const totalClass = 50;
-    const counterDisplay = document.getElementById("simCounterDisplay");
-    const presentDisplay = document.getElementById("simPresentCount");
-    const absentDisplay = document.getElementById("simAbsentCount");
-    const progressFill = document.querySelector(".progress-fill");
+    const totalStudents = 50;
+    const verifiedRatio = document.getElementById("liveVerifiedRatio");
+    const presentVal = document.getElementById("livePresentVal");
+    const absentVal = document.getElementById("liveAbsentVal");
+    const barFill = document.querySelector(".telemetry-bar-fill");
 
-    function updateSimulatedCheckin() {
+    function updateLiveCheckin() {
         if (currentPresent < 49) {
             currentPresent += 1;
-            const absent = totalClass - currentPresent;
-            const percentage = Math.round((currentPresent / totalClass) * 100);
+            const absent = totalStudents - currentPresent;
+            const percentage = Math.round((currentPresent / totalStudents) * 100);
 
-            if (counterDisplay) counterDisplay.textContent = currentPresent + " / " + totalClass + " Present";
-            if (presentDisplay) presentDisplay.textContent = currentPresent;
-            if (absentDisplay) absentDisplay.textContent = absent;
-            if (progressFill) progressFill.style.width = percentage + "%";
+            if (verifiedRatio) verifiedRatio.textContent = currentPresent + " / " + totalStudents + " Present";
+            if (presentVal) presentVal.textContent = currentPresent;
+            if (absentVal) absentVal.textContent = absent;
+            if (barFill) barFill.style.width = percentage + "%";
         }
     }
 
-    // Trigger subtle real-time simulation updates every 8 seconds
-    setInterval(updateSimulatedCheckin, 8000);
+    setInterval(updateLiveCheckin, 9000);
 
     // 5. Scroll Animation Observer
     const scrollObserver = new IntersectionObserver((entries, observer) => {
@@ -127,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }, {
-        threshold: 0.12
+        threshold: 0.1
     });
 
     document.querySelectorAll(".scroll-animate").forEach(el => {
