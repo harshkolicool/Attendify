@@ -5,38 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Waiting for Approval | Attendify</title>
     <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/authPages.css?v=20260901_3">
     <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
     <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+
     <style>
-        .waiting-card {
+        .waiting-pod {
             text-align: center;
-            padding: 48px 32px;
+            padding: 44px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-        .waiting-icon {
-            font-size: 64px;
-            color: var(--primary);
-            margin-bottom: 24px;
-            animation: pulse 2s infinite;
-        }
-        .waiting-spinner {
-            margin: 32px auto 0;
-            width: 48px;
-            height: 48px;
-            border: 4px solid var(--border);
-            border-top-color: var(--primary);
+
+        .waiting-radar-wrap {
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            background: rgba(99, 102, 241, 0.15);
+            border: 2px solid rgba(99, 102, 241, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 24px;
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.35);
         }
+
+        .waiting-radar-ping {
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 1px solid rgba(99, 102, 241, 0.6);
+            animation: pulseWave 2s infinite ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes pulseWave {
+            0% { transform: scale(0.9); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .waiting-radar-icon {
+            font-size: 2.4rem;
+            color: #818cf8;
+            transition: all 0.3s ease;
+        }
+
+        .waiting-status-pill {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #34d399;
+            padding: 4px 12px;
+            border-radius: 999px;
+            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .waiting-spinner-ring {
+            width: 22px;
+            height: 22px;
+            border: 2.5px solid rgba(255, 255, 255, 0.15);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin-top: 18px;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
         }
     </style>
 
@@ -45,16 +90,8 @@
     <script src="/js/customAlerts.js" defer></script>
 
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#6366f1">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-            });
-        }
-    </script>
-
 
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
@@ -66,22 +103,48 @@
     </script>
     <% } %>
 </head>
-<body>
+<body class="auth-redesign-body">
 
-<div class="auth-page">
-    <div class="auth-card waiting-auth-card">
-        <div class="waiting-card">
-            <i id="waiting-status-icon" class="fa-solid fa-clock-rotate-left waiting-icon"></i>
-            <h2 id="waiting-status-title" class="waiting-status-title">Waiting for Admin Approval</h2>
-            <p class="waiting-status-copy">
-                Hi <strong><%= student.fullName %></strong>, your registration was successful! 
-                Please keep this page open. You will be automatically redirected to the login screen as soon as your college admin approves your account.
+<div class="auth-bg-ambient">
+    <div class="auth-grid-overlay"></div>
+</div>
+
+<div class="auth-container" style="max-width: 640px;">
+    <div class="auth-card-split" style="grid-template-columns: 1fr;">
+
+        <div class="waiting-pod">
+            <div class="waiting-radar-wrap">
+                <div class="waiting-radar-ping"></div>
+                <i id="waiting-status-icon" class="fa-solid fa-clock-rotate-left waiting-radar-icon"></i>
+            </div>
+
+            <span class="auth-role-pill student" style="margin-bottom: 8px;">
+                <i class="fa-solid fa-hourglass-half"></i> APPROVAL PENDING
+            </span>
+
+            <h2 id="waiting-status-title" style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
+                Waiting for Admin Approval
+            </h2>
+
+            <p style="color: var(--auth-muted); font-size: 0.92rem; line-height: 1.6; max-width: 480px; margin: 0 auto;">
+                Welcome, <strong><%= student.fullName %></strong>! Your registration has been submitted. 
+                Please keep this window open — you will be automatically redirected the moment your college administrator approves your account.
             </p>
-            
-            <div class="waiting-spinner"></div>
-            
-            <p id="status-text" class="waiting-status-text">Connecting to live server...</p>
+
+            <div class="waiting-spinner-ring" id="waitingSpinner"></div>
+
+            <div class="waiting-status-pill" id="status-pill">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; animation: blipPulse 1.8s infinite;"></span>
+                <span id="status-text">Connecting to real-time server...</span>
+            </div>
+
+            <div class="auth-structured-footer" style="width: 100%; margin-top: 32px;">
+                <div class="footer-nav-row" style="justify-content: center;">
+                    <a href="/" class="footer-nav-btn"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+                </div>
+            </div>
         </div>
+
     </div>
 </div>
 
@@ -92,6 +155,7 @@
         var statusText = document.getElementById("status-text");
         var statusIcon = document.getElementById("waiting-status-icon");
         var statusTitle = document.getElementById("waiting-status-title");
+        var spinner = document.getElementById("waitingSpinner");
         var redirecting = false;
 
         function doRedirect(redirectUrl) {
@@ -99,36 +163,34 @@
             redirecting = true;
             if (typeof pollTimer !== 'undefined' && pollTimer) clearInterval(pollTimer);
             
-            var spinner = document.querySelector(".waiting-spinner");
             if (spinner) spinner.style.display = "none";
             
             if (statusIcon) {
-                statusIcon.className = "fa-solid fa-circle-check waiting-icon";
-                statusIcon.style.color = "var(--success)";
-                statusIcon.style.animation = "none";
+                statusIcon.className = "fa-solid fa-circle-check waiting-radar-icon";
+                statusIcon.style.color = "#10b981";
             }
 
             if (statusTitle) {
                 statusTitle.textContent = "Registration Approved!";
             }
-            statusText.textContent = "Redirecting to login...";
-            statusText.style.color = "var(--success)";
+            if (statusText) {
+                statusText.textContent = "Redirecting to login...";
+                statusText.style.color = "#10b981";
+            }
 
-            // Build redirect URL
             var url = redirectUrl ? redirectUrl : "/student/login?message=approved";
-
-            // Redirect immediately
-            window.location.href = url;
+            setTimeout(function() {
+                window.location.href = url;
+            }, 600);
         }
 
-        // === Strategy 1: Socket (instant when it works) ===
+        // Socket connection
         try {
             var socket = io({ query: { waitingId: studentId } });
 
             socket.on("connect", function() {
-                if (!redirecting) {
-                    statusText.textContent = "Connected. Waiting for admin...";
-                    statusText.style.color = "var(--primary)";
+                if (!redirecting && statusText) {
+                    statusText.textContent = "Live Socket Connected. Waiting for approval...";
                 }
             });
 
@@ -137,21 +199,17 @@
             });
 
             socket.on("disconnect", function() {
-                if (!redirecting) {
-                    statusText.textContent = "Connection lost. Still checking...";
-                    statusText.style.color = "var(--danger)";
+                if (!redirecting && statusText) {
+                    statusText.textContent = "Connection lost. Checking fallback...";
                 }
             });
         } catch (e) {
-            console.log("Socket connection failed, relying on polling:", e);
+            console.log("Socket connection fallback:", e);
         }
 
-        // === Strategy 2: HTTP Polling (reliable fallback) ===
-        var pollInterval = 5000;
-
+        // Polling fallback
         function checkApproval() {
             if (redirecting) return;
-            // Skip HTTP poll if socket is actively connected
             if (typeof socket !== "undefined" && socket.connected) return;
 
             fetch("/student/check-approval/" + studentId)
@@ -166,15 +224,12 @@
                 });
         }
 
-        // Start polling every 5 seconds
-        var pollTimer = setInterval(checkApproval, pollInterval);
-
-        // Also check immediately on page load
+        var pollTimer = setInterval(checkApproval, 5000);
         checkApproval();
     });
 </script>
 
-    <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /**
- * Attendify Ultra-Modern Landing Experience (v5)
- * Cartographic map simulation, in-card biometric scanning, and live stream telemetry.
+ * Attendify Ultra-Modern Landing Experience (v6)
+ * Cartographic map simulation, in-card biometric scanning, and continuous live stream telemetry.
  */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -155,7 +155,33 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 5. Scroll Animations
+    // 5. Continuous Live Telemetry Log Generator (Simulates ongoing campus activity)
+    const sampleStudents = [
+        { name: "Pooja V.", id: "AIML-9912A", dist: "3.2m" },
+        { name: "Rohan D.", id: "AIML-4421B", dist: "6.8m" },
+        { name: "Sneha M.", id: "AIML-7714C", dist: "11.4m" },
+        { name: "Vikram S.", id: "AIML-1120D", dist: "15.0m" }
+    ];
+    let sampleIdx = 0;
+
+    setInterval(function () {
+        if (telemetryStream && sampleIdx < sampleStudents.length) {
+            const st = sampleStudents[sampleIdx];
+            const now = new Date();
+            const timeStr = now.toTimeString().split(" ")[0];
+            const logRow = document.createElement("div");
+            logRow.className = "log-row verified";
+            logRow.innerHTML = `
+                <span class="log-time">${timeStr}</span>
+                <span class="log-badge pass">VERIFIED</span>
+                <span class="log-desc">${st.name} (${st.id}) • GPS: ${st.dist} inside • FIDO2 Passkey ✓</span>
+            `;
+            telemetryStream.insertBefore(logRow, telemetryStream.firstChild);
+            sampleIdx++;
+        }
+    }, 12000);
+
+    // 6. Scroll Animations
     const scrollObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
