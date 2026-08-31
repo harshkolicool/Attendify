@@ -1061,33 +1061,36 @@ html.dark-mode {
    ========================================================================== */
 .adm-timeline-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
     width: 100%;
 }
 
 .adm-timeline-card {
-    background: rgba(248, 250, 252, 0.6);
+    background: rgba(248, 250, 252, 0.75);
     border: 1px solid var(--adm-card-border);
+    border-left: 4px solid #6366f1;
     border-radius: 16px;
-    padding: 16px;
+    padding: 18px 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    color: inherit;
+    gap: 14px;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
 }
 
-[data-theme="dark"] .adm-timeline-card {
-    background: rgba(30, 41, 59, 0.4);
+[data-theme="dark"] .adm-timeline-card,
+body.dark-mode .adm-timeline-card {
+    background: rgba(19, 29, 53, 0.85);
+    border-color: rgba(255, 255, 255, 0.08);
+    border-left: 4px solid #818cf8;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .adm-timeline-card:hover {
-    background: var(--adm-card-bg-solid);
-    border-color: rgba(99, 102, 241, 0.35);
     transform: translateY(-2px);
-    box-shadow: var(--adm-card-hover-shadow);
+    box-shadow: 0 12px 28px rgba(99, 102, 241, 0.18);
+    border-color: rgba(99, 102, 241, 0.4);
 }
 
 .adm-timeline-top {
@@ -1095,43 +1098,121 @@ html.dark-mode {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    margin-bottom: 2px;
 }
 
 .adm-timeline-time {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-size: 0.82rem;
+    font-weight: 800;
     color: #4f46e5;
     background: rgba(99, 102, 241, 0.1);
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 8px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
-[data-theme="dark"] .adm-timeline-time {
+[data-theme="dark"] .adm-timeline-time,
+body.dark-mode .adm-timeline-time {
     color: #818cf8;
     background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.35);
 }
 
 .adm-timeline-subj {
-    font-size: 0.95rem;
+    font-size: 1.12rem;
     font-weight: 800;
     color: var(--adm-text-primary);
-}
-
-.adm-timeline-meta {
-    font-size: 0.8rem;
-    color: var(--adm-text-secondary);
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.adm-timeline-meta span {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.adm-subj-code-pill {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(6, 182, 212, 0.12);
+    color: #0891b2;
+    border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+[data-theme="dark"] .adm-subj-code-pill,
+body.dark-mode .adm-subj-code-pill {
+    background: rgba(6, 182, 212, 0.2);
+    color: #38bdf8;
+    border-color: rgba(6, 182, 212, 0.4);
+}
+
+.adm-timeline-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--adm-card-border);
+}
+
+[data-theme="dark"] .adm-timeline-meta-grid,
+body.dark-mode .adm-timeline-meta-grid {
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.adm-meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.03);
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--adm-card-border);
+}
+
+[data-theme="dark"] .adm-meta-chip,
+body.dark-mode .adm-meta-chip {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.adm-meta-chip i {
+    font-size: 1rem;
+    color: #6366f1;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .adm-meta-chip i,
+body.dark-mode .adm-meta-chip i {
+    color: #818cf8;
+}
+
+.adm-meta-chip small {
+    font-size: 0.64rem;
+    font-weight: 700;
+    color: var(--adm-text-secondary);
+    display: block;
+    line-height: 1.1;
+}
+
+.adm-meta-chip strong {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--adm-text-primary);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+    .adm-timeline-grid {
+        grid-template-columns: 1fr;
+    }
+    .adm-timeline-meta-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ==========================================================================

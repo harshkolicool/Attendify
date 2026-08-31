@@ -423,11 +423,20 @@
                 <div class="adm-timeline-grid">
                     <% if (typeof todaySchedulesList !== "undefined" && todaySchedulesList && todaySchedulesList.length > 0) { %>
                         <% todaySchedulesList.forEach(function(item) { 
-                            const subjName = item.subject ? (item.subject.name || "Subject") : "Lecture";
-                            const subjCode = item.subject ? (item.subject.code || "") : "";
-                            const teacherName = item.teacher ? item.teacher.fullName : "Faculty";
-                            const groupName = item.classGroup ? item.classGroup.name : "Class Group";
-                            const roomName = item.classroom ? (item.classroom.name || "Room " + item.classroom.roomNumber) : "Classroom";
+                            const subjName = (item.subject && typeof item.subject === "object" ? (item.subject.name || "Lecture") : (typeof item.subject === "string" ? item.subject : "Lecture"));
+                            const subjCode = (item.subject && typeof item.subject === "object") ? (item.subject.code || "") : "";
+                            const teacherName = item.teacher ? item.teacher.fullName : "Assigned Faculty";
+                            const groupName = item.classGroup ? item.classGroup.name : "All Students";
+                            
+                            const roomName = (function(c) {
+                                if (!c) return "Classroom";
+                                if (typeof c === "string") return c.trim() && c !== "undefined" ? c : "Classroom";
+                                if (c.name && typeof c.name === "string" && c.name.trim() && c.name.trim() !== "undefined") return c.name.trim();
+                                if (c.roomNumber && String(c.roomNumber).trim() && String(c.roomNumber).trim() !== "undefined") return "Room " + String(c.roomNumber).trim();
+                                if (c.block && String(c.block).trim()) return "Block " + String(c.block).trim();
+                                return "Classroom";
+                            })(item.classroom);
+                            
                             const timeDisplay = (item.startTime && item.endTime) ? `${item.startTime} - ${item.endTime}` : (item.startTime || "Scheduled");
                         %>
                             <div class="adm-timeline-card">
@@ -435,15 +444,38 @@
                                     <span class="adm-timeline-time">
                                         <i class="fa-regular fa-clock"></i> <%= timeDisplay %>
                                     </span>
-                                    <span class="adm-status-pill closed">Scheduled</span>
+                                    <span class="adm-status-pill closed">
+                                        <i class="fa-solid fa-calendar-check"></i> Scheduled
+                                    </span>
                                 </div>
                                 <div class="adm-timeline-subj">
-                                    <%= subjName %> <% if (subjCode) { %><span style="opacity: 0.7; font-size: 0.82rem;">(<%= subjCode %>)</span><% } %>
+                                    <span><%= subjName %></span>
+                                    <% if (subjCode) { %>
+                                        <span class="adm-subj-code-pill"><%= subjCode %></span>
+                                    <% } %>
                                 </div>
-                                <div class="adm-timeline-meta">
-                                    <span><i class="fa-solid fa-chalkboard-user"></i> <%= teacherName %></span>
-                                    <span><i class="fa-solid fa-layer-group"></i> <%= groupName %></span>
-                                    <span><i class="fa-solid fa-door-open"></i> <%= roomName %></span>
+                                <div class="adm-timeline-meta-grid">
+                                    <div class="adm-meta-chip">
+                                        <i class="fa-solid fa-chalkboard-user"></i>
+                                        <div>
+                                            <small>Faculty</small>
+                                            <strong><%= teacherName %></strong>
+                                        </div>
+                                    </div>
+                                    <div class="adm-meta-chip">
+                                        <i class="fa-solid fa-layer-group"></i>
+                                        <div>
+                                            <small>Class Group</small>
+                                            <strong><%= groupName %></strong>
+                                        </div>
+                                    </div>
+                                    <div class="adm-meta-chip">
+                                        <i class="fa-solid fa-door-open"></i>
+                                        <div>
+                                            <small>Location</small>
+                                            <strong><%= roomName %></strong>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         <% }); %>
