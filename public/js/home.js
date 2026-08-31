@@ -1,19 +1,17 @@
 /**
- * Attendify Homepage Interactive Engine (v3)
+ * Attendify Next-Gen Cyber Landing Engine (v4)
+ * Pure in-card interactive simulation with zero intrusive popups.
  */
 
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Mobile Navigation Menu Toggle
+    // 1. Mobile Menu Handling
     const menuButton = document.getElementById("homeMenuBtn");
     const navLinks = document.getElementById("homeNavLinks");
     const navOverlay = document.getElementById("homeNavOverlay");
-    const homePage = document.querySelector(".home-page");
 
     if (menuButton && navLinks) {
         function syncMenuUi(isOpen) {
             navLinks.classList.toggle("open", isOpen);
-            document.body.classList.toggle("home-nav-open", isOpen);
-            if (homePage) homePage.classList.toggle("home-nav-open", isOpen);
             if (navOverlay) navOverlay.classList.toggle("open", isOpen);
             menuButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
             const icon = menuButton.querySelector("i");
@@ -45,76 +43,113 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 2. Interactive Terminal Showcase Tabs
-    const tabButtons = document.querySelectorAll(".showcase-tab");
-    const tabPanels = document.querySelectorAll(".tab-panel");
+    // 2. Interactive Tactical Terminal Tabs
+    const tabButtons = document.querySelectorAll(".t-tab-btn");
+    const screens = document.querySelectorAll(".terminal-screen");
 
     tabButtons.forEach(button => {
         button.addEventListener("click", function () {
-            const targetTab = this.getAttribute("data-tab");
+            const targetTab = this.getAttribute("data-terminal-tab");
 
             tabButtons.forEach(btn => btn.classList.remove("active"));
-            tabPanels.forEach(panel => panel.classList.remove("active"));
+            screens.forEach(screen => screen.classList.remove("active"));
 
             this.classList.add("active");
-            const activePanel = document.getElementById("tabContent-" + targetTab);
-            if (activePanel) {
-                activePanel.classList.add("active");
+            const activeScreen = document.getElementById("terminalScreen-" + targetTab);
+            if (activeScreen) {
+                activeScreen.classList.add("active");
             }
         });
     });
 
-    // 3. Interactive Biometric Scanner Demo
-    const heroFingerprintScanner = document.getElementById("heroFingerprintScanner");
-    const heroAuthResult = document.getElementById("heroAuthResult");
+    // 3. In-Card Biometric Scanner Experience (No Popups!)
+    const scanDevice = document.getElementById("interactiveScanDevice");
+    const laserLine = document.getElementById("laserScannerLine");
+    const promptText = document.getElementById("scanPromptText");
+    const cryptoFeed = document.getElementById("cryptoFeedLog");
 
-    if (heroFingerprintScanner && heroAuthResult) {
-        heroFingerprintScanner.addEventListener("click", function () {
-            const icon = this.querySelector(".fp-icon");
-            if (icon) {
-                icon.style.color = "#10b981";
-                icon.style.transform = "scale(1.15)";
+    if (scanDevice && laserLine && cryptoFeed) {
+        scanDevice.addEventListener("click", function () {
+            laserLine.classList.remove("scanning");
+            void laserLine.offsetWidth; // trigger reflow
+            laserLine.classList.add("scanning");
+
+            const fpIcon = this.querySelector(".main-fp-icon");
+            if (fpIcon) {
+                fpIcon.style.color = "#10b981";
+                fpIcon.style.transform = "scale(1.15)";
             }
 
-            heroAuthResult.style.transform = "scale(1.02)";
-            heroAuthResult.style.borderColor = "#10b981";
-
-            if (typeof window.uiToast === "function") {
-                window.uiToast("FIDO2 Biometric signature verified via Secure Enclave!", "success", "Passkey Authenticated");
+            if (promptText) {
+                promptText.textContent = "Authenticating with Secure Enclave...";
+                promptText.style.color = "#34d399";
             }
+
+            cryptoFeed.innerHTML = `
+                <div class="feed-line"><span class="t-cyan">[WEBAUTHN]</span> 32-Byte challenge received from server: 0x8f2a7b1c...</div>
+                <div class="feed-line"><span class="t-emerald">[ENCLAVE]</span> Biometric verified! ECDSA P-256 signature generated (0.32s) ✓</div>
+                <div class="feed-line"><span class="t-purple">[TOKEN]</span> Single-use Attendance Token issued: #att_` + Math.random().toString(36).substring(2, 9) + `</div>
+            `;
 
             setTimeout(() => {
-                if (icon) {
-                    icon.style.color = "#38bdf8";
-                    icon.style.transform = "scale(1)";
+                if (fpIcon) {
+                    fpIcon.style.color = "#38bdf8";
+                    fpIcon.style.transform = "scale(1)";
                 }
-                heroAuthResult.style.transform = "scale(1)";
-            }, 1000);
+                if (promptText) {
+                    promptText.textContent = "Hardware Biometrics Verified ✓";
+                    promptText.style.color = "#38bdf8";
+                }
+            }, 1400);
         });
     }
 
-    // 4. Live Simulated Telemetry Ticker (Auto-increments check-in counter)
-    let currentPresent = 44;
-    const totalStudents = 50;
-    const verifiedRatio = document.getElementById("liveVerifiedRatio");
-    const presentVal = document.getElementById("livePresentVal");
-    const absentVal = document.getElementById("liveAbsentVal");
-    const barFill = document.querySelector(".telemetry-bar-fill");
+    // 4. Interactive "Test My Check-In" Radar Simulator
+    const simulateBtn = document.getElementById("simulateCheckinBtn");
+    const dynamicBlip = document.getElementById("dynamicStudentBlip");
+    const countVal = document.getElementById("radarCountVal");
+    const progressBar = document.getElementById("radarProgressBar");
+    const streamLogs = document.getElementById("streamLogsBox");
 
-    function updateLiveCheckin() {
-        if (currentPresent < 49) {
-            currentPresent += 1;
-            const absent = totalStudents - currentPresent;
-            const percentage = Math.round((currentPresent / totalStudents) * 100);
+    let isCheckedIn = false;
 
-            if (verifiedRatio) verifiedRatio.textContent = currentPresent + " / " + totalStudents + " Present";
-            if (presentVal) presentVal.textContent = currentPresent;
-            if (absentVal) absentVal.textContent = absent;
-            if (barFill) barFill.style.width = percentage + "%";
-        }
+    if (simulateBtn && dynamicBlip && countVal && progressBar) {
+        simulateBtn.addEventListener("click", function () {
+            if (!isCheckedIn) {
+                isCheckedIn = true;
+                dynamicBlip.style.display = "flex";
+                countVal.textContent = "45 / 50 Present (90%)";
+                countVal.style.color = "#34d399";
+                progressBar.style.width = "90%";
+                this.innerHTML = `<i class="fa-solid fa-circle-check text-emerald"></i> You Are Verified!`;
+                this.style.borderColor = "#10b981";
+                this.style.background = "rgba(16, 185, 129, 0.2)";
+                this.style.color = "#34d399";
+
+                if (streamLogs) {
+                    const now = new Date();
+                    const timeStr = now.toTimeString().split(" ")[0];
+                    const newLog = document.createElement("div");
+                    newLog.className = "log-entry";
+                    newLog.style.background = "rgba(6, 182, 212, 0.15)";
+                    newLog.style.border = "1px solid rgba(6, 182, 212, 0.4)";
+                    newLog.innerHTML = `<span class="time">${timeStr}</span> <span class="tag verified" style="color: #38bdf8;">[YOU]</span> Student Check-In Verified • Distance: 5.2m inside geofence • FIDO2 Passkey ✓`;
+                    streamLogs.insertBefore(newLog, streamLogs.firstChild);
+                }
+            } else {
+                // Reset
+                isCheckedIn = false;
+                dynamicBlip.style.display = "none";
+                countVal.textContent = "44 / 50 Present (88%)";
+                countVal.style.color = "#ffffff";
+                progressBar.style.width = "88%";
+                this.innerHTML = `<i class="fa-solid fa-location-arrow"></i> Test My Check-in`;
+                this.style.borderColor = "rgba(6, 182, 212, 0.4)";
+                this.style.background = "rgba(6, 182, 212, 0.15)";
+                this.style.color = "#38bdf8";
+            }
+        });
     }
-
-    setInterval(updateLiveCheckin, 9000);
 
     // 5. Scroll Animation Observer
     const scrollObserver = new IntersectionObserver((entries, observer) => {

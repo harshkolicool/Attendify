@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendify | Next-Gen Biometric & Geofenced Smart Attendance</title>
 
-    <!-- Preconnect to external CDNs for faster DNS resolution -->
+    <!-- Preconnect to external CDNs -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
     <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
-    <link rel="stylesheet" href="/css/home.css?v=20260901_v3">
+    <link rel="stylesheet" href="/css/home.css?v=20260901_crazy">
     <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
     <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
     <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
@@ -23,20 +23,9 @@
     >
     <link rel="icon" type="image/png" href="/favicon.png">
 
-    <!-- SweetAlert2 for Custom UI Alerts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
-    <script src="/js/customAlerts.js" defer></script>
-
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#090d16">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-            });
-        }
-    </script>
 
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
@@ -48,26 +37,28 @@
     </script>
     <% } %>
 </head>
-<body>
+<body class="dark-tech-body">
 
-<div class="home-page">
+<div class="home-page-crazy">
 
-    <!-- Ambient Subtle Glowing Backdrop -->
-    <div class="hero-ambient-orb orb-indigo"></div>
-    <div class="hero-ambient-orb orb-cyan"></div>
+    <!-- Cyber Background Matrix Grid & Ambient Glows -->
+    <div class="cyber-grid-overlay"></div>
+    <div class="crazy-glow-orb orb-purple"></div>
+    <div class="crazy-glow-orb orb-cyan"></div>
+    <div class="crazy-glow-orb orb-emerald"></div>
 
     <!-- Navigation Header -->
-    <header class="home-navbar">
-        <a href="/" class="home-brand">
-            <span class="brand-icon-box">
+    <header class="crazy-navbar">
+        <a href="/" class="crazy-brand">
+            <span class="brand-hexagon">
                 <i class="fa-solid fa-clipboard-check"></i>
             </span>
-            <span class="brand-name">Attendify</span>
-            <span class="brand-version-pill">v2.5</span>
+            <span class="brand-title">ATTENDIFY</span>
+            <span class="brand-ai-tag"><i class="fa-solid fa-bolt"></i> FIDO2</span>
         </a>
 
         <button
-            class="home-menu-btn"
+            class="crazy-menu-btn"
             id="homeMenuBtn"
             type="button"
             aria-label="Toggle navigation menu"
@@ -77,14 +68,14 @@
             <i class="fa-solid fa-bars"></i>
         </button>
 
-        <nav class="home-nav-links" id="homeNavLinks">
-            <a href="#features" class="nav-item">Features</a>
-            <a href="#how-it-works" class="nav-item">How It Works</a>
-            <a href="/college/register" class="nav-item">Register College</a>
-            <a href="/admin/login" class="nav-item">Admin</a>
-            <a href="/teacher/login" class="nav-item">Teacher</a>
-            <a href="/student/register" class="nav-item">Student Register</a>
-            <a href="/student/login" class="nav-cta-btn">
+        <nav class="crazy-nav-links" id="homeNavLinks">
+            <a href="#features" class="c-nav-item"><i class="fa-solid fa-microchip"></i> Features</a>
+            <a href="#how-it-works" class="c-nav-item"><i class="fa-solid fa-network-wired"></i> Architecture</a>
+            <a href="/college/register" class="c-nav-item"><i class="fa-solid fa-building-columns"></i> Register College</a>
+            <a href="/admin/login" class="c-nav-item"><i class="fa-solid fa-user-shield"></i> Admin</a>
+            <a href="/teacher/login" class="c-nav-item"><i class="fa-solid fa-chalkboard-user"></i> Teacher</a>
+            <a href="/student/register" class="c-nav-item"><i class="fa-solid fa-user-plus"></i> Student Sign-Up</a>
+            <a href="/student/login" class="crazy-cta-btn">
                 <i class="fa-solid fa-fingerprint"></i> Student Login
             </a>
         </nav>
@@ -94,250 +85,247 @@
     <main>
 
         <!-- HERO SECTION -->
-        <section class="hero-section">
+        <section class="crazy-hero-section">
 
-            <div class="hero-left-column">
+            <!-- LEFT: PUNCHY COPY & CALL TO ACTIONS -->
+            <div class="crazy-hero-left">
 
-                <div class="hero-pill-badge animate-fade-up">
-                    <span class="pill-pulse-dot"></span>
-                    <span>Zero-Proxy Campus Attendance Platform</span>
+                <div class="live-security-badge animate-fade-up">
+                    <span class="radar-ping-dot"></span>
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>ZERO-PROXY BIOMETRIC ATTENDANCE</span>
                 </div>
 
-                <h1 class="hero-headline animate-fade-up delay-100">
-                    Smart attendance with <span class="highlight-text">FIDO2 Passkeys</span> & <span class="highlight-text-cyan">Live Geofencing</span>.
+                <h1 class="crazy-hero-title animate-fade-up delay-100">
+                    Next-Gen Attendance Powered by <span class="neon-indigo">Hardware Passkeys</span> & <span class="neon-cyan">Geofence Radar</span>.
                 </h1>
 
-                <p class="hero-description animate-fade-up delay-200">
-                    Eliminate proxy attendance and buddy punching with hardware-bound biometric authentication, sub-meter GPS verification, and real-time live lecture radar.
+                <p class="crazy-hero-subtitle animate-fade-up delay-200">
+                    Cryptographically verify student identity and physical classroom presence. Zero passwords, zero buddy punching, and zero proxy attendance.
                 </p>
 
-                <div class="hero-cta-group animate-fade-up delay-300">
-                    <a href="/college/register" class="btn-primary-glow">
+                <div class="crazy-hero-actions animate-fade-up delay-300">
+                    <a href="/college/register" class="crazy-btn-primary">
                         <i class="fa-solid fa-building-columns"></i>
-                        <span>Register Your College</span>
-                        <i class="fa-solid fa-arrow-right arrow-icon"></i>
+                        <span>Register Institution</span>
+                        <i class="fa-solid fa-arrow-right arrow-shift"></i>
                     </a>
 
-                    <a href="/student/login" class="btn-secondary-outline">
-                        <i class="fa-solid fa-user-graduate"></i>
-                        <span>Student Login</span>
+                    <a href="/student/login" class="crazy-btn-secondary">
+                        <i class="fa-solid fa-fingerprint text-cyan"></i>
+                        <span>Student Passkey Login</span>
                     </a>
                 </div>
 
-                <div class="hero-feature-tags animate-fade-up delay-400">
-                    <div class="feature-tag">
-                        <i class="fa-solid fa-shield-check text-indigo"></i>
-                        <span>Multi-Tenant Architecture</span>
+                <!-- Telemetry mini-strip -->
+                <div class="crazy-trust-grid animate-fade-up delay-400">
+                    <div class="trust-cell">
+                        <i class="fa-solid fa-lock text-indigo"></i>
+                        <div>
+                            <strong>FIDO2 / WebAuthn</strong>
+                            <span>Secure Enclave Bound</span>
+                        </div>
                     </div>
 
-                    <div class="feature-tag">
-                        <i class="fa-solid fa-fingerprint text-emerald"></i>
-                        <span>Hardware Passkeys</span>
+                    <div class="trust-cell">
+                        <i class="fa-solid fa-satellite text-cyan"></i>
+                        <div>
+                            <strong>Haversine Geofence</strong>
+                            <span>Sub-Meter GPS Precision</span>
+                        </div>
                     </div>
 
-                    <div class="feature-tag">
-                        <i class="fa-solid fa-bolt text-cyan"></i>
-                        <span>Live WebSockets</span>
+                    <div class="trust-cell">
+                        <i class="fa-solid fa-bolt text-emerald"></i>
+                        <div>
+                            <strong>Live WebSockets</strong>
+                            <span>Sub-Second Telemetry</span>
+                        </div>
                     </div>
                 </div>
 
             </div>
 
-            <!-- RIGHT COLUMN: INTERACTIVE PRODUCT TERMINAL -->
-            <div class="hero-right-column animate-fade-up delay-200">
+            <!-- RIGHT: INTERACTIVE TACTICAL CYBER TERMINAL -->
+            <div class="crazy-hero-right animate-fade-up delay-200">
 
-                <div class="product-showcase-window">
+                <div class="cyber-terminal-card">
 
-                    <!-- Window Top Navigation Bar -->
-                    <div class="showcase-topbar">
-                        <div class="window-controls">
-                            <span class="ctrl-dot red"></span>
-                            <span class="ctrl-dot yellow"></span>
-                            <span class="ctrl-dot green"></span>
+                    <!-- Terminal Top Header -->
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="t-dot red"></span>
+                            <span class="t-dot yellow"></span>
+                            <span class="t-dot green"></span>
                         </div>
 
-                        <!-- Segmented Switcher Tabs -->
-                        <div class="showcase-tabs">
-                            <button class="showcase-tab active" data-tab="radar" type="button">
-                                <i class="fa-solid fa-radar"></i> Live Radar
+                        <!-- Interactive Tab Switches -->
+                        <div class="terminal-nav-tabs">
+                            <button class="t-tab-btn active" data-terminal-tab="radar" type="button">
+                                <i class="fa-solid fa-satellite-dish"></i> Live Tactical Radar
                             </button>
-                            <button class="showcase-tab" data-tab="passkey" type="button">
-                                <i class="fa-solid fa-fingerprint"></i> Passkey Auth
+                            <button class="t-tab-btn" data-terminal-tab="biometrics" type="button">
+                                <i class="fa-solid fa-fingerprint"></i> Biometric Scan
                             </button>
-                            <button class="showcase-tab" data-tab="analytics" type="button">
-                                <i class="fa-solid fa-chart-pie"></i> Analytics
+                            <button class="t-tab-btn" data-terminal-tab="telemetry" type="button">
+                                <i class="fa-solid fa-chart-line"></i> Live Feed
                             </button>
                         </div>
 
-                        <div class="showcase-status-badge">
-                            <span class="status-live-dot"></span> LIVE
+                        <div class="terminal-signal-pill">
+                            <span class="signal-beacon"></span> 18ms WebSocket
                         </div>
                     </div>
 
-                    <!-- TAB 1: LIVE RADAR INTERFACE -->
-                    <div class="showcase-body tab-panel active" id="tabContent-radar">
+                    <!-- TAB 1: LIVE TACTICAL RADAR INTERACTION -->
+                    <div class="terminal-screen active" id="terminalScreen-radar">
 
-                        <!-- Session Header -->
-                        <div class="session-meta-strip">
+                        <div class="radar-top-meta">
                             <div>
-                                <span class="meta-label">ACTIVE LECTURE SESSION</span>
-                                <h4 class="session-title">Data Structures & Algorithms</h4>
+                                <span class="radar-session-tag"><i class="fa-solid fa-circle-dot text-emerald"></i> SESSION ACTIVE</span>
+                                <h3 class="radar-session-name">Data Structures (CS401) • Lab 101</h3>
                             </div>
-                            <div class="session-right-pills">
-                                <span class="badge-pill geofence"><i class="fa-solid fa-location-crosshairs"></i> 100m Radius</span>
-                                <span class="badge-pill classgroup">AIML 4A</span>
+                            <div class="radar-radius-pill">
+                                <i class="fa-solid fa-location-crosshairs text-cyan"></i> 100m Geofence
                             </div>
                         </div>
 
-                        <!-- Tactical Radar Screen -->
-                        <div class="tactical-radar-viewport">
-                            <div class="radar-scan-beam"></div>
-                            <div class="radar-grid-ring r1"></div>
-                            <div class="radar-grid-ring r2"></div>
-                            <div class="radar-grid-ring r3"></div>
+                        <!-- Real Tactical Radar HUD Canvas -->
+                        <div class="tactical-hud-container">
+                            <div class="hud-sweep-beam"></div>
+                            
+                            <!-- Concentric Sonar Rings -->
+                            <div class="hud-ring r1"></div>
+                            <div class="hud-ring r2"></div>
+                            <div class="hud-ring r3"></div>
+                            <div class="hud-crosshair-x"></div>
+                            <div class="hud-crosshair-y"></div>
 
                             <!-- Faculty GPS Anchor -->
-                            <div class="radar-anchor faculty" title="Teacher Anchor (Lab 101)">
-                                <div class="anchor-icon"><i class="fa-solid fa-person-chalkboard"></i></div>
-                                <span class="anchor-label">Faculty Anchor</span>
+                            <div class="hud-anchor faculty" title="Faculty GPS Anchor (Lab 101)">
+                                <div class="anchor-pulse"></div>
+                                <div class="anchor-core"><i class="fa-solid fa-chalkboard-user"></i></div>
+                                <span class="anchor-name">Faculty Anchor</span>
                             </div>
 
-                            <!-- Live Student Blips -->
-                            <div class="radar-blip s1" title="Aarav K. - 8m inside">
-                                <span class="blip-node"></span>
-                                <span class="blip-text">Aarav (8m)</span>
-                            </div>
-                            <div class="radar-blip s2" title="Ananya S. - 14m inside">
-                                <span class="blip-node"></span>
-                                <span class="blip-text">Ananya (14m)</span>
-                            </div>
-                            <div class="radar-blip s3" title="Harsh K. - 2m inside">
-                                <span class="blip-node"></span>
-                                <span class="blip-text">Harsh (2m)</span>
-                            </div>
-                            <div class="radar-blip s4" title="Rahul M. - 19m inside">
-                                <span class="blip-node"></span>
-                                <span class="blip-text">Rahul (19m)</span>
-                            </div>
-                        </div>
-
-                        <!-- Progress & Verified Telemetry -->
-                        <div class="session-telemetry-box">
-                            <div class="telemetry-stat-row">
-                                <span><i class="fa-solid fa-clock"></i> Verified Student Check-Ins</span>
-                                <strong id="liveVerifiedRatio">44 / 50 Present</strong>
+                            <!-- Live Verified Student Blips -->
+                            <div class="hud-blip b1" title="Aarav K. (AIML 4A) • 8.2m inside">
+                                <div class="blip-ping-ring"></div>
+                                <div class="blip-core"></div>
+                                <span class="blip-label">Aarav K. (8m)</span>
                             </div>
 
-                            <div class="telemetry-bar-shell">
-                                <div class="telemetry-bar-fill" style="width: 88%;"></div>
+                            <div class="hud-blip b2" title="Ananya S. (AIML 4A) • 14.1m inside">
+                                <div class="blip-ping-ring"></div>
+                                <div class="blip-core"></div>
+                                <span class="blip-label">Ananya (14m)</span>
                             </div>
 
-                            <div class="telemetry-chips-row">
-                                <div class="stat-badge present">
-                                    <i class="fa-solid fa-circle-check"></i>
-                                    <span>Verified Present</span>
-                                    <strong id="livePresentVal">44</strong>
-                                </div>
+                            <div class="hud-blip b3" title="Harsh K. (AIML 4A) • 2.4m inside">
+                                <div class="blip-ping-ring"></div>
+                                <div class="blip-core"></div>
+                                <span class="blip-label">Harsh (2m)</span>
+                            </div>
 
-                                <div class="stat-badge absent">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                    <span>Absent</span>
-                                    <strong id="liveAbsentVal">6</strong>
-                                </div>
+                            <div class="hud-blip b4" title="Rahul M. (AIML 4A) • 19.5m inside">
+                                <div class="blip-ping-ring"></div>
+                                <div class="blip-core"></div>
+                                <span class="blip-label">Rahul (19m)</span>
+                            </div>
+
+                            <div class="hud-blip b5 dynamic-student" id="dynamicStudentBlip" style="display: none;">
+                                <div class="blip-ping-ring cyan"></div>
+                                <div class="blip-core cyan"></div>
+                                <span class="blip-label cyan">You (5m) Verified ✓</span>
                             </div>
                         </div>
 
-                    </div>
-
-                    <!-- TAB 2: BIOMETRIC PASSKEY INTERFACE -->
-                    <div class="showcase-body tab-panel" id="tabContent-passkey">
-
-                        <div class="session-meta-strip">
-                            <div>
-                                <span class="meta-label">FIDO2 / WEBAUTHN PROTOCOL</span>
-                                <h4 class="session-title">Hardware Biometric Authentication</h4>
-                            </div>
-                            <span class="badge-pill secure"><i class="fa-solid fa-shield-halved"></i> ENCLAVE SECURE</span>
-                        </div>
-
-                        <div class="biometric-scanner-stage">
-                            <div class="biometric-fingerprint-btn" id="heroFingerprintScanner">
-                                <div class="fingerprint-scan-wave"></div>
-                                <i class="fa-solid fa-fingerprint fp-icon"></i>
-                                <span class="fp-hint">Click / Tap to Verify Passkey</span>
-                            </div>
-
-                            <div class="auth-result-box" id="heroAuthResult">
-                                <div class="result-icon-circle"><i class="fa-solid fa-check"></i></div>
+                        <!-- Live Interactive Bar & Action -->
+                        <div class="radar-telemetry-tray">
+                            <div class="tray-row">
                                 <div>
-                                    <strong>Apple Touch ID / Face ID Verified</strong>
-                                    <p>Signed with Secure Enclave private key (0.38s)</p>
+                                    <span class="tray-label">VERIFIED ATTENDANCE</span>
+                                    <strong class="tray-val" id="radarCountVal">44 / 50 Present (88%)</strong>
                                 </div>
-                            </div>
-                        </div>
 
-                        <div class="crypto-specs-grid">
-                            <div class="spec-card">
-                                <small>ALGORITHM</small>
-                                <strong>ES256 (P-256)</strong>
+                                <button class="simulate-checkin-btn" id="simulateCheckinBtn" type="button">
+                                    <i class="fa-solid fa-location-arrow"></i> Test My Check-in
+                                </button>
                             </div>
-                            <div class="spec-card">
-                                <small>CHALLENGE</small>
-                                <strong>32-Byte Anti-Replay</strong>
-                            </div>
-                            <div class="spec-card">
-                                <small>HARDWARE BINDING</small>
-                                <strong class="text-emerald">Secure Enclave</strong>
+
+                            <div class="tray-progress-shell">
+                                <div class="tray-progress-fill" id="radarProgressBar" style="width: 88%;"></div>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- TAB 3: REAL-TIME ANALYTICS INTERFACE -->
-                    <div class="showcase-body tab-panel" id="tabContent-analytics">
+                    <!-- TAB 2: BIOMETRIC ENCLAVE SCANNER -->
+                    <div class="terminal-screen" id="terminalScreen-biometrics">
 
-                        <div class="session-meta-strip">
-                            <div>
-                                <span class="meta-label">CAMPUS METRICS</span>
-                                <h4 class="session-title">Institutional Telemetry</h4>
+                        <div class="biometric-hud-stage">
+                            
+                            <!-- Scanner Device Core -->
+                            <div class="biometric-scanner-device" id="interactiveScanDevice">
+                                <div class="laser-scanner-line" id="laserScannerLine"></div>
+                                <div class="fp-glow-core">
+                                    <i class="fa-solid fa-fingerprint main-fp-icon"></i>
+                                </div>
+                                <span class="scanner-instruction" id="scanPromptText">Touch / Click Scanner to Authenticate</span>
                             </div>
-                            <span class="badge-pill rate"><i class="fa-solid fa-bolt"></i> 99.6% ACCURACY</span>
+
+                            <!-- Live Cryptographic Telemetry Stream -->
+                            <div class="crypto-feed-log" id="cryptoFeedLog">
+                                <div class="feed-line"><span class="t-cyan">[WEBAUTHN]</span> Requesting 32-byte cryptographic challenge from server...</div>
+                                <div class="feed-line"><span class="t-emerald">[ENCLAVE]</span> Apple Secure Enclave / Android TEE keypair loaded</div>
+                                <div class="feed-line"><span class="t-purple">[STATUS]</span> Ready for physical biometric assertion</div>
+                            </div>
+
                         </div>
 
-                        <div class="analytics-dashboard-grid">
-                            <div class="analytics-stat-card">
-                                <span class="analytics-label">Today's Check-ins</span>
-                                <strong class="analytics-number">3,482</strong>
-                                <small class="text-emerald"><i class="fa-solid fa-arrow-trend-up"></i> +14% vs last week</small>
+                        <div class="enclave-specs-strip">
+                            <div class="spec-tile">
+                                <span>SIGNATURE</span>
+                                <strong>ECDSA P-256</strong>
                             </div>
-                            <div class="analytics-stat-card">
-                                <span class="analytics-label">Proxy Rejections</span>
-                                <strong class="analytics-number text-emerald">0 Flagged</strong>
-                                <small><i class="fa-solid fa-lock"></i> 100% Cryptographic Lock</small>
+                            <div class="spec-tile">
+                                <span>PROXY CHANCE</span>
+                                <strong class="text-emerald">0.00% (Locked)</strong>
                             </div>
-                            <div class="analytics-stat-card">
-                                <span class="analytics-label">Average Speed</span>
-                                <strong class="analytics-number text-cyan">0.52s</strong>
-                                <small><i class="fa-solid fa-bolt"></i> Ultra Low Latency</small>
-                            </div>
-                            <div class="analytics-stat-card">
-                                <span class="analytics-label">Active Halls</span>
-                                <strong class="analytics-number">28 Rooms</strong>
-                                <small class="text-indigo"><i class="fa-solid fa-building"></i> Live Monitored</small>
+                            <div class="spec-tile">
+                                <span>STORAGE</span>
+                                <strong>Hardware HSM</strong>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- Bottom Status Bar -->
-                    <div class="showcase-bottom-bar">
-                        <div class="bottom-status-item">
-                            <i class="fa-solid fa-satellite-dish text-indigo"></i>
-                            <span>GPS Geofence: <strong>100m Active</strong></span>
+                    <!-- TAB 3: LIVE TELEMETRY LOGS -->
+                    <div class="terminal-screen" id="terminalScreen-telemetry">
+
+                        <div class="telemetry-live-stream">
+                            <div class="stream-header">
+                                <i class="fa-solid fa-terminal text-cyan"></i> Real-Time Cryptographic Verification Stream
+                            </div>
+
+                            <div class="stream-logs-box" id="streamLogsBox">
+                                <div class="log-entry"><span class="time">04:30:12</span> <span class="tag verified">[PRESENT]</span> Harsh K. (AIML-3C5CF1) • GPS drift: 2.1m (±4m) • FIDO2 Passkey ✓</div>
+                                <div class="log-entry"><span class="time">04:30:18</span> <span class="tag verified">[PRESENT]</span> Aarav K. (AIML-1351EA) • GPS drift: 7.8m (±5m) • FIDO2 Passkey ✓</div>
+                                <div class="log-entry"><span class="time">04:30:24</span> <span class="tag verified">[PRESENT]</span> Ananya S. (AIML-2281FB) • GPS drift: 13.9m (±6m) • FIDO2 Passkey ✓</div>
+                                <div class="log-entry"><span class="time">04:30:31</span> <span class="tag verified">[PRESENT]</span> Rahul M. (AIML-8821CD) • GPS drift: 18.2m (±8m) • FIDO2 Passkey ✓</div>
+                                <div class="log-entry warning"><span class="time">04:30:39</span> <span class="tag blocked">[REJECTED]</span> Unknown Device (Hostel Block) • Distance: 480m • Outside 100m Radius ❌</div>
+                            </div>
                         </div>
-                        <div class="bottom-status-item">
-                            <i class="fa-solid fa-link text-emerald"></i>
-                            <span>WebSocket: <strong>Connected (18ms)</strong></span>
+
+                    </div>
+
+                    <!-- Terminal Bottom Footer -->
+                    <div class="terminal-footer-strip">
+                        <div class="footer-telemetry-item">
+                            <i class="fa-solid fa-server text-indigo"></i> Multi-Tenant MongoDB Atlas
+                        </div>
+                        <div class="footer-telemetry-item">
+                            <i class="fa-solid fa-shield-check text-emerald"></i> 100% Anti-Proxy Verified
                         </div>
                     </div>
 
@@ -347,102 +335,107 @@
 
         </section>
 
-        <!-- TELEMETRY KEY STATS BANNER -->
-        <section class="key-metrics-section scroll-animate">
-            <div class="metrics-container">
-                <div class="metric-block">
-                    <div class="metric-icon-box indigo"><i class="fa-solid fa-fingerprint"></i></div>
-                    <div class="metric-text">
+        <!-- LIVE TELEMETRY STATS BANNER -->
+        <section class="crazy-metrics-banner scroll-animate">
+            <div class="metrics-grid-crazy">
+                <div class="metric-glass-card">
+                    <div class="m-icon-box indigo"><i class="fa-solid fa-fingerprint"></i></div>
+                    <div class="m-info">
                         <strong>100%</strong>
                         <span>Zero-Proxy Hardware Security</span>
                     </div>
                 </div>
 
-                <div class="metric-block">
-                    <div class="metric-icon-box emerald"><i class="fa-solid fa-location-crosshairs"></i></div>
-                    <div class="metric-text">
+                <div class="metric-glass-card">
+                    <div class="m-icon-box cyan"><i class="fa-solid fa-satellite-dish"></i></div>
+                    <div class="m-info">
                         <strong>&lt; 100m</strong>
-                        <span>Classroom Geofence Precision</span>
+                        <span>Sub-Meter Classroom Geofencing</span>
                     </div>
                 </div>
 
-                <div class="metric-block">
-                    <div class="metric-icon-box cyan"><i class="fa-solid fa-bolt-lightning"></i></div>
-                    <div class="metric-text">
+                <div class="metric-glass-card">
+                    <div class="m-icon-box emerald"><i class="fa-solid fa-bolt-lightning"></i></div>
+                    <div class="m-info">
                         <strong>0.4s</strong>
-                        <span>Instant Biometric Verification</span>
+                        <span>Average Biometric Check-In</span>
                     </div>
                 </div>
 
-                <div class="metric-block">
-                    <div class="metric-icon-box amber"><i class="fa-solid fa-building-columns"></i></div>
-                    <div class="metric-text">
+                <div class="metric-glass-card">
+                    <div class="m-icon-box amber"><i class="fa-solid fa-building-columns"></i></div>
+                    <div class="m-info">
                         <strong>Multi-Tenant</strong>
-                        <span>Complete College Data Isolation</span>
+                        <span>Complete Institutional Isolation</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ROLE PORTALS SECTION -->
-        <section class="roles-section" id="portals">
+        <!-- DEDICATED ROLE PORTALS -->
+        <section class="crazy-roles-section" id="portals">
 
-            <div class="section-title-wrap center scroll-animate">
-                <span class="section-mini-pill"><i class="fa-solid fa-layer-group"></i> Role-Based Access</span>
+            <div class="crazy-section-heading center scroll-animate">
+                <span class="neon-pill"><i class="fa-solid fa-layer-group"></i> ACCESS CONTROL</span>
                 <h2>Dedicated Dashboards for Every Stakeholder</h2>
                 <p>Streamlined, specialized workflows for campus administrators, faculty members, and students.</p>
             </div>
 
-            <div class="roles-cards-grid">
+            <div class="crazy-roles-grid">
 
-                <a href="/admin/login" class="portal-card scroll-animate delay-100">
-                    <div class="portal-card-top">
-                        <div class="portal-icon admin"><i class="fa-solid fa-user-shield"></i></div>
-                        <span class="portal-chip">MANAGEMENT</span>
+                <a href="/admin/login" class="crazy-role-card scroll-animate delay-100 card-admin">
+                    <div class="role-card-glow"></div>
+                    <div class="role-top">
+                        <div class="role-icon-box admin"><i class="fa-solid fa-user-shield"></i></div>
+                        <span class="role-tag">MANAGEMENT</span>
                     </div>
                     <h3>College Admin</h3>
-                    <p>Manage academic departments, classrooms, faculty assignments, timetables, and student roster enrollments.</p>
-                    <span class="portal-action-link">Open Admin Portal <i class="fa-solid fa-arrow-right"></i></span>
+                    <p>Manage academic departments, classrooms, faculty assignments, timetables, and student rosters.</p>
+                    <span class="role-cta-link">Open Admin Portal <i class="fa-solid fa-arrow-right"></i></span>
                 </a>
 
-                <a href="/teacher/login" class="portal-card scroll-animate delay-200">
-                    <div class="portal-card-top">
-                        <div class="portal-icon teacher"><i class="fa-solid fa-chalkboard-user"></i></div>
-                        <span class="portal-chip">FACULTY</span>
+                <a href="/teacher/login" class="crazy-role-card scroll-animate delay-200 card-teacher">
+                    <div class="role-card-glow"></div>
+                    <div class="role-top">
+                        <div class="role-icon-box teacher"><i class="fa-solid fa-chalkboard-user"></i></div>
+                        <span class="role-tag">FACULTY</span>
                     </div>
                     <h3>Teacher / Faculty</h3>
                     <p>Launch live geofenced lecture sessions, track student GPS radar in real time, and export single-click Excel reports.</p>
-                    <span class="portal-action-link">Open Teacher Portal <i class="fa-solid fa-arrow-right"></i></span>
+                    <span class="role-cta-link">Open Teacher Portal <i class="fa-solid fa-arrow-right"></i></span>
                 </a>
 
-                <a href="/student/login" class="portal-card scroll-animate delay-300">
-                    <div class="portal-card-top">
-                        <div class="portal-icon student"><i class="fa-solid fa-user-graduate"></i></div>
-                        <span class="portal-chip">STUDENTS</span>
+                <a href="/student/login" class="crazy-role-card scroll-animate delay-300 card-student">
+                    <div class="role-card-glow"></div>
+                    <div class="role-top">
+                        <div class="role-icon-box student"><i class="fa-solid fa-user-graduate"></i></div>
+                        <span class="role-tag">STUDENT</span>
                     </div>
                     <h3>Student Portal</h3>
-                    <p>Mark attendance using Touch ID/Face ID biometrics, view weekly schedules, and inspect attendance history heatmaps.</p>
-                    <span class="portal-action-link">Open Student Portal <i class="fa-solid fa-arrow-right"></i></span>
+                    <p>Mark attendance using Touch ID/Face ID biometrics, view weekly schedules, and inspect attendance history.</p>
+                    <span class="role-cta-link">Open Student Portal <i class="fa-solid fa-arrow-right"></i></span>
                 </a>
 
-                <a href="/college/register" class="portal-card highlight scroll-animate delay-100">
-                    <div class="portal-card-top">
-                        <div class="portal-icon college"><i class="fa-solid fa-building-columns"></i></div>
-                        <span class="portal-chip accent">ONBOARDING</span>
+                <a href="/college/register" class="crazy-role-card highlight scroll-animate delay-100 card-college">
+                    <div class="role-card-glow"></div>
+                    <div class="role-top">
+                        <div class="role-icon-box college"><i class="fa-solid fa-building-columns"></i></div>
+                        <span class="role-tag accent">ONBOARDING</span>
                     </div>
-                    <h3>Register New College</h3>
-                    <p>Apply for Attendify access. Platform Super Admin verification issues your institution code and initial credentials.</p>
-                    <span class="portal-action-link">Register College <i class="fa-solid fa-arrow-right"></i></span>
+                    <h3>Register Institution</h3>
+                    <p>Apply for Attendify access. Platform Super Admin verification issues your institution code and credentials.</p>
+                    <span class="role-cta-link">Register College <i class="fa-solid fa-arrow-right"></i></span>
                 </a>
 
-                <a href="/student/register" class="portal-card highlight scroll-animate delay-200">
-                    <div class="portal-card-top">
-                        <div class="portal-icon student-register"><i class="fa-solid fa-user-plus"></i></div>
-                        <span class="portal-chip">ENROLLMENT</span>
+                <a href="/student/register" class="crazy-role-card highlight scroll-animate delay-200 card-register-student">
+                    <div class="role-card-glow"></div>
+                    <div class="role-top">
+                        <div class="role-icon-box student-reg"><i class="fa-solid fa-user-plus"></i></div>
+                        <span class="role-tag">ENROLLMENT</span>
                     </div>
-                    <h3>New Student Registration</h3>
-                    <p>Register yourself for your institution's department and class group. Admin approval activates your biometric passkey.</p>
-                    <span class="portal-action-link">Register Student <i class="fa-solid fa-arrow-right"></i></span>
+                    <h3>Student Self-Registration</h3>
+                    <p>Register yourself for your institution's department and class group. Admin approval activates your passkey.</p>
+                    <span class="role-cta-link">Register Student <i class="fa-solid fa-arrow-right"></i></span>
                 </a>
 
             </div>
@@ -450,48 +443,48 @@
         </section>
 
         <!-- FEATURES SECTION -->
-        <section class="features-section" id="features">
+        <section class="crazy-features-section" id="features">
 
-            <div class="section-title-wrap scroll-animate">
-                <span class="section-mini-pill"><i class="fa-solid fa-microchip"></i> Core Capabilities</span>
-                <h2>Engineered for 100% Zero-Proxy Integrity</h2>
+            <div class="crazy-section-heading scroll-animate">
+                <span class="neon-pill"><i class="fa-solid fa-microchip"></i> CRYPTOGRAPHIC INTEGRITY</span>
+                <h2>Engineered for 100% Zero-Proxy Security</h2>
                 <p>Combines asymmetric cryptography, hardware secure enclaves, and real-time geodesic calculations.</p>
             </div>
 
-            <div class="features-cards-grid">
+            <div class="crazy-features-grid">
 
-                <article class="feature-item-card scroll-animate delay-100">
-                    <div class="feature-icon-box indigo"><i class="fa-solid fa-fingerprint"></i></div>
+                <article class="crazy-feature-box scroll-animate delay-100">
+                    <div class="feature-icon indigo"><i class="fa-solid fa-fingerprint"></i></div>
                     <h3>FIDO2 Biometric Passkeys</h3>
                     <p>Hardware-bound private keys never leave the phone's Secure Enclave, eliminating buddy punching and shared passwords forever.</p>
                 </article>
 
-                <article class="feature-item-card scroll-animate delay-200">
-                    <div class="feature-icon-box emerald"><i class="fa-solid fa-satellite-dish"></i></div>
+                <article class="crazy-feature-box scroll-animate delay-200">
+                    <div class="feature-icon emerald"><i class="fa-solid fa-satellite-dish"></i></div>
                     <h3>Live GPS Classroom Radar</h3>
                     <p>Calculates Haversine geodesic distances in real-time, verifying physical presence within exact classroom geofence perimeters.</p>
                 </article>
 
-                <article class="feature-item-card scroll-animate delay-300">
-                    <div class="feature-icon-box cyan"><i class="fa-solid fa-shield-virus"></i></div>
+                <article class="crazy-feature-box scroll-animate delay-300">
+                    <div class="feature-icon cyan"><i class="fa-solid fa-shield-virus"></i></div>
                     <h3>Anti-Spoofing Velocity Filter</h3>
                     <p>Temporal velocity models detect and reject mock GPS apps, artificial coordinate injection, and rapid campus teleportation.</p>
                 </article>
 
-                <article class="feature-item-card scroll-animate delay-100">
-                    <div class="feature-icon-box amber"><i class="fa-solid fa-laptop-code"></i></div>
+                <article class="crazy-feature-box scroll-animate delay-100">
+                    <div class="feature-icon amber"><i class="fa-solid fa-laptop-code"></i></div>
                     <h3>Trusted Browser Attestation</h3>
                     <p>Entropy-based hardware fingerprinting and cryptographic device cookies provide a secure fallback when biometrics are unavailable.</p>
                 </article>
 
-                <article class="feature-item-card scroll-animate delay-200">
-                    <div class="feature-icon-box purple"><i class="fa-solid fa-file-excel"></i></div>
+                <article class="crazy-feature-box scroll-animate delay-200">
+                    <div class="feature-icon purple"><i class="fa-solid fa-file-excel"></i></div>
                     <h3>Automated Excel Reports</h3>
                     <p>Instant multi-sheet .xlsx generation calculating subject-wise attendance percentages, session logs, and shortfall analytics.</p>
                 </article>
 
-                <article class="feature-item-card scroll-animate delay-300">
-                    <div class="feature-icon-box rose"><i class="fa-solid fa-bell"></i></div>
+                <article class="crazy-feature-box scroll-animate delay-300">
+                    <div class="feature-icon rose"><i class="fa-solid fa-bell"></i></div>
                     <h3>VAPID Push Reminders</h3>
                     <p>Automated Service Worker background notifications alert faculty and students before upcoming scheduled lectures.</p>
                 </article>
@@ -500,41 +493,41 @@
 
         </section>
 
-        <!-- WORKFLOW SECTION -->
-        <section class="workflow-section" id="how-it-works">
+        <!-- WORKFLOW TIMELINE -->
+        <section class="crazy-workflow-section" id="how-it-works">
 
-            <div class="section-title-wrap center scroll-animate">
-                <span class="section-mini-pill"><i class="fa-solid fa-diagram-project"></i> Simple Process</span>
+            <div class="crazy-section-heading center scroll-animate">
+                <span class="neon-pill"><i class="fa-solid fa-diagram-project"></i> WORKFLOW</span>
                 <h2>From College Onboarding to Live Attendance</h2>
                 <p>Four streamlined steps that automate institutional attendance workflows.</p>
             </div>
 
-            <div class="workflow-steps-grid">
+            <div class="crazy-steps-grid">
 
-                <div class="step-card scroll-animate delay-100">
-                    <span class="step-num-badge">01</span>
-                    <div class="step-icon-wrap"><i class="fa-solid fa-building-columns"></i></div>
-                    <h3>College Onboarding</h3>
+                <div class="step-card-crazy scroll-animate delay-100">
+                    <div class="step-counter">01</div>
+                    <div class="step-icon"><i class="fa-solid fa-building-columns"></i></div>
+                    <h3>Institution Onboarding</h3>
                     <p>College submits institutional details. Platform Super Admin reviews and issues admin credentials.</p>
                 </div>
 
-                <div class="step-card scroll-animate delay-200">
-                    <span class="step-num-badge">02</span>
-                    <div class="step-icon-wrap"><i class="fa-solid fa-calendar-check"></i></div>
+                <div class="step-card-crazy scroll-animate delay-200">
+                    <div class="step-counter">02</div>
+                    <div class="step-icon"><i class="fa-solid fa-calendar-check"></i></div>
                     <h3>Academic Setup</h3>
                     <p>Admin maps classroom GPS coordinates, configures departments, assigns faculty, and builds timetable schedules.</p>
                 </div>
 
-                <div class="step-card scroll-animate delay-300">
-                    <span class="step-num-badge">03</span>
-                    <div class="step-icon-wrap"><i class="fa-solid fa-play"></i></div>
+                <div class="step-card-crazy scroll-animate delay-300">
+                    <div class="step-counter">03</div>
+                    <div class="step-icon"><i class="fa-solid fa-play"></i></div>
                     <h3>Lecture Launch</h3>
                     <p>Faculty launches attendance from their dashboard. The live geofence radar and WebSocket stream activate.</p>
                 </div>
 
-                <div class="step-card scroll-animate delay-400">
-                    <span class="step-num-badge">04</span>
-                    <div class="step-icon-wrap"><i class="fa-solid fa-fingerprint"></i></div>
+                <div class="step-card-crazy scroll-animate delay-400">
+                    <div class="step-counter">04</div>
+                    <div class="step-icon"><i class="fa-solid fa-fingerprint"></i></div>
                     <h3>Instant Biometric Check-In</h3>
                     <p>Students tap Mark Attendance. Hardware passkey + GPS verifies physical presence in under a second.</p>
                 </div>
@@ -543,23 +536,24 @@
 
         </section>
 
-        <!-- CALL TO ACTION SECTION -->
-        <section class="cta-banner-section">
+        <!-- CTA SECTION -->
+        <section class="crazy-cta-section">
 
-            <div class="cta-banner-card scroll-animate">
-                <div class="cta-text-content">
-                    <span class="cta-tag"><i class="fa-solid fa-rocket"></i> Get Started Today</span>
-                    <h2>Bring next-generation smart attendance to your campus.</h2>
+            <div class="crazy-cta-card scroll-animate">
+                <div class="cta-glow-bg"></div>
+                <div class="cta-inner-content">
+                    <span class="cta-badge"><i class="fa-solid fa-rocket"></i> GET STARTED TODAY</span>
+                    <h2>Bring Next-Gen Smart Attendance to Your Campus.</h2>
                     <p>Register your institution today and eliminate proxy attendance with enterprise-grade cryptographic security.</p>
                 </div>
 
-                <div class="cta-buttons-wrap">
-                    <a href="/college/register" class="btn-primary-glow">
+                <div class="cta-actions-wrap">
+                    <a href="/college/register" class="crazy-btn-primary">
                         <i class="fa-solid fa-building-columns"></i> Register College
                     </a>
 
-                    <a href="/admin/login" class="btn-secondary-light">
-                        <i class="fa-solid fa-user-shield"></i> Admin Login
+                    <a href="/admin/login" class="crazy-btn-secondary">
+                        <i class="fa-solid fa-user-shield"></i> Admin Portal
                     </a>
                 </div>
             </div>
@@ -569,19 +563,19 @@
     </main>
 
     <!-- FOOTER -->
-    <footer class="home-footer">
-        <div class="footer-main-row">
-            <div class="footer-brand-info">
-                <a href="/" class="home-brand">
-                    <span class="brand-icon-box">
+    <footer class="crazy-footer">
+        <div class="footer-top-grid">
+            <div class="footer-brand-pane">
+                <a href="/" class="crazy-brand">
+                    <span class="brand-hexagon">
                         <i class="fa-solid fa-clipboard-check"></i>
                     </span>
-                    <span class="brand-name">Attendify</span>
+                    <span class="brand-title">ATTENDIFY</span>
                 </a>
-                <p>Next-generation smart biometric & GPS verified attendance system for modern institutions.</p>
+                <p>Next-generation smart biometric & GPS verified attendance management system for modern colleges.</p>
             </div>
 
-            <div class="footer-links-group">
+            <div class="footer-links-pane">
                 <a href="/college/register">Register College</a>
                 <a href="/admin/login">Admin Portal</a>
                 <a href="/teacher/login">Teacher Portal</a>
@@ -591,14 +585,14 @@
             </div>
         </div>
 
-        <div class="footer-copyright-row">
-            <p>&copy; 2026 Attendify Inc. All rights reserved. Built with modern web standards.</p>
+        <div class="footer-bottom-strip">
+            <p>&copy; 2026 Attendify Inc. All rights reserved. Built with modern web cryptography.</p>
         </div>
     </footer>
 
 </div>
 
-<script src="/js/home.js?v=20260901_v3"></script>
+<script src="/js/home.js?v=20260901_crazy"></script>
 <script src="/js/csrfAuto.js" defer></script>
 <script src="/js/selectEnhancer.js" defer></script>
 </body>
