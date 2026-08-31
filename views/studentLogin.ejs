@@ -6,7 +6,7 @@
     <title>Student Login | Attendify</title>
     
     <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/authPages.css?v=20260901_1">
+    <link rel="stylesheet" href="/css/authPages.css?v=20260901_2">
     <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
     <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -110,10 +110,16 @@
                 </form>
             </div>
 
-            <div class="auth-card-footer">
-                <a href="/"><i class="fa-solid fa-arrow-left"></i> Home</a>
-                <span>Not registered? <a href="/student/register" class="role-switch-link">Register Student</a></span>
-                <a href="/teacher/login" class="role-switch-link">Faculty Login <i class="fa-solid fa-arrow-right"></i></a>
+            <!-- CLEAN STRUCTURED FOOTER -->
+            <div class="auth-structured-footer">
+                <div class="footer-action-prompt">
+                    <span>New student?</span>
+                    <a href="/student/register">Register Student Account</a>
+                </div>
+                <div class="footer-nav-row">
+                    <a href="/" class="footer-nav-btn"><i class="fa-solid fa-arrow-left"></i> Home</a>
+                    <a href="/teacher/login" class="footer-nav-btn alt">Faculty Login <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
             </div>
         </div>
 

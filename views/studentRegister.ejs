@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Registration | Attendify</title>
+    
     <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/style.css?v=3">
+    <link rel="stylesheet" href="/css/authPages.css?v=20260901_2">
     <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
     <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -22,16 +22,8 @@
     <script src="/js/customAlerts.js" defer></script>
 
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#10b981">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-            });
-        }
-    </script>
-
 
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
     <% if (typeof realtimeMode !== "undefined") { %>
@@ -43,130 +35,169 @@
     </script>
     <% } %>
 </head>
-<body>
+<body class="auth-redesign-body">
 
-<div class="auth-page">
-    <div class="auth-split">
+<div class="auth-bg-ambient">
+    <div class="auth-grid-overlay"></div>
+</div>
 
-        <aside class="auth-brand-panel student">
-            <a href="/" class="brand-logo light">
-                <span><i class="fa-solid fa-clipboard-check"></i></span>
-                Attendify
-            </a>
-            <h2>Join your college</h2>
-            <p>Register for your classes to track your attendance securely using GPS verification.</p>
-            <ul class="auth-perks">
-                <li><i class="fa-solid fa-check"></i> Join Class Groups securely</li>
-                <li><i class="fa-solid fa-check"></i> Mark attendance from your phone</li>
-                <li><i class="fa-solid fa-check"></i> Real-time notification updates</li>
+<div class="auth-container">
+    <div class="auth-card-split">
+
+        <!-- LEFT BRAND PANEL -->
+        <aside class="auth-hero-pane student">
+            <div class="auth-brand-top">
+                <a href="/" class="auth-brand-header">
+                    <span class="auth-brand-icon student">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                    </span>
+                    <span class="auth-brand-title">ATTENDIFY</span>
+                </a>
+            </div>
+
+            <div class="auth-hero-body">
+                <span class="auth-role-pill student">
+                    <i class="fa-solid fa-user-plus"></i> STUDENT ENROLLMENT
+                </span>
+                <h2>Join Your Institution</h2>
+                <p>Register yourself for your college department and class section. Once approved, mark attendance securely using biometric passkeys.</p>
+            </div>
+
+            <ul class="auth-perks-list student">
+                <li><i class="fa-solid fa-check"></i> Instant Section & Timetable Enrollment</li>
+                <li><i class="fa-solid fa-check"></i> Hardware Touch ID / Face ID Setup</li>
+                <li><i class="fa-solid fa-check"></i> Live Geofence Radar Attendance Check-ins</li>
             </ul>
         </aside>
 
-        <div class="auth-card auth-card-scroll">
-            <div class="auth-header student compact">
-                <div class="auth-icon"><i class="fa-solid fa-user-plus"></i></div>
-                <h2>Student Registration</h2>
-                <p>Create your new student account</p>
+        <!-- RIGHT FORM CARD -->
+        <div class="auth-form-pane">
+            <div>
+                <div class="auth-form-header">
+                    <div class="auth-icon-badge student">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <h3>Student Registration</h3>
+                    <p><%= !collegeFound ? "Step 1: Enter your institutional college code" : "Step 2: Enter your student credentials and section" %></p>
+                </div>
+
+                <% if (typeof error !== "undefined" && error) { %>
+                    <div class="auth-alert-box">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span><%= error %></span>
+                    </div>
+                <% } %>
+
+                <% if (!collegeFound) { %>
+                    <!-- STEP 1: COLLEGE CODE LOOKUP -->
+                    <form action="/student/register" method="GET" class="modern-auth-form" id="collegeCodeForm">
+                        <div class="form-group-modern">
+                            <label for="collegeCode">Institution College Code</label>
+                            <div class="input-field-wrap">
+                                <i class="fa-solid fa-building-columns field-icon"></i>
+                                <input type="text" id="collegeCode" name="collegeCode" placeholder="e.g. BMSCE" value="<%= typeof collegeCode !== 'undefined' ? collegeCode : '' %>" required autofocus>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="auth-submit-btn student">
+                            <span>Continue to Registration</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </form>
+                <% } else { %>
+                    <!-- STEP 2: STUDENT DETAILS & CLASSGROUP SELECTION -->
+                    <form action="/student/register" method="POST" class="modern-auth-form" id="registerForm">
+                        <input type="hidden" name="collegeCode" value="<%= collegeCode %>">
+                        
+                        <div class="form-group-modern">
+                            <label for="studentFullName">Full Name</label>
+                            <div class="input-field-wrap">
+                                <i class="fa-regular fa-user field-icon"></i>
+                                <input type="text" id="studentFullName" name="fullName" placeholder="e.g. Harsh Koli" required>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2col">
+                            <div class="form-group-modern">
+                                <label for="studentEmail">Email Address</label>
+                                <div class="input-field-wrap">
+                                    <i class="fa-regular fa-envelope field-icon"></i>
+                                    <input type="email" id="studentEmail" name="email" placeholder="student@college.edu" required autocomplete="email">
+                                </div>
+                            </div>
+
+                            <div class="form-group-modern">
+                                <label for="studentPassword">Password</label>
+                                <div class="input-field-wrap">
+                                    <i class="fa-solid fa-lock field-icon"></i>
+                                    <input type="password" id="studentPassword" name="password" placeholder="Create password" required minlength="6" autocomplete="new-password">
+                                    <button type="button" class="password-toggle-btn" aria-label="Toggle password visibility">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-3col">
+                            <div class="form-group-modern">
+                                <label for="departmentSelect">Department</label>
+                                <div class="input-field-wrap">
+                                    <i class="fa-solid fa-building field-icon"></i>
+                                    <select id="departmentSelect" required>
+                                        <option value="">-- Dept --</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down select-chevron"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group-modern">
+                                <label for="semesterSelect">Semester</label>
+                                <div class="input-field-wrap">
+                                    <i class="fa-solid fa-layer-group field-icon"></i>
+                                    <select id="semesterSelect" required disabled>
+                                        <option value="">-- Sem --</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down select-chevron"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group-modern">
+                                <label for="classGroupSelect">Class Group</label>
+                                <div class="input-field-wrap">
+                                    <i class="fa-solid fa-users field-icon"></i>
+                                    <select id="classGroupSelect" name="classGroupId" required disabled>
+                                        <option value="">-- Group --</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down select-chevron"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="auth-submit-btn student">
+                            <i class="fa-solid fa-user-check"></i>
+                            <span>Complete Registration</span>
+                        </button>
+                    </form>
+                <% } %>
             </div>
 
-            <% if (typeof error !== "undefined" && error) { %>
-                <div class="error-box auth-alert">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <%= typeof error !== "undefined" ? error : "" %>
+            <!-- CLEAN STRUCTURED FOOTER -->
+            <div class="auth-structured-footer">
+                <div class="footer-action-prompt">
+                    <span>Already have an account?</span>
+                    <a href="/student/login">Login to Student Portal</a>
                 </div>
-            <% } %>
-
-            <% if (!collegeFound) { %>
-                <form action="/student/register" method="GET" class="auth-form" id="collegeCodeForm">
-                    <div class="input-group">
-                        <label>College Code</label>
-                        <div class="input-wrap">
-                            <i class="fa-solid fa-building-columns"></i>
-                            <input type="text" name="collegeCode" placeholder="Enter College Code" value="<%= typeof collegeCode !== 'undefined' ? collegeCode : '' %>" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full auth-submit-btn">
-                        <i class="fa-solid fa-arrow-right"></i>
-                        Next
-                    </button>
-                </form>
-            <% } else { %>
-                <form action="/student/register" method="POST" class="auth-form" id="registerForm">
-                    <input type="hidden" name="collegeCode" value="<%= collegeCode %>">
-                    
-                    <div class="input-group">
-                        <label>Full Name</label>
-                        <div class="input-wrap">
-                            <i class="fa-regular fa-user"></i>
-                            <input type="text" name="fullName" placeholder="John Doe" required>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Email Address</label>
-                        <div class="input-wrap">
-                            <i class="fa-regular fa-envelope"></i>
-                            <input type="email" name="email" placeholder="student@college.com" required>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Password</label>
-                        <div class="input-wrap">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" name="password" placeholder="Create a strong password" required minlength="6">
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Department</label>
-                        <div class="select-shell">
-                            <i class="fa-solid fa-building select-shell-icon"></i>
-                            <select id="departmentSelect" required>
-                                <option value="">-- Select Department --</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Semester</label>
-                        <div class="select-shell">
-                            <i class="fa-solid fa-layer-group select-shell-icon"></i>
-                            <select id="semesterSelect" required disabled>
-                                <option value="">-- Select Semester --</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Class Group (Section)</label>
-                        <div class="select-shell">
-                            <i class="fa-solid fa-users select-shell-icon"></i>
-                            <!-- The actual value sent to server is classGroupId -->
-                            <select id="classGroupSelect" name="classGroupId" required disabled>
-                                <option value="">-- Select Class Group --</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down select-shell-chevron"></i>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-full auth-submit-btn">
-                        <i class="fa-solid fa-user-check"></i>
-                        Register
-                    </button>
-                </form>
-            <% } %>
-
-            <div class="auth-footer">
-                <span>Already have an account?</span>
-                <a href="/student/login">Login here</a>
+                <div class="footer-nav-row">
+                    <a href="/" class="footer-nav-btn"><i class="fa-solid fa-arrow-left"></i> Home</a>
+                    <a href="/college/register" class="footer-nav-btn alt">College Registration <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
             </div>
         </div>
+
     </div>
 </div>
 
+<script src="/js/authHelper.js" defer></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const deptSelect = document.getElementById("departmentSelect");
@@ -174,82 +205,87 @@
         const groupSelect = document.getElementById("classGroupSelect");
         const form = document.getElementById("registerForm");
 
-        // 1. Extract unique departments
-        const departments = [...new Set(classGroupsData.map(g => g.department))].filter(Boolean).sort();
-        departments.forEach(dept => {
-            const opt = document.createElement("option");
-            opt.value = dept;
-            opt.textContent = dept;
-            deptSelect.appendChild(opt);
-        });
-
-        // 2. Handle Department change
-        deptSelect.addEventListener("change", function() {
-            const selectedDept = this.value;
-            
-            semSelect.innerHTML = '<option value="">-- Select Semester --</option>';
-            groupSelect.innerHTML = '<option value="">-- Select Class Group --</option>';
-            groupSelect.disabled = true;
-
-            if (!selectedDept) {
-                semSelect.disabled = true;
-                return;
-            }
-
-            semSelect.disabled = false;
-            
-            const filteredGroups = classGroupsData.filter(g => g.department === selectedDept);
-            const semesters = [...new Set(filteredGroups.map(g => g.semester))].filter(Boolean).sort((a,b) => Number(a) - Number(b));
-            
-            semesters.forEach(sem => {
+        if (deptSelect && semSelect && groupSelect && form) {
+            // 1. Extract unique departments
+            const departments = [...new Set(classGroupsData.map(g => g.department))].filter(Boolean).sort();
+            departments.forEach(dept => {
                 const opt = document.createElement("option");
-                opt.value = sem;
-                opt.textContent = `Semester ${sem}`;
-                semSelect.appendChild(opt);
+                opt.value = dept;
+                opt.textContent = dept;
+                deptSelect.appendChild(opt);
             });
-        });
 
-        // 3. Handle Semester change
-        semSelect.addEventListener("change", function() {
-            const selectedDept = deptSelect.value;
-            const selectedSem = this.value;
-
-            groupSelect.innerHTML = '<option value="">-- Select Class Group --</option>';
-
-            if (!selectedSem) {
+            // 2. Handle Department change
+            deptSelect.addEventListener("change", function() {
+                const selectedDept = this.value;
+                
+                semSelect.innerHTML = '<option value="">-- Sem --</option>';
+                groupSelect.innerHTML = '<option value="">-- Group --</option>';
                 groupSelect.disabled = true;
-                return;
-            }
 
-            groupSelect.disabled = false;
+                if (!selectedDept) {
+                    semSelect.disabled = true;
+                    return;
+                }
 
-            const filteredGroups = classGroupsData.filter(g => 
-                g.department === selectedDept && 
-                String(g.semester) === String(selectedSem)
-            );
-
-            filteredGroups.sort((a, b) => (a.section || "").localeCompare(b.section || ""));
-
-            filteredGroups.forEach(group => {
-                const opt = document.createElement("option");
-                opt.value = group._id;
-                opt.textContent = group.name + (group.section ? ` (Section ${group.section})` : "");
-                groupSelect.appendChild(opt);
+                semSelect.disabled = false;
+                
+                const filteredGroups = classGroupsData.filter(g => g.department === selectedDept);
+                const semesters = [...new Set(filteredGroups.map(g => g.semester))].filter(Boolean).sort((a,b) => Number(a) - Number(b));
+                
+                semesters.forEach(sem => {
+                    const opt = document.createElement("option");
+                    opt.value = sem;
+                    opt.textContent = `Sem ${sem}`;
+                    semSelect.appendChild(opt);
+                });
             });
-        });
 
-        // 4. Form submission hook
-        form.addEventListener("submit", function(e) {
-            if (!groupSelect.value) {
-                e.preventDefault();
-                uiAlert("Please select a Class Group.");
-            }
-        });
+            // 3. Handle Semester change
+            semSelect.addEventListener("change", function() {
+                const selectedDept = deptSelect.value;
+                const selectedSem = this.value;
+
+                groupSelect.innerHTML = '<option value="">-- Group --</option>';
+
+                if (!selectedSem) {
+                    groupSelect.disabled = true;
+                    return;
+                }
+
+                groupSelect.disabled = false;
+
+                const filteredGroups = classGroupsData.filter(g => 
+                    g.department === selectedDept && 
+                    String(g.semester) === String(selectedSem)
+                );
+
+                filteredGroups.sort((a, b) => (a.section || "").localeCompare(b.section || ""));
+
+                filteredGroups.forEach(group => {
+                    const opt = document.createElement("option");
+                    opt.value = group._id;
+                    opt.textContent = group.name + (group.section ? ` (Sec ${group.section})` : "");
+                    groupSelect.appendChild(opt);
+                });
+            });
+
+            // 4. Form submission hook
+            form.addEventListener("submit", function(e) {
+                if (!groupSelect.value) {
+                    e.preventDefault();
+                    if (typeof uiAlert === "function") {
+                        uiAlert("Please select a Class Group.");
+                    } else {
+                        alert("Please select a Class Group.");
+                    }
+                }
+            });
+        }
     });
 </script>
 
-
-    <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>

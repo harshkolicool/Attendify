@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register College | Attendify</title>
-
-    <link rel="stylesheet" href="/css/collegeRegister.css">
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+    
+    <link rel="stylesheet" href="/css/uiShell.css">
+    <link rel="stylesheet" href="/css/authPages.css?v=20260901_2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <!-- SweetAlert2 for Custom UI Alerts -->
@@ -18,22 +17,10 @@
     <script src="/js/customAlerts.js" defer></script>
 
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#f59e0b">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js');
-            });
-        }
-    </script>
-
 
     <% if (typeof csrfToken !== "undefined") { %><meta name="csrf-token" content="<%= csrfToken %>"><% } %>
-    <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=1">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
     <% if (typeof realtimeMode !== "undefined") { %>
     <script>
     window.AttendifyRealtimeConfig = {
@@ -43,179 +30,154 @@
     </script>
     <% } %>
 </head>
-<body>
+<body class="auth-redesign-body">
 
-<div class="register-page">
+<div class="auth-bg-ambient">
+    <div class="auth-grid-overlay"></div>
+</div>
 
-    <section class="register-left">
-        <div class="brand-box">
-            <div class="brand-icon">
-                <i class="fa-solid fa-clipboard-check"></i>
+<div class="auth-container wide">
+    <div class="auth-card-split wide-left">
+
+        <!-- LEFT BRAND PANEL -->
+        <aside class="auth-hero-pane college-reg">
+            <div class="auth-brand-top">
+                <a href="/" class="auth-brand-header">
+                    <span class="auth-brand-icon college-reg">
+                        <i class="fa-solid fa-building-columns"></i>
+                    </span>
+                    <span class="auth-brand-title">ATTENDIFY</span>
+                </a>
             </div>
 
+            <div class="auth-hero-body">
+                <span class="auth-role-pill college-reg">
+                    <i class="fa-solid fa-sparkles"></i> INSTITUTION ONBOARDING
+                </span>
+                <h2>Register Your College</h2>
+                <p>Apply for Attendify enterprise access. Our platform administrators will verify your credentials and configure your dedicated institutional tenancy.</p>
+            </div>
+
+            <ul class="auth-perks-list college-reg">
+                <li><i class="fa-solid fa-check"></i> Complete Multi-Tenant Database Isolation</li>
+                <li><i class="fa-solid fa-check"></i> Sub-Meter Geofence Classroom Radar Mapping</li>
+                <li><i class="fa-solid fa-check"></i> Automated Rollouts for Faculty & Student Passkeys</li>
+            </ul>
+        </aside>
+
+        <!-- RIGHT FORM CARD -->
+        <div class="auth-form-pane">
             <div>
-                <h1>Attendify</h1>
-                <p>Smart attendance platform for colleges</p>
-            </div>
-        </div>
-
-        <div class="hero-content">
-            <span>College Registration</span>
-            <h2>Apply to use Attendify for your college.</h2>
-            <p>
-                Submit your college and admin details. Our platform admin will review
-                your request and approve your college account.
-            </p>
-        </div>
-
-        <div class="feature-list">
-            <div>
-                <i class="fa-solid fa-shield-halved"></i>
-                <p>Secure college-wise data separation</p>
-            </div>
-
-            <div>
-                <i class="fa-solid fa-location-dot"></i>
-                <p>GPS based attendance verification</p>
-            </div>
-
-            <div>
-                <i class="fa-solid fa-users"></i>
-                <p>Admin, teacher and student dashboards</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="register-right">
-
-        <div class="form-card">
-
-            <div class="form-head">
-                <h2>College Application</h2>
-                <p>
-                    Fill basic college details. College code, admin employee ID and admin department
-                    will be generated automatically after approval.
-                </p>
-            </div>
-
-            <% if (typeof message !== "undefined" && message) { %>
-                <div class="register-alert <%= message && message && message.includes('submitted') ? 'success' : 'error' %>">
-                    <%= typeof message !== "undefined" ? message : "" %>
-                </div>
-            <% } %>
-
-            <form action="/college/register" method="POST" id="collegeRegisterForm">
-
-                <h3>College Details</h3>
-
-                <div class="form-grid">
-
-                    <div class="field">
-                        <label>College Name</label>
-                        <input
-                            type="text"
-                            name="collegeName"
-                            placeholder="BMS College of Engineering"
-                            value="<%= formData.collegeName || '' %>"
-                            required
-                        >
+                <div class="auth-form-header">
+                    <div class="auth-icon-badge college-reg">
+                        <i class="fa-solid fa-file-signature"></i>
                     </div>
-
-                    <div class="field">
-                        <label>City</label>
-                        <input
-                            type="text"
-                            name="city"
-                            placeholder="Bangalore"
-                            value="<%= formData.city || '' %>"
-                            required
-                        >
-                    </div>
-
-                    <div class="field">
-                        <label>State</label>
-                        <input
-                            type="text"
-                            name="state"
-                            placeholder="Karnataka"
-                            value="<%= formData.state || '' %>"
-                            required
-                        >
-                    </div>
-
-                    <div class="field full">
-                        <label>Address</label>
-                        <input
-                            type="text"
-                            name="address"
-                            placeholder="Full college address"
-                            value="<%= formData.address || '' %>"
-                            required
-                        >
-                    </div>
-
+                    <h3>Institutional Application</h3>
+                    <p>Enter your institution details and primary administrator contact</p>
                 </div>
 
-                <h3>First Admin Details</h3>
+                <% if (typeof message !== "undefined" && message) { %>
+                    <div class="auth-alert-box <%= message && message.includes('submitted') ? 'success' : '' %>">
+                        <i class="fa-solid <%= message && message.includes('submitted') ? 'fa-circle-check text-emerald' : 'fa-triangle-exclamation' %>"></i>
+                        <span><%= message %></span>
+                    </div>
+                <% } %>
 
-                <div class="form-grid">
-
-                    <div class="field">
-                        <label>Admin Full Name</label>
-                        <input
-                            type="text"
-                            name="adminFullName"
-                            placeholder="College Admin"
-                            value="<%= formData.adminFullName || '' %>"
-                            required
-                        >
+                <form action="/college/register" method="POST" class="modern-auth-form" id="collegeRegisterForm">
+                    
+                    <div class="section-divider-title">
+                        <i class="fa-solid fa-building"></i> College Information
                     </div>
 
-                    <div class="field">
-                        <label>Admin Email</label>
-                        <input
-                            type="email"
-                            name="adminEmail"
-                            placeholder="admin@college.com"
-                            value="<%= formData.adminEmail || '' %>"
-                            required
-                        >
+                    <div class="form-group-modern">
+                        <label for="collegeName">Official College Name</label>
+                        <div class="input-field-wrap">
+                            <i class="fa-solid fa-building-columns field-icon"></i>
+                            <input type="text" id="collegeName" name="collegeName" placeholder="e.g. BMS College of Engineering" value="<%= (typeof formData !== 'undefined' && formData.collegeName) ? formData.collegeName : '' %>" required>
+                        </div>
                     </div>
 
-                    <div class="field">
-                        <label>Phone Number</label>
-                        <input
-                            type="text"
-                            name="adminPhone"
-                            placeholder="+91 9876543210"
-                            value="<%= formData.adminPhone || '' %>"
-                            required
-                        >
+                    <div class="form-grid-2col">
+                        <div class="form-group-modern">
+                            <label for="collegeCity">City</label>
+                            <div class="input-field-wrap">
+                                <i class="fa-solid fa-city field-icon"></i>
+                                <input type="text" id="collegeCity" name="city" placeholder="Bangalore" value="<%= (typeof formData !== 'undefined' && formData.city) ? formData.city : '' %>" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label for="collegeState">State</label>
+                            <div class="input-field-wrap">
+                                <i class="fa-solid fa-map-pin field-icon"></i>
+                                <input type="text" id="collegeState" name="state" placeholder="Karnataka" value="<%= (typeof formData !== 'undefined' && formData.state) ? formData.state : '' %>" required>
+                            </div>
+                        </div>
                     </div>
 
-                </div>
+                    <div class="form-group-modern">
+                        <label for="collegeAddress">Campus Full Address</label>
+                        <div class="input-field-wrap">
+                            <i class="fa-solid fa-map-location-dot field-icon"></i>
+                            <input type="text" id="collegeAddress" name="address" placeholder="Full campus address, postal code" value="<%= (typeof formData !== 'undefined' && formData.address) ? formData.address : '' %>" required>
+                        </div>
+                    </div>
 
-                <button class="submit-btn" type="submit">
-                    <i class="fa-solid fa-paper-plane"></i>
-                    Submit Application
-                </button>
+                    <div class="section-divider-title" style="margin-top: 14px;">
+                        <i class="fa-solid fa-user-shield"></i> Primary Admin Contact
+                    </div>
 
-                <p class="login-note">
-                    Already approved?
+                    <div class="form-group-modern">
+                        <label for="adminFullName">Admin Full Name</label>
+                        <div class="input-field-wrap">
+                            <i class="fa-regular fa-user field-icon"></i>
+                            <input type="text" id="adminFullName" name="adminFullName" placeholder="Dr. Rajesh Kumar" value="<%= (typeof formData !== 'undefined' && formData.adminFullName) ? formData.adminFullName : '' %>" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2col">
+                        <div class="form-group-modern">
+                            <label for="adminEmail">Official Email</label>
+                            <div class="input-field-wrap">
+                                <i class="fa-regular fa-envelope field-icon"></i>
+                                <input type="email" id="adminEmail" name="adminEmail" placeholder="admin@college.edu" value="<%= (typeof formData !== 'undefined' && formData.adminEmail) ? formData.adminEmail : '' %>" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label for="adminPhone">Phone Number</label>
+                            <div class="input-field-wrap">
+                                <i class="fa-solid fa-phone field-icon"></i>
+                                <input type="tel" id="adminPhone" name="adminPhone" placeholder="+91 98765 43210" value="<%= (typeof formData !== 'undefined' && formData.adminPhone) ? formData.adminPhone : '' %>" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="auth-submit-btn college-reg">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Submit College Application</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- CLEAN STRUCTURED FOOTER -->
+            <div class="auth-structured-footer">
+                <div class="footer-action-prompt">
+                    <span>Already approved?</span>
                     <a href="/admin/login">Login as College Admin</a>
-                </p>
-
-            </form>
-
+                </div>
+                <div class="footer-nav-row">
+                    <a href="/" class="footer-nav-btn"><i class="fa-solid fa-arrow-left"></i> Home</a>
+                    <a href="/student/login" class="footer-nav-btn alt">Student Portal <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </div>
         </div>
 
-    </section>
-
+    </div>
 </div>
 
 <script src="/js/collegeRegisterValidation.js"></script>
-
-    <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js" defer></script>
 </body>
 </html>
