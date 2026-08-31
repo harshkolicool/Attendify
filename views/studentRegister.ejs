@@ -6,7 +6,7 @@
     <title>Student Registration | Attendify</title>
     
     <link rel="stylesheet" href="/css/uiShell.css">
-    <link rel="stylesheet" href="/css/authPages.css?v=20260901_2">
+    <link rel="stylesheet" href="/css/authPages.css?v=20260901_3">
     <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
     <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -100,10 +100,22 @@
                         </div>
 
                         <button type="submit" class="auth-submit-btn student">
-                            <span>Continue to Registration</span>
+                            <span>Lookup College & Continue</span>
                             <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </form>
+
+                    <!-- STEP 1 HELPER GUIDANCE CARD -->
+                    <div class="auth-info-card">
+                        <div class="auth-info-card-header">
+                            <i class="fa-solid fa-circle-info"></i> How to find your College Code
+                        </div>
+                        <p>Ask your class teacher, department head, or refer to your college admission slip.</p>
+                        <div class="code-suggestions-row">
+                            <span class="code-suggestions-label">Try Demo:</span>
+                            <button type="button" class="code-suggestion-pill" onclick="document.getElementById('collegeCode').value='BMSCE'; document.getElementById('collegeCodeForm').submit();">BMSCE</button>
+                        </div>
+                    </div>
                 <% } else { %>
                     <!-- STEP 2: STUDENT DETAILS & CLASSGROUP SELECTION -->
                     <form action="/student/register" method="POST" class="modern-auth-form" id="registerForm">

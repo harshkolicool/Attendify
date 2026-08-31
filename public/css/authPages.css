@@ -264,6 +264,62 @@ body.auth-redesign-body {
     color: var(--auth-muted);
 }
 
+/* HELPER INFO BOX */
+.auth-info-card {
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 16px;
+    font-size: 0.78rem;
+    color: #cbd5e1;
+    line-height: 1.5;
+}
+
+.auth-info-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 800;
+    color: #38bdf8;
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+}
+
+.code-suggestions-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.code-suggestions-label {
+    font-size: 0.72rem;
+    color: var(--auth-muted);
+    font-weight: 700;
+}
+
+.code-suggestion-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #7dd3fc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.code-suggestion-pill:hover {
+    background: rgba(6, 182, 212, 0.2);
+    border-color: #06b6d4;
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
 /* ERROR / ALERT BOX */
 .auth-alert-box {
     background: rgba(244, 63, 94, 0.12);
