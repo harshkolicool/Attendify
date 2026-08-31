@@ -12,7 +12,7 @@
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
     <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
-    <link rel="stylesheet" href="/css/home.css?v=20260901_crazy">
+    <link rel="stylesheet" href="/css/home.css?v=20260901_modern">
     <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
     <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
     <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
@@ -41,11 +41,10 @@
 
 <div class="home-page-crazy">
 
-    <!-- Cyber Background Matrix Grid & Ambient Glows -->
+    <!-- Subtle Ambient Glows -->
     <div class="cyber-grid-overlay"></div>
     <div class="crazy-glow-orb orb-purple"></div>
     <div class="crazy-glow-orb orb-cyan"></div>
-    <div class="crazy-glow-orb orb-emerald"></div>
 
     <!-- Navigation Header -->
     <header class="crazy-navbar">
@@ -54,7 +53,7 @@
                 <i class="fa-solid fa-clipboard-check"></i>
             </span>
             <span class="brand-title">ATTENDIFY</span>
-            <span class="brand-ai-tag"><i class="fa-solid fa-bolt"></i> FIDO2</span>
+            <span class="brand-ai-tag"><i class="fa-solid fa-shield-check"></i> FIDO2</span>
         </a>
 
         <button
@@ -69,12 +68,12 @@
         </button>
 
         <nav class="crazy-nav-links" id="homeNavLinks">
-            <a href="#features" class="c-nav-item"><i class="fa-solid fa-microchip"></i> Features</a>
-            <a href="#how-it-works" class="c-nav-item"><i class="fa-solid fa-network-wired"></i> Architecture</a>
-            <a href="/college/register" class="c-nav-item"><i class="fa-solid fa-building-columns"></i> Register College</a>
-            <a href="/admin/login" class="c-nav-item"><i class="fa-solid fa-user-shield"></i> Admin</a>
-            <a href="/teacher/login" class="c-nav-item"><i class="fa-solid fa-chalkboard-user"></i> Teacher</a>
-            <a href="/student/register" class="c-nav-item"><i class="fa-solid fa-user-plus"></i> Student Sign-Up</a>
+            <a href="#features" class="c-nav-item">Features</a>
+            <a href="#how-it-works" class="c-nav-item">How It Works</a>
+            <a href="/college/register" class="c-nav-item">Register College</a>
+            <a href="/admin/login" class="c-nav-item">Admin</a>
+            <a href="/teacher/login" class="c-nav-item">Teacher</a>
+            <a href="/student/register" class="c-nav-item">Student Sign-Up</a>
             <a href="/student/login" class="crazy-cta-btn">
                 <i class="fa-solid fa-fingerprint"></i> Student Login
             </a>
@@ -87,21 +86,21 @@
         <!-- HERO SECTION -->
         <section class="crazy-hero-section">
 
-            <!-- LEFT: PUNCHY COPY & CALL TO ACTIONS -->
+            <!-- LEFT: HERO COPY -->
             <div class="crazy-hero-left">
 
                 <div class="live-security-badge animate-fade-up">
                     <span class="radar-ping-dot"></span>
                     <i class="fa-solid fa-shield-halved"></i>
-                    <span>ZERO-PROXY BIOMETRIC ATTENDANCE</span>
+                    <span>ZERO-PROXY BIOMETRIC & GPS PLATFORM</span>
                 </div>
 
                 <h1 class="crazy-hero-title animate-fade-up delay-100">
-                    Next-Gen Attendance Powered by <span class="neon-indigo">Hardware Passkeys</span> & <span class="neon-cyan">Geofence Radar</span>.
+                    Smart attendance powered by <span class="neon-indigo">FIDO2 Passkeys</span> & <span class="neon-cyan">Live Geofencing</span>.
                 </h1>
 
                 <p class="crazy-hero-subtitle animate-fade-up delay-200">
-                    Cryptographically verify student identity and physical classroom presence. Zero passwords, zero buddy punching, and zero proxy attendance.
+                    Eliminate proxy attendance with hardware-bound biometric authentication, sub-meter GPS verification, and real-time live lecture telemetry.
                 </p>
 
                 <div class="crazy-hero-actions animate-fade-up delay-300">
@@ -117,21 +116,20 @@
                     </a>
                 </div>
 
-                <!-- Telemetry mini-strip -->
                 <div class="crazy-trust-grid animate-fade-up delay-400">
                     <div class="trust-cell">
                         <i class="fa-solid fa-lock text-indigo"></i>
                         <div>
-                            <strong>FIDO2 / WebAuthn</strong>
-                            <span>Secure Enclave Bound</span>
+                            <strong>Hardware Enclave</strong>
+                            <span>FIDO2 Passkeys</span>
                         </div>
                     </div>
 
                     <div class="trust-cell">
                         <i class="fa-solid fa-satellite text-cyan"></i>
                         <div>
-                            <strong>Haversine Geofence</strong>
-                            <span>Sub-Meter GPS Precision</span>
+                            <strong>Sub-Meter GPS</strong>
+                            <span>Geofence Decision Engine</span>
                         </div>
                     </div>
 
@@ -139,192 +137,220 @@
                         <i class="fa-solid fa-bolt text-emerald"></i>
                         <div>
                             <strong>Live WebSockets</strong>
-                            <span>Sub-Second Telemetry</span>
+                            <span>Instant Zero-Refresh Sync</span>
                         </div>
                     </div>
                 </div>
 
             </div>
 
-            <!-- RIGHT: INTERACTIVE TACTICAL CYBER TERMINAL -->
+            <!-- RIGHT: MODERN INTERACTIVE DASHBOARD TERMINAL -->
             <div class="crazy-hero-right animate-fade-up delay-200">
 
-                <div class="cyber-terminal-card">
+                <div class="modern-dashboard-frame">
 
-                    <!-- Terminal Top Header -->
-                    <div class="terminal-header">
-                        <div class="terminal-dots">
-                            <span class="t-dot red"></span>
-                            <span class="t-dot yellow"></span>
-                            <span class="t-dot green"></span>
+                    <!-- Window Header Strip -->
+                    <div class="dash-window-header">
+                        <div class="dash-mac-dots">
+                            <span class="mac-dot red"></span>
+                            <span class="mac-dot yellow"></span>
+                            <span class="mac-dot green"></span>
                         </div>
 
-                        <!-- Interactive Tab Switches -->
-                        <div class="terminal-nav-tabs">
-                            <button class="t-tab-btn active" data-terminal-tab="radar" type="button">
-                                <i class="fa-solid fa-satellite-dish"></i> Live Tactical Radar
+                        <div class="dash-nav-pills">
+                            <button class="dash-pill-tab active" data-view="map" type="button">
+                                <i class="fa-solid fa-map-location-dot"></i> Live Map
                             </button>
-                            <button class="t-tab-btn" data-terminal-tab="biometrics" type="button">
-                                <i class="fa-solid fa-fingerprint"></i> Biometric Scan
+                            <button class="dash-pill-tab" data-view="biometric" type="button">
+                                <i class="fa-solid fa-fingerprint"></i> Biometrics
                             </button>
-                            <button class="t-tab-btn" data-terminal-tab="telemetry" type="button">
-                                <i class="fa-solid fa-chart-line"></i> Live Feed
+                            <button class="dash-pill-tab" data-view="stream" type="button">
+                                <i class="fa-solid fa-wave-pulse"></i> Telemetry
                             </button>
                         </div>
 
-                        <div class="terminal-signal-pill">
-                            <span class="signal-beacon"></span> 18ms WebSocket
+                        <div class="dash-connection-status">
+                            <span class="pulse-emerald-dot"></span> 18ms
                         </div>
                     </div>
 
-                    <!-- TAB 1: LIVE TACTICAL RADAR INTERACTION -->
-                    <div class="terminal-screen active" id="terminalScreen-radar">
+                    <!-- VIEW 1: INTERACTIVE CAMPUS MAP RADAR -->
+                    <div class="dash-view-screen active" id="dashView-map">
 
-                        <div class="radar-top-meta">
-                            <div>
-                                <span class="radar-session-tag"><i class="fa-solid fa-circle-dot text-emerald"></i> SESSION ACTIVE</span>
-                                <h3 class="radar-session-name">Data Structures (CS401) • Lab 101</h3>
+                        <div class="session-quick-bar">
+                            <div class="session-title-cluster">
+                                <span class="active-badge"><i class="fa-solid fa-circle"></i> ACTIVE LECTURE</span>
+                                <h4>Data Structures (CS401)</h4>
                             </div>
-                            <div class="radar-radius-pill">
-                                <i class="fa-solid fa-location-crosshairs text-cyan"></i> 100m Geofence
+                            <div class="session-geofence-tag">
+                                <i class="fa-solid fa-location-crosshairs"></i> 100m Geofence
                             </div>
                         </div>
 
-                        <!-- Real Tactical Radar HUD Canvas -->
-                        <div class="tactical-hud-container">
-                            <div class="hud-sweep-beam"></div>
+                        <!-- High-Tech Vector Map Canvas -->
+                        <div class="vector-map-canvas">
                             
-                            <!-- Concentric Sonar Rings -->
-                            <div class="hud-ring r1"></div>
-                            <div class="hud-ring r2"></div>
-                            <div class="hud-ring r3"></div>
-                            <div class="hud-crosshair-x"></div>
-                            <div class="hud-crosshair-y"></div>
+                            <!-- Campus Building Floorplan Contours -->
+                            <div class="map-building-block bldg-a">CS BLOCK</div>
+                            <div class="map-building-block bldg-b">LIBRARY</div>
+                            <div class="map-road-path road-main"></div>
+                            <div class="map-road-path road-cross"></div>
 
-                            <!-- Faculty GPS Anchor -->
-                            <div class="hud-anchor faculty" title="Faculty GPS Anchor (Lab 101)">
-                                <div class="anchor-pulse"></div>
-                                <div class="anchor-core"><i class="fa-solid fa-chalkboard-user"></i></div>
-                                <span class="anchor-name">Faculty Anchor</span>
+                            <!-- Animated Concentric Geofence Boundary -->
+                            <div class="geofence-radar-circle">
+                                <div class="radar-scan-sweep"></div>
+                                <div class="radar-concentric-line line-1"></div>
+                                <div class="radar-concentric-line line-2"></div>
                             </div>
 
-                            <!-- Live Verified Student Blips -->
-                            <div class="hud-blip b1" title="Aarav K. (AIML 4A) • 8.2m inside">
-                                <div class="blip-ping-ring"></div>
-                                <div class="blip-core"></div>
-                                <span class="blip-label">Aarav K. (8m)</span>
+                            <!-- Central Teacher Station Anchor -->
+                            <div class="map-pin teacher-anchor" title="Faculty Station (Lab 101)">
+                                <div class="pin-halo"></div>
+                                <div class="pin-avatar teacher"><i class="fa-solid fa-chalkboard-user"></i></div>
+                                <div class="pin-tooltip">Faculty (Lab 101)</div>
                             </div>
 
-                            <div class="hud-blip b2" title="Ananya S. (AIML 4A) • 14.1m inside">
-                                <div class="blip-ping-ring"></div>
-                                <div class="blip-core"></div>
-                                <span class="blip-label">Ananya (14m)</span>
+                            <!-- Connected Student Pins with Glass Tooltips -->
+                            <div class="map-pin student-pin p1" title="Aarav K. • 8.2m">
+                                <div class="pin-avatar">AK</div>
+                                <div class="pin-tooltip">Aarav K. <span>• 8m</span></div>
                             </div>
 
-                            <div class="hud-blip b3" title="Harsh K. (AIML 4A) • 2.4m inside">
-                                <div class="blip-ping-ring"></div>
-                                <div class="blip-core"></div>
-                                <span class="blip-label">Harsh (2m)</span>
+                            <div class="map-pin student-pin p2" title="Ananya S. • 14.1m">
+                                <div class="pin-avatar">AS</div>
+                                <div class="pin-tooltip">Ananya S. <span>• 14m</span></div>
                             </div>
 
-                            <div class="hud-blip b4" title="Rahul M. (AIML 4A) • 19.5m inside">
-                                <div class="blip-ping-ring"></div>
-                                <div class="blip-core"></div>
-                                <span class="blip-label">Rahul (19m)</span>
+                            <div class="map-pin student-pin p3" title="Harsh K. • 2.4m">
+                                <div class="pin-avatar">HK</div>
+                                <div class="pin-tooltip">Harsh K. <span>• 2m</span></div>
                             </div>
 
-                            <div class="hud-blip b5 dynamic-student" id="dynamicStudentBlip" style="display: none;">
-                                <div class="blip-ping-ring cyan"></div>
-                                <div class="blip-core cyan"></div>
-                                <span class="blip-label cyan">You (5m) Verified ✓</span>
+                            <div class="map-pin student-pin p4" title="Rahul M. • 19.5m">
+                                <div class="pin-avatar">RM</div>
+                                <div class="pin-tooltip">Rahul M. <span>• 19m</span></div>
                             </div>
+
+                            <!-- Dynamic Simulated Student Pin (Appears on click) -->
+                            <div class="map-pin student-pin p5 dynamic" id="simulatedUserPin" style="display: none;">
+                                <div class="pin-halo-cyan"></div>
+                                <div class="pin-avatar you">YOU</div>
+                                <div class="pin-tooltip you">You Verified ✓ <span>• 4.5m</span></div>
+                            </div>
+
                         </div>
 
-                        <!-- Live Interactive Bar & Action -->
-                        <div class="radar-telemetry-tray">
-                            <div class="tray-row">
+                        <!-- Bottom Control & Metric Tray -->
+                        <div class="map-metric-tray">
+                            <div class="metric-tray-top">
                                 <div>
-                                    <span class="tray-label">VERIFIED ATTENDANCE</span>
-                                    <strong class="tray-val" id="radarCountVal">44 / 50 Present (88%)</strong>
+                                    <span class="tray-sub">VERIFIED ATTENDANCE</span>
+                                    <strong class="tray-counter" id="liveAttendanceCounter">44 / 50 Present (88%)</strong>
                                 </div>
-
-                                <button class="simulate-checkin-btn" id="simulateCheckinBtn" type="button">
-                                    <i class="fa-solid fa-location-arrow"></i> Test My Check-in
+                                <button class="btn-simulate-checkin" id="btnSimulateCheckin" type="button">
+                                    <i class="fa-solid fa-location-arrow"></i> Test My Attendance
                                 </button>
                             </div>
 
-                            <div class="tray-progress-shell">
-                                <div class="tray-progress-fill" id="radarProgressBar" style="width: 88%;"></div>
+                            <div class="tray-progress-track">
+                                <div class="tray-progress-bar" id="liveAttendanceProgressBar" style="width: 88%;"></div>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- TAB 2: BIOMETRIC ENCLAVE SCANNER -->
-                    <div class="terminal-screen" id="terminalScreen-biometrics">
+                    <!-- VIEW 2: BIOMETRIC SCANNER EXPERIENCE -->
+                    <div class="dash-view-screen" id="dashView-biometric">
 
-                        <div class="biometric-hud-stage">
-                            
-                            <!-- Scanner Device Core -->
-                            <div class="biometric-scanner-device" id="interactiveScanDevice">
-                                <div class="laser-scanner-line" id="laserScannerLine"></div>
-                                <div class="fp-glow-core">
-                                    <i class="fa-solid fa-fingerprint main-fp-icon"></i>
+                        <div class="session-quick-bar">
+                            <div class="session-title-cluster">
+                                <span class="active-badge fido"><i class="fa-solid fa-shield-check"></i> FIDO2 WEBAUTHN</span>
+                                <h4>Hardware Biometric Attestation</h4>
+                            </div>
+                            <span class="enclave-bound-pill"><i class="fa-solid fa-lock"></i> Secure Enclave</span>
+                        </div>
+
+                        <!-- Modern Biometric Scanner Pod -->
+                        <div class="biometric-scanner-pod">
+                            <div class="biometric-touch-target" id="modernTouchTarget">
+                                <div class="scanner-laser-beam" id="scannerLaserBeam"></div>
+                                <div class="scanner-glow-circle">
+                                    <i class="fa-solid fa-fingerprint scanner-fp-svg"></i>
                                 </div>
-                                <span class="scanner-instruction" id="scanPromptText">Touch / Click Scanner to Authenticate</span>
+                                <span class="scanner-helper-text" id="scannerHelperText">Touch to Authenticate</span>
                             </div>
 
-                            <!-- Live Cryptographic Telemetry Stream -->
-                            <div class="crypto-feed-log" id="cryptoFeedLog">
-                                <div class="feed-line"><span class="t-cyan">[WEBAUTHN]</span> Requesting 32-byte cryptographic challenge from server...</div>
-                                <div class="feed-line"><span class="t-emerald">[ENCLAVE]</span> Apple Secure Enclave / Android TEE keypair loaded</div>
-                                <div class="feed-line"><span class="t-purple">[STATUS]</span> Ready for physical biometric assertion</div>
+                            <div class="biometric-crypto-terminal" id="cryptoTerminalStream">
+                                <div class="term-row"><span class="c-dim">[04:35:10]</span> <span class="c-cyan">WEBAUTHN:</span> 32-Byte challenge issued</div>
+                                <div class="term-row"><span class="c-dim">[04:35:11]</span> <span class="c-purple">ENCLAVE:</span> Hardware keypair (ES256 P-256) loaded</div>
+                                <div class="term-row"><span class="c-dim">[04:35:12]</span> <span class="c-emerald">READY:</span> Touch sensor to generate assertion signature</div>
                             </div>
-
                         </div>
 
-                        <div class="enclave-specs-strip">
-                            <div class="spec-tile">
-                                <span>SIGNATURE</span>
-                                <strong>ECDSA P-256</strong>
+                        <div class="crypto-meta-triplet">
+                            <div class="triplet-card">
+                                <span>ALGORITHM</span>
+                                <strong>ES256 (P-256)</strong>
                             </div>
-                            <div class="spec-tile">
+                            <div class="triplet-card">
+                                <span>KEY ISOLATION</span>
+                                <strong class="text-emerald">Hardware HSM</strong>
+                            </div>
+                            <div class="triplet-card">
                                 <span>PROXY CHANCE</span>
-                                <strong class="text-emerald">0.00% (Locked)</strong>
-                            </div>
-                            <div class="spec-tile">
-                                <span>STORAGE</span>
-                                <strong>Hardware HSM</strong>
+                                <strong class="text-cyan">0.00% (Locked)</strong>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- TAB 3: LIVE TELEMETRY LOGS -->
-                    <div class="terminal-screen" id="terminalScreen-telemetry">
+                    <!-- VIEW 3: LIVE TELEMETRY LOGS -->
+                    <div class="dash-view-screen" id="dashView-stream">
 
-                        <div class="telemetry-live-stream">
-                            <div class="stream-header">
-                                <i class="fa-solid fa-terminal text-cyan"></i> Real-Time Cryptographic Verification Stream
+                        <div class="session-quick-bar">
+                            <div class="session-title-cluster">
+                                <span class="active-badge"><i class="fa-solid fa-satellite"></i> LIVE STREAM</span>
+                                <h4>Cryptographic Verification Feed</h4>
                             </div>
+                            <span class="badge-socket-live"><i class="fa-solid fa-bolt"></i> Real-Time</span>
+                        </div>
 
-                            <div class="stream-logs-box" id="streamLogsBox">
-                                <div class="log-entry"><span class="time">04:30:12</span> <span class="tag verified">[PRESENT]</span> Harsh K. (AIML-3C5CF1) • GPS drift: 2.1m (±4m) • FIDO2 Passkey ✓</div>
-                                <div class="log-entry"><span class="time">04:30:18</span> <span class="tag verified">[PRESENT]</span> Aarav K. (AIML-1351EA) • GPS drift: 7.8m (±5m) • FIDO2 Passkey ✓</div>
-                                <div class="log-entry"><span class="time">04:30:24</span> <span class="tag verified">[PRESENT]</span> Ananya S. (AIML-2281FB) • GPS drift: 13.9m (±6m) • FIDO2 Passkey ✓</div>
-                                <div class="log-entry"><span class="time">04:30:31</span> <span class="tag verified">[PRESENT]</span> Rahul M. (AIML-8821CD) • GPS drift: 18.2m (±8m) • FIDO2 Passkey ✓</div>
-                                <div class="log-entry warning"><span class="time">04:30:39</span> <span class="tag blocked">[REJECTED]</span> Unknown Device (Hostel Block) • Distance: 480m • Outside 100m Radius ❌</div>
+                        <div class="telemetry-log-stream" id="telemetryLogStream">
+                            <div class="log-row verified">
+                                <span class="log-time">04:34:12</span>
+                                <span class="log-badge pass">VERIFIED</span>
+                                <span class="log-desc">Harsh K. (AIML-3C5CF1) • GPS: 2.1m inside • FIDO2 Passkey ✓</span>
+                            </div>
+                            <div class="log-row verified">
+                                <span class="log-time">04:34:20</span>
+                                <span class="log-badge pass">VERIFIED</span>
+                                <span class="log-desc">Aarav K. (AIML-1351EA) • GPS: 7.8m inside • FIDO2 Passkey ✓</span>
+                            </div>
+                            <div class="log-row verified">
+                                <span class="log-time">04:34:31</span>
+                                <span class="log-badge pass">VERIFIED</span>
+                                <span class="log-desc">Ananya S. (AIML-2281FB) • GPS: 13.9m inside • FIDO2 Passkey ✓</span>
+                            </div>
+                            <div class="log-row verified">
+                                <span class="log-time">04:34:45</span>
+                                <span class="log-badge pass">VERIFIED</span>
+                                <span class="log-desc">Rahul M. (AIML-8821CD) • GPS: 18.2m inside • FIDO2 Passkey ✓</span>
+                            </div>
+                            <div class="log-row blocked">
+                                <span class="log-time">04:34:52</span>
+                                <span class="log-badge reject">BLOCKED</span>
+                                <span class="log-desc">Unknown Device • Distance: 480m (Hostel Block) • Outside 100m Geofence ❌</span>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- Terminal Bottom Footer -->
-                    <div class="terminal-footer-strip">
-                        <div class="footer-telemetry-item">
-                            <i class="fa-solid fa-server text-indigo"></i> Multi-Tenant MongoDB Atlas
+                    <!-- Bottom Frame Footer -->
+                    <div class="dash-window-footer">
+                        <div class="footer-chip">
+                            <i class="fa-solid fa-server text-indigo"></i> MongoDB Atlas Multi-Tenant
                         </div>
-                        <div class="footer-telemetry-item">
+                        <div class="footer-chip">
                             <i class="fa-solid fa-shield-check text-emerald"></i> 100% Anti-Proxy Verified
                         </div>
                     </div>
@@ -335,7 +361,7 @@
 
         </section>
 
-        <!-- LIVE TELEMETRY STATS BANNER -->
+        <!-- METRICS SECTION -->
         <section class="crazy-metrics-banner scroll-animate">
             <div class="metrics-grid-crazy">
                 <div class="metric-glass-card">
@@ -383,8 +409,7 @@
 
             <div class="crazy-roles-grid">
 
-                <a href="/admin/login" class="crazy-role-card scroll-animate delay-100 card-admin">
-                    <div class="role-card-glow"></div>
+                <a href="/admin/login" class="crazy-role-card scroll-animate delay-100">
                     <div class="role-top">
                         <div class="role-icon-box admin"><i class="fa-solid fa-user-shield"></i></div>
                         <span class="role-tag">MANAGEMENT</span>
@@ -394,8 +419,7 @@
                     <span class="role-cta-link">Open Admin Portal <i class="fa-solid fa-arrow-right"></i></span>
                 </a>
 
-                <a href="/teacher/login" class="crazy-role-card scroll-animate delay-200 card-teacher">
-                    <div class="role-card-glow"></div>
+                <a href="/teacher/login" class="crazy-role-card scroll-animate delay-200">
                     <div class="role-top">
                         <div class="role-icon-box teacher"><i class="fa-solid fa-chalkboard-user"></i></div>
                         <span class="role-tag">FACULTY</span>
@@ -405,8 +429,7 @@
                     <span class="role-cta-link">Open Teacher Portal <i class="fa-solid fa-arrow-right"></i></span>
                 </a>
 
-                <a href="/student/login" class="crazy-role-card scroll-animate delay-300 card-student">
-                    <div class="role-card-glow"></div>
+                <a href="/student/login" class="crazy-role-card scroll-animate delay-300">
                     <div class="role-top">
                         <div class="role-icon-box student"><i class="fa-solid fa-user-graduate"></i></div>
                         <span class="role-tag">STUDENT</span>
@@ -416,8 +439,7 @@
                     <span class="role-cta-link">Open Student Portal <i class="fa-solid fa-arrow-right"></i></span>
                 </a>
 
-                <a href="/college/register" class="crazy-role-card highlight scroll-animate delay-100 card-college">
-                    <div class="role-card-glow"></div>
+                <a href="/college/register" class="crazy-role-card highlight scroll-animate delay-100">
                     <div class="role-top">
                         <div class="role-icon-box college"><i class="fa-solid fa-building-columns"></i></div>
                         <span class="role-tag accent">ONBOARDING</span>
@@ -427,8 +449,7 @@
                     <span class="role-cta-link">Register College <i class="fa-solid fa-arrow-right"></i></span>
                 </a>
 
-                <a href="/student/register" class="crazy-role-card highlight scroll-animate delay-200 card-register-student">
-                    <div class="role-card-glow"></div>
+                <a href="/student/register" class="crazy-role-card highlight scroll-animate delay-200">
                     <div class="role-top">
                         <div class="role-icon-box student-reg"><i class="fa-solid fa-user-plus"></i></div>
                         <span class="role-tag">ENROLLMENT</span>
@@ -493,7 +514,7 @@
 
         </section>
 
-        <!-- WORKFLOW TIMELINE -->
+        <!-- WORKFLOW SECTION -->
         <section class="crazy-workflow-section" id="how-it-works">
 
             <div class="crazy-section-heading center scroll-animate">
@@ -540,7 +561,6 @@
         <section class="crazy-cta-section">
 
             <div class="crazy-cta-card scroll-animate">
-                <div class="cta-glow-bg"></div>
                 <div class="cta-inner-content">
                     <span class="cta-badge"><i class="fa-solid fa-rocket"></i> GET STARTED TODAY</span>
                     <h2>Bring Next-Gen Smart Attendance to Your Campus.</h2>
@@ -592,7 +612,7 @@
 
 </div>
 
-<script src="/js/home.js?v=20260901_crazy"></script>
+<script src="/js/home.js?v=20260901_modern"></script>
 <script src="/js/csrfAuto.js" defer></script>
 <script src="/js/selectEnhancer.js" defer></script>
 </body>

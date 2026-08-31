@@ -1,10 +1,10 @@
 /**
- * Attendify Next-Gen Cyber Landing Engine (v4)
- * Pure in-card interactive simulation with zero intrusive popups.
+ * Attendify Ultra-Modern Landing Experience (v5)
+ * Cartographic map simulation, in-card biometric scanning, and live stream telemetry.
  */
 
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Mobile Menu Handling
+    // 1. Mobile Menu Toggle
     const menuButton = document.getElementById("homeMenuBtn");
     const navLinks = document.getElementById("homeNavLinks");
     const navOverlay = document.getElementById("homeNavOverlay");
@@ -43,107 +43,69 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 2. Interactive Tactical Terminal Tabs
-    const tabButtons = document.querySelectorAll(".t-tab-btn");
-    const screens = document.querySelectorAll(".terminal-screen");
+    // 2. Dashboard View Switcher Tabs
+    const viewTabs = document.querySelectorAll(".dash-pill-tab");
+    const viewScreens = document.querySelectorAll(".dash-view-screen");
 
-    tabButtons.forEach(button => {
-        button.addEventListener("click", function () {
-            const targetTab = this.getAttribute("data-terminal-tab");
+    viewTabs.forEach(tab => {
+        tab.addEventListener("click", function () {
+            const targetView = this.getAttribute("data-view");
 
-            tabButtons.forEach(btn => btn.classList.remove("active"));
-            screens.forEach(screen => screen.classList.remove("active"));
+            viewTabs.forEach(t => t.classList.remove("active"));
+            viewScreens.forEach(s => s.classList.remove("active"));
 
             this.classList.add("active");
-            const activeScreen = document.getElementById("terminalScreen-" + targetTab);
+            const activeScreen = document.getElementById("dashView-" + targetView);
             if (activeScreen) {
                 activeScreen.classList.add("active");
             }
         });
     });
 
-    // 3. In-Card Biometric Scanner Experience (No Popups!)
-    const scanDevice = document.getElementById("interactiveScanDevice");
-    const laserLine = document.getElementById("laserScannerLine");
-    const promptText = document.getElementById("scanPromptText");
-    const cryptoFeed = document.getElementById("cryptoFeedLog");
+    // 3. Vector Map "Test My Attendance" Simulator
+    const btnSimulate = document.getElementById("btnSimulateCheckin");
+    const userPin = document.getElementById("simulatedUserPin");
+    const counterDisplay = document.getElementById("liveAttendanceCounter");
+    const progressBar = document.getElementById("liveAttendanceProgressBar");
+    const telemetryStream = document.getElementById("telemetryLogStream");
 
-    if (scanDevice && laserLine && cryptoFeed) {
-        scanDevice.addEventListener("click", function () {
-            laserLine.classList.remove("scanning");
-            void laserLine.offsetWidth; // trigger reflow
-            laserLine.classList.add("scanning");
+    let isUserVerified = false;
 
-            const fpIcon = this.querySelector(".main-fp-icon");
-            if (fpIcon) {
-                fpIcon.style.color = "#10b981";
-                fpIcon.style.transform = "scale(1.15)";
-            }
-
-            if (promptText) {
-                promptText.textContent = "Authenticating with Secure Enclave...";
-                promptText.style.color = "#34d399";
-            }
-
-            cryptoFeed.innerHTML = `
-                <div class="feed-line"><span class="t-cyan">[WEBAUTHN]</span> 32-Byte challenge received from server: 0x8f2a7b1c...</div>
-                <div class="feed-line"><span class="t-emerald">[ENCLAVE]</span> Biometric verified! ECDSA P-256 signature generated (0.32s) ✓</div>
-                <div class="feed-line"><span class="t-purple">[TOKEN]</span> Single-use Attendance Token issued: #att_` + Math.random().toString(36).substring(2, 9) + `</div>
-            `;
-
-            setTimeout(() => {
-                if (fpIcon) {
-                    fpIcon.style.color = "#38bdf8";
-                    fpIcon.style.transform = "scale(1)";
-                }
-                if (promptText) {
-                    promptText.textContent = "Hardware Biometrics Verified ✓";
-                    promptText.style.color = "#38bdf8";
-                }
-            }, 1400);
-        });
-    }
-
-    // 4. Interactive "Test My Check-In" Radar Simulator
-    const simulateBtn = document.getElementById("simulateCheckinBtn");
-    const dynamicBlip = document.getElementById("dynamicStudentBlip");
-    const countVal = document.getElementById("radarCountVal");
-    const progressBar = document.getElementById("radarProgressBar");
-    const streamLogs = document.getElementById("streamLogsBox");
-
-    let isCheckedIn = false;
-
-    if (simulateBtn && dynamicBlip && countVal && progressBar) {
-        simulateBtn.addEventListener("click", function () {
-            if (!isCheckedIn) {
-                isCheckedIn = true;
-                dynamicBlip.style.display = "flex";
-                countVal.textContent = "45 / 50 Present (90%)";
-                countVal.style.color = "#34d399";
+    if (btnSimulate && userPin && counterDisplay && progressBar) {
+        btnSimulate.addEventListener("click", function () {
+            if (!isUserVerified) {
+                isUserVerified = true;
+                userPin.style.display = "flex";
+                counterDisplay.textContent = "45 / 50 Present (90%)";
+                counterDisplay.style.color = "#34d399";
                 progressBar.style.width = "90%";
                 this.innerHTML = `<i class="fa-solid fa-circle-check text-emerald"></i> You Are Verified!`;
                 this.style.borderColor = "#10b981";
                 this.style.background = "rgba(16, 185, 129, 0.2)";
                 this.style.color = "#34d399";
 
-                if (streamLogs) {
+                if (telemetryStream) {
                     const now = new Date();
                     const timeStr = now.toTimeString().split(" ")[0];
                     const newLog = document.createElement("div");
-                    newLog.className = "log-entry";
+                    newLog.className = "log-row verified";
                     newLog.style.background = "rgba(6, 182, 212, 0.15)";
                     newLog.style.border = "1px solid rgba(6, 182, 212, 0.4)";
-                    newLog.innerHTML = `<span class="time">${timeStr}</span> <span class="tag verified" style="color: #38bdf8;">[YOU]</span> Student Check-In Verified • Distance: 5.2m inside geofence • FIDO2 Passkey ✓`;
-                    streamLogs.insertBefore(newLog, streamLogs.firstChild);
+                    newLog.innerHTML = `
+                        <span class="log-time">${timeStr}</span>
+                        <span class="log-badge pass" style="background:#06b6d4; color:#042f2e;">YOU</span>
+                        <span class="log-desc">Student Check-In Verified • GPS: 4.5m inside geofence • FIDO2 Passkey ✓</span>
+                    `;
+                    telemetryStream.insertBefore(newLog, telemetryStream.firstChild);
                 }
             } else {
-                // Reset
-                isCheckedIn = false;
-                dynamicBlip.style.display = "none";
-                countVal.textContent = "44 / 50 Present (88%)";
-                countVal.style.color = "#ffffff";
+                // Toggle reset
+                isUserVerified = false;
+                userPin.style.display = "none";
+                counterDisplay.textContent = "44 / 50 Present (88%)";
+                counterDisplay.style.color = "#ffffff";
                 progressBar.style.width = "88%";
-                this.innerHTML = `<i class="fa-solid fa-location-arrow"></i> Test My Check-in`;
+                this.innerHTML = `<i class="fa-solid fa-location-arrow"></i> Test My Attendance`;
                 this.style.borderColor = "rgba(6, 182, 212, 0.4)";
                 this.style.background = "rgba(6, 182, 212, 0.15)";
                 this.style.color = "#38bdf8";
@@ -151,7 +113,49 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 5. Scroll Animation Observer
+    // 4. In-Card Biometric Scanner Interaction
+    const touchTarget = document.getElementById("modernTouchTarget");
+    const laserBeam = document.getElementById("scannerLaserBeam");
+    const helperText = document.getElementById("scannerHelperText");
+    const cryptoConsole = document.getElementById("cryptoTerminalStream");
+
+    if (touchTarget && laserBeam && cryptoConsole) {
+        touchTarget.addEventListener("click", function () {
+            laserBeam.classList.remove("active");
+            void laserBeam.offsetWidth; // trigger reflow
+            laserBeam.classList.add("active");
+
+            const fpSvg = this.querySelector(".scanner-fp-svg");
+            if (fpSvg) {
+                fpSvg.style.color = "#10b981";
+                fpSvg.style.transform = "scale(1.15)";
+            }
+
+            if (helperText) {
+                helperText.textContent = "Authenticating with Secure Enclave...";
+                helperText.style.color = "#34d399";
+            }
+
+            cryptoConsole.innerHTML = `
+                <div class="term-row"><span class="c-dim">[WEBAUTHN]</span> 32-Byte challenge received from server: 0x8f2a7b1c...</div>
+                <div class="term-row"><span class="c-emerald">[ENCLAVE]</span> Biometric verified! ECDSA P-256 signature generated (0.32s) ✓</div>
+                <div class="term-row"><span class="c-cyan">[TOKEN]</span> Single-use Attendance Token issued: #att_` + Math.random().toString(36).substring(2, 9) + `</div>
+            `;
+
+            setTimeout(() => {
+                if (fpSvg) {
+                    fpSvg.style.color = "#38bdf8";
+                    fpSvg.style.transform = "scale(1)";
+                }
+                if (helperText) {
+                    helperText.textContent = "Hardware Biometrics Verified ✓";
+                    helperText.style.color = "#38bdf8";
+                }
+            }, 1300);
+        });
+    }
+
+    // 5. Scroll Animations
     const scrollObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
