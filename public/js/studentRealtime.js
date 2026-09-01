@@ -503,56 +503,6 @@ document.addEventListener("DOMContentLoaded", function init() {
         );
     });
 
-    socket.on("attendance:extended", function (payload) {
-        showRealtimeMessage(
-            payload.message || "Attendance window extended by Teacher!",
-            "info"
-        );
-
-        if (!payload) return;
-
-        // Find the schedule card on the student's dashboard
-        let card = null;
-        if (payload.scheduleId) {
-            card = getScheduleCard(payload.scheduleId);
-        }
-        if (!card && payload.sessionId) {
-            card = document.querySelector("[data-session-id='" + payload.sessionId + "']");
-        }
-        if (!card) {
-            card = document.querySelector(".class-card[data-attendance-state='live'], .schedule-card[data-attendance-state='live']");
-        }
-
-        if (card) {
-            const startTime = card.getAttribute("data-start-time") || "";
-            let formattedEnd = "";
-            if (payload.endTime) {
-                formattedEnd = new Date(payload.endTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                });
-            }
-
-            if (formattedEnd) {
-                card.setAttribute("data-end-time", formattedEnd);
-                const timeSpan = card.querySelector(".class-time span, .schedule-time span, .schedule-card-time span");
-                if (timeSpan) {
-                    timeSpan.textContent = (startTime ? (startTime + " – ") : "") + formattedEnd;
-                    timeSpan.style.color = "#38bdf8";
-                    timeSpan.style.transition = "color 0.3s ease";
-                    setTimeout(function () {
-                        timeSpan.style.color = "";
-                    }, 3000);
-                }
-            }
-
-            const currentState = card.getAttribute("data-attendance-state");
-            if (currentState !== "present") {
-                setLiveUI(card, payload.sessionId);
-            }
-        }
-    });
-
     socket.on("attendance:ended", function (payload) {
         const card = getScheduleCard(payload.scheduleId);
 

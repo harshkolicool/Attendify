@@ -535,64 +535,6 @@ document.addEventListener("DOMContentLoaded", function init() {
         }
     }
 
-    document.addEventListener("click", async function (e) {
-        const btn = e.target.closest(".js-extend-session-btn");
-        if (!btn) return;
-
-        const sessionId = btn.getAttribute("data-session-id");
-        const minutes = Number(btn.getAttribute("data-minutes")) || 5;
-        if (!sessionId) return;
-
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        btn.disabled = true;
-
-        try {
-            const res = await fetch("/teacher/attendance/session/" + sessionId + "/extend", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-                body: JSON.stringify({ extendMinutes: minutes })
-            });
-            const data = await res.json();
-            if (data.success) {
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> +' + minutes + 'm';
-                showTeacherToast(data.message, "success");
-                setTimeout(function () {
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                }, 2000);
-            } else {
-                showTeacherToast(data.message || "Failed to extend attendance.", "danger");
-                btn.innerHTML = originalHtml;
-                btn.disabled = false;
-            }
-        } catch (err) {
-            showTeacherToast("Error: " + err.message, "danger");
-            btn.innerHTML = originalHtml;
-            btn.disabled = false;
-        }
-    });
-
-    socket.on("attendance:extended", function (payload) {
-        if (!payload || !payload.sessionId) return;
-        showTeacherToast(payload.message || "Attendance window extended!", "info");
-
-        // Dynamically update the Ends text in the live card telemetry bar!
-        const liveCard = document.querySelector(`.live-card[data-session-id="${payload.sessionId}"]`);
-        if (liveCard && payload.endTime) {
-            const endsValueEl = liveCard.querySelector(".live-meta-item:nth-child(2) .meta-value");
-            if (endsValueEl) {
-                const newEndStr = new Date(payload.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                endsValueEl.textContent = newEndStr;
-                endsValueEl.style.color = "#38bdf8";
-                setTimeout(function () { endsValueEl.style.color = ""; }, 2500);
-            }
-        }
-    });
-
     loadRecentSuspiciousAttempts();
     startAcousticBeaconForLiveSessions();
 });

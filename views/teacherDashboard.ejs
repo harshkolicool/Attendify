@@ -873,13 +873,6 @@
 
                         <!-- Balanced Modern Control Dock -->
                         <div class="teacher-live-actions-row">
-                            <button type="button" class="teacher-extend-btn js-extend-session-btn" data-session-id="<%= session._id %>" data-minutes="5" title="Add 5 minutes to attendance window">
-                                <i class="fa-solid fa-clock-rotate-left"></i> +5 Min
-                            </button>
-                            <button type="button" class="teacher-extend-btn js-extend-session-btn" data-session-id="<%= session._id %>" data-minutes="10" title="Add 10 minutes to attendance window">
-                                <i class="fa-solid fa-clock-rotate-left"></i> +10 Min
-                            </button>
-
                             <form action="/teacher/attendance/end/<%= session._id %>" method="POST" class="teacher-live-action-form">
                                 <button class="teacher-end-btn" type="submit">
                                     <i class="fa-solid fa-stop"></i>
