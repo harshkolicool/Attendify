@@ -95,7 +95,10 @@ const attendanceRecordSchema = new mongoose.Schema({
         radiusUncertaintyAllowance: Number,
         minimumPossibleDistance: Number,
         passkeyCredentialId: String,
-        locationMeta: mongoose.Schema.Types.Mixed
+        locationMeta: mongoose.Schema.Types.Mixed,
+        acousticVerified: { type: Boolean, default: false },
+        acousticDistanceMeters: { type: Number, default: null },
+        acousticRowCategory: { type: String, default: null }
     },
 
     markedAt: {

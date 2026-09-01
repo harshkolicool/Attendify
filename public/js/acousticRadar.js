@@ -200,62 +200,67 @@
 
                 navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
                     .then(stream => {
-                        this.stream = stream;
-                        this.audioCtx = getAudioContext();
-                        if (!this.audioCtx) return finish({ verified: false, reason: "AUDIO_CONTEXT_FAILED" });
+                        try {
+                            this.stream = stream;
+                            this.audioCtx = getAudioContext();
+                            if (!this.audioCtx) return finish({ verified: false, reason: "AUDIO_CONTEXT_FAILED" });
 
-                        const source = this.audioCtx.createMediaStreamSource(stream);
+                            const source = this.audioCtx.createMediaStreamSource(stream);
 
-                        // High-Pass Filter: Cuts off all speech, AC, and ambient noise (< 18,000 Hz)
-                        const filter = this.audioCtx.createBiquadFilter();
-                        filter.type = "highpass";
-                        filter.frequency.value = 18000;
+                            // High-Pass Filter: Cuts off all speech, AC, and ambient noise (< 18,000 Hz)
+                            const filter = this.audioCtx.createBiquadFilter();
+                            filter.type = "highpass";
+                            filter.frequency.value = 18000;
 
-                        const analyser = this.audioCtx.createAnalyser();
-                        analyser.fftSize = 2048;
-                        analyser.smoothingTimeConstant = 0.2;
+                            const analyser = this.audioCtx.createAnalyser();
+                            analyser.fftSize = 2048;
+                            analyser.smoothingTimeConstant = 0.2;
 
-                        source.connect(filter);
-                        filter.connect(analyser);
+                            source.connect(filter);
+                            filter.connect(analyser);
 
-                        const sampleRate = this.audioCtx.sampleRate;
-                        const binSize = sampleRate / analyser.fftSize;
+                            const sampleRate = this.audioCtx.sampleRate;
+                            const binSize = sampleRate / analyser.fftSize;
 
-                        const binPilot = Math.round(FREQ_PILOT / binSize);
-                        const binSpace = Math.round(FREQ_SPACE / binSize);
-                        const binMark  = Math.round(FREQ_MARK / binSize);
+                            const binPilot = Math.round(FREQ_PILOT / binSize);
+                            const binSpace = Math.round(FREQ_SPACE / binSize);
+                            const binMark  = Math.round(FREQ_MARK / binSize);
 
-                        const bufferLength = analyser.frequencyBinCount;
-                        const dataArray = new Uint8Array(bufferLength);
+                            const bufferLength = analyser.frequencyBinCount;
+                            const dataArray = new Uint8Array(bufferLength);
 
-                        const pollInterval = setInterval(() => {
-                            if (isDone) {
-                                clearInterval(pollInterval);
-                                return;
-                            }
+                            const pollInterval = setInterval(() => {
+                                if (isDone) {
+                                    clearInterval(pollInterval);
+                                    return;
+                                }
 
-                            analyser.getByteFrequencyData(dataArray);
+                                analyser.getByteFrequencyData(dataArray);
 
-                            const powerPilot = dataArray[binPilot] || 0;
-                            const powerSpace = dataArray[binSpace] || 0;
-                            const powerMark  = dataArray[binMark] || 0;
+                                const powerPilot = dataArray[binPilot] || 0;
+                                const powerSpace = dataArray[binSpace] || 0;
+                                const powerMark  = dataArray[binMark] || 0;
 
-                            const maxPower = Math.max(powerPilot, powerSpace, powerMark);
+                                const maxPower = Math.max(powerPilot, powerSpace, powerMark);
 
-                            // If distinct ultrasonic signal detected above noise floor
-                            if (maxPower >= 75) {
-                                clearInterval(pollInterval);
-                                const metrics = this._calculateSeatingMetrics(maxPower);
-                                
-                                finish({
-                                    verified: true,
-                                    signalPower: maxPower,
-                                    distanceMeters: metrics.distanceMeters,
-                                    rowCategory: metrics.rowCategory,
-                                    confidence: metrics.confidence
-                                });
-                            }
-                        }, 25);
+                                // If distinct ultrasonic signal detected above noise floor
+                                if (maxPower >= 75) {
+                                    clearInterval(pollInterval);
+                                    const metrics = this._calculateSeatingMetrics(maxPower);
+                                    
+                                    finish({
+                                        verified: true,
+                                        signalPower: maxPower,
+                                        distanceMeters: metrics.distanceMeters,
+                                        rowCategory: metrics.rowCategory,
+                                        confidence: metrics.confidence
+                                    });
+                                }
+                            }, 25);
+                        } catch (innerErr) {
+                            console.warn("Acoustic node setup fallback:", innerErr);
+                            finish({ verified: false, reason: "NODE_ERROR" });
+                        }
                     })
                     .catch(() => {
                         finish({ verified: false, reason: "PERMISSION_DENIED" });

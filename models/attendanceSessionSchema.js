@@ -39,6 +39,8 @@ const studentAttendanceSnapshotSchema = new mongoose.Schema(
             enum: [
                 "GEOLOCATION",
                 "PASSKEY_GEOLOCATION",
+                "PASSKEY_ACOUSTIC_GEOFENCE",
+                "ACOUSTIC_RADAR",
                 "TRUSTED_DEVICE_GEOLOCATION",
                 "MANUAL",
                 "AUTO_ABSENT",
