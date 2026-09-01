@@ -2365,6 +2365,30 @@ router.post("/classrooms/:id/update", isCollegeAdmin, async function (req, res) 
             }
         );
 
+        // Dynamically sync and update any currently active attendance sessions in this classroom
+        const activeSessions = await AttendanceSession.find({
+            classroom: classroomId,
+            status: "ACTIVE",
+            isActive: true
+        });
+
+        if (activeSessions && activeSessions.length > 0) {
+            await AttendanceSession.updateMany(
+                {
+                    classroom: classroomId,
+                    status: "ACTIVE",
+                    isActive: true
+                },
+                {
+                    $set: { radius: radius }
+                }
+            );
+
+            for (const s of activeSessions) {
+                socketManager.emitSessionRadiusUpdated(s, radius);
+            }
+        }
+
         res.redirect("/admin/classrooms?message=updated");
 
     } catch (err) {

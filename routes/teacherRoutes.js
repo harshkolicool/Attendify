@@ -971,6 +971,43 @@ router.get("/live-map/global", isTeacher, async function (req, res) {
     }
 });
 
+router.post("/attendance/session/:id/radius", isTeacher, async (req, res) => {
+    try {
+        const sessionId = req.params.id;
+        const newRadius = Number(req.body.radius);
+
+        if (!isValidObjectId(sessionId) || !Number.isFinite(newRadius) || newRadius < 1 || newRadius > 10000) {
+            return res.status(400).json({ success: false, message: "Invalid radius value." });
+        }
+
+        const session = await AttendanceSession.findOne({
+            _id: sessionId,
+            teacher: req.user._id,
+            college: req.user.college,
+            isActive: true,
+            status: "ACTIVE"
+        });
+
+        if (!session) {
+            return res.status(404).json({ success: false, message: "Active attendance session not found." });
+        }
+
+        session.radius = newRadius;
+        await session.save();
+
+        socketManager.emitSessionRadiusUpdated(session, newRadius);
+
+        return res.json({
+            success: true,
+            message: "Attendance radius updated successfully.",
+            radius: newRadius
+        });
+    } catch (err) {
+        console.error("TEACHER UPDATE RADIUS ERROR:", err);
+        return res.status(500).json({ success: false, message: "Server error updating radius." });
+    }
+});
+
 router.post("/attendance/start", isTeacher, async (req, res) => {
     try {
         let durationMinutes = Number(req.body.durationMinutes);

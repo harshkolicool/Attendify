@@ -1431,6 +1431,34 @@ function emitRetryRequested(sessionId, studentId) {
     });
 }
 
+function emitSessionRadiusUpdated(session, newRadius) {
+    const io = getIO();
+    if (!io || !session || !newRadius) return;
+
+    const sessionId = getId(session._id);
+    const teacherId = getId(session.teacher);
+    const classGroupId = getId(session.classGroup);
+    const collegeId = getId(session.college);
+
+    const payload = {
+        sessionId: sessionId,
+        radius: Number(newRadius),
+        configuredRadius: Number(newRadius),
+        effectiveRadius: Number(newRadius),
+        updatedAt: new Date()
+    };
+
+    if (teacherId) {
+        io.to(getTeacherRoom(teacherId)).emit("attendance:radius:updated", payload);
+    }
+    if (classGroupId) {
+        io.to(getClassGroupRoom(classGroupId)).emit("attendance:radius:updated", payload);
+    }
+    if (collegeId) {
+        io.to(getAdminCollegeRoom(collegeId)).emit("attendance:radius:updated", payload);
+    }
+}
+
 module.exports = {
     initializeSocket,
     getIO,
@@ -1449,5 +1477,6 @@ module.exports = {
     emitNewRegistration,
     emitAttendancePendingReview,
     emitAttendanceReviewDecision,
-    emitRetryRequested
+    emitRetryRequested,
+    emitSessionRadiusUpdated
 };

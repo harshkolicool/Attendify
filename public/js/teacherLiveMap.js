@@ -1283,6 +1283,32 @@ function initTeacherLiveMap() {
             if (String(payload.sessionId) === activeSessionId) clearSession();
         });
 
+        socket.on("attendance:radius:updated", function (payload) {
+            if (!payload || !payload.sessionId) return;
+            if (activeSessionId && String(payload.sessionId) !== activeSessionId) return;
+
+            var newRadius = Number(payload.radius || payload.effectiveRadius || payload.configuredRadius);
+            if (newRadius > 0) {
+                if (sessionCenter) {
+                    sessionCenter.radius = newRadius;
+                    sessionCenter.verificationRadius = newRadius;
+                }
+                if (radiusCircle) {
+                    radiusCircle.setRadius(newRadius);
+                }
+                if (effectiveRadiusCircle) {
+                    effectiveRadiusCircle.setRadius(newRadius);
+                }
+                if (teacherMarker) {
+                    teacherMarker.bindPopup(
+                        "<b>Teacher / Classroom Center</b><br>Attendance Radius: " +
+                            Math.round(newRadius) + " m"
+                    );
+                }
+                setHint("Attendance radius updated to " + Math.round(newRadius) + "m by Admin.");
+            }
+        });
+
         socket.on("student:location:update", function (payload) {
             upsertStudent(payload);
         });
