@@ -363,14 +363,14 @@ async function getStudentAttendanceSummary(studentId) {
     try {
         const records = await AttendanceRecord.find({
             student: studentId,
-            status: { $in: ["PRESENT", "LATE", "ABSENT"] }
+            status: { $in: ["PRESENT", "LATE", "EXCUSED", "ABSENT"] }
         }).select("status").lean();
 
         let total = 0;
         let present = 0;
         for (let i = 0; i < records.length; i++) {
             total++;
-            if (records[i].status === "PRESENT" || records[i].status === "LATE") {
+            if (records[i].status === "PRESENT" || records[i].status === "LATE" || records[i].status === "EXCUSED") {
                 present++;
             }
         }
@@ -1019,7 +1019,7 @@ async function getStudentPageData(req) {
         // Computes overall % and per-subject breakdown in one DB round-trip.
         AttendanceRecord.find({
             student: student._id,
-            status: { $in: ["PRESENT", "LATE", "ABSENT"] }
+            status: { $in: ["PRESENT", "LATE", "EXCUSED", "ABSENT"] }
         })
             .populate("subject", "subjectName subjectCode")
             .lean()
@@ -1083,7 +1083,7 @@ async function getStudentPageData(req) {
     let absentCount = 0;
     for (let key in attendanceStatusBySchedule) {
         const s = attendanceStatusBySchedule[key].status;
-        if (s === "PRESENT" || s === "LATE") presentCount++;
+        if (s === "PRESENT" || s === "LATE" || s === "EXCUSED") presentCount++;
         if (s === "ABSENT") absentCount++;
     }
 
@@ -1095,7 +1095,7 @@ async function getStudentPageData(req) {
     for (let i = 0; i < attendanceAgg.length; i++) {
         const r = attendanceAgg[i];
         totalAllSessions++;
-        const isPresent = (r.status === "PRESENT" || r.status === "LATE");
+        const isPresent = (r.status === "PRESENT" || r.status === "LATE" || r.status === "EXCUSED");
         if (isPresent) presentAllSessions++;
 
         const subjKey = r.subject ? (r.subject._id ? r.subject._id.toString() : r.subject.toString()) : "unassigned";
@@ -2987,6 +2987,7 @@ router.get("/attendance-history", isStudent, async function (req, res) {
         }
 
         if (!student.college || !student.classGroup) {
+            const studentStats = await getStudentAttendanceSummary(student._id);
             return res.render("studentAttendanceHistory", {
                 student: student,
                 activePage: "attendance-history",
@@ -3010,6 +3011,9 @@ router.get("/attendance-history", isStudent, async function (req, res) {
                     attendancePercentage: 0,
                     suspiciousCount: 0
                 },
+                overallAttendancePercentage: studentStats.attendancePercentage,
+                attendancePercentage: studentStats.attendancePercentage,
+                totalAttendanceSessions: studentStats.totalSessions,
                 realtimeMode: realtimeConfig.getRealtimeMode(),
                 realtimePollIntervalMs: realtimeConfig.getPollIntervalMs()
             });
@@ -3040,15 +3044,43 @@ router.get("/attendance-history", isStudent, async function (req, res) {
             sessionQuery.subject = subjectId;
         }
 
-        const sessions = await AttendanceSession.find(sessionQuery)
-            .populate("schedule")
-            .populate("subject")
-            .populate("teacher")
-            .populate("classGroup")
-            .populate("classroom")
-            .sort({
-                startTime: -1
-            });
+        const attemptQuery = {
+            student: student._id,
+            college: student.college,
+            result: {
+                $ne: "SUCCESS"
+            },
+            createdAt: {
+                $gte: fromDate,
+                $lte: toDate
+            }
+        };
+
+        if (subjectId) {
+            attemptQuery.subject = subjectId;
+        }
+
+        const [sessions, suspiciousAttempts, studentStats] = await Promise.all([
+            AttendanceSession.find(sessionQuery)
+                .populate("schedule")
+                .populate("subject")
+                .populate("teacher")
+                .populate("classGroup")
+                .populate("classroom")
+                .sort({
+                    startTime: -1
+                }),
+            AttendanceAttempt.find(attemptQuery)
+                .populate("subject")
+                .populate("teacher")
+                .populate("classGroup")
+                .populate("classroom")
+                .sort({
+                    createdAt: -1
+                })
+                .limit(50),
+            getStudentAttendanceSummary(student._id)
+        ]);
 
         const sessionIds = sessions.map(function (session) {
             return session._id;
@@ -3200,32 +3232,6 @@ router.get("/attendance-history", isStudent, async function (req, res) {
                 return firstGroup.subjectName.localeCompare(secondGroup.subjectName);
             });
 
-        const attemptQuery = {
-            student: student._id,
-            college: student.college,
-            result: {
-                $ne: "SUCCESS"
-            },
-            createdAt: {
-                $gte: fromDate,
-                $lte: toDate
-            }
-        };
-
-        if (subjectId) {
-            attemptQuery.subject = subjectId;
-        }
-
-        const suspiciousAttempts = await AttendanceAttempt.find(attemptQuery)
-            .populate("subject")
-            .populate("teacher")
-            .populate("classGroup")
-            .populate("classroom")
-            .sort({
-                createdAt: -1
-            })
-            .limit(50);
-
         const summary = {
             totalSessions: sessions.length,
             totalRecords: attendanceRecords.length,
@@ -3246,8 +3252,9 @@ router.get("/attendance-history", isStudent, async function (req, res) {
             suspiciousAttempts: suspiciousAttempts,
             subjectSummary: subjectSummary,
             summary: summary,
-            attendancePercentage: summary.attendancePercentage,
-            totalAttendanceSessions: summary.totalRecords,
+            overallAttendancePercentage: studentStats.attendancePercentage,
+            attendancePercentage: studentStats.attendancePercentage,
+            totalAttendanceSessions: studentStats.totalSessions,
             realtimeMode: realtimeConfig.getRealtimeMode(),
             realtimePollIntervalMs: realtimeConfig.getPollIntervalMs()
         });
@@ -3973,7 +3980,7 @@ router.get("/profile", isStudent, async function (req, res) {
         let totalAbsent = 0;
 
         for (const r of allRecords) {
-            if (r.status === "PRESENT" || r.status === "LATE") totalPresent++;
+            if (r.status === "PRESENT" || r.status === "LATE" || r.status === "EXCUSED") totalPresent++;
             else if (r.status === "ABSENT") totalAbsent++;
         }
 

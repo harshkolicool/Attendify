@@ -103,7 +103,7 @@
 
             <span class="student-history-overall-pill">
                 <i class="fa-solid fa-user-graduate"></i>
-                <%= summary.attendancePercentage %>% Overall
+                <%= typeof attendancePercentage !== 'undefined' ? attendancePercentage : (typeof overallAttendancePercentage !== 'undefined' ? overallAttendancePercentage : summary.attendancePercentage) %>% Overall
             </span>
         </section>
 
