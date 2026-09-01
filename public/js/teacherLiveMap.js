@@ -321,7 +321,25 @@ function initTeacherLiveMap() {
                     teacherMarker = null;
                 }
 
-                // Draw / update Live Teacher GPS marker
+                // If an active session is already rendering, do not create a disconnected rogue marker
+                if (activeSessionId && sessionCenter) {
+                    if (userLiveGpsMarker) { try { userLiveGpsMarker.remove(); } catch (e) {} userLiveGpsMarker = null; }
+                    if (userLiveGpsCircle) { try { userLiveGpsCircle.remove(); } catch (e) {} userLiveGpsCircle = null; }
+
+                    if (teacherMarker) {
+                        teacherMarker.setLatLng([sessionCenter.lat, sessionCenter.lon]);
+                        teacherMarker.bindPopup(
+                            "<b>Teacher / Session Center</b><br><small style='color: #059669; font-weight: 700;'>GPS Accuracy: ±" + Math.round(accuracy) + "m</small><br>Allowed Radius: " + Math.round(sessionCenter.radius) + "m"
+                        );
+                    }
+                    if (autoCenter) {
+                        map.flyTo([sessionCenter.lat, sessionCenter.lon], 17, { animate: true, duration: 1.2 });
+                    }
+                    setHint("Teacher Location verified (±" + Math.round(accuracy) + "m). Geofence boundary active.");
+                    return;
+                }
+
+                // Draw / update Standby Live Teacher GPS marker when NO session is running
                 if (userLiveGpsMarker) {
                     try { userLiveGpsMarker.remove(); } catch (e) {}
                 }
@@ -728,30 +746,32 @@ function initTeacherLiveMap() {
 
         if (mapOverlay) mapOverlay.style.display = "none";
 
-        if (userLiveGpsMarker) {
-            // Live GPS marker is active; do not duplicate teacherMarker
-            if (teacherMarker) {
-                try { teacherMarker.remove(); } catch (e) {}
-                teacherMarker = null;
-            }
-        } else if (teacherMarker) {
+        if (userLiveGpsMarker) { try { userLiveGpsMarker.remove(); } catch (e) {} userLiveGpsMarker = null; }
+        if (userLiveGpsCircle) { try { userLiveGpsCircle.remove(); } catch (e) {} userLiveGpsCircle = null; }
+        if (standbyMarker) { try { standbyMarker.remove(); } catch (e) {} standbyMarker = null; }
+        if (standbyCircle) { try { standbyCircle.remove(); } catch (e) {} standbyCircle = null; }
+
+        const teacherIcon = L.divIcon({
+            className: "custom-teacher-marker",
+            html: '<div class="teacher-map-center-marker teacher-live-beacon"><span class="beacon-halo"></span><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i></div>',
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+        });
+
+        if (teacherMarker) {
             teacherMarker.setLatLng([lat, lon]);
+            teacherMarker.setIcon(teacherIcon);
         } else {
-            const teacherIcon = L.divIcon({
-                className: "custom-teacher-marker",
-                html: '<div class="teacher-map-center-marker"><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i></div>',
-                iconSize: [36, 36],
-                iconAnchor: [18, 18]
-            });
             teacherMarker = L.marker([lat, lon], { icon: teacherIcon, title: "Teacher Location", zIndexOffset: 1000 }).addTo(map);
-            teacherMarker.bindPopup(
-                "<b>Teacher / Classroom Center</b><br>Admin radius: " +
-                    Math.round(adminRadius) +
-                    " m<br>GPS verification zone: " +
-                    Math.round(verificationRadius) +
-                    " m"
-            );
         }
+
+        teacherMarker.bindPopup(
+            "<b>Teacher / Classroom Center</b><br>Attendance Radius: " +
+                Math.round(adminRadius) +
+                " m<br>GPS verification zone: " +
+                Math.round(verificationRadius) +
+                " m"
+        );
 
         if (radiusCircle) {
             radiusCircle.setLatLng([lat, lon]);
