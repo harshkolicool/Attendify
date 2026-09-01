@@ -829,9 +829,19 @@
                     showRealtimeToast("Attendance session started.", "success");
                 });
 
+                socket.on("attendance:extended:admin", function (payload) {
+                    dispatchRealtimeEvent("attendify:attendance-extended", payload);
+                    showRealtimeToast(payload.message || "Attendance session extended.", "info");
+                });
+
                 socket.on("attendance:ended:admin", function (payload) {
                     dispatchRealtimeEvent("attendify:attendance-ended", payload);
                     showRealtimeToast("Attendance session ended.", "success");
+                });
+
+                socket.on("attendance:extended", function (payload) {
+                    dispatchRealtimeEvent("attendify:attendance-extended", payload);
+                    showRealtimeToast(payload.message || "Attendance window extended.", "info");
                 });
 
                 socket.on("attendance:started", function (payload) {

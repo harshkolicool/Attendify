@@ -37,6 +37,10 @@ document.addEventListener("DOMContentLoaded", function () {
       dispatchRealtimeEvent("attendify:attendance-started", payload);
     });
 
+    socket.on("attendance:extended:admin", function (payload) {
+      dispatchRealtimeEvent("attendify:attendance-extended", payload);
+    });
+
     socket.on("attendance:ended:admin", function (payload) {
       dispatchRealtimeEvent("attendify:attendance-ended", payload);
     });
