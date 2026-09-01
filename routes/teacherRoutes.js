@@ -1104,17 +1104,30 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
         let finalLongitude = Number(teacherLongitude) || 0;
         let finalLocationSource = "TEACHER_GPS";
 
+        const teacherAccNum = Number(teacherAccuracy) || 0;
+
+        // SMART GPS ANCHOR: If teacher is on a laptop/Wi-Fi with weak accuracy (> 25m or unmeasured)
+        // and the scheduled classroom has calibrated preset coordinates, use the classroom anchor!
+        if (
+            (teacherAccNum > 25 || teacherAccNum === 0) &&
+            scheduleItem.classroom &&
+            scheduleItem.classroom.latitude &&
+            scheduleItem.classroom.longitude &&
+            Number(scheduleItem.classroom.latitude) !== 0 &&
+            Number(scheduleItem.classroom.longitude) !== 0
+        ) {
+            finalLatitude = Number(scheduleItem.classroom.latitude);
+            finalLongitude = Number(scheduleItem.classroom.longitude);
+            finalLocationSource = "CLASSROOM_PRESET_ANCHOR";
+        }
+
         // Block 0,0 coordinates — these are never valid teacher locations
         if (finalLatitude === 0 && finalLongitude === 0) {
             return res.redirect("/teacher/dashboard?error=invalid_teacher_location");
         }
 
-        // Teacher GPS is ALWAYS the session center.
-        // Classroom preset coordinates are NOT used as center anymore.
-
-        const teacherAccNum = Number(teacherAccuracy) || 0;
-        const teacherLocationQuality = teacherAccNum > 0 && teacherAccNum <= 50 ? "GOOD" : "WEAK";
-        const sessionRadius = Number(scheduleItem.classroom.radius) || 100;
+        const teacherLocationQuality = teacherAccNum > 0 && teacherAccNum <= 25 ? "EXCELLENT" : (teacherAccNum <= 50 ? "GOOD" : "WEAK");
+        const sessionRadius = Number(scheduleItem.classroom ? scheduleItem.classroom.radius : 100) || 100;
 
         if (previousSession) {
             previousSession.endTime = sessionEndTime;

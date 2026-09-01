@@ -270,15 +270,15 @@ function resetAttendanceButton(button, oldHtml) {
 
 function getFastGpsPosition() {
     return new Promise(function(resolve, reject) {
-        // 1. Check window.AttendifyLatestPosition from active location stream
+        // 1. Check window.AttendifyLatestPosition from active location stream (max 15s old)
         if (window.AttendifyLatestPosition && Number.isFinite(window.AttendifyLatestPosition.latitude)) {
             const age = Date.now() - (window.AttendifyLatestPosition.timestamp || 0);
-            if (age < 90000) {
+            if (age < 15000 && (window.AttendifyLatestPosition.accuracy || 999) <= 30) {
                 return resolve({
                     coords: {
                         latitude: window.AttendifyLatestPosition.latitude,
                         longitude: window.AttendifyLatestPosition.longitude,
-                        accuracy: window.AttendifyLatestPosition.accuracy || 15
+                        accuracy: window.AttendifyLatestPosition.accuracy || 10
                     },
                     timestamp: window.AttendifyLatestPosition.timestamp
                 });
@@ -287,8 +287,8 @@ function getFastGpsPosition() {
 
         // 2. Check window.AttendifyLiveStream buffer
         if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.getBestFreshPosition === 'function') {
-            const cached = window.AttendifyLiveStream.getBestFreshPosition(60000);
-            if (cached) {
+            const cached = window.AttendifyLiveStream.getBestFreshPosition(15000);
+            if (cached && (cached.accuracy || 999) <= 30) {
                 return resolve({ coords: cached });
             }
         }
@@ -297,7 +297,7 @@ function getFastGpsPosition() {
             return reject(new Error("Geolocation is not supported by your browser."));
         }
 
-        // 3. High-accuracy query with maximumAge: 30000 to leverage active GPS hardware lock
+        // 3. Ultra-fresh high-accuracy query (maximumAge: 0) to force fresh satellite fix
         navigator.geolocation.getCurrentPosition(
             function(pos) { resolve(pos); },
             function(err) {
@@ -317,10 +317,10 @@ function getFastGpsPosition() {
                         }
                         reject(fallbackErr || err);
                     },
-                    { enableHighAccuracy: false, timeout: 6000, maximumAge: 60000 }
+                    { enableHighAccuracy: false, timeout: 6000, maximumAge: 10000 }
                 );
             },
-            { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     });
 }
