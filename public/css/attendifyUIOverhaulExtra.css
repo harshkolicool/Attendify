@@ -6914,32 +6914,43 @@ html.dark-mode ::-webkit-scrollbar-thumb:hover {
     align-items: center !important;
     gap: 12px !important;
     padding: 10px 14px !important;
-    background: rgba(30, 41, 59, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(30, 41, 59, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
     border-radius: 14px !important;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    cursor: default !important;
+    position: relative !important;
 }
 
+/* Subtle, Luxury Hover State (Zero Jerky Movement) */
 .teacher-live-active-card .student-card-item:hover {
-    background: rgba(30, 41, 59, 0.9) !important;
+    background: rgba(30, 41, 59, 0.8) !important;
     border-color: rgba(56, 189, 248, 0.35) !important;
-    transform: translateX(3px) !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+    box-shadow: 0 4px 18px -2px rgba(6, 182, 212, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    transform: none !important;
 }
 
 .teacher-live-active-card .student-avatar {
-    width: 38px !important;
-    height: 38px !important;
-    border-radius: 11px !important;
-    background: linear-gradient(135deg, #0284c7, #2563eb) !important;
-    color: #ffffff !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(37, 99, 235, 0.25)) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    color: #38bdf8 !important;
     font-weight: 800 !important;
-    font-size: 0.95rem !important;
+    font-size: 0.9rem !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
     flex-shrink: 0 !important;
+    transition: all 0.22s ease !important;
+}
+
+.teacher-live-active-card .student-card-item:hover .student-avatar {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.35), rgba(37, 99, 235, 0.45)) !important;
+    border-color: rgba(56, 189, 248, 0.65) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.35) !important;
 }
 
 .teacher-live-active-card .student-info {
@@ -6951,7 +6962,7 @@ html.dark-mode ::-webkit-scrollbar-thumb:hover {
 }
 
 .teacher-live-active-card .student-name-text {
-    font-size: 0.92rem !important;
+    font-size: 0.9rem !important;
     font-weight: 800 !important;
     color: #f8fafc !important;
     white-space: nowrap !important;
@@ -6962,25 +6973,31 @@ html.dark-mode ::-webkit-scrollbar-thumb:hover {
 
 .teacher-live-active-card .student-enrollment-badge {
     font-family: monospace !important;
-    font-size: 0.74rem !important;
+    font-size: 0.72rem !important;
     color: #94a3b8 !important;
     font-weight: 600 !important;
     line-height: 1 !important;
 }
 
 .teacher-live-active-card .student-status-icon.verified {
-    width: 28px !important;
-    height: 28px !important;
+    width: 26px !important;
+    height: 26px !important;
     border-radius: 50% !important;
-    background: rgba(16, 185, 129, 0.18) !important;
-    border: 1.5px solid rgba(16, 185, 129, 0.6) !important;
+    background: rgba(16, 185, 129, 0.14) !important;
+    border: 1px solid rgba(16, 185, 129, 0.45) !important;
     color: #34d399 !important;
-    font-size: 0.74rem !important;
+    font-size: 0.7rem !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.25) !important;
     flex-shrink: 0 !important;
+    transition: all 0.22s ease !important;
+}
+
+.teacher-live-active-card .student-card-item:hover .student-status-icon.verified {
+    background: rgba(16, 185, 129, 0.24) !important;
+    border-color: rgba(16, 185, 129, 0.8) !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.35) !important;
 }
 
 .teacher-live-active-card .empty-student-card {
