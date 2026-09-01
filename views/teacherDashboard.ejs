@@ -790,49 +790,63 @@
 
                     <div class="live-card teacher-live-active-card" data-session-id="<%= session._id %>">
 
+                        <!-- Live Card Header -->
                         <div class="live-top">
                             <div class="live-course-info">
-                                <h4><%= session.subject ? session.subject.subjectName : 'Subject Missing' %></h4>
-                                <p><%= session.classGroup ? session.classGroup.name : 'Class Missing' %></p>
+                                <div class="live-course-title-wrap">
+                                    <h4 class="live-subject-heading"><%= session.subject ? session.subject.subjectName : 'Subject Missing' %></h4>
+                                    <span class="live-class-pill"><i class="fa-solid fa-graduation-cap"></i> <%= session.classGroup ? session.classGroup.name : 'Class Missing' %></span>
+                                </div>
                             </div>
 
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div class="acoustic-radar-badge" title="Broadcasting inaudible 19.5kHz ultrasonic beacon for zero-proxy presence verification" style="font-size: 0.72rem; font-weight: 800; color: #38bdf8; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.35); padding: 4px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">
-                                    <i class="fa-solid fa-tower-broadcast" style="animation: pulse 1.8s infinite;"></i>
+                            <div class="live-top-badges">
+                                <div class="acoustic-radar-badge" title="Broadcasting inaudible 19.5kHz ultrasonic beacon for zero-proxy presence verification">
+                                    <span class="acoustic-wave-bars">
+                                        <span></span><span></span><span></span>
+                                    </span>
                                     <span>Radar: 19.5 kHz Active</span>
                                 </div>
                                 <div class="live-badge-modern">
                                     <span class="pulse-dot"></span>
-                                    LIVE
+                                    <span>LIVE</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="live-meta">
+                        <!-- 3-Column Glass Telemetry Grid -->
+                        <div class="live-meta-grid">
+                            <div class="live-meta-item">
+                                <div class="live-meta-icon cyan"><i class="fa-solid fa-location-dot"></i></div>
+                                <div class="live-meta-text">
+                                    <span class="meta-label">Location</span>
+                                    <strong class="meta-value"><%= session.classroom ? session.classroom.classroomName : 'Campus' %></strong>
+                                </div>
+                            </div>
 
-                            <% if (session.classroom) { %>
-                                <p>
-                                    <i class="fa-solid fa-location-dot"></i>
-                                    <%= session.classroom.classroomName %>
-                                </p>
-                            <% } %>
+                            <div class="live-meta-item">
+                                <div class="live-meta-icon amber"><i class="fa-solid fa-clock"></i></div>
+                                <div class="live-meta-text">
+                                    <span class="meta-label">Ends At</span>
+                                    <strong class="meta-value"><%= session.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></strong>
+                                </div>
+                            </div>
 
-                            <p>
-                                <i class="fa-solid fa-clock"></i>
-                                Ends:
-                                <%= session.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
-                            </p>
-
-                            <p>
-                                <i class="fa-solid fa-user-check"></i>
-                                Present:
-                                <span class="js-live-present-count">
-                                    <%= session.presentStudents ? session.presentStudents.length : 0 %>
-                                </span>
-                            </p>
-
+                            <div class="live-meta-item">
+                                <div class="live-meta-icon emerald"><i class="fa-solid fa-user-check"></i></div>
+                                <div class="live-meta-text">
+                                    <span class="meta-label">Present</span>
+                                    <strong class="meta-value js-live-present-count live-count-badge"><%= session.presentStudents ? session.presentStudents.length : 0 %></strong>
+                                </div>
+                            </div>
                         </div>
 
+                        <!-- Live Student Feed Header -->
+                        <div class="live-student-section-header">
+                            <span><i class="fa-solid fa-list-check"></i> Live Check-ins</span>
+                            <small class="live-feed-pulse-indicator"><span class="pulse-tiny"></span> Real-time Sync</small>
+                        </div>
+
+                        <!-- Live Student Feed List -->
                         <ul class="live-student-list js-live-student-list">
                             <% if (session.presentStudents && session.presentStudents.length > 0) { %>
                                 <% session.presentStudents.slice(-5).reverse().forEach(function(studentItem) { %>
@@ -841,36 +855,38 @@
                                             <%= studentItem.fullName ? studentItem.fullName.charAt(0).toUpperCase() : 'S' %>
                                         </div>
                                         <div class="student-info">
-                                            <strong><%= studentItem.fullName %></strong>
-                                            <span><%= studentItem.enrollmentNumber %></span>
+                                            <strong class="student-name-text"><%= studentItem.fullName %></strong>
+                                            <span class="student-enrollment-badge"><%= studentItem.enrollmentNumber %></span>
                                         </div>
-                                        <div class="student-status-icon">
+                                        <div class="student-status-icon verified">
                                             <i class="fa-solid fa-check"></i>
                                         </div>
                                     </li>
                                 <% }) %>
                             <% } else { %>
                                 <li class="empty-student-card">
-                                    <p>No students present yet.</p>
+                                    <i class="fa-solid fa-satellite-dish fa-bounce" style="--fa-bounce-height: -6px; color: #38bdf8; font-size: 1.25rem;"></i>
+                                    <p>Waiting for first student to mark attendance...</p>
                                 </li>
                             <% } %>
                         </ul>
 
+                        <!-- Balanced Modern Control Dock -->
                         <div class="teacher-live-actions-row">
-                            <div class="teacher-extend-actions" style="display: inline-flex; gap: 6px; margin-right: auto;">
-                                <button type="button" class="teacher-extend-btn js-extend-session-btn" data-session-id="<%= session._id %>" data-minutes="5" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;" title="Add 5 minutes to attendance window">
-                                    <i class="fa-solid fa-clock-rotate-left"></i> +5 Min
-                                </button>
-                                <button type="button" class="teacher-extend-btn js-extend-session-btn" data-session-id="<%= session._id %>" data-minutes="10" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;" title="Add 10 minutes to attendance window">
-                                    <i class="fa-solid fa-clock-rotate-left"></i> +10 Min
-                                </button>
-                            </div>
+                            <button type="button" class="teacher-extend-btn js-extend-session-btn" data-session-id="<%= session._id %>" data-minutes="5" title="Add 5 minutes to attendance window">
+                                <i class="fa-solid fa-clock-rotate-left"></i> +5 Min
+                            </button>
+                            <button type="button" class="teacher-extend-btn js-extend-session-btn" data-session-id="<%= session._id %>" data-minutes="10" title="Add 10 minutes to attendance window">
+                                <i class="fa-solid fa-clock-rotate-left"></i> +10 Min
+                            </button>
+
                             <form action="/teacher/attendance/end/<%= session._id %>" method="POST" class="teacher-live-action-form">
                                 <button class="teacher-end-btn" type="submit">
                                     <i class="fa-solid fa-stop"></i>
                                     <span>End Early</span>
                                 </button>
                             </form>
+
                             <form action="/teacher/attendance/force-end/<%= session._id %>" method="POST" class="teacher-live-action-form" onsubmit="return confirm('Force ending will immediately mark all remaining students ABSENT. Are you sure?');">
                                 <button class="teacher-force-end-btn" type="submit">
                                     <i class="fa-solid fa-power-off"></i>

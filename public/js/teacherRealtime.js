@@ -433,9 +433,11 @@ document.addEventListener("DOMContentLoaded", function init() {
                 infoBox.className = "student-info";
 
                 const studentName = document.createElement("strong");
+                studentName.className = "student-name-text";
                 studentName.textContent = studentNameStr;
 
                 const enrollmentNumber = document.createElement("span");
+                enrollmentNumber.className = "student-enrollment-badge";
                 enrollmentNumber.textContent = payload.enrollmentNumber || "Unknown";
 
                 infoBox.appendChild(studentName);
@@ -450,7 +452,7 @@ document.addEventListener("DOMContentLoaded", function init() {
                 }
 
                 const statusIconBox = document.createElement("div");
-                statusIconBox.className = "student-status-icon";
+                statusIconBox.className = "student-status-icon verified";
                 
                 const checkIcon = document.createElement("i");
                 checkIcon.className = "fa-solid fa-check";
