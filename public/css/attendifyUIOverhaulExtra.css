@@ -6568,7 +6568,7 @@ body, button, input, select, textarea {
 }
 
 /* Glassmorphism Stat & KPI Cards */
-.admin-kpi-card, .report-stat-card, .teacher-report-kpi-tile, .stat-tile {
+.admin-kpi-card, .report-stat-card, .stat-tile {
     background: var(--theme-bg-card, #ffffff) !important;
     border: 1px solid var(--theme-border, #e2e8f0) !important;
     border-radius: 20px !important;
@@ -6577,7 +6577,17 @@ body, button, input, select, textarea {
     box-shadow: var(--glass-shadow) !important;
 }
 
-.admin-kpi-card:hover, .report-stat-card:hover, .teacher-report-kpi-tile:hover, .stat-tile:hover {
+[data-theme="dark"] .admin-kpi-card,
+[data-theme="dark"] .report-stat-card,
+[data-theme="dark"] .stat-tile,
+html.dark-mode .admin-kpi-card,
+html.dark-mode .report-stat-card,
+html.dark-mode .stat-tile {
+    background: rgba(15, 23, 42, 0.75) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.admin-kpi-card:hover, .report-stat-card:hover, .stat-tile:hover {
     transform: translateY(-4px) !important;
     box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12) !important;
 }
