@@ -176,6 +176,13 @@ app.use(express.static(path.join(__dirname, "public"), {
     }
 }));
 
+app.get(["/service-worker.js", "/sw.js"], function (req, res) {
+    res.setHeader("Content-Type", "application/javascript");
+    res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+    res.setHeader("Service-Worker-Allowed", "/");
+    res.sendFile(path.join(__dirname, "public", "sw.js"));
+});
+
 /*
     Note: MongoDB connection is established once at server startup in server.js.
     No per-request reconnect needed here.

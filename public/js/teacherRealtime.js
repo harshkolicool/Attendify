@@ -489,6 +489,17 @@ document.addEventListener("DOMContentLoaded", function init() {
     });
 
 
+    socket.on("attendance:started:teacher", function (payload) {
+        if (!payload || !payload.sessionId) return;
+        const token = payload.acousticBeaconToken || String(payload.sessionId).slice(0, 4).toUpperCase();
+        if (window.AttendifyAcousticRadar && window.AttendifyAcousticRadar.Emitter) {
+            if (!window._attendifyAcousticEmitter) {
+                window._attendifyAcousticEmitter = new window.AttendifyAcousticRadar.Emitter();
+            }
+            window._attendifyAcousticEmitter.startBroadcast(token);
+        }
+    });
+
     socket.on("attendance:ended:teacher", function (payload) {
         const card = findLiveCard(payload.sessionId);
 
@@ -500,6 +511,10 @@ document.addEventListener("DOMContentLoaded", function init() {
             if (badge) {
                 badge.textContent = "CLOSED";
             }
+        }
+
+        if (window._attendifyAcousticEmitter && window._attendifyAcousticEmitter.isBroadcasting) {
+            window._attendifyAcousticEmitter.stopBroadcast();
         }
 
         showTeacherToast("Attendance session closed", "success");
@@ -517,18 +532,17 @@ document.addEventListener("DOMContentLoaded", function init() {
         );
     });
 
-
-
     function startAcousticBeaconForLiveSessions() {
         if (!window.AttendifyAcousticRadar || !window.AttendifyAcousticRadar.Emitter) return;
         const liveCards = document.querySelectorAll(".live-card:not(.session-ended)");
         if (liveCards.length > 0) {
-            const firstSessionId = liveCards[0].getAttribute("data-session-id");
-            if (firstSessionId && (!window._attendifyAcousticEmitter || !window._attendifyAcousticEmitter.isBroadcasting)) {
+            const token = liveCards[0].getAttribute("data-acoustic-token") ||
+                          liveCards[0].getAttribute("data-session-id");
+            if (token && (!window._attendifyAcousticEmitter || !window._attendifyAcousticEmitter.isBroadcasting)) {
                 if (!window._attendifyAcousticEmitter) {
                     window._attendifyAcousticEmitter = new window.AttendifyAcousticRadar.Emitter();
                 }
-                window._attendifyAcousticEmitter.startBroadcast(firstSessionId);
+                window._attendifyAcousticEmitter.startBroadcast(token);
             }
         } else if (window._attendifyAcousticEmitter && window._attendifyAcousticEmitter.isBroadcasting) {
             window._attendifyAcousticEmitter.stopBroadcast();

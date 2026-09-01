@@ -405,7 +405,29 @@
                         </div>
                     </div>
                 </label>
+        </section>
+
+        <!-- ULTRASONIC ACOUSTIC RECEIVER TESTER CARD -->
+        <section class="student-acoustic-tester-card" id="studentAcousticTestSection">
+            <div class="student-acoustic-tester-head">
+                <div class="tester-title-wrap">
+                    <div class="tester-icon-box">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                    </div>
+                    <div>
+                        <h3 class="tester-title">
+                            Ultrasonic Acoustic Microphone Tester
+                        </h3>
+                        <p class="tester-subtitle">
+                            Listen for the teacher's inaudible ultrasonic acoustic chord (18.2–19.8 kHz MFSK) and decode the secret key live.
+                        </p>
+                    </div>
+                </div>
+                <button id="btnStudentAcousticTest" class="btn-student-acoustic-test" type="button" onclick="runStudentAcousticTest()">
+                    <i class="fa-solid fa-microphone-lines"></i> Listen & Decode Sound
+                </button>
             </div>
+            <div id="studentAcousticResultBox" class="student-acoustic-result-box" style="display: none;"></div>
         </section>
 
         <section class="dashboard-panel">
@@ -744,12 +766,19 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <script src="/js/kalmanFilter.js"></script>
 <script src="/js/locationStabilizer.js"></script>
 <script src="/js/geoAccuracy.js"></script>
-<script src="/js/acousticRadar.js?v=20260901_v2"></script>
-<script src="/js/studentLocation.js"></script>
+<script src="/js/acousticRadar.js?v=20260902_v21"></script>
+<script src="/js/acousticTestLab.js?v=20260902_v21"></script>
+<script src="/js/studentLocation.js?v=20260902_v21"></script>
 <script src="/js/studentRealtime.js"></script>
 <script src="/js/studentLiveLocation.js"></script>
 <script src="/js/dashboardTimeSync.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+}
+</script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const ctx = document.getElementById('studentAnalyticsChart');

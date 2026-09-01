@@ -103,15 +103,12 @@
                     if (res.redirected) {
                         window.location.href = res.url;
                     } else if (res.ok) {
-                        return res.text().then(function(html) {
-                            document.open();
-                            document.write(html);
-                            document.close();
-                        });
+                        window.location.reload();
                     } else {
                         window.location.reload();
                     }
                 }).catch(function(err) {
+
                     console.error("Form submit error:", err);
                     if (submitButton) {
                         submitButton.disabled = false;

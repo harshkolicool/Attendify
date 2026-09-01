@@ -63,6 +63,8 @@ const attendanceRecordSchema = new mongoose.Schema({
             "GEOLOCATION",
             "PASSKEY_GEOLOCATION",
             "PASSKEY_ACOUSTIC_GEOFENCE",
+            "ULTRASONIC_ACOUSTIC_FALLBACK",
+            "ACOUSTIC_VERIFIED",
             "ACOUSTIC_RADAR",
             "TRUSTED_DEVICE_GEOLOCATION",
             "MANUAL",

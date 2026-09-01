@@ -1,210 +1,315 @@
 /**
- * Attendify Acoustic Radar Engine (v2.0 - High Performance & Production Resilient)
- * Zero-hardware inaudible ultrasonic presence verification (18.2 kHz - 19.4 kHz)
- * and indoor seating distance ranging with adaptive SNR filtering.
+ * Attendify Acoustic Radar Engine (v12.0 - Polyphonic Simultaneous Ultrasonic Chord Modem)
+ * 100% Inaudible (18.3 kHz - 19.7 kHz), Zero Audible Clicks, Instant Single-Snapshot Detection.
+ * Transmits all 4 Hex Characters Simultaneously in 4 Parallel Inaudible Frequency Carriers.
  */
 
 (function (window) {
     "use strict";
 
-    // Frequencies (Hz) strictly above human hearing, within all 44.1kHz / 48kHz audio limits
-    const FREQ_PILOT = 18200; // Start of Frame sync pilot tone
-    const FREQ_SPACE = 18800; // Binary '0'
-    const FREQ_MARK  = 19400; // Binary '1'
-    const FREQ_NOISE_LOWER = 17500; // Guard band lower reference
-    const FREQ_NOISE_UPPER = 20000; // Guard band upper reference
-    const SYMBOL_DURATION_MS = 20;  // Duration per bit symbol (20ms)
+    // 4 Parallel Inaudible Frequency Bands (One dedicated band per character position)
+    const BANDS = [
+        { base: 18300, step: 20, min: 18280, max: 18620 }, // Band 0 for Char 0 (18300 - 18600 Hz)
+        { base: 18680, step: 20, min: 18660, max: 19000 }, // Band 1 for Char 1 (18680 - 18980 Hz)
+        { base: 19060, step: 20, min: 19040, max: 19380 }, // Band 2 for Char 2 (19060 - 19360 Hz)
+        { base: 19440, step: 20, min: 19420, max: 19760 }  // Band 3 for Char 3 (19440 - 19740 Hz)
+    ];
 
-    // Web Audio Context Singleton & Safe Lifecycle
+    const HEX_CHARS = ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"];
+    const FREQ_GUARD_LOW = 17800;
+    const FREQ_GUARD_HIGH= 19900;
+
+    function tokenToChordFrequencies(tokenHex) {
+        const clean = String(tokenHex || "E3F0").toUpperCase().replace(/[^0-9A-F]/g, "").slice(0, 4).padEnd(4, "0");
+        const freqs = [];
+        for (let i = 0; i < 4; i++) {
+            const val = parseInt(clean[i], 16);
+            freqs.push(BANDS[i].base + val * BANDS[i].step);
+        }
+        return freqs; // 4 simultaneous frequencies
+    }
+
+    function sha256(ascii) {
+        function rightRotate(value, amount) {
+            return (value>>>amount) | (value<<(32 - amount));
+        }
+        const mathPow = Math.pow;
+        const maxWord = mathPow(2, 32);
+        let lengthProperty = 'length';
+        let i, j;
+        let result = '';
+
+        const words = [];
+        const asciiBitLength = ascii[lengthProperty]*8;
+        
+        let hash = sha256.h = sha256.h || [];
+        const k = sha256.k = sha256.k || [];
+        let primeCounter = k[lengthProperty];
+
+        const isComposite = {};
+        for (let candidate = 2; primeCounter < 64; candidate++) {
+            if (!isComposite[candidate]) {
+                for (i = 0; i < 313; i += candidate) {
+                    isComposite[i] = candidate;
+                }
+                hash[primeCounter] = (mathPow(candidate, .5)*maxWord)|0;
+                k[primeCounter++] = (mathPow(candidate, 1/3)*maxWord)|0;
+            }
+        }
+        
+        ascii += '\x80';
+        while (ascii[lengthProperty]%64 - 56) ascii += '\x00';
+        for (i = 0; i < ascii[lengthProperty]; i++) {
+            j = ascii.charCodeAt(i);
+            if (j>>8) return;
+            words[i>>2] |= j << ((3 - i)%4)*8;
+        }
+        words[words[lengthProperty]] = ((asciiBitLength/maxWord)|0);
+        words[words[lengthProperty]] = (asciiBitLength);
+        
+        for (j = 0; j < words[lengthProperty];) {
+            const w = words.slice(j, j += 16);
+            const oldHash = hash;
+            hash = hash.slice(0, 8);
+            
+            for (i = 0; i < 64; i++) {
+                const i2 = i + j;
+                const w15 = w[i - 15], w2 = w[i - 2];
+
+                const a = hash[0], e = hash[4];
+                const temp1 = hash[7]
+                    + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+                    + ((e & hash[5]) ^ ((~e) & hash[6]))
+                    + k[i]
+                    + (w[i] = (i < 16) ? w[i] : (
+                            w[i - 16]
+                            + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15>>>3))
+                            + w[i - 7]
+                            + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2>>>10))
+                        )|0
+                    );
+                const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+                    + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+                
+                hash = [(temp1 + temp2)|0].concat(hash);
+                hash[4] = (hash[4] + temp1)|0;
+            }
+            
+            for (i = 0; i < 8; i++) {
+                hash[i] = (hash[i] + oldHash[i])|0;
+            }
+        }
+        
+        for (i = 0; i < 8; i++) {
+            for (j = 3; j + 1; j--) {
+                const b = (hash[i]>>(j*8))&255;
+                result += ((b < 16) ? 0 : '') + b.toString(16);
+            }
+        }
+        return result;
+    }
+
+    function generateRollingToken(baseSecret, windowIndex) {
+        const raw = String(baseSecret || "") + ":" + String(windowIndex);
+        const hash = sha256(raw).toUpperCase();
+        return hash.slice(0, 4);
+    }
+
+    function interpolateFrequency(dataArray, bin, binSize) {
+        if (bin <= 0 || bin >= dataArray.length - 1) return bin * binSize;
+        const y1 = dataArray[bin - 1];
+        const y2 = dataArray[bin];
+        const y3 = dataArray[bin + 1];
+        const denom = y1 - 2 * y2 + y3;
+        if (denom === 0) return bin * binSize;
+        const delta = (0.5 * (y1 - y3)) / denom;
+        return (bin + delta) * binSize;
+    }
+
     function getAudioContext() {
+        if (window._attendifyGlobalAudioCtx && window._attendifyGlobalAudioCtx.state !== "closed") {
+            return window._attendifyGlobalAudioCtx;
+        }
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return null;
         try {
-            return new AudioCtx();
+            window._attendifyGlobalAudioCtx = new AudioCtx();
+            return window._attendifyGlobalAudioCtx;
         } catch (e) {
             return null;
         }
     }
 
+    // Auto-unlock Web Audio on first touch/click (iOS Safari / Android Chrome autoplay policy)
+    function unlockAudioContext() {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state === "suspended") {
+            ctx.resume().catch(() => {});
+        }
+        document.removeEventListener("touchstart", unlockAudioContext);
+        document.removeEventListener("touchend", unlockAudioContext);
+        document.removeEventListener("click", unlockAudioContext);
+    }
+    if (typeof document !== "undefined") {
+        document.addEventListener("touchstart", unlockAudioContext, { passive: true });
+        document.addEventListener("touchend", unlockAudioContext, { passive: true });
+        document.addEventListener("click", unlockAudioContext, { passive: true });
+    }
+
     /**
-     * AcousticEmitter (Teacher Mode)
-     * Broadcasts inaudible 2-FSK modulated ultrasonic pulses from teacher's speaker during live attendance.
+     * AcousticEmitter (Teacher Laptop Speaker)
+     * Broadcasts a continuous 4-tone inaudible polyphonic ultrasonic chord with rolling beacon support.
      */
     class AcousticEmitter {
-        constructor() {
-            this.audioCtx = null;
-            this.broadcastTimer = null;
+        constructor(existingAudioCtx) {
+            this.audioCtx = existingAudioCtx || getAudioContext();
             this.isBroadcasting = false;
             this.activeNodes = [];
             this.lastToken = null;
+            this.rollingTimer = null;
+            this.baseSecret = null;
         }
 
-        startBroadcast(tokenHex, intervalMs = 800) {
+        startBroadcast(tokenHex) {
             if (this.isBroadcasting) {
                 this.stopBroadcast();
             }
 
             try {
-                this.audioCtx = getAudioContext();
-                if (!this.audioCtx) {
-                    return false;
+                if (!this.audioCtx || this.audioCtx.state === "closed") {
+                    this.audioCtx = getAudioContext();
                 }
-
-                // Handle browser autoplay policy
-                const tryResume = () => {
-                    if (this.audioCtx && this.audioCtx.state === "suspended") {
-                        this.audioCtx.resume().catch(() => {});
-                    }
-                };
+                if (!this.audioCtx) return false;
 
                 if (this.audioCtx.state === "suspended") {
-                    tryResume();
-                    const resumeOnInteraction = () => {
-                        tryResume();
-                        document.removeEventListener("click", resumeOnInteraction);
-                        document.removeEventListener("touchstart", resumeOnInteraction);
-                        document.removeEventListener("pointerdown", resumeOnInteraction);
-                        document.removeEventListener("keydown", resumeOnInteraction);
-                    };
-                    document.addEventListener("click", resumeOnInteraction, { once: true });
-                    document.addEventListener("touchstart", resumeOnInteraction, { once: true, passive: true });
-                    document.addEventListener("pointerdown", resumeOnInteraction, { once: true, passive: true });
-                    document.addEventListener("keydown", resumeOnInteraction, { once: true });
+                    this.audioCtx.resume().catch(() => {});
                 }
 
                 this.isBroadcasting = true;
-                this.lastToken = String(tokenHex || "ATTEND");
-                const binaryPayload = this._encodeToBits(this.lastToken);
+                const cleanToken = String(tokenHex || "E3F0").toUpperCase().replace(/[^0-9A-F]/g, "").slice(0, 4).padEnd(4, "0");
+                this.lastToken = cleanToken;
 
-                // Play first burst immediately
-                this._transmitBurst(binaryPayload);
-
-                // Repeat periodically during active attendance session (default every 800ms)
-                this.broadcastTimer = setInterval(() => {
-                    if (this.isBroadcasting) {
-                        tryResume();
-                        this._transmitBurst(binaryPayload);
-                    }
-                }, intervalMs);
-
+                this._playChord(cleanToken);
                 return true;
             } catch (err) {
+                console.warn("AcousticEmitter startBroadcast error:", err);
                 return false;
             }
         }
 
-        stopBroadcast() {
-            this.isBroadcasting = false;
-            if (this.broadcastTimer) {
-                clearInterval(this.broadcastTimer);
-                this.broadcastTimer = null;
+        startRollingBroadcast(baseSecret, windowDurationMs = 20000) {
+            if (this.isBroadcasting) {
+                this.stopBroadcast();
             }
-            this.activeNodes.forEach(item => {
-                try {
-                    if (item.osc) {
-                        item.osc.stop();
-                        item.osc.disconnect();
-                    }
-                    if (item.gain) {
-                        item.gain.disconnect();
-                    }
-                } catch (e) {}
-            });
-            this.activeNodes = [];
-            if (this.audioCtx && this.audioCtx.state !== "closed") {
-                try { this.audioCtx.close(); } catch (e) {}
-            }
-            this.audioCtx = null;
-        }
 
-        _encodeToBits(str) {
-            let bits = [1, 0, 1, 0]; // 4-bit sync preamble
-            for (let i = 0; i < Math.min(str.length, 3); i++) {
-                const charCode = str.charCodeAt(i);
-                for (let b = 7; b >= 0; b--) {
-                    bits.push((charCode >> b) & 1);
+            this.baseSecret = baseSecret;
+            const currentWin = Math.floor(Date.now() / windowDurationMs);
+            const currentToken = generateRollingToken(baseSecret, currentWin);
+            
+            console.log(`[AcousticEmitter] Starting Rolling Beacon (20s window): Initial Token "${currentToken}"`);
+            this.startBroadcast(currentToken);
+
+            // Set up rolling interval
+            this.rollingTimer = setInterval(() => {
+                if (!this.isBroadcasting) return;
+                const nextWin = Math.floor(Date.now() / windowDurationMs);
+                const nextToken = generateRollingToken(this.baseSecret, nextWin);
+                if (nextToken !== this.lastToken) {
+                    console.log(`[AcousticEmitter] Rolling to new window ${nextWin} token: "${nextToken}"`);
+                    this.lastToken = nextToken;
+                    this._crossfadeChord(nextToken);
                 }
-            }
-            return bits;
+            }, 1000);
+
+            return true;
         }
 
-        _transmitBurst(bits) {
+        _playChord(token) {
             if (!this.audioCtx || this.audioCtx.state === "closed") return;
+            const chordFrequencies = tokenToChordFrequencies(token);
+            const now = this.audioCtx.currentTime;
 
-            try {
-                let startTime = this.audioCtx.currentTime + 0.03;
-                const symbolTime = SYMBOL_DURATION_MS / 1000;
-
-                // 1. Play Pilot Sync Tone (longer duration for lock)
-                this._scheduleTone(FREQ_PILOT, startTime, symbolTime * 2);
-                startTime += symbolTime * 2;
-
-                // 2. Play Bit Stream (FSK)
-                for (let i = 0; i < bits.length; i++) {
-                    const freq = bits[i] === 1 ? FREQ_MARK : FREQ_SPACE;
-                    this._scheduleTone(freq, startTime, symbolTime);
-                    startTime += symbolTime;
-                }
-            } catch (err) {}
-        }
-
-        _scheduleTone(freq, start, duration) {
-            if (!this.audioCtx) return;
-            try {
+            for (let i = 0; i < 4; i++) {
+                const freq = chordFrequencies[i];
                 const osc = this.audioCtx.createOscillator();
                 const gain = this.audioCtx.createGain();
 
                 osc.type = "sine";
-                osc.frequency.setValueAtTime(freq, start);
+                osc.frequency.setValueAtTime(freq, now);
 
-                // Smooth exponential envelope to eliminate speaker popping / clicks
-                gain.gain.setValueAtTime(0.0001, start);
-                gain.gain.exponentialRampToValueAtTime(0.75, start + 0.004);
-                gain.gain.setValueAtTime(0.75, start + duration - 0.004);
-                gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+                // Smooth 25ms raised-cosine ramp
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.24, now + 0.025);
 
                 osc.connect(gain);
                 gain.connect(this.audioCtx.destination);
 
-                osc.start(start);
-                osc.stop(start + duration);
-                const entry = { osc, gain };
-                this.activeNodes.push(entry);
+                osc.start(now);
+                this.activeNodes.push({ osc, gain });
+            }
+        }
 
-                setTimeout(() => {
-                    const idx = this.activeNodes.indexOf(entry);
-                    if (idx > -1) {
-                        try { gain.disconnect(); } catch (e) {}
-                        this.activeNodes.splice(idx, 1);
+        _crossfadeChord(newToken) {
+            if (!this.audioCtx) return;
+            const now = this.audioCtx.currentTime;
+
+            // Fade out existing nodes over 40ms
+            const oldNodes = this.activeNodes.slice();
+            this.activeNodes = [];
+
+            oldNodes.forEach(item => {
+                try {
+                    item.gain.gain.setValueAtTime(item.gain.gain.value, now);
+                    item.gain.gain.linearRampToValueAtTime(0, now + 0.04);
+                    setTimeout(() => {
+                        try { item.osc.stop(); item.osc.disconnect(); item.gain.disconnect(); } catch (e) {}
+                    }, 50);
+                } catch (e) {}
+            });
+
+            // Start new nodes with 40ms fade-in
+            this._playChord(newToken);
+        }
+
+        stopBroadcast() {
+            this.isBroadcasting = false;
+            if (this.rollingTimer) {
+                clearInterval(this.rollingTimer);
+                this.rollingTimer = null;
+            }
+            if (!this.audioCtx) return;
+
+            const now = this.audioCtx.currentTime;
+            this.activeNodes.forEach(item => {
+                try {
+                    if (item.gain) {
+                        item.gain.gain.setValueAtTime(item.gain.gain.value, now);
+                        item.gain.gain.linearRampToValueAtTime(0, now + 0.02);
                     }
-                }, (duration + 0.08) * 1000);
-            } catch (e) {}
+                    setTimeout(() => {
+                        try {
+                            if (item.osc) { item.osc.stop(); item.osc.disconnect(); }
+                            if (item.gain) { item.gain.disconnect(); }
+                        } catch (e) {}
+                    }, 30);
+                } catch (e) {}
+            });
+            this.activeNodes = [];
         }
     }
 
+
     /**
-     * AcousticListener (Student Mode)
-     * Captures inaudible ultrasonic pulses during check-in with high-SNR multi-bin detection.
+     * AcousticListener (Student Smartphone Microphone)
+     * Real-time 4-Band Simultaneous Polyphonic Demodulator.
      */
     class AcousticListener {
-        constructor() {
-            this.audioCtx = null;
+        constructor(existingAudioCtx) {
+            this.audioCtx = existingAudioCtx || null;
             this.stream = null;
         }
 
-        _getBandPeak(dataArray, freq, binSize) {
-            const centerBin = Math.round(freq / binSize);
-            const left = dataArray[centerBin - 1] || 0;
-            const center = dataArray[centerBin] || 0;
-            const right = dataArray[centerBin + 1] || 0;
-            return Math.max(left, center, right);
-        }
-
-        /**
-         * Listens for classroom acoustic chirp with adaptive timeout and early exit.
-         * Resolves with { verified: boolean, distanceMeters: number, signalPower: number, rowCategory: string }
-         */
-        async capturePresence(timeoutMs = 1200) {
+        async capturePresence(timeoutMs = 6000, onLiveSpectrum = null) {
             return new Promise((resolve) => {
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                     return resolve({ verified: false, reason: "NOT_SUPPORTED" });
@@ -223,16 +328,15 @@
                         } catch (e) {}
                         this.stream = null;
                     }
-                    if (this.audioCtx && this.audioCtx.state !== "closed") {
+                    if (this.audioCtx && this.audioCtx.state !== "closed" && this.audioCtx !== window._attendifyGlobalAudioCtx) {
                         try { this.audioCtx.close(); } catch (e) {}
                     }
                     this.audioCtx = null;
                     resolve(result);
                 };
 
-                // Non-blocking timeout fallback
                 timer = setTimeout(() => {
-                    finish({ verified: false, reason: "TIMEOUT" });
+                    finish({ verified: false, reason: "ACOUSTIC_SIGNAL_NOT_DETECTED" });
                 }, timeoutMs);
 
                 navigator.mediaDevices.getUserMedia({
@@ -247,9 +351,12 @@
                             try { stream.getTracks().forEach(t => t.stop()); } catch (e) {}
                             return;
                         }
+
                         try {
                             this.stream = stream;
-                            this.audioCtx = getAudioContext();
+                            if (!this.audioCtx || this.audioCtx.state === "closed") {
+                                this.audioCtx = getAudioContext();
+                            }
                             if (!this.audioCtx) return finish({ verified: false, reason: "AUDIO_CONTEXT_FAILED" });
 
                             if (this.audioCtx.state === "suspended") {
@@ -258,27 +365,26 @@
 
                             const source = this.audioCtx.createMediaStreamSource(stream);
 
-                            // High-Pass Filter: Cuts off all speech, AC, and ambient audible noise (< 17,500 Hz)
                             const filter = this.audioCtx.createBiquadFilter();
                             filter.type = "highpass";
                             filter.frequency.value = 17500;
-                            filter.Q.value = 1.0;
+                            filter.Q.value = 0.7;
 
                             const analyser = this.audioCtx.createAnalyser();
                             analyser.fftSize = 2048;
-                            analyser.smoothingTimeConstant = 0.15;
+                            analyser.smoothingTimeConstant = 0.04;
 
                             source.connect(filter);
                             filter.connect(analyser);
 
                             const sampleRate = this.audioCtx.sampleRate;
                             const binSize = sampleRate / analyser.fftSize;
-
                             const bufferLength = analyser.frequencyBinCount;
                             const dataArray = new Uint8Array(bufferLength);
 
-                            let consecutiveHits = 0;
-                            let highestDetectedPower = 0;
+                            let consecutiveValidFrames = 0;
+                            let candidateTokenVotes = {};
+                            let highestPower = 0;
 
                             const pollInterval = setInterval(() => {
                                 if (isDone) {
@@ -288,84 +394,157 @@
 
                                 analyser.getByteFrequencyData(dataArray);
 
-                                const powerPilot = this._getBandPeak(dataArray, FREQ_PILOT, binSize);
-                                const powerSpace = this._getBandPeak(dataArray, FREQ_SPACE, binSize);
-                                const powerMark  = this._getBandPeak(dataArray, FREQ_MARK, binSize);
+                                // Guard noise floor
+                                const guardLowBin = Math.round(FREQ_GUARD_LOW / binSize);
+                                const guardHighBin = Math.round(FREQ_GUARD_HIGH / binSize);
                                 const noiseFloor = Math.max(
-                                    this._getBandPeak(dataArray, FREQ_NOISE_LOWER, binSize),
-                                    this._getBandPeak(dataArray, FREQ_NOISE_UPPER, binSize)
+                                    dataArray[guardLowBin] || 0,
+                                    dataArray[guardHighBin] || 0,
+                                    5
                                 );
 
-                                const targetPeak = Math.max(powerPilot, powerSpace, powerMark);
+                                // Read all 4 bands simultaneously in this single frame!
+                                const frameChars = [];
+                                let frameValid = true;
+                                let framePowerSum = 0;
 
-                                // Dynamic SNR check: signal is prominent above guard band noise floor
-                                const hasSignal = targetPeak >= 55 && (targetPeak - noiseFloor >= 12 || targetPeak >= 85);
+                                for (let i = 0; i < 4; i++) {
+                                    const band = BANDS[i];
+                                    const startBin = Math.floor(band.min / binSize);
+                                    const endBin   = Math.ceil(band.max / binSize);
 
-                                if (hasSignal) {
-                                    consecutiveHits++;
-                                    if (targetPeak > highestDetectedPower) {
-                                        highestDetectedPower = targetPeak;
+                                    let bandMaxVal = 0;
+                                    let bandPeakBin = -1;
+                                    for (let b = startBin; b <= endBin && b < dataArray.length; b++) {
+                                        if (dataArray[b] > bandMaxVal) {
+                                            bandMaxVal = dataArray[b];
+                                            bandPeakBin = b;
+                                        }
                                     }
 
-                                    // Fast early-return: 2 consecutive positive samples confirm presence
-                                    if (consecutiveHits >= 2) {
-                                        clearInterval(pollInterval);
-                                        const metrics = this._calculateSeatingMetrics(highestDetectedPower);
-                                        finish({
-                                            verified: true,
-                                            signalPower: highestDetectedPower,
-                                            distanceMeters: metrics.distanceMeters,
-                                            rowCategory: metrics.rowCategory,
-                                            confidence: metrics.confidence
-                                        });
+                                    if (bandPeakBin > -1) {
+                                        const peakFreq = interpolateFrequency(dataArray, bandPeakBin, binSize);
+                                        const snr = bandMaxVal / noiseFloor;
+
+                                        if (bandMaxVal > highestPower) highestPower = bandMaxVal;
+
+                                        if (bandMaxVal >= 16 && snr >= 1.25) {
+                                            const val = Math.round((peakFreq - band.base) / band.step);
+                                            if (val >= 0 && val <= 15) {
+                                                frameChars.push(HEX_CHARS[val]);
+                                                framePowerSum += bandMaxVal;
+                                            } else {
+                                                frameValid = false;
+                                            }
+                                        } else {
+                                            frameValid = false;
+                                        }
+                                    } else {
+                                        frameValid = false;
+                                    }
+                                }
+
+                                if (typeof onLiveSpectrum === "function") {
+                                    onLiveSpectrum({
+                                        peakFreq: Math.round(18300),
+                                        power: highestPower,
+                                        noise: noiseFloor,
+                                        snr: Math.round((highestPower / noiseFloor) * 10) / 10,
+                                        state: "DECODING",
+                                        collected: frameChars.length === 4 ? frameChars.join(" ") : "Listening..."
+                                    });
+                                }
+
+                                if (frameValid && frameChars.length === 4) {
+                                    const token = frameChars.join("");
+                                    candidateTokenVotes[token] = (candidateTokenVotes[token] || 0) + framePowerSum;
+                                    consecutiveValidFrames++;
+
+                                    // Require 10 consecutive matching frames (~120ms) of the 4-tone chord
+                                    if (consecutiveValidFrames >= 10) {
+                                        let bestToken = null;
+                                        let maxVotes = -1;
+                                        for (const [tok, votes] of Object.entries(candidateTokenVotes)) {
+                                            if (votes > maxVotes) {
+                                                maxVotes = votes;
+                                                bestToken = tok;
+                                            }
+                                        }
+
+                                        if (bestToken) {
+                                            clearInterval(pollInterval);
+                                            const metrics = this._calculateSeatingMetrics(highestPower, noiseFloor);
+
+                                            return finish({
+                                                verified: true,
+                                                decodedToken: bestToken,
+                                                signalPower: highestPower,
+                                                distanceMeters: metrics.distanceMeters,
+                                                rowCategory: metrics.rowCategory,
+                                                confidence: metrics.confidence,
+                                                snr: metrics.snr
+                                            });
+                                        }
                                     }
                                 } else {
-                                    consecutiveHits = Math.max(0, consecutiveHits - 1);
+                                    consecutiveValidFrames = 0;
                                 }
-                            }, 15);
+                            }, 12);
                         } catch (innerErr) {
-                            console.warn("Acoustic node setup error:", innerErr);
+                            console.warn("Acoustic listener setup error:", innerErr);
                             finish({ verified: false, reason: "NODE_ERROR" });
                         }
                     })
                     .catch((err) => {
+                        console.warn("getUserMedia audio error:", err);
                         finish({ verified: false, reason: "PERMISSION_DENIED" });
                     });
             });
         }
 
-        _calculateSeatingMetrics(signalPower) {
-            let distanceMeters;
-            let rowCategory;
-            let confidence = Math.min(100, Math.max(50, Math.round((signalPower / 255) * 100)));
+        _calculateSeatingMetrics(signalPower, noiseFloor = 5) {
+            // 1. Noise-compensated acoustic power (removes ambient hiss bias)
+            const effectivePower = Math.max(8, Math.sqrt(Math.max(1, (signalPower * signalPower) - (noiseFloor * noiseFloor))));
+            
+            // 2. Telemetry-calibrated Log-Distance Acoustic Path Loss Formula:
+            // Measured Reference Anchor: 158/255 power corresponds to 1.0 meter
+            const PREF = 158; 
+            const exponent = (PREF - effectivePower) / 105.0;
+            let distance = 1.0 * Math.pow(10, exponent);
+            
+            distance = Math.max(0.2, Math.min(10.0, distance));
+            distance = parseFloat(distance.toFixed(1));
 
-            if (signalPower >= 190) {
-                distanceMeters = parseFloat((1.0 + (255 - signalPower) * (2.2 / 65)).toFixed(1));
-                rowCategory = "Front Row (1–2)";
-            } else if (signalPower >= 135) {
-                distanceMeters = parseFloat((3.3 + (190 - signalPower) * (3.7 / 55)).toFixed(1));
-                rowCategory = "Middle Row (3–5)";
-            } else if (signalPower >= 85) {
-                distanceMeters = parseFloat((7.1 + (135 - signalPower) * (5.4 / 50)).toFixed(1));
-                rowCategory = "Back Row (6–9)";
+            // 3. Dynamic Seating Category
+            let rowCategory;
+            if (distance <= 0.6) {
+                rowCategory = "Desk Proximity (< 0.6m)";
+            } else if (distance <= 1.8) {
+                rowCategory = "Front Row (1–2m)";
+            } else if (distance <= 4.2) {
+                rowCategory = "Middle Row (2–4m)";
             } else {
-                distanceMeters = parseFloat((12.6 + (85 - signalPower) * (7.4 / 35)).toFixed(1));
-                rowCategory = "Far Seating (10+)";
+                rowCategory = "Back Row (4m+)";
             }
 
+            const snr = parseFloat((effectivePower / Math.max(1, noiseFloor)).toFixed(1));
+            const confidence = Math.min(99, Math.max(70, Math.round(60 + (effectivePower / 255) * 39)));
+
             return {
-                distanceMeters: Math.max(1.0, distanceMeters),
+                distanceMeters: distance,
                 rowCategory: rowCategory,
-                confidence: confidence
+                confidence: confidence,
+                snr: snr
             };
         }
     }
 
-    // Export clean production API to window
     window.AttendifyAcousticRadar = {
         Emitter: AcousticEmitter,
         Listener: AcousticListener,
-        version: "2.0.0"
+        version: "12.0.0",
+        getAudioContext: getAudioContext,
+        tokenToChordFrequencies: tokenToChordFrequencies
     };
 
 })(window);

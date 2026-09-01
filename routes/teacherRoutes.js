@@ -1,6 +1,8 @@
 const socketManager = require("../utils/socketManager");
 const realtimeConfig = require("../utils/realtimeConfig");
 const express = require("express");
+const crypto = require("crypto");
+const acousticTestStore = require("../utils/acousticTestStore");
 const {
     MAX_GPS_ACCURACY_METERS,
     isUsableAccuracy,
@@ -1264,25 +1266,28 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
 
         const teacherAccNum = Number(teacherAccuracy) || 0;
 
-        // SMART GPS ANCHOR: If teacher is on a laptop/Wi-Fi with weak accuracy (> 25m or unmeasured)
-        // and the scheduled classroom has calibrated preset coordinates, use the classroom anchor!
-        if (
-            (teacherAccNum > 25 || teacherAccNum === 0) &&
-            scheduleItem.classroom &&
-            scheduleItem.classroom.latitude &&
-            scheduleItem.classroom.longitude &&
-            Number(scheduleItem.classroom.latitude) !== 0 &&
-            Number(scheduleItem.classroom.longitude) !== 0
-        ) {
-            finalLatitude = Number(scheduleItem.classroom.latitude);
-            finalLongitude = Number(scheduleItem.classroom.longitude);
-            finalLocationSource = "CLASSROOM_PRESET_ANCHOR";
+        // If teacher's GPS is missing or invalid (0,0), fallback to classroom preset
+        if (!isValidCoordinate(finalLatitude, finalLongitude)) {
+            if (
+                scheduleItem.classroom &&
+                scheduleItem.classroom.latitude &&
+                scheduleItem.classroom.longitude &&
+                Number(scheduleItem.classroom.latitude) !== 0 &&
+                Number(scheduleItem.classroom.longitude) !== 0
+            ) {
+                finalLatitude = Number(scheduleItem.classroom.latitude);
+                finalLongitude = Number(scheduleItem.classroom.longitude);
+                finalLocationSource = "CLASSROOM_PRESET";
+            }
         }
 
         // Block 0,0 coordinates — these are never valid teacher locations
         if (finalLatitude === 0 && finalLongitude === 0) {
             return res.redirect("/teacher/dashboard?error=invalid_teacher_location");
         }
+
+        // Generate dynamic 4-character hex acoustic challenge token (16-bit challenge, e.g. "A7F2")
+        const acousticBeaconToken = crypto.randomBytes(2).toString("hex").toUpperCase();
 
         const teacherLocationQuality = teacherAccNum > 0 && teacherAccNum <= 25 ? "EXCELLENT" : (teacherAccNum <= 50 ? "GOOD" : "WEAK");
         const sessionRadius = Number(scheduleItem.classroom ? scheduleItem.classroom.radius : 100) || 100;
@@ -1300,6 +1305,7 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
             previousSession.radius = sessionRadius;
             previousSession.teacherLocationQuality = teacherLocationQuality;
             previousSession.teacherLocationCapturedAt = new Date();
+            previousSession.acousticBeaconToken = previousSession.acousticBeaconToken || acousticBeaconToken;
 
             // Clear finalization state so the reopened session behaves as open
             // Without this, canOverrideAbsent sees a "finalized" session and may block
@@ -1332,6 +1338,7 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
                         radius: sessionRadius,
                         teacherLocationQuality: teacherLocationQuality,
                         teacherLocationCapturedAt: new Date(),
+                        acousticBeaconToken: acousticBeaconToken,
 
                         startTime: new Date(),
                         endTime: sessionEndTime,
@@ -3165,6 +3172,64 @@ router.get("/profile", isTeacher, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
         res.redirect("/teacher/dashboard");
+    }
+});
+
+router.post("/acoustic-test/start", isTeacher, async function (req, res) {
+    try {
+        const teacherId = req.user._id || req.user.id;
+        const testToken = crypto.randomBytes(2).toString("hex").toUpperCase(); // 4-char hex token, e.g. "B4F9"
+        
+        const tokenObj = acousticTestStore.setTestToken(teacherId, {
+            token: testToken,
+            teacherName: req.user.fullName || "Teacher",
+            collegeId: req.user.college
+        });
+
+        res.json({
+            success: true,
+            token: tokenObj.token,
+            expiresAt: tokenObj.expiresAt,
+            message: "Acoustic beacon test broadcast started."
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "Could not start acoustic test: " + err.message
+        });
+    }
+});
+
+router.post("/acoustic-test/stop", isTeacher, async function (req, res) {
+    try {
+        const teacherId = req.user._id || req.user.id;
+        acousticTestStore.clearTestToken(teacherId);
+        res.json({
+            success: true,
+            message: "Acoustic beacon test broadcast stopped."
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "Could not stop acoustic test: " + err.message
+        });
+    }
+});
+
+router.get("/acoustic-test/status", isTeacher, async function (req, res) {
+    try {
+        const teacherId = req.user._id || req.user.id;
+        const tokenObj = acousticTestStore.getTestTokenByTeacher(teacherId);
+        res.json({
+            success: true,
+            active: !!tokenObj,
+            token: tokenObj ? tokenObj.token : null
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "Could not get test status."
+        });
     }
 });
 

@@ -243,17 +243,25 @@ async function getBestAttendanceToken(sessionId, button) {
     }
 
     try {
+        button.innerHTML = '<i class="fa-solid fa-fingerprint"></i> Authenticating Passkey...';
         return await getAttendanceTokenWithPasskey(sessionId);
     } catch (err) {
         const msg = String(err && err.message ? err.message : err);
         const errName = String(err && err.name ? err.name : "");
-        const isTlsOrEnvironmentError = /TLS|certificate|insecure|not supported|relying party|NotAllowedError|InvalidStateError|SecurityError|network|no passkey|not registered|passkey verification could not start|timed out|abort/i.test(msg) || /NotAllowedError|AbortError|InvalidStateError|SecurityError/i.test(errName);
-        
-        if (isTlsOrEnvironmentError) {
-            console.warn("Passkey unavailable in current browser/tunnel TLS environment. Falling back to Trusted Browser verification...", err);
+
+        // If user intentionally canceled or biometric failed, throw clear actionable message
+        if (/NotAllowedError|AbortError|canceled|timed out|cancelled/i.test(errName) || /NotAllowedError|AbortError|canceled|cancelled/i.test(msg)) {
+            throw new Error("Passkey biometric verification is required. Please tap 'Mark Attendance' and complete the biometric prompt.");
+        }
+
+        // Only fallback to trusted browser if explicitly in an unresolvable TLS tunnel constraint
+        const isTlsTunnelError = /TLS|relying party|insecure context/i.test(msg);
+        if (isTlsTunnelError) {
+            console.warn("Passkey TLS origin constraint detected. Falling back to Trusted Browser verification...", err);
             button.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Trusted Browser...';
             return await getAttendanceTokenWithTrustedDevice(sessionId);
         }
+
         throw err;
     }
 }
@@ -562,36 +570,100 @@ function markAttendance(sessionId, button) {
     button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Checking Location...';
     showRadarScanModal();
 
+    // Sample hardware motion variance for human legitimacy (anti-mock emulator)
+    function sampleMicroMotion(durationMs = 400) {
+        return new Promise((resolve) => {
+            if (typeof window === "undefined" || !window.DeviceMotionEvent) {
+                return resolve({ supported: false });
+            }
+
+            const samples = [];
+            const onMotion = (event) => {
+                const acc = event.accelerationIncludingGravity || event.acceleration;
+                if (acc && (acc.x !== null || acc.y !== null || acc.z !== null)) {
+                    samples.push({ x: acc.x || 0, y: acc.y || 0, z: acc.z || 0 });
+                }
+            };
+
+            try {
+                window.addEventListener("devicemotion", onMotion, { passive: true });
+            } catch (e) {
+                return resolve({ supported: false });
+            }
+
+            setTimeout(() => {
+                try {
+                    window.removeEventListener("devicemotion", onMotion);
+                } catch (e) {}
+
+                if (samples.length < 2) {
+                    return resolve({ supported: true, sampleCount: samples.length, microMotionDetected: false });
+                }
+
+                let sumX = 0, sumY = 0, sumZ = 0;
+                samples.forEach(s => { sumX += s.x; sumY += s.y; sumZ += s.z; });
+                const meanX = sumX / samples.length;
+                const meanY = sumY / samples.length;
+                const meanZ = sumZ / samples.length;
+
+                let varSum = 0;
+                samples.forEach(s => {
+                    varSum += Math.pow(s.x - meanX, 2) + Math.pow(s.y - meanY, 2) + Math.pow(s.z - meanZ, 2);
+                });
+                const variance = varSum / samples.length;
+
+                resolve({
+                    supported: true,
+                    sampleCount: samples.length,
+                    variance: Math.round(variance * 10000) / 10000,
+                    microMotionDetected: variance > 0.00005
+                });
+            }, durationMs);
+        });
+    }
+
     let finalPos = null;
     const radiusHint = getActiveSessionRadiusHint();
+    const motionPromise = sampleMicroMotion(500);
 
     getFastGpsPosition()
         .catch(function(err) {
+            console.warn("GPS position failed or unavailable, activating Ultrasonic Fallback:", err);
             return null;
         })
-        .then(function(pos) {
-            if (!pos || !pos.coords) {
-                throw new Error("Could not detect your location. Please move near a window and try again.");
-            }
+        .then(async function(pos) {
             finalPos = pos;
-            updateRadarScanStep("GPS_OK", `Satellite accuracy ±${Math.round(pos.coords.accuracy || 10)}m acquired.`);
-            return getBestAttendanceToken(sessionId, button);
-        })
-        .then(async function (attendanceToken) {
-            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            if (pos && pos.coords) {
+                updateRadarScanStep("GPS_OK", `Satellite accuracy ±${Math.round(pos.coords.accuracy || 10)}m acquired.`);
+            } else {
+                updateRadarScanStep("GPS_OK", "GPS indoor/weak — activating Ultrasonic Acoustic Radar...");
+            }
+
+            const attendanceToken = await getBestAttendanceToken(sessionId, button);
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking Presence...';
 
             let acousticProof = { verified: false };
             if (window.AttendifyAcousticRadar && window.AttendifyAcousticRadar.Listener) {
                 try {
                     const listener = new window.AttendifyAcousticRadar.Listener();
-                    acousticProof = await listener.capturePresence(1200);
+                    // Listen for teacher's inaudible polyphonic chord
+                    const listenTimeout = finalPos ? 1600 : 3200;
+                    acousticProof = await listener.capturePresence(listenTimeout);
                 } catch (e) {
-                    console.log("Acoustic listener skipped:", e);
+                    console.log("Acoustic listener error:", e);
                 }
             }
 
-            if (acousticProof.verified) {
-                updateRadarScanStep("ACOUSTIC_OK", `Seating: ${acousticProof.distanceMeters}m (${acousticProof.rowCategory || "Classroom"})`);
+            // Wait for motion telemetry sample
+            const motionData = await motionPromise;
+
+            // If GPS failed AND Ultrasonic acoustic failed:
+            if ((!finalPos || !finalPos.coords) && (!acousticProof || !acousticProof.verified)) {
+                throw new Error("Could not verify your presence in the classroom. GPS was unavailable and no teacher ultrasonic beacon was heard. Please move near a window or closer to the teacher.");
+            }
+
+            if (acousticProof.verified && acousticProof.decodedToken) {
+                updateRadarScanStep("ACOUSTIC_OK", `Ultrasonic Verified • Key ${acousticProof.decodedToken} (${acousticProof.distanceMeters}m ${acousticProof.rowCategory || ""})`);
             } else {
                 updateRadarScanStep("ACOUSTIC_OK", "Geofence satellite telemetry verified.");
             }
@@ -600,11 +672,11 @@ function markAttendance(sessionId, button) {
 
             const payloadObj = {
                 sessionId: sessionId,
-                latitude: finalPos ? finalPos.coords.latitude : null,
-                longitude: finalPos ? finalPos.coords.longitude : null,
-                accuracy: finalPos ? finalPos.coords.accuracy : null,
+                latitude: finalPos && finalPos.coords ? finalPos.coords.latitude : null,
+                longitude: finalPos && finalPos.coords ? finalPos.coords.longitude : null,
+                accuracy: finalPos && finalPos.coords ? finalPos.coords.accuracy : null,
                 timestamp: finalPos && finalPos.timestamp ? finalPos.timestamp : Date.now(),
-                locationMeta: buildStudentLocationMeta(finalPos),
+                locationMeta: Object.assign({}, buildStudentLocationMeta(finalPos), { motion: motionData }),
                 attendanceToken: attendanceToken,
                 browserFingerprint: getBrowserFingerprint(),
                 requestReview: false,
@@ -944,7 +1016,31 @@ function saveOfflineAttendance(payload) {
     queue.push(payload);
     localStorage.setItem('attendify_offline_queue', JSON.stringify(queue));
     updateOfflineQueueUI();
+
+    // Also persist to IndexedDB for Background Sync Service Worker
+    try {
+        const req = indexedDB.open("AttendifyOfflineDB", 1);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains("attendanceQueue")) {
+                db.createObjectStore("attendanceQueue", { keyPath: "id", autoIncrement: true });
+            }
+        };
+        req.onsuccess = (e) => {
+            const db = e.target.result;
+            const tx = db.transaction("attendanceQueue", "readwrite");
+            tx.objectStore("attendanceQueue").add({ payload, queuedAt: Date.now() });
+        };
+    } catch (e) {}
+
+    // Register Background Sync if supported
+    if ("serviceWorker" in navigator && "SyncManager" in window) {
+        navigator.serviceWorker.ready.then((reg) => {
+            return reg.sync.register("sync-attendance");
+        }).catch(() => {});
+    }
 }
+
 
 function syncOfflineAttendance() {
     if (!navigator.onLine) return;

@@ -788,7 +788,7 @@
 
                 <% activeSessions.forEach(function(session) { %>
 
-                    <div class="live-card teacher-live-active-card" data-session-id="<%= session._id %>">
+                    <div class="live-card teacher-live-active-card" data-session-id="<%= session._id %>" data-acoustic-token="<%= session.acousticBeaconToken || '' %>">
 
                         <!-- Live Card Header -->
                         <div class="live-top">
@@ -1005,6 +1005,58 @@
                 };
             });
         %>
+        <!-- ULTRASONIC ACOUSTIC TEST LAB CARD -->
+        <section class="teacher-acoustic-lab-card" id="teacherAcousticLabSection">
+            <div class="teacher-acoustic-lab-head">
+                <div class="acoustic-lab-title-wrap">
+                    <div class="acoustic-lab-icon-box">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                    </div>
+                    <div>
+                        <h3 class="teacher-acoustic-lab-title">
+                            Ultrasonic Presence Lab (Hardware Test)
+                        </h3>
+                        <p class="teacher-acoustic-lab-subtitle">
+                            Broadcast an inaudible ultrasonic acoustic chord (18.2–19.8 kHz MFSK) from your speaker to verify students' microphones in real time.
+                        </p>
+                    </div>
+                </div>
+                <div class="teacher-acoustic-lab-actions">
+                    <button id="btnTeacherAcousticTest" class="btn-teacher-acoustic-test" type="button" onclick="toggleTeacherAcousticTest()">
+                        <i class="fa-solid fa-play"></i> Start Test Beacon Broadcast
+                    </button>
+                </div>
+            </div>
+            
+            <div id="teacherAcousticStatusBox" class="teacher-acoustic-status-box" style="display: none;">
+                <div class="acoustic-status-grid">
+                    <div class="acoustic-badge-pill active">
+                        <span class="pulse-dot"></span>
+                        <span class="acoustic-wave-bars">
+                            <span></span><span></span><span></span>
+                        </span>
+                        <span>Broadcasting 100% Inaudible Ultrasonic Chords (18.2–19.8 kHz)</span>
+                    </div>
+                    <div class="acoustic-token-chip">
+                        <span class="chip-label">Active Secret Key in DB:</span>
+                        <strong id="teacherAcousticCurrentToken" class="chip-code">—</strong>
+                    </div>
+                </div>
+
+                <div class="acoustic-live-receivers-wrap">
+                    <div class="acoustic-feed-header">
+                        <h5><i class="fa-solid fa-mobile-screen-button text-purple"></i> Live Student Microphone Verification Feed:</h5>
+                        <span class="feed-badge-pulse" id="teacherAcousticFeedBadge">Listening...</span>
+                    </div>
+                    <div id="teacherAcousticReceiverFeed" class="acoustic-receiver-feed">
+                        <div class="acoustic-feed-empty" id="teacherAcousticEmptyFeed">
+                            <i class="fa-solid fa-satellite-dish"></i>
+                            <p>Waiting for students to tap "Listen & Decode Sound" on their phones…</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <section class="teacher-map-card" aria-label="Realtime student location map">
             <div class="teacher-map-head">
@@ -1123,6 +1175,13 @@
 <script src="/js/geoAccuracy.js"></script>
 <script src="/js/teacherLocation.js"></script>
 <script>
+    if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.start === 'function' && !window.AttendifyLiveStream.isRunning) {
+        try {
+            window.AttendifyLiveStream.start('teacher-global');
+        } catch (e) {}
+    }
+</script>
+<script>
     window.AttendifyRealtimeConfig = {
         mode: "<%= typeof realtimeMode !== 'undefined' ? realtimeMode : 'auto' %>",
         pollIntervalMs: <%= typeof realtimePollIntervalMs !== 'undefined' ? realtimePollIntervalMs : 5000 %>
@@ -1187,7 +1246,8 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
-<script src="/js/acousticRadar.js?v=20260901_v2"></script>
+<script src="/js/acousticRadar.js?v=20260902_v21"></script>
+<script src="/js/acousticTestLab.js?v=20260902_v21"></script>
 <script src="/js/teacherRealtime.js"></script>
 <script src="/js/teacherNav.js"></script>
 <script src="/js/teacherPanels.js"></script>
@@ -1195,10 +1255,16 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <script src="/js/uiShell.js"></script>
 <script src="/js/dashboardTimeSync.js"></script>
 
-    <script src="/js/csrfAuto.js" defer></script>
-    <script src="/js/selectEnhancer.js" defer></script>
-
+<script src="/js/csrfAuto.js" defer></script>
+<script src="/js/selectEnhancer.js" defer></script>
 <script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+}
+</script>
+
 // ---- Pending Attendance Reviews ----
 (function() {
     function getCsrfToken() {

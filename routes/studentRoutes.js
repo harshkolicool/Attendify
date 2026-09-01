@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
+const acousticTestStore = require("../utils/acousticTestStore");
 
 const Student = require("../models/studentSchema");
 const logger = require("../utils/logger");
@@ -27,6 +28,7 @@ const {
     MAX_GPS_ACCURACY_METERS
 } = require("../utils/locationVerification");
 const liveLocationStore = require("../utils/liveLocationStore");
+const attendanceQueue = require("../utils/attendanceQueue");
 const gpsPeerCalibration = require("../utils/gpsPeerCalibration");
 const socketManager = require("../utils/socketManager");
 const { verifyStudentAttendanceLocation } = require("../utils/locationVerificationEngine");
@@ -697,7 +699,7 @@ async function saveAttendanceAttempt(options) {
             return;
         }
 
-        const attempt = await AttendanceAttempt.create({
+        const attemptDoc = {
             student: student._id,
             studentName: student.fullName || "Unknown Student",
             enrollmentNumber: student.enrollmentNumber || "Unknown",
@@ -729,15 +731,19 @@ async function saveAttendanceAttempt(options) {
             userAgent: req ? req.headers["user-agent"] : "",
             ip: req ? getClientIp(req) : "",
             locationMeta: options.locationMeta || null
-        });
+        };
 
-        if (
-            attempt.result !== "SUCCESS" &&
-            shouldEmitSuspiciousAttempt(attempt.reasonCode) &&
-            socketManager &&
-            typeof socketManager.emitSuspiciousAttendanceAttempt === "function"
-        ) {
-            socketManager.emitSuspiciousAttendanceAttempt(attempt);
+        if (attemptDoc.result === "SUCCESS") {
+            attendanceQueue.enqueueAttempt(attemptDoc);
+        } else {
+            const attempt = await AttendanceAttempt.create(attemptDoc);
+            if (
+                shouldEmitSuspiciousAttempt(attempt.reasonCode) &&
+                socketManager &&
+                typeof socketManager.emitSuspiciousAttendanceAttempt === "function"
+            ) {
+                socketManager.emitSuspiciousAttendanceAttempt(attempt);
+            }
         }
     } catch (err) {
         console.log("SAVE ATTENDANCE ATTEMPT ERROR:");
@@ -2055,35 +2061,19 @@ router.post("/attendance/device-token/:sessionId", isStudent, async function (re
         let trustedDevice = getTrustedDeviceFromStudent(student, req);
 
         if (!trustedDevice) {
-            // Auto-provision trusted device for verified authenticated student session
-            const deviceId = crypto.randomBytes(12).toString("hex");
-            const rawToken = createRawTrustedDeviceToken();
-            const now = new Date();
-
-            if (!student.trustedDevices) {
-                student.trustedDevices = [];
+            if (hasPasskey) {
+                return res.status(403).json({
+                    success: false,
+                    needPasskeyStepUp: true,
+                    message: "Passkey biometric authentication is required to mark attendance."
+                });
             }
 
-            const autoDevice = {
-                deviceId: deviceId,
-                tokenHash: hashTrustedDeviceToken(rawToken),
-                browserFingerprint: normalizeBrowserFingerprint(req.body.browserFingerprint || ""),
-                userAgent: currentUserAgent,
-                lastIpPrefix: requestIp ? requestIp.split(".").slice(0, 3).join(".") : "127.0.0",
-                tokenRotatedAt: now,
-                stepUpVerifiedAt: now,
-                riskScore: 0,
-                riskLevel: "low",
-                registeredAt: now,
-                usableAfter: now,
-                trustedByPasswordAt: now,
-                isActive: true
-            };
-
-            student.trustedDevices.push(autoDevice);
-            await student.save();
-            setTrustedDeviceCookie(res, deviceId, rawToken);
-            trustedDevice = autoDevice;
+            return res.status(403).json({
+                success: false,
+                needTrustedDevice: true,
+                message: "This browser is not registered as a trusted device. Please register a passkey or trust this browser in settings."
+            });
         }
 
         const browserFingerprint = normalizeBrowserFingerprint(req.body.browserFingerprint || "");
@@ -2098,7 +2088,13 @@ router.post("/attendance/device-token/:sessionId", isStudent, async function (re
             trustedDevice.riskScore = trustedRisk.score;
             trustedDevice.riskLevel = trustedRisk.level;
             await student.save();
-            // Allow verified logged-in student to proceed with attendance
+            if (hasPasskey) {
+                return res.status(403).json({
+                    success: false,
+                    needPasskeyStepUp: true,
+                    message: "Biometric passkey verification is required for security step-up."
+                });
+            }
         }
 
         const session = await AttendanceSession.findById(sessionId);
@@ -2413,11 +2409,14 @@ router.post("/attendance/mark", isStudent, attendanceLimiter, async function (re
             });
         }
 
-        // If no location and not requesting review, reject
-        if (!hasLocation && !requestReview) {
+        // If no location, not requesting review, and no ultrasonic acoustic proof, reject
+        const acousticProof = req.body.acousticProof;
+        const hasAcousticProof = acousticProof && typeof acousticProof === "object" && acousticProof.verified === true;
+
+        if (!hasLocation && !requestReview && !hasAcousticProof) {
             return res.status(400).json({
                 success: false,
-                message: "Location is required."
+                message: "Location or classroom ultrasonic presence is required."
             });
         }
 
@@ -2738,19 +2737,39 @@ router.post("/attendance/mark", isStudent, attendanceLimiter, async function (re
             console.log("ASYNC ATTENDANCE ATTEMPT SAVE ERROR:", err && err.message ? err.message : err);
         });
 
-        const acousticProof = req.body.acousticProof;
         let isAcousticVerified = false;
         let acousticDistance = null;
         let acousticRowCategory = null;
 
         if (acousticProof && typeof acousticProof === "object" && acousticProof.verified === true) {
-            const parsedDist = Number(acousticProof.distanceMeters);
-            if (Number.isFinite(parsedDist) && parsedDist > 0 && parsedDist <= 35) {
-                isAcousticVerified = true;
-                acousticDistance = Math.round(parsedDist * 10) / 10;
+            const receivedToken = String(acousticProof.decodedToken || "").toUpperCase().trim();
+            const baseSecret = String(session.acousticBeaconToken || session._id.toString().slice(0, 4)).toUpperCase().trim();
+
+            // CRYPTOGRAPHIC ROLLING ACOUSTIC CHALLENGE MATCH (Anti-Replay Protection)
+            let isTokenMatch = receivedToken && baseSecret && receivedToken === baseSecret;
+            if (!isTokenMatch && receivedToken && baseSecret) {
+                const currentWin = Math.floor(Date.now() / 20000);
+                for (let w = currentWin - 1; w <= currentWin + 1; w++) {
+                    const raw = baseSecret + ":" + w;
+                    const rollingToken = crypto.createHash("sha256").update(raw).digest("hex").toUpperCase().slice(0, 4);
+                    if (receivedToken === rollingToken) {
+                        isTokenMatch = true;
+                        break;
+                    }
+                }
             }
-            if (acousticProof.rowCategory && typeof acousticProof.rowCategory === "string") {
-                acousticRowCategory = acousticProof.rowCategory.slice(0, 50);
+
+            if (isTokenMatch) {
+                const parsedDist = Number(acousticProof.distanceMeters);
+                if (Number.isFinite(parsedDist) && parsedDist > 0 && parsedDist <= 35) {
+                    isAcousticVerified = true;
+                    acousticDistance = Math.round(parsedDist * 10) / 10;
+                }
+                if (acousticProof.rowCategory && typeof acousticProof.rowCategory === "string") {
+                    acousticRowCategory = acousticProof.rowCategory.slice(0, 50);
+                }
+            } else {
+                console.warn(`[ACOUSTIC PRESENCE REJECTED] Acoustic challenge mismatch. Base: "${baseSecret}", Received: "${receivedToken}"`);
             }
         }
 
@@ -2765,7 +2784,7 @@ router.post("/attendance/mark", isStudent, attendanceLimiter, async function (re
             });
         }
 
-        if (decisionResult.shouldReject) {
+        if (decisionResult.shouldReject && !isAcousticVerified) {
             return res.status(403).json({
                 success: false,
                 status: decisionResult.attendanceStatus,
@@ -2777,7 +2796,9 @@ router.post("/attendance/mark", isStudent, attendanceLimiter, async function (re
         }
 
         const markedAt = new Date();
-        const verificationMethod = isAcousticVerified ? "PASSKEY_ACOUSTIC_GEOFENCE" : decisionResult.verificationMethod;
+        const verificationMethod = isAcousticVerified 
+            ? (hasLocation ? "PASSKEY_ACOUSTIC_GEOFENCE" : "ULTRASONIC_ACOUSTIC_FALLBACK")
+            : decisionResult.verificationMethod;
 
         let attendanceRecord;
         let wasAbsentOverridden = false;
@@ -4011,6 +4032,104 @@ router.get("/profile", isStudent, async function (req, res) {
         console.log(err.message);
         console.log(err.stack);
         res.redirect("/student/dashboard");
+    }
+});
+
+router.post("/acoustic-test/verify", isStudent, async function (req, res) {
+    try {
+        const studentId = getStudentIdFromRequest(req);
+        const student = await Student.findById(studentId).select("fullName enrollmentNumber college");
+
+        if (!student) {
+            return res.status(401).json({ success: false, message: "Student not found." });
+        }
+
+        const decodedToken = String(req.body.decodedToken || "").toUpperCase().trim();
+        const distanceMeters = Number(req.body.distanceMeters) || 0;
+        const rowCategory = String(req.body.rowCategory || "Classroom");
+        const snr = Number(req.body.snr) || 0;
+        const signalPower = Number(req.body.signalPower) || 0;
+
+        if (!decodedToken) {
+            return res.status(400).json({
+                success: false,
+                verified: false,
+                message: "No decoded token received from microphone."
+            });
+        }
+
+        // 1. Check if there is an active test beacon for student's college
+        const testObj = acousticTestStore.getActiveTestTokenForCollege(student.college);
+        
+        // 2. Also check if there is an active live attendance session with an acoustic token
+        let sessionObj = null;
+        if (!testObj) {
+            sessionObj = await AttendanceSession.findOne({
+                college: student.college,
+                status: "ACTIVE",
+                isActive: true
+            }).select("acousticBeaconToken teacher");
+        }
+
+        const expectedToken = testObj ? testObj.token : (sessionObj ? sessionObj.acousticBeaconToken : null);
+        const targetTeacherId = testObj ? testObj.teacherId : (sessionObj && sessionObj.teacher ? sessionObj.teacher.toString() : null);
+
+        let isMatch = expectedToken && decodedToken === expectedToken;
+        if (!isMatch && expectedToken && decodedToken) {
+            const currentWin = Math.floor(Date.now() / 20000);
+            for (let w = currentWin - 1; w <= currentWin + 1; w++) {
+                const raw = expectedToken + ":" + w;
+                const rollingToken = crypto.createHash("sha256").update(raw).digest("hex").toUpperCase().slice(0, 4);
+                if (decodedToken === rollingToken) {
+                    isMatch = true;
+                    break;
+                }
+            }
+        }
+
+        if (isMatch) {
+            // Notify teacher portal in real time via Socket.IO
+            if (targetTeacherId && socketManager.getIO()) {
+                socketManager.getIO().to("teacher:" + targetTeacherId).emit("acoustic:test:student_verified", {
+                    studentName: student.fullName,
+                    enrollmentNumber: student.enrollmentNumber,
+                    decodedToken: decodedToken,
+                    distanceMeters: distanceMeters,
+                    rowCategory: rowCategory,
+                    snr: snr,
+                    signalPower: signalPower,
+                    timestamp: new Date()
+                });
+            }
+
+            return res.json({
+                success: true,
+                verified: true,
+                decodedToken: decodedToken,
+                expectedToken: expectedToken,
+                distanceMeters: distanceMeters,
+                rowCategory: rowCategory,
+                snr: snr,
+                signalPower: signalPower,
+                message: `Ultrasonic presence verified! Decoded token "${decodedToken}" matches teacher beacon.`
+            });
+        } else {
+            return res.json({
+                success: false,
+                verified: false,
+                decodedToken: decodedToken,
+                expectedToken: expectedToken || "NO_ACTIVE_BEACON",
+                message: expectedToken
+                    ? `Acoustic token mismatch: Heard "${decodedToken}", but active beacon is "${expectedToken}".`
+                    : "No active teacher acoustic test beacon was found for your college."
+            });
+        }
+    } catch (err) {
+        console.error("STUDENT ACOUSTIC TEST ERROR:", err);
+        res.status(500).json({
+            success: false,
+            message: "Error verifying acoustic test: " + err.message
+        });
     }
 });
 

@@ -33,8 +33,14 @@
         }
 
         filter(lat, lon, accuracy, timestamp) {
+            const numLat = Number(lat);
+            const numLon = Number(lon);
+            if (!Number.isFinite(numLat) || !Number.isFinite(numLon)) {
+                return this.state ? { lat: this.state[0], lon: this.state[1] } : { lat: 0, lon: 0 };
+            }
+
             if (!this.state) {
-                this.init(lat, lon, accuracy, timestamp);
+                this.init(numLat, numLon, accuracy, timestamp);
                 return { lat: this.state[0], lon: this.state[1] };
             }
 

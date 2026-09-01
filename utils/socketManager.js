@@ -958,9 +958,13 @@ function emitAttendanceStarted(session, scheduleItem) {
 
     io.to(getClassGroupRoom(classGroupId)).emit("attendance:started", payload);
 
+    const teacherPayload = Object.assign({}, payload, {
+        acousticBeaconToken: session.acousticBeaconToken || ""
+    });
+
     io.to(getTeacherRoom(getId(session.teacher || scheduleItem.teacher))).emit(
         "attendance:started:teacher",
-        payload
+        teacherPayload
     );
 
     if (payload.collegeId) {
@@ -998,7 +1002,7 @@ function emitAttendanceReopened(session, scheduleItem) {
 
     // Emit both the dedicated reopen event AND the started event so all listeners catch it
     io.to(getClassGroupRoom(classGroupId)).emit("attendance:reopened", payload);
-    const teacherPayload = Object.assign({}, payload, {
+    const studentStartPayload = Object.assign({}, payload, {
         latitude: Number(session.latitude || 0),
         longitude: Number(session.longitude || 0),
         teacherGpsAccuracy: Number(session.teacherGpsAccuracy || 0),
@@ -1007,7 +1011,11 @@ function emitAttendanceReopened(session, scheduleItem) {
         radius: session.radius
     });
 
-    io.to(getClassGroupRoom(classGroupId)).emit("attendance:started", teacherPayload);
+    io.to(getClassGroupRoom(classGroupId)).emit("attendance:started", studentStartPayload);
+
+    const teacherPayload = Object.assign({}, studentStartPayload, {
+        acousticBeaconToken: session.acousticBeaconToken || ""
+    });
 
     const teacherId = getId(session.teacher || scheduleItem.teacher);
     if (teacherId) {

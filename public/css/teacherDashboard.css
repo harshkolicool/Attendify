@@ -2099,6 +2099,16 @@ span.flatpickr-weekday {
     filter: saturate(1.05) contrast(1.02) brightness(0.98) !important;
 }
 
+.teacher-map .leaflet-marker-icon {
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    will-change: transform;
+}
+
+.teacher-map .leaflet-marker-shadow {
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    will-change: transform;
+}
+
 .teacher-map-icon-button.highlight {
     background: #ecfdf5 !important;
     color: #047857 !important;

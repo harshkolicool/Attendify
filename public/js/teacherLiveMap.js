@@ -221,6 +221,25 @@ function initTeacherLiveMap() {
     }
 
     function getInitialCenterCoords() {
+        // 1. Check if window.teacherLiveLocation or LiveStream has real teacher GPS
+        if (window.teacherLiveLocation && window.teacherLiveLocation.lat && window.teacherLiveLocation.lon && Number(window.teacherLiveLocation.lat) !== 0) {
+            return { lat: Number(window.teacherLiveLocation.lat), lon: Number(window.teacherLiveLocation.lon), zoom: 17, name: "Your Location", radius: 100 };
+        }
+
+        if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.getBestFreshPosition === "function") {
+            const cached = window.AttendifyLiveStream.getBestFreshPosition(60000);
+            if (cached && Number.isFinite(cached.latitude) && Number(cached.latitude) !== 0) {
+                return { lat: Number(cached.latitude), lon: Number(cached.longitude), zoom: 17, name: "Your Location", radius: 100 };
+            }
+        }
+
+        // 2. Check bootstrap data from active sessions
+        const boot = readBootstrap();
+        if (boot.length > 0 && boot[0].latitude && boot[0].longitude && Number(boot[0].latitude) !== 0) {
+            return { lat: Number(boot[0].latitude), lon: Number(boot[0].longitude), zoom: 17, name: boot[0].subjectName, radius: Number(boot[0].radius || 100) };
+        }
+
+        // 3. Check data-default-center
         if (mapEl) {
             const rawCenter = mapEl.getAttribute("data-default-center");
             if (rawCenter) {
@@ -231,11 +250,6 @@ function initTeacherLiveMap() {
                     }
                 } catch (e) {}
             }
-        }
-
-        const boot = readBootstrap();
-        if (boot.length > 0 && boot[0].latitude && boot[0].longitude && Number(boot[0].latitude) !== 0) {
-            return { lat: Number(boot[0].latitude), lon: Number(boot[0].longitude), zoom: 17, name: boot[0].subjectName, radius: Number(boot[0].radius || 100) };
         }
 
         return { lat: 28.6139, lon: 77.2090, zoom: 15, name: "Campus", radius: 100 };
@@ -290,95 +304,42 @@ function initTeacherLiveMap() {
             locateBtn.classList.add("loading");
         }
 
-        navigator.geolocation.getCurrentPosition(
-            function (pos) {
-                if (locateBtn) locateBtn.classList.remove("loading");
-                const lat = pos.coords.latitude;
-                const lon = pos.coords.longitude;
-                const accuracy = pos.coords.accuracy || 20;
+        const geoOptions = { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 };
 
-                window.teacherLiveLocation = { lat: lat, lon: lon, accuracy: accuracy };
+        function onPositionSuccess(pos) {
+            if (locateBtn) locateBtn.classList.remove("loading");
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const accuracy = pos.coords.accuracy || 10;
 
-                // Auto-fill hidden inputs on start attendance forms
-                document.querySelectorAll(".js-teacher-start-form").forEach(function(f) {
-                    const latInput = f.querySelector("input[name='teacherLatitude']");
-                    const lonInput = f.querySelector("input[name='teacherLongitude']");
-                    const accInput = f.querySelector("input[name='teacherAccuracy']");
-                    if (latInput) latInput.value = lat;
-                    if (lonInput) lonInput.value = lon;
-                    if (accInput) accInput.value = accuracy;
-                });
+            window.teacherLiveLocation = { lat: lat, lon: lon, accuracy: accuracy };
 
-                if (!map) return;
+            // Auto-fill hidden inputs on start attendance forms
+            document.querySelectorAll(".js-teacher-start-form").forEach(function(f) {
+                const latInput = f.querySelector("input[name='teacherLatitude']");
+                const lonInput = f.querySelector("input[name='teacherLongitude']");
+                const accInput = f.querySelector("input[name='teacherAccuracy']");
+                if (latInput) latInput.value = lat;
+                if (lonInput) lonInput.value = lon;
+                if (accInput) accInput.value = accuracy;
+            });
 
-                // Remove generic standby circle/marker if any
-                if (standbyCircle) {
-                    try { standbyCircle.remove(); } catch (e) {}
-                    standbyCircle = null;
-                }
-                if (standbyMarker) {
-                    try { standbyMarker.remove(); } catch (e) {}
-                    standbyMarker = null;
-                }
+            if (!map) return;
 
-                // If an active session is already rendering, keep and focus the unified teacher marker
-                if (activeSessionId && sessionCenter) {
-                    if (userLiveGpsMarker) { try { userLiveGpsMarker.remove(); } catch (e) {} userLiveGpsMarker = null; }
-                    if (userLiveGpsCircle) { try { userLiveGpsCircle.remove(); } catch (e) {} userLiveGpsCircle = null; }
+            // Remove generic standby circle/marker if any
+            if (standbyCircle) {
+                try { standbyCircle.remove(); } catch (e) {}
+                standbyCircle = null;
+            }
+            if (standbyMarker) {
+                try { standbyMarker.remove(); } catch (e) {}
+                standbyMarker = null;
+            }
 
-                    const teacherIcon = L.divIcon({
-                        className: "custom-teacher-marker",
-                        html: '<div class="teacher-map-center-marker teacher-live-beacon"><span class="beacon-halo"></span><i class="fa-solid fa-chalkboard-user"></i></div>',
-                        iconSize: [36, 36],
-                        iconAnchor: [18, 18]
-                    });
-
-                    if (teacherMarker) {
-                        teacherMarker.setLatLng([sessionCenter.lat, sessionCenter.lon]);
-                        teacherMarker.setIcon(teacherIcon);
-                    } else {
-                        teacherMarker = L.marker([sessionCenter.lat, sessionCenter.lon], {
-                            icon: teacherIcon,
-                            title: "Teacher Location",
-                            zIndexOffset: 1000
-                        }).addTo(map);
-                    }
-
-                    teacherMarker.bindPopup(
-                        "<b>Teacher / Session Center</b><br><small style='color: #059669; font-weight: 700;'>GPS Accuracy: ±" + Math.round(accuracy) + "m</small><br>Allowed Radius: " + Math.round(sessionCenter.radius) + "m"
-                    );
-
-                    if (autoCenter) {
-                        map.flyTo([sessionCenter.lat, sessionCenter.lon], 17, { animate: true, duration: 1.2 });
-                        setTimeout(function() {
-                            if (teacherMarker) teacherMarker.openPopup();
-                        }, 1200);
-                    }
-                    setHint("Teacher Location verified (±" + Math.round(accuracy) + "m). Geofence boundary active.");
-                    return;
-                }
-
-                // If in standby mode (NO active session), clean up old teacher marker
-                if (teacherMarker) {
-                    try { teacherMarker.remove(); } catch (e) {}
-                    teacherMarker = null;
-                }
-
-                // Draw / update Standby Live Teacher GPS marker when NO session is running
-                if (userLiveGpsMarker) {
-                    try { userLiveGpsMarker.remove(); } catch (e) {}
-                }
-                if (userLiveGpsCircle) {
-                    try { userLiveGpsCircle.remove(); } catch (e) {}
-                }
-
-                userLiveGpsCircle = L.circle([lat, lon], {
-                    radius: Math.max(accuracy, 30),
-                    color: '#10b981',
-                    fillColor: '#10b981',
-                    fillOpacity: 0.15,
-                    weight: 2
-                }).addTo(map);
+            // If an active session is already rendering, keep and focus the unified teacher marker
+            if (activeSessionId && sessionCenter) {
+                if (userLiveGpsMarker) { try { userLiveGpsMarker.remove(); } catch (e) {} userLiveGpsMarker = null; }
+                if (userLiveGpsCircle) { try { userLiveGpsCircle.remove(); } catch (e) {} userLiveGpsCircle = null; }
 
                 const teacherIcon = L.divIcon({
                     className: "custom-teacher-marker",
@@ -387,39 +348,91 @@ function initTeacherLiveMap() {
                     iconAnchor: [18, 18]
                 });
 
-                userLiveGpsMarker = L.marker([lat, lon], {
-                    icon: teacherIcon,
-                    zIndexOffset: 1000
-                }).addTo(map);
+                if (teacherMarker) {
+                    teacherMarker.setLatLng([sessionCenter.lat, sessionCenter.lon]);
+                    teacherMarker.setIcon(teacherIcon);
+                } else {
+                    teacherMarker = L.marker([sessionCenter.lat, sessionCenter.lon], {
+                        icon: teacherIcon,
+                        title: "Teacher Location",
+                        zIndexOffset: 1000
+                    }).addTo(map);
+                }
 
-                userLiveGpsMarker.bindPopup(
-                    "<b>Your Live Location</b><br><small style='color: #059669; font-weight: 700;'>GPS Accuracy: ±" + Math.round(accuracy) + "m</small>"
+                teacherMarker.bindPopup(
+                    "<b>Teacher / Session Center</b><br><small style='color: #059669; font-weight: 700;'>GPS Accuracy: ±" + Math.round(accuracy) + "m</small><br>Allowed Radius: " + Math.round(sessionCenter.radius) + "m"
                 );
 
                 if (autoCenter) {
-                    map.flyTo([lat, lon], 17, {
-                        animate: true,
-                        duration: 1.2
-                    });
+                    map.flyTo([sessionCenter.lat, sessionCenter.lon], 17, { animate: true, duration: 1.2 });
                     setTimeout(function() {
-                        if (userLiveGpsMarker) userLiveGpsMarker.openPopup();
+                        if (teacherMarker) teacherMarker.openPopup();
                     }, 1200);
                 }
-
-                setHint("Teacher GPS acquired (±" + Math.round(accuracy) + "m). Ready to verify student proximity.");
-            },
-            function (err) {
-                if (locateBtn) locateBtn.classList.remove("loading");
-                console.warn("Teacher location error:", err.message);
-                setHint("Click 'Locate Me' and allow browser location access to pinpoint your position.");
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 30000
+                setHint("Teacher Location verified (±" + Math.round(accuracy) + "m). Geofence boundary active.");
+                return;
             }
-        );
+
+            // If in standby mode (NO active session), clean up old teacher marker
+            if (teacherMarker) {
+                try { teacherMarker.remove(); } catch (e) {}
+                teacherMarker = null;
+            }
+
+            // Draw / update Standby Live Teacher GPS marker when NO session is running
+            if (userLiveGpsMarker) {
+                try { userLiveGpsMarker.remove(); } catch (e) {}
+            }
+            if (userLiveGpsCircle) {
+                try { userLiveGpsCircle.remove(); } catch (e) {}
+            }
+
+            userLiveGpsCircle = L.circle([lat, lon], {
+                radius: Math.max(accuracy, 30),
+                color: '#10b981',
+                fillColor: '#10b981',
+                fillOpacity: 0.15,
+                weight: 2
+            }).addTo(map);
+
+            const teacherIcon = L.divIcon({
+                className: "custom-teacher-marker",
+                html: '<div class="teacher-map-center-marker teacher-live-beacon"><span class="beacon-halo"></span><i class="fa-solid fa-chalkboard-user"></i></div>',
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+
+            userLiveGpsMarker = L.marker([lat, lon], {
+                icon: teacherIcon,
+                zIndexOffset: 1000
+            }).addTo(map);
+
+            userLiveGpsMarker.bindPopup(
+                "<b>Your Live Location</b><br><small style='color: #059669; font-weight: 700;'>GPS Accuracy: ±" + Math.round(accuracy) + "m</small>"
+            );
+
+            if (autoCenter) {
+                map.flyTo([lat, lon], 17, {
+                    animate: true,
+                    duration: 1.2
+                });
+                setTimeout(function() {
+                    if (userLiveGpsMarker) userLiveGpsMarker.openPopup();
+                }, 1200);
+            }
+
+            setHint("Teacher GPS acquired (±" + Math.round(accuracy) + "m). Ready to verify student proximity.");
+        }
+
+        function onError(err) {
+            if (locateBtn) locateBtn.classList.remove("loading");
+            console.warn("Teacher location error:", err.message);
+            setHint("Click 'Locate Me' and allow browser location access to pinpoint your position.");
+        }
+
+        navigator.geolocation.getCurrentPosition(onPositionSuccess, onError, geoOptions);
     }
+
 
     // Always initialize map
     if (!mapInitialized) {

@@ -211,6 +211,11 @@ const attendanceSessionSchema = new mongoose.Schema({
         default: 100
     },
 
+    acousticBeaconToken: {
+        type: String,
+        trim: true
+    },
+
 
 
     startTime: {

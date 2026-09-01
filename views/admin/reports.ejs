@@ -489,7 +489,30 @@
                                     </td>
 
                                     <td>
-                                        <%= record.verificationMethod || "-" %>
+                                        <%
+                                            const vm = String(record.verificationMethod || "GEOLOCATION").toUpperCase();
+                                            if (vm.includes("ACOUSTIC") || vm.includes("ULTRASONIC")) {
+                                        %>
+                                            <span class="badge badge-acoustic" style="background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="fa-solid fa-tower-broadcast"></i> Ultrasonic
+                                            </span>
+                                        <% } else if (vm.includes("PASSKEY")) { %>
+                                            <span class="badge badge-passkey" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="fa-solid fa-fingerprint"></i> Passkey
+                                            </span>
+                                        <% } else if (vm.includes("MANUAL") || vm.includes("TEACHER")) { %>
+                                            <span class="badge badge-manual" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="fa-solid fa-user-pen"></i> Manual
+                                            </span>
+                                        <% } else if (vm.includes("WEAK")) { %>
+                                            <span class="badge badge-warn" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="fa-solid fa-satellite-dish"></i> Weak GPS
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge badge-gps" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="fa-solid fa-location-crosshairs"></i> GPS
+                                            </span>
+                                        <% } %>
                                     </td>
 
                                     <td>
