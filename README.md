@@ -25,7 +25,7 @@
 
 <br/>
 
-[Overview](#-overview) · [Biometrics & Passkeys](#-fido2-biometric-passkeys) · [Acoustic Radar](#-ultrasonic-acoustic-presence-radar) · [Geospatial Engine](#-real-time-geospatial-radar) · [Architecture](#%EF%B8%8F-system-architecture) · [Tech Stack](#-technology-stack) · [Role Portals](#-role-portals) · [Deployment](#-production-deployment-on-render) · [Testing](#-automated-testing) · [Threat Matrix](#-security--threat-mitigation-matrix)
+[Overview](#-overview) · [GUI Security Architecture](#-complete-attendance-marking--multi-layer-security-architecture-gui-structure-format) · [Biometrics & Passkeys](#-fido2-biometric-passkeys) · [Acoustic Radar](#-ultrasonic-acoustic-presence-radar) · [Geospatial Engine](#-real-time-geospatial-radar) · [Architecture](#%EF%B8%8F-system-architecture) · [Tech Stack](#-technology-stack) · [Role Portals](#-role-portals) · [Deployment](#-production-deployment-on-render) · [Testing](#-automated-testing) · [Threat Matrix](#-security--threat-mitigation-matrix)
 
 ---
 
@@ -61,6 +61,122 @@ Traditional college attendance methods like manual paper roll-calls, sign-in she
 - **📊 Automated Analytics & Excel Reports** — Instant multi-sheet `.xlsx` report exports, attendance heatmap calendars, and low-attendance alert triggers.
 - **🔔 Web Push Notifications** — Background lecture alerts and passkey approval notices via Web Push (VAPID) and Service Workers.
 - **📱 Fully Responsive Modern UI** — Cyber-glassmorphism dark aesthetic tailored for 4K desktops, laptops, tablets, and smartphones with zero horizontal overflow.
+
+---
+
+## 🛡️ Complete Attendance Marking & Multi-Layer Security Architecture (GUI Structure Format)
+
+Attendify treats attendance not as a simple database update, but as a **Zero-Trust Cryptographic Transaction** verified across 5 distinct hardware, physical, and network layers:
+
+```
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                  ATTENDIFY ZERO-TRUST SECURITY PIPELINE (GUI)                                ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                                              ║
+║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
+║  │  LAYER 1: HARDWARE ENCLAVE BIOMETRIC PASSEYS (FIDO2 / WEBAUTHN)                                       │  ║
+║  │  [ Touch ID / Face ID / Android TEE / Windows Hello ] ──> Asymmetric ES256 Signature (Private Key Safe)│  ║
+║  │  STATUS: [✓ HARDWARE BOUND] · NO PASSWORDS · ZERO PROXY BUDDY PUNCHING                                │  ║
+║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
+║                                                   │                                                          ║
+║                                                   ▼                                                          ║
+║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
+║  │  LAYER 2: HIGH-PRECISION WGS-84 GPS GEOFENCING ENGINE                                                 │  ║
+║  │  [ Sub-Meter Coordinates + Haversine Metric ] ──> Geodesic Delta <= Classroom Radius (R=30m-100m)     │  ║
+║  │  STATUS: [✓ GEOFENCE LOCKED] · HORIZONTAL ACCURACY FILTERING · ANTI-MOCK LOCATION ENGINE               │  ║
+║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
+║                                                   │                                                          ║
+║                                                   ▼                                                          ║
+║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
+║  │  LAYER 3: INAUDIBLE ULTRASONIC ACOUSTIC PRESENCE RADAR (2-FSK)                                         │  ║
+║  │  [ 18.6k–19.8 kHz Soundwaves ] ──> 18kHz High-Pass DSP ──> 2048-pt FFT ──> Log-Distance Ranging (m)  │  ║
+║  │  STATUS: [✓ AIR-GAP VERIFIED] · PHYSICAL ROOM PRESENCE CONFIRMED · FRONT/MID/BACK ROW CLASSIFIED       │  ║
+║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
+║                                                   │                                                          ║
+║                                                   ▼                                                          ║
+║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
+║  │  LAYER 4: EPHEMERAL CRYPTOGRAPHIC ATTENDANCE TOKEN & ANTI-REPLAY GUARD                                │  ║
+║  │  [ HMAC-SHA256 Token ] ──> One-Time Rotating Nonce ──> 60s Expiration Window ──> Idempotency Lock     │  ║
+║  │  STATUS: [✓ CRYPTO SEALED] · ZERO NETWORK INTERCEPTION · ZERO REPLAY ATTACKS                           │  ║
+║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
+║                                                   │                                                          ║
+║                                                   ▼                                                          ║
+║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
+║  │  LAYER 5: REAL-TIME WEBSOCKET TELEMETRY & MULTI-TENANT LEDGER                                         │  ║
+║  │  [ Atomic Mongo Commit ] ──> Socket.IO Broadcast (<20ms) ──> Teacher Tactical Radar Map Pin Update     │  ║
+║  │  STATUS: [✓ LEDGER RECORDED] · REAL-TIME MAP STREAMING · COMPLETE INSTITUTION AUDIT TRAIL              │  ║
+║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
+║                                                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+### 🖥️ Student GUI Flow: How Attendance is Marked Step-by-Step
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 📱 STUDENT ATTENDANCE TERMINAL (GUI EXPERIENCE)                                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                             │
+│  [STEP 1: SESSION DISCOVERY & GEOFENCE LOCK]                                                                │
+│  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ 📍 LECTURE FOUND: Data Structures (CS401) · Prof. Sharma · Lab 101                                    │  │
+│  │ Geofence Check: Latitude 28.5450°, Longitude 77.1926° · Accuracy: ±4.2m · Distance: 12.8m [INSIDE ✓] │  │
+│  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                   │                                                          │
+│                                                   ▼                                                          │
+│  [STEP 2: INAUDIBLE ULTRASONIC ACOUSTIC CAPTURE]                                                            │
+│  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ 🔊 ACOUSTIC RADAR: Capturing inaudible 18.6–19.8 kHz classroom broadcast via microphone...             │  │
+│  │ Signal Power: 182/255 · Seating Range: 2.1 meters · Row Category: [FRONT ROW (1-2) ✓]                 │  │
+│  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                   │                                                          │
+│                                                   ▼                                                          │
+│  [STEP 3: HARDWARE BIOMETRIC ASSERTION]                                                                     │
+│  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ 🔒 HARDWARE ENCLAVE PROMPT: "Verify Touch ID / Face ID to authenticate as Harsh Koli (Roll: 21CS042)" │  │
+│  │ Biometric Match: 100% · ES256 Signed Assertion Created inside Secure Enclave ✓                         │  │
+│  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                   │                                                          │
+│                                                   ▼                                                          │
+│  [STEP 4: INSTANT ATTENDANCE RECEIPT & COMMIT]                                                              │
+│  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ 🎉 ATTENDANCE MARKED SUCCESSFULLY!                                                                     │  │
+│  │ Receipt ID: ATT-89201F · Method: FIDO2 + ACOUSTIC + GPS · Timestamp: 14:02:18 IST · Status: PRESENT ✓  │  │
+│  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 👨‍🏫 Teacher Real-Time Tactical Radar GUI Screen
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 🔴 LIVE FACULTY RADAR TERMINAL · ACTIVE LECTURE: CS401 (LAB 101)                                            │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  ● LIVE BROADCASTING 18.6–19.8kHz 2-FSK   |   📡 100m GEOFENCE ACTIVE   |   ⚡ 44 / 50 PRESENT (88%)         │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                             │
+│       [CS BLOCK]                                (AK) Aarav K. (8m, Mid Row)                                 │
+│                                                            │                                                │
+│                                     (((( ⭕ Faculty Station ))))                                            │
+│                                                (Lab 101)                                                    │
+│                                                    │                                                        │
+│                    (HK) Harsh K. (2m, Front Row)   │   (AS) Ananya S. (14m, Back Row)                       │
+│                                                                                                             │
+│                                                                             [CAMPUS LIBRARY]                │
+│                                                                                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 📋 LIVE VERIFIED STREAM:                                                                                    │
+│  14:02:18 · [FIDO2+ACOUSTIC] Harsh K. (21CS042) · Front Row (2.1m) · Score: 98% ────────────────── [PASS ✓]│
+│  14:02:12 · [FIDO2+ACOUSTIC] Aarav K. (21CS011) · Mid Row (5.4m)   · Score: 94% ────────────────── [PASS ✓]│
+│  14:01:58 · [FIDO2+ACOUSTIC] Ananya S.(21CS019) · Back Row (12.2m) · Score: 88% ────────────────── [PASS ✓]│
+│  14:01:40 · [GPS SPOOF BLOCKED] Unknown (IP Proxy) · Outside Radius (350m) ─────────────────── [REJECTED ✕]│
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
