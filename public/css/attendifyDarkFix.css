@@ -4715,9 +4715,6 @@ body.dark-mode .admin-edit-box {
 }
 
 /* ==========================================================================
-   TEACHER REPORT DIRECTORY TOOLBAR OVERHAUL (PERFECT ALIGNMENT & ZERO CLIPPING)
-   ========================================================================== */
-/* ==========================================================================
    TEACHER REPORT DIRECTORY TOOLBAR & MOBILE RESPONSIVE FIXES
    ========================================================================== */
 .teacher-search-box,
@@ -4728,13 +4725,16 @@ body.dark-mode .teacher-search-box {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    outline: none !important;
     padding: 0 !important;
+    margin: 0 !important;
 }
 
 .teacher-report-directory-toolbar,
 div.teacher-report-directory-toolbar[data-report-record-directory],
 div.teacher-report-directory-toolbar[data-report-attempt-directory] {
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns: 1fr auto auto auto !important;
     align-items: center !important;
     gap: 12px !important;
     margin-top: 18px !important;
@@ -4744,18 +4744,17 @@ div.teacher-report-directory-toolbar[data-report-attempt-directory] {
     border: none !important;
     box-shadow: none !important;
     width: 100% !important;
-    flex-wrap: nowrap !important;
+    box-sizing: border-box !important;
 }
 
 .teacher-report-directory-toolbar .teacher-search-box {
-    flex: 1 1 auto !important;
-    min-width: 220px !important;
     position: relative !important;
     display: flex !important;
     align-items: center !important;
     height: 44px !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
 }
 
 .teacher-report-directory-toolbar .teacher-search-box input {
@@ -4807,7 +4806,6 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-search-box input {
     align-items: center !important;
     margin: 0 !important;
     padding: 0 !important;
-    flex: 0 0 auto !important;
 }
 
 .teacher-report-directory-toolbar .teacher-select-wrap {
@@ -4888,7 +4886,7 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-select-wrap select {
     height: 44px !important;
     min-height: 44px !important;
     max-height: 44px !important;
-    padding: 0 18px !important;
+    padding: 0 20px !important;
     border-radius: 12px !important;
     font-size: 13px !important;
     font-weight: 700 !important;
@@ -4900,7 +4898,7 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-select-wrap select {
     margin: 0 !important;
     box-sizing: border-box !important;
     white-space: nowrap !important;
-    flex: 0 0 auto !important;
+    width: auto !important;
 }
 
 [data-theme="dark"] .teacher-report-directory-toolbar .teacher-toolbar-reset-btn,
@@ -4934,7 +4932,7 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-toolbar-reset-btn:hove
     transition: transform 0.3s ease !important;
 }
 
-/* Horizontal Tab Strip - No Overlapping / Smooth Scroll */
+/* Horizontal Tab Strip - No Overlapping / Smooth Touch Scroll */
 .teacher-report-nav-bar {
     display: flex !important;
     flex-direction: row !important;
@@ -4976,27 +4974,41 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-toolbar-reset-btn:hove
 }
 
 /* ==========================================================================
-   MOBILE RESPONSIVE BREAKPOINT (< 768px)
+   RESPONSIVE BREAKPOINTS (Tablets: <= 960px, Mobile: <= 580px)
    ========================================================================== */
-@media (max-width: 768px) {
+@media (max-width: 960px) {
     .teacher-report-directory-toolbar,
     div.teacher-report-directory-toolbar[data-report-record-directory],
     div.teacher-report-directory-toolbar[data-report-attempt-directory] {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 10px !important;
-        width: 100% !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
     }
 
     .teacher-report-directory-toolbar .teacher-search-box {
+        grid-column: 1 / -1 !important;
         width: 100% !important;
-        min-width: 100% !important;
-        flex: 1 1 100% !important;
     }
 
-    .teacher-report-directory-toolbar .teacher-schedule-filter-field {
+    .teacher-report-directory-toolbar .teacher-toolbar-reset-btn {
+        grid-column: 1 / -1 !important;
         width: 100% !important;
-        flex: 1 1 100% !important;
+        justify-content: center !important;
+    }
+}
+
+@media (max-width: 580px) {
+    .teacher-report-directory-toolbar,
+    div.teacher-report-directory-toolbar[data-report-record-directory],
+    div.teacher-report-directory-toolbar[data-report-attempt-directory] {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .teacher-report-directory-toolbar .teacher-search-box,
+    .teacher-report-directory-toolbar .teacher-schedule-filter-field,
+    .teacher-report-directory-toolbar .teacher-toolbar-reset-btn {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
     }
 
     .teacher-report-directory-toolbar .teacher-select-wrap {
@@ -5011,7 +5023,6 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-toolbar-reset-btn:hove
     .teacher-report-directory-toolbar .teacher-toolbar-reset-btn {
         width: 100% !important;
         justify-content: center !important;
-        flex: 1 1 100% !important;
     }
 
     .teacher-report-group-summary {
