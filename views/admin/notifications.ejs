@@ -5,11 +5,207 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications & Passkeys | Admin</title>
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
-    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=2">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed4">
+    <link rel="stylesheet" href="/css/adminDashboard.css?v=20260901_fixed4">
+    <link rel="stylesheet" href="/css/attendifyAdminTheme.css?v=20260901_fixed4">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=20260901_fixed4">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=20260901_fixed4">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=20260901_fixed4">
+
+    <style>
+    /* Modern Admin Card Header */
+    .admin-card .admin-card-head {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 16px !important;
+        flex-wrap: wrap !important;
+        margin-bottom: 20px !important;
+    }
+
+    .admin-card-head-title {
+        display: flex !important;
+        align-items: center !important;
+        gap: 14px !important;
+    }
+
+    .adm-head-icon-box {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.25rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    .adm-head-icon-box.passkey {
+        background: rgba(99, 102, 241, 0.15) !important;
+        color: #818cf8 !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.18) !important;
+    }
+
+    .adm-head-icon-box.inbox {
+        background: rgba(14, 165, 233, 0.15) !important;
+        color: #38bdf8 !important;
+        border: 1px solid rgba(14, 165, 233, 0.3) !important;
+        box-shadow: 0 4px 14px rgba(14, 165, 233, 0.18) !important;
+    }
+
+    .admin-card-head-title h3 {
+        margin: 0 !important;
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+        color: #ffffff !important;
+        letter-spacing: -0.01em !important;
+    }
+
+    .admin-card-head-title p {
+        margin: 3px 0 0 0 !important;
+        font-size: 0.85rem !important;
+        color: #94a3b8 !important;
+    }
+
+    .admin-count-pill {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 6px 14px !important;
+        border-radius: 999px !important;
+        font-size: 0.82rem !important;
+        font-weight: 800 !important;
+    }
+
+    .admin-count-pill.emerald {
+        background: rgba(16, 185, 129, 0.14) !important;
+        color: #34d399 !important;
+        border: 1px solid rgba(16, 185, 129, 0.3) !important;
+    }
+
+    .admin-count-pill.amber {
+        background: rgba(245, 158, 11, 0.14) !important;
+        color: #fbbf24 !important;
+        border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    }
+
+    .admin-count-pill.indigo {
+        background: rgba(99, 102, 241, 0.14) !important;
+        color: #a5b4fc !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    }
+
+    /* Modern Empty State Container */
+    .admin-empty-state-modern {
+        width: 100% !important;
+        margin-top: 4px !important;
+        padding: 22px 26px !important;
+        border-radius: 18px !important;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(15, 23, 42, 0.6) 100%) !important;
+        border: 1px solid rgba(16, 185, 129, 0.22) !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 20px !important;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2) !important;
+        box-sizing: border-box !important;
+    }
+
+    .admin-empty-state-modern.inbox-empty {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(15, 23, 42, 0.6) 100%) !important;
+        border: 1px solid rgba(99, 102, 241, 0.22) !important;
+    }
+
+    .empty-state-icon-orb {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        border-radius: 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.35rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    .empty-state-icon-orb.emerald {
+        background: rgba(16, 185, 129, 0.16) !important;
+        color: #34d399 !important;
+        border: 1px solid rgba(16, 185, 129, 0.35) !important;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.25) !important;
+    }
+
+    .empty-state-icon-orb.indigo {
+        background: rgba(99, 102, 241, 0.16) !important;
+        color: #a5b4fc !important;
+        border: 1px solid rgba(99, 102, 241, 0.35) !important;
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.25) !important;
+    }
+
+    .empty-state-text-group {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        text-align: left !important;
+    }
+
+    .empty-state-text-group h4 {
+        margin: 0 !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        letter-spacing: -0.01em !important;
+    }
+
+    .empty-state-text-group p {
+        margin: 0 !important;
+        font-size: 0.86rem !important;
+        color: #94a3b8 !important;
+        line-height: 1.45 !important;
+    }
+
+    .empty-state-meta-chip {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 7px 15px !important;
+        border-radius: 999px !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #cbd5e1 !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+
+    .empty-state-meta-chip .pulse-dot.green {
+        width: 8px !important;
+        height: 8px !important;
+        border-radius: 50% !important;
+        background: #10b981 !important;
+        box-shadow: 0 0 8px #10b981 !important;
+        display: inline-block !important;
+    }
+
+    @media (max-width: 680px) {
+        .admin-empty-state-modern {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 14px !important;
+            padding: 16px 18px !important;
+        }
+
+        .empty-state-meta-chip {
+            align-self: flex-start !important;
+        }
+    }
+    </style>
 
     <link
         rel="stylesheet"
