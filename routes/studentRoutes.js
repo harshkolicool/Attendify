@@ -257,14 +257,31 @@ function getActiveTrustedDeviceCount(student) {
 }
 
 function isPasskeySetupAllowed(student) {
-    if (!student || !student.passkeySetupAllowedUntil) {
+    if (!student) {
+        return false;
+    }
+
+    // Students with no registered passkeys are always allowed to register their initial passkey
+    if (!student.passkeys || student.passkeys.length === 0) {
+        return true;
+    }
+
+    if (!student.passkeySetupAllowedUntil) {
         return false;
     }
 
     return new Date(student.passkeySetupAllowedUntil).getTime() > Date.now();
 }
 function isTrustedDeviceSetupAllowed(student) {
-    if (!student || !student.trustedDeviceSetupAllowedUntil) {
+    if (!student) {
+        return false;
+    }
+
+    if (!student.trustedDevices || student.trustedDevices.length === 0) {
+        return true;
+    }
+
+    if (!student.trustedDeviceSetupAllowedUntil) {
         return false;
     }
 
@@ -306,7 +323,25 @@ function getPublicKeyBytes(passkey) {
         return null;
     }
 
-    return new Uint8Array(passkey.credentialPublicKey);
+    // Robust handling of Mongoose Binary, Node Buffer, ArrayBuffer, and Uint8Array across server restarts
+    if (Buffer.isBuffer(passkey.credentialPublicKey)) {
+        return new Uint8Array(
+            passkey.credentialPublicKey.buffer,
+            passkey.credentialPublicKey.byteOffset,
+            passkey.credentialPublicKey.byteLength
+        );
+    }
+
+    if (passkey.credentialPublicKey instanceof Uint8Array) {
+        return passkey.credentialPublicKey;
+    }
+
+    try {
+        const buf = Buffer.from(passkey.credentialPublicKey);
+        return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+    } catch (_err) {
+        return new Uint8Array(passkey.credentialPublicKey);
+    }
 }
 
 function findScheduleForSession(schedules, session) {

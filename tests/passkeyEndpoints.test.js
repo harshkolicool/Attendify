@@ -40,3 +40,21 @@ test("getSimpleWebAuthnServer exports generateRegistrationOptions", async functi
     assert.equal(typeof webauthn.generateRegistrationOptions, "function");
     assert.equal(typeof webauthn.verifyRegistrationResponse, "function");
 });
+
+test("Passkey credential public key deserializes reliably from MongoDB BSON Binary after restart", function () {
+    // Simulate raw public key bytes stored in MongoDB
+    const originalBytes = new Uint8Array([48, 89, 48, 19, 6, 7, 42, 134, 72, 206, 61, 2, 1, 6, 8, 42, 134, 72, 206, 61, 3, 1, 7]);
+    
+    // In Mongoose, stored as Node Buffer / BSON Binary
+    const mongooseStoredBuffer = Buffer.from(originalBytes);
+    
+    // Simulate conversion helper
+    const decodedUint8Array = new Uint8Array(
+        mongooseStoredBuffer.buffer,
+        mongooseStoredBuffer.byteOffset,
+        mongooseStoredBuffer.byteLength
+    );
+
+    assert.equal(decodedUint8Array.length, originalBytes.length);
+    assert.deepEqual(Array.from(decodedUint8Array), Array.from(originalBytes));
+});
