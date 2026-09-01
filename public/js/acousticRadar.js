@@ -48,13 +48,22 @@
                     this.audioCtx.resume();
                     const resumeOnInteraction = () => {
                         if (this.audioCtx && this.audioCtx.state === "suspended") {
-                            this.audioCtx.resume();
+                            this.audioCtx.resume().then(() => {
+                                if (this.isBroadcasting && this.lastToken) {
+                                    const binaryPayload = this._encodeToBits(this.lastToken);
+                                    this._transmitBurst(binaryPayload);
+                                }
+                            }).catch(() => {});
                         }
                         document.removeEventListener("click", resumeOnInteraction);
                         document.removeEventListener("touchstart", resumeOnInteraction);
+                        document.removeEventListener("pointerdown", resumeOnInteraction);
+                        document.removeEventListener("keydown", resumeOnInteraction);
                     };
-                    document.addEventListener("click", resumeOnInteraction);
-                    document.addEventListener("touchstart", resumeOnInteraction);
+                    document.addEventListener("click", resumeOnInteraction, { once: true });
+                    document.addEventListener("touchstart", resumeOnInteraction, { once: true, passive: true });
+                    document.addEventListener("pointerdown", resumeOnInteraction, { once: true, passive: true });
+                    document.addEventListener("keydown", resumeOnInteraction, { once: true });
                 }
 
                 this.isBroadcasting = true;
@@ -83,10 +92,15 @@
                 clearInterval(this.broadcastTimer);
                 this.broadcastTimer = null;
             }
-            this.activeNodes.forEach(node => {
+            this.activeNodes.forEach(item => {
                 try {
-                    node.stop();
-                    node.disconnect();
+                    if (item.osc) {
+                        item.osc.stop();
+                        item.osc.disconnect();
+                    }
+                    if (item.gain) {
+                        item.gain.disconnect();
+                    }
                 } catch (e) {}
             });
             this.activeNodes = [];
@@ -146,12 +160,16 @@
 
             osc.start(start);
             osc.stop(start + duration);
-            this.activeNodes.push(osc);
+            const entry = { osc, gain };
+            this.activeNodes.push(entry);
 
             setTimeout(() => {
-                const idx = this.activeNodes.indexOf(osc);
-                if (idx > -1) this.activeNodes.splice(idx, 1);
-            }, (duration + 1) * 1000);
+                const idx = this.activeNodes.indexOf(entry);
+                if (idx > -1) {
+                    try { gain.disconnect(); } catch (e) {}
+                    this.activeNodes.splice(idx, 1);
+                }
+            }, (duration + 0.1) * 1000);
         }
     }
 
@@ -200,6 +218,10 @@
 
                 navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
                     .then(stream => {
+                        if (isDone) {
+                            try { stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+                            return;
+                        }
                         try {
                             this.stream = stream;
                             this.audioCtx = getAudioContext();

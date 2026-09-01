@@ -11,11 +11,8 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
-    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
-    <link rel="stylesheet" href="/css/home.css?v=20260901_modern">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=2">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19">
+    <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed5">
+    <link rel="stylesheet" href="/css/home.css?v=20260901_crazy_v11">
 
     <link
         rel="stylesheet"
@@ -68,18 +65,18 @@
         </button>
 
         <nav class="crazy-nav-links" id="homeNavLinks">
-            <a href="#features" class="c-nav-item">Features</a>
-            <a href="#how-it-works" class="c-nav-item">How It Works</a>
-            <a href="/college/register" class="c-nav-item">Register College</a>
-            <a href="/admin/login" class="c-nav-item">Admin</a>
-            <a href="/teacher/login" class="c-nav-item">Teacher</a>
-            <a href="/student/register" class="c-nav-item">Student Sign-Up</a>
+            <a href="#features" class="c-nav-item"><i class="fa-solid fa-layer-group text-indigo"></i> <span>Features</span></a>
+            <a href="#acoustic-radar" class="c-nav-item"><i class="fa-solid fa-tower-broadcast text-purple"></i> <span>Acoustic Radar</span></a>
+            <a href="#how-it-works" class="c-nav-item"><i class="fa-solid fa-route text-cyan"></i> <span>How It Works</span></a>
+            <a href="/college/register" class="c-nav-item"><i class="fa-solid fa-building-columns text-amber"></i> <span>Register</span></a>
+            <a href="/admin/login" class="c-nav-item"><i class="fa-solid fa-user-shield text-purple"></i> <span>Admin</span></a>
+            <a href="/teacher/login" class="c-nav-item"><i class="fa-solid fa-chalkboard-user text-cyan"></i> <span>Teacher</span></a>
+            <a href="/student/register" class="c-nav-item"><i class="fa-solid fa-user-plus text-emerald"></i> <span>Sign-Up</span></a>
             <a href="/student/login" class="crazy-cta-btn">
-                <i class="fa-solid fa-fingerprint"></i> Student Login
+                <i class="fa-solid fa-fingerprint"></i> <span>Student Login</span>
             </a>
         </nav>
     </header>
-    <div class="home-nav-overlay" id="homeNavOverlay"></div>
 
     <main>
 
@@ -92,15 +89,15 @@
                 <div class="live-security-badge animate-fade-up">
                     <span class="radar-ping-dot"></span>
                     <i class="fa-solid fa-shield-halved"></i>
-                    <span>ZERO-PROXY BIOMETRIC & GPS PLATFORM</span>
+                    <span>ZERO-PROXY BIOMETRIC & ACOUSTIC PLATFORM</span>
                 </div>
 
                 <h1 class="crazy-hero-title animate-fade-up delay-100">
-                    Smart attendance powered by <span class="neon-indigo">FIDO2 Passkeys</span> & <span class="neon-cyan">Live Geofencing</span>.
+                    Smart attendance powered by <span class="neon-indigo">Passkeys</span>, <span class="neon-cyan">Geofencing</span> & <span class="neon-purple">Ultrasonic Radar</span>.
                 </h1>
 
                 <p class="crazy-hero-subtitle animate-fade-up delay-200">
-                    Eliminate proxy attendance with hardware-bound biometric authentication, sub-meter GPS verification, and real-time live lecture telemetry.
+                    Eliminate proxy attendance with hardware-bound biometric authentication, sub-meter GPS geofences, and inaudible ultrasonic physical presence verification.
                 </p>
 
                 <div class="crazy-hero-actions animate-fade-up delay-300">
@@ -134,6 +131,14 @@
                     </div>
 
                     <div class="trust-cell">
+                        <i class="fa-solid fa-tower-broadcast text-purple"></i>
+                        <div>
+                            <strong>Ultrasonic Radar</strong>
+                            <span>18.6–19.8 kHz 2-FSK</span>
+                        </div>
+                    </div>
+
+                    <div class="trust-cell">
                         <i class="fa-solid fa-bolt text-emerald"></i>
                         <div>
                             <strong>Live WebSockets</strong>
@@ -163,6 +168,9 @@
                             </button>
                             <button class="dash-pill-tab" data-view="biometric" type="button">
                                 <i class="fa-solid fa-fingerprint"></i> Biometrics
+                            </button>
+                            <button class="dash-pill-tab" data-view="acoustic" type="button">
+                                <i class="fa-solid fa-tower-broadcast"></i> Acoustic Radar
                             </button>
                             <button class="dash-pill-tab" data-view="stream" type="button">
                                 <i class="fa-solid fa-wave-pulse"></i> Telemetry
@@ -287,24 +295,179 @@
                             </div>
                         </div>
 
+                        <!-- Bottom 3 Telemetry Info Chips (Consistent Format) -->
                         <div class="crypto-meta-triplet">
                             <div class="triplet-card">
-                                <span>ALGORITHM</span>
-                                <strong>ES256 (P-256)</strong>
+                                <div class="t-icon-box indigo"><i class="fa-solid fa-key"></i></div>
+                                <div class="t-meta-content">
+                                    <span>ALGORITHM</span>
+                                    <strong class="text-indigo">ES256 (P-256)</strong>
+                                    <small class="meta-subtext">ECDSA Hardware Sign</small>
+                                </div>
                             </div>
                             <div class="triplet-card">
-                                <span>KEY ISOLATION</span>
-                                <strong class="text-emerald">Hardware HSM</strong>
+                                <div class="t-icon-box emerald"><i class="fa-solid fa-shield-halved"></i></div>
+                                <div class="t-meta-content">
+                                    <span>KEY ISOLATION</span>
+                                    <strong class="text-emerald">Hardware HSM</strong>
+                                    <small class="meta-subtext">Secure Enclave Bound</small>
+                                </div>
                             </div>
                             <div class="triplet-card">
-                                <span>PROXY CHANCE</span>
-                                <strong class="text-cyan">0.00% (Locked)</strong>
+                                <div class="t-icon-box cyan"><i class="fa-solid fa-user-xmark"></i></div>
+                                <div class="t-meta-content">
+                                    <span>PROXY RISK</span>
+                                    <strong class="text-cyan">0.00% (Locked)</strong>
+                                    <small class="meta-subtext">Non-Exportable Keys</small>
+                                </div>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- VIEW 3: LIVE TELEMETRY LOGS -->
+                    <!-- VIEW 3: INAUDIBLE ULTRASONIC ACOUSTIC RADAR -->
+                    <div class="dash-view-screen" id="dashView-acoustic">
+
+                        <div class="session-quick-bar">
+                            <div class="session-title-cluster">
+                                <span class="active-badge ultrasonic"><i class="fa-solid fa-tower-broadcast"></i> ULTRASONIC 2-FSK</span>
+                                <h4>Acoustic Presence & Seating Ranging</h4>
+                            </div>
+                            <span class="enclave-bound-pill ultrasonic"><i class="fa-solid fa-volume-xmark text-purple"></i> Inaudible 18.6–19.8 kHz</span>
+                        </div>
+
+                        <!-- Ultrasonic Radar Scanner Pod -->
+                        <div class="acoustic-scanner-pod">
+                            <!-- Left: Interactive Sonar Emitter -->
+                            <div class="acoustic-sonar-target" id="acousticSonarTarget" title="Click to transmit ultrasonic 2-FSK chirp">
+                                <div class="sonar-radar-grid"></div>
+                                <div class="acoustic-wave-ring ring-1"></div>
+                                <div class="acoustic-wave-ring ring-2"></div>
+                                <div class="acoustic-wave-ring ring-3"></div>
+                                <div class="acoustic-wave-ring ring-4"></div>
+                                <div class="acoustic-center-emitter">
+                                    <div class="emitter-core-glow"></div>
+                                    <i class="fa-solid fa-tower-broadcast emitter-icon"></i>
+                                </div>
+                                <div class="sonar-emitter-label">
+                                    <span class="sonar-pulse-dot"></span>
+                                    <span id="acousticHelperText">TRANSMIT CHIRP</span>
+                                </div>
+                            </div>
+
+                            <!-- Right: High-Precision 2-FSK FFT Equalizer Spectrum -->
+                            <div class="acoustic-spectrum-card">
+                                <div class="spectrum-header-row">
+                                    <div class="spectrum-title-wrap">
+                                        <div class="spectrum-icon-box"><i class="fa-solid fa-wave-square"></i></div>
+                                        <div>
+                                            <span class="spectrum-main-title">2-FSK Audio Spectrum</span>
+                                            <span class="spectrum-sub-title">2048-pt FFT · Real-Time</span>
+                                        </div>
+                                    </div>
+                                    <span class="seating-row-badge" id="acousticSeatingBadge">
+                                        <i class="fa-solid fa-chair text-emerald"></i>
+                                        <span class="seating-label-text">Front Row (1.2m)</span>
+                                    </span>
+                                </div>
+
+                                <div class="spectrum-visualizer-box">
+                                    <div class="spectrum-grid-lines">
+                                        <span class="db-line"><i>0 dB</i></span>
+                                        <span class="db-line"><i>-12 dB</i></span>
+                                        <span class="db-line"><i>-24 dB</i></span>
+                                        <span class="db-line cutoff-line"><i>18kHz</i></span>
+                                    </div>
+
+                                    <div class="spectrum-bars-row" id="spectrumBarsRow">
+                                        <div class="spectrum-channel-col cutoff">
+                                            <div class="spectrum-bar-track">
+                                                <div class="spectrum-bar" style="height: 14%;"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="spectrum-channel-col pilot active">
+                                            <div class="spectrum-bar-track">
+                                                <div class="spectrum-bar pilot active" style="height: 88%;"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="spectrum-channel-col">
+                                            <div class="spectrum-bar-track">
+                                                <div class="spectrum-bar" style="height: 18%;"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="spectrum-channel-col bit0 active">
+                                            <div class="spectrum-bar-track">
+                                                <div class="spectrum-bar bit0 active" style="height: 78%;"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="spectrum-channel-col">
+                                            <div class="spectrum-bar-track">
+                                                <div class="spectrum-bar" style="height: 16%;"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="spectrum-channel-col bit1 active">
+                                            <div class="spectrum-bar-track">
+                                                <div class="spectrum-bar bit1 active" style="height: 92%;"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="spectrum-channel-col">
+                                            <div class="spectrum-bar-track">
+                                                <div class="spectrum-bar" style="height: 12%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Clean Frequency Legend Row Below the Grid (Zero Collision!) -->
+                                <div class="spectrum-channel-labels-row">
+                                    <div class="channel-info"><span class="channel-freq">18.0k</span><span class="channel-tag">CUTOFF</span></div>
+                                    <div class="channel-info"><span class="channel-freq text-cyan">18.6k</span><span class="channel-tag pilot">PILOT</span></div>
+                                    <div class="channel-info"><span class="channel-freq">19.0k</span><span class="channel-tag">GUARD</span></div>
+                                    <div class="channel-info"><span class="channel-freq text-purple">19.2k</span><span class="channel-tag bit0">BIT 0</span></div>
+                                    <div class="channel-info"><span class="channel-freq">19.5k</span><span class="channel-tag">GUARD</span></div>
+                                    <div class="channel-info"><span class="channel-freq text-rose">19.8k</span><span class="channel-tag bit1">BIT 1</span></div>
+                                    <div class="channel-info"><span class="channel-freq">20.0k</span><span class="channel-tag">EDGE</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom 3 Telemetry Info Chips -->
+                        <div class="crypto-meta-triplet acoustic-meta">
+                            <div class="triplet-card">
+                                <div class="t-icon-box purple"><i class="fa-solid fa-wave-square"></i></div>
+                                <div class="t-meta-content">
+                                    <span>MODULATION</span>
+                                    <strong class="text-purple">2-FSK Pilot Sync</strong>
+                                    <small class="meta-subtext">Δf = 600 Hz · 25ms/bit</small>
+                                </div>
+                            </div>
+                            <div class="triplet-card">
+                                <div class="t-icon-box cyan"><i class="fa-solid fa-filter"></i></div>
+                                <div class="t-meta-content">
+                                    <span>FILTER CUTOFF</span>
+                                    <strong class="text-cyan">18.0 kHz High-Pass</strong>
+                                    <small class="meta-subtext">Speech & Noise Blocked</small>
+                                </div>
+                            </div>
+                            <div class="triplet-card">
+                                <div class="t-icon-box emerald"><i class="fa-solid fa-laptop-code"></i></div>
+                                <div class="t-meta-content">
+                                    <span>HARDWARE NEEDED</span>
+                                    <strong class="text-emerald">Zero (Built-In Audio)</strong>
+                                    <small class="meta-subtext">Built-in Mic & Speaker</small>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- VIEW 4: LIVE TELEMETRY LOGS -->
                     <div class="dash-view-screen" id="dashView-stream">
 
                         <div class="session-quick-bar">
@@ -340,6 +503,34 @@
                                 <span class="log-time">04:34:52</span>
                                 <span class="log-badge reject">BLOCKED</span>
                                 <span class="log-desc">Unknown Device • Distance: 480m (Hostel Block) • Outside 100m Geofence ❌</span>
+                            </div>
+                        </div>
+
+                        <!-- Bottom 3 Telemetry Info Chips (Matching Format) -->
+                        <div class="crypto-meta-triplet telemetry-meta">
+                            <div class="triplet-card">
+                                <div class="t-icon-box indigo"><i class="fa-solid fa-bolt"></i></div>
+                                <div class="t-meta-content">
+                                    <span>SOCKET PROTOCOL</span>
+                                    <strong class="text-indigo">WebSocket (TLS 1.3)</strong>
+                                    <small class="meta-subtext">Sub-20ms Event Delivery</small>
+                                </div>
+                            </div>
+                            <div class="triplet-card">
+                                <div class="t-icon-box emerald"><i class="fa-solid fa-database"></i></div>
+                                <div class="t-meta-content">
+                                    <span>MULTI-TENANT</span>
+                                    <strong class="text-emerald">Atlas Isolated</strong>
+                                    <small class="meta-subtext">Institution Data Siloed</small>
+                                </div>
+                            </div>
+                            <div class="triplet-card">
+                                <div class="t-icon-box cyan"><i class="fa-solid fa-file-shield"></i></div>
+                                <div class="t-meta-content">
+                                    <span>AUDIT TRAIL</span>
+                                    <strong class="text-cyan">Tamper-Evident</strong>
+                                    <small class="meta-subtext">Immutable Session Logs</small>
+                                </div>
                             </div>
                         </div>
 
@@ -396,6 +587,136 @@
                     </div>
                 </div>
             </div>
+        </section>
+
+        <!-- ACOUSTIC ULTRASONIC RADAR SHOWCASE SECTION (PURE LIVE ANIMATION - NO STATIC IMAGES) -->
+        <section class="crazy-acoustic-section scroll-animate" id="acoustic-radar">
+
+            <div class="crazy-section-heading center scroll-animate">
+                <span class="neon-pill" style="border-color:rgba(168,85,247,0.4); color:#c084fc;"><i class="fa-solid fa-tower-broadcast"></i> ZERO-HARDWARE ACOUSTIC RADAR</span>
+                <h2>Inaudible Ultrasonic Presence & Physical Seating Ranging</h2>
+                <p>Zero extra hardware required. Uses high-frequency soundwaves (18.6–19.8 kHz) through standard device speakers and microphones to verify room presence and classify exact indoor seating rows.</p>
+            </div>
+
+            <div class="acoustic-showcase-grid scroll-animate delay-100">
+                <!-- Left: Pure Animated Ultrasonic Classroom Radar Vector Canvas -->
+                <div class="acoustic-live-sim-canvas" id="classroomAcousticSim">
+                    <!-- Top HUD Status & Zone Legend Bar (Zero Overlap) -->
+                    <div class="sim-radar-top-hud">
+                        <div class="acoustic-live-pill">
+                            <span class="pulse-dot"></span>
+                            <span class="live-pill-text">18.6–19.8 kHz 2-FSK Pulse Active</span>
+                        </div>
+                        <div class="sim-zone-legend">
+                            <span class="zone-tag emerald" title="Front Row (1–2m)"><i class="fa-solid fa-chair"></i> Front Row (1–2m)</span>
+                            <span class="zone-tag cyan" title="Middle Row (3–5m)"><i class="fa-solid fa-users-line"></i> Middle Row (3–5m)</span>
+                            <span class="zone-tag purple" title="Back Row (6–9m)"><i class="fa-solid fa-chair"></i> Back Row (6–9m)</span>
+                        </div>
+                    </div>
+
+                    <!-- Polar coordinate grid & scan beams -->
+                    <div class="sim-grid-background"></div>
+                    <div class="sim-radar-sweep-cone"></div>
+
+                    <!-- Ultrasonic Soundwave Emitter Station -->
+                    <div class="sim-wave-emitter">
+                        <div class="sim-ripple ripple-1"></div>
+                        <div class="sim-ripple ripple-2"></div>
+                        <div class="sim-ripple ripple-3"></div>
+                        <div class="sim-ripple ripple-4"></div>
+                        <div class="sim-emitter-station" title="Faculty Ultrasonic Station (18.6–19.8 kHz)">
+                            <div class="station-glow-core"></div>
+                            <i class="fa-solid fa-chalkboard-user station-icon"></i>
+                            <span class="station-label">Faculty Laptop Emitter</span>
+                        </div>
+                    </div>
+
+                    <!-- Seating Ranging Arcs & Verified Student Nodes -->
+                    <div class="sim-seating-arcs">
+                        <!-- Front Row (1-2m) -->
+                        <div class="seating-zone-arc zone-front" title="Front Row (1–2m) · 18.6–19.8 kHz High Power">
+                            <div class="sim-student-node node-1 active" style="top: 30%; left: 32%;" title="Harsh K. · 1.2m · -38 dBm · Verified ✓">
+                                <div class="node-ping emerald"></div>
+                                <div class="node-avatar emerald"><i class="fa-solid fa-user-check"></i></div>
+                                <div class="node-tooltip">Harsh K. <span>1.2m · -38 dBm ✓</span></div>
+                            </div>
+                            <div class="sim-student-node node-2 active" style="top: 68%; left: 34%;" title="Pooja V. · 1.8m · -42 dBm · Verified ✓">
+                                <div class="node-ping emerald"></div>
+                                <div class="node-avatar emerald"><i class="fa-solid fa-user-check"></i></div>
+                                <div class="node-tooltip">Pooja V. <span>1.8m · -42 dBm ✓</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Middle Row (3-5m) -->
+                        <div class="seating-zone-arc zone-middle" title="Middle Row (3–5m) · Signal Strength: 80%">
+                            <div class="sim-student-node node-3 active" style="top: 26%; left: 58%;" title="Rohan D. · 3.8m · -58 dBm · Verified ✓">
+                                <div class="node-ping cyan"></div>
+                                <div class="node-avatar cyan"><i class="fa-solid fa-user-check"></i></div>
+                                <div class="node-tooltip">Rohan D. <span>3.8m · -58 dBm ✓</span></div>
+                            </div>
+                            <div class="sim-student-node node-4 active" style="top: 72%; left: 60%;" title="Sneha M. · 4.5m · -62 dBm · Verified ✓">
+                                <div class="node-ping cyan"></div>
+                                <div class="node-avatar cyan"><i class="fa-solid fa-user-check"></i></div>
+                                <div class="node-tooltip">Sneha M. <span>4.5m · -62 dBm ✓</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Back Row (6-9m) -->
+                        <div class="seating-zone-arc zone-back" title="Back Row (6–9m) · Signal Strength: 65%">
+                            <div class="sim-student-node node-5 active" style="top: 48%; left: 82%;" title="Vikram S. · 7.5m · -74 dBm · Verified ✓">
+                                <div class="node-ping purple"></div>
+                                <div class="node-avatar purple"><i class="fa-solid fa-user-check"></i></div>
+                                <div class="node-tooltip">Vikram S. <span>7.5m · -74 dBm ✓</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Live Telemetry Strip -->
+                    <div class="sim-telemetry-readout">
+                        <div class="sim-stat">
+                            <span>MODULATION</span>
+                            <strong>2-FSK Sync (18.6k/19.2k/19.8k)</strong>
+                        </div>
+                        <div class="sim-stat">
+                            <span>HIGH-PASS CUTOFF</span>
+                            <strong class="text-cyan">18.0 kHz Filter Active</strong>
+                        </div>
+                        <div class="sim-stat">
+                            <span>RANGING RESOLUTION</span>
+                            <strong class="text-emerald">Sub-Meter (0.3m)</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="acoustic-showcase-details">
+                    <span class="neon-pill" style="margin-bottom: 14px; display: inline-flex;"><i class="fa-solid fa-microchip"></i> INAUDIBLE TO HUMAN EARS</span>
+                    <h3 style="font-size: 1.65rem; font-weight: 800; color: #f8fafc; margin-bottom: 14px; line-height: 1.3;">
+                        Indoor Seating Telemetry Beyond GPS Limits
+                    </h3>
+                    <p style="color: #94a3b8; font-size: 0.94rem; line-height: 1.65; margin-bottom: 22px;">
+                        GPS signals attenuate inside concrete lecture halls. Attendify's Acoustic Radar broadcasts continuous inaudible 2-FSK modulated ultrasonic frames from the faculty's laptop during live lectures. Students' devices capture and compute precise seating distances in 450ms.
+                    </p>
+
+                    <div class="acoustic-feature-triad">
+                        <div class="acoustic-triad-card">
+                            <i class="fa-solid fa-chair text-emerald"></i>
+                            <strong>Row Classification</strong>
+                            <span>Front Row (1–2m), Middle Row (3–5m), Back Row (6–9m).</span>
+                        </div>
+                        <div class="acoustic-triad-card">
+                            <i class="fa-solid fa-filter text-cyan"></i>
+                            <strong>18.0 kHz High-Pass</strong>
+                            <span>Completely blocks human speech, AC, and ambient classroom noise.</span>
+                        </div>
+                        <div class="acoustic-triad-card">
+                            <i class="fa-solid fa-shield-halved text-purple"></i>
+                            <strong>Zero Hardware</strong>
+                            <span>Works instantly with built-in laptop speakers and phone microphones.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <!-- DEDICATED ROLE PORTALS -->
@@ -479,7 +800,7 @@
             <div class="crazy-section-heading scroll-animate">
                 <span class="neon-pill"><i class="fa-solid fa-microchip"></i> CRYPTOGRAPHIC INTEGRITY</span>
                 <h2>Engineered for 100% Zero-Proxy Security</h2>
-                <p>Combines asymmetric cryptography, hardware secure enclaves, and real-time geodesic calculations.</p>
+                <p>Combines asymmetric cryptography, hardware secure enclaves, geodesic GPS calculations, and ultrasonic presence verification.</p>
             </div>
 
             <div class="crazy-features-grid">
@@ -497,27 +818,27 @@
                 </article>
 
                 <article class="crazy-feature-box scroll-animate delay-300">
+                    <div class="feature-icon purple"><i class="fa-solid fa-tower-broadcast"></i></div>
+                    <h3>Ultrasonic Acoustic Radar</h3>
+                    <p>Inaudible 2-FSK chirps (18.6–19.8 kHz) verify physical classroom presence and measure indoor seating rows without external beacons.</p>
+                </article>
+
+                <article class="crazy-feature-box scroll-animate delay-100">
                     <div class="feature-icon cyan"><i class="fa-solid fa-shield-virus"></i></div>
                     <h3>Anti-Spoofing Velocity Filter</h3>
                     <p>Temporal velocity models detect and reject mock GPS apps, artificial coordinate injection, and rapid campus teleportation.</p>
                 </article>
 
-                <article class="crazy-feature-box scroll-animate delay-100">
+                <article class="crazy-feature-box scroll-animate delay-200">
                     <div class="feature-icon amber"><i class="fa-solid fa-laptop-code"></i></div>
                     <h3>Trusted Browser Attestation</h3>
                     <p>Entropy-based hardware fingerprinting and cryptographic device cookies provide a secure fallback when biometrics are unavailable.</p>
                 </article>
 
-                <article class="crazy-feature-box scroll-animate delay-200">
-                    <div class="feature-icon purple"><i class="fa-solid fa-file-excel"></i></div>
+                <article class="crazy-feature-box scroll-animate delay-300">
+                    <div class="feature-icon rose"><i class="fa-solid fa-file-excel"></i></div>
                     <h3>Automated Excel Reports</h3>
                     <p>Instant multi-sheet .xlsx generation calculating subject-wise attendance percentages, session logs, and shortfall analytics.</p>
-                </article>
-
-                <article class="crazy-feature-box scroll-animate delay-300">
-                    <div class="feature-icon rose"><i class="fa-solid fa-bell"></i></div>
-                    <h3>VAPID Push Reminders</h3>
-                    <p>Automated Service Worker background notifications alert faculty and students before upcoming scheduled lectures.</p>
                 </article>
 
             </div>
@@ -553,14 +874,14 @@
                     <div class="step-counter">03</div>
                     <div class="step-icon"><i class="fa-solid fa-play"></i></div>
                     <h3>Lecture Launch</h3>
-                    <p>Faculty launches attendance from their dashboard. The live geofence radar and WebSocket stream activate.</p>
+                    <p>Faculty launches attendance. The live geofence radar, WebSocket stream, and ultrasonic acoustic beacon activate.</p>
                 </div>
 
                 <div class="step-card-crazy scroll-animate delay-400">
                     <div class="step-counter">04</div>
                     <div class="step-icon"><i class="fa-solid fa-fingerprint"></i></div>
-                    <h3>Instant Biometric Check-In</h3>
-                    <p>Students tap Mark Attendance. Hardware passkey + GPS verifies physical presence in under a second.</p>
+                    <h3>Triple Verification Check-In</h3>
+                    <p>Students tap Mark Attendance. Hardware Passkey + GPS Geofence + Ultrasonic Acoustic Radar verify presence in under a second.</p>
                 </div>
 
             </div>
@@ -601,28 +922,81 @@
                         <i class="fa-solid fa-clipboard-check"></i>
                     </span>
                     <span class="brand-title">ATTENDIFY</span>
+                    <span class="brand-ai-tag"><i class="fa-solid fa-shield-check"></i> FIDO2</span>
                 </a>
-                <p>Next-generation smart biometric & GPS verified attendance management system for modern colleges.</p>
+                <p>Next-generation smart biometric, GPS geofencing & ultrasonic attendance management system for modern higher education institutions.</p>
+                <div class="footer-status-pill">
+                    <span class="pulse-emerald-dot"></span>
+                    <span>Systems Operational · TLS 1.3</span>
+                </div>
             </div>
 
-            <div class="footer-links-pane">
-                <a href="/college/register">Register College</a>
-                <a href="/admin/login">Admin Portal</a>
-                <a href="/teacher/login">Teacher Portal</a>
-                <a href="/student/login">Student Login</a>
-                <a href="/student/register">Student Register</a>
-                <a href="/platform-admin/login">Platform Super Admin</a>
+            <div class="footer-nav-columns">
+                <div class="footer-nav-col">
+                    <span class="footer-col-title">Role Portals</span>
+                    <a href="/admin/login" class="footer-link">
+                        <i class="fa-solid fa-user-shield text-purple"></i>
+                        <span>Admin Portal</span>
+                    </a>
+                    <a href="/teacher/login" class="footer-link">
+                        <i class="fa-solid fa-chalkboard-user text-cyan"></i>
+                        <span>Teacher Portal</span>
+                    </a>
+                    <a href="/student/login" class="footer-link">
+                        <i class="fa-solid fa-fingerprint text-emerald"></i>
+                        <span>Student Login</span>
+                    </a>
+                </div>
+
+                <div class="footer-nav-col">
+                    <span class="footer-col-title">Onboarding</span>
+                    <a href="/college/register" class="footer-link">
+                        <i class="fa-solid fa-building-columns text-amber"></i>
+                        <span>Register College</span>
+                    </a>
+                    <a href="/student/register" class="footer-link">
+                        <i class="fa-solid fa-user-plus text-indigo"></i>
+                        <span>Student Sign-Up</span>
+                    </a>
+                    <a href="/platform-admin/login" class="footer-link">
+                        <i class="fa-solid fa-shield-halved text-cyan"></i>
+                        <span>Platform Super Admin</span>
+                    </a>
+                </div>
+
+                <div class="footer-nav-col">
+                    <span class="footer-col-title">Core Technology</span>
+                    <a href="#acoustic-radar" class="footer-link">
+                        <i class="fa-solid fa-tower-broadcast text-purple"></i>
+                        <span>Acoustic 2-FSK</span>
+                    </a>
+                    <a href="#features" class="footer-link">
+                        <i class="fa-solid fa-location-crosshairs text-cyan"></i>
+                        <span>GPS Geofencing</span>
+                    </a>
+                    <a href="#how-it-works" class="footer-link">
+                        <i class="fa-solid fa-lock text-indigo"></i>
+                        <span>WebAuthn Passkeys</span>
+                    </a>
+                </div>
             </div>
         </div>
 
         <div class="footer-bottom-strip">
-            <p>&copy; 2026 Attendify Inc. All rights reserved. Built with modern web cryptography.</p>
+            <div class="footer-bottom-content">
+                <p>&copy; 2026 Attendify Inc. All rights reserved. Built with modern web cryptography.</p>
+                <div class="footer-tech-badges">
+                    <span><i class="fa-solid fa-bolt text-amber"></i> WebSockets Active</span>
+                    <span><i class="fa-solid fa-shield-check text-emerald"></i> Zero-Proxy Guard</span>
+                </div>
+            </div>
         </div>
     </footer>
 
 </div>
 
-<script src="/js/home.js?v=20260901_modern"></script>
+<script src="/js/acousticRadar.js?v=20260901_v2"></script>
+<script src="/js/home.js?v=20260901_modern_v5"></script>
 <script src="/js/csrfAuto.js" defer></script>
 <script src="/js/selectEnhancer.js" defer></script>
 </body>

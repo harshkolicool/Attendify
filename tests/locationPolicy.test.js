@@ -88,3 +88,25 @@ test("clearly outside position fails", function () {
     assert.equal(evaluation.isOutside, true);
     assert.equal(evaluation.decision, "FAIL");
 });
+
+test("isValidCoordinate rejects (0, 0) and out-of-range coordinates", function () {
+    const { isValidCoordinate } = require("../utils/locationVerification");
+    assert.equal(isValidCoordinate(0, 0), false);
+    assert.equal(isValidCoordinate(0.0, 0.0), false);
+    assert.equal(isValidCoordinate(12.9716, 77.5946), true);
+    assert.equal(isValidCoordinate(95, 77.5946), false);
+    assert.equal(isValidCoordinate(12.9716, 200), false);
+    assert.equal(isValidCoordinate(null, null), false);
+});
+
+test("inferAccuracyFromMeta conservatively inflates accuracy when samples are poor", function () {
+    const { inferAccuracyFromMeta } = require("../utils/locationVerification");
+    // If client claims 5m accuracy, but best in batch was 40m, inferred becomes 40m
+    const inferred = inferAccuracyFromMeta(5, {
+        bestAccuracy: 40,
+        averageAccuracy: 60,
+        sampleCount: 10
+    });
+    assert.ok(inferred >= 40);
+});
+

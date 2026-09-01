@@ -246,7 +246,8 @@ async function getBestAttendanceToken(sessionId, button) {
         return await getAttendanceTokenWithPasskey(sessionId);
     } catch (err) {
         const msg = String(err && err.message ? err.message : err);
-        const isTlsOrEnvironmentError = /TLS|certificate|insecure|not supported|relying party|NotAllowedError|InvalidStateError|SecurityError|network/i.test(msg);
+        const errName = String(err && err.name ? err.name : "");
+        const isTlsOrEnvironmentError = /TLS|certificate|insecure|not supported|relying party|NotAllowedError|InvalidStateError|SecurityError|network|no passkey|not registered|passkey verification could not start|timed out|abort/i.test(msg) || /NotAllowedError|AbortError|InvalidStateError|SecurityError/i.test(errName);
         
         if (isTlsOrEnvironmentError) {
             console.warn("Passkey unavailable in current browser/tunnel TLS environment. Falling back to Trusted Browser verification...", err);
@@ -496,6 +497,50 @@ function hideRadarScanModal(delayMs) {
     }, delay);
 }
 
+function buildStudentLocationMeta(pos) {
+    const samples = window.AttendifyLiveStream && typeof window.AttendifyLiveStream.getRecentFreshSamples === 'function'
+        ? window.AttendifyLiveStream.getRecentFreshSamples(30000)
+        : [];
+
+    let bestAcc = pos && pos.coords && Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : null;
+    let avgAcc = pos && pos.coords && Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : null;
+
+    if (samples.length > 0) {
+        let sumAcc = 0;
+        let validCount = 0;
+        for (let i = 0; i < samples.length; i++) {
+            const s = samples[i];
+            if (s && Number.isFinite(s.accuracy) && s.accuracy > 0) {
+                sumAcc += s.accuracy;
+                validCount++;
+                if (bestAcc === null || s.accuracy < bestAcc) {
+                    bestAcc = s.accuracy;
+                }
+            }
+        }
+        if (validCount > 0) {
+            avgAcc = Math.round(sumAcc / validCount);
+        }
+    }
+
+    const navConn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
+    const networkMeta = navConn ? {
+        effectiveType: navConn.effectiveType || "",
+        rtt: typeof navConn.rtt === "number" ? navConn.rtt : null,
+        downlink: typeof navConn.downlink === "number" ? navConn.downlink : null,
+        saveData: !!navConn.saveData
+    } : null;
+
+    return {
+        sampleCount: Math.max(1, samples.length),
+        bestAccuracy: bestAcc,
+        averageAccuracy: avgAcc,
+        source: pos && pos.coords && pos.coords.source ? pos.coords.source : "browser-gps",
+        network: networkMeta,
+        capturedAt: Date.now()
+    };
+}
+
 function markAttendance(sessionId, button) {
     if (!button || !sessionId) return;
     if (button.dataset.pending === "true") return;
@@ -558,7 +603,8 @@ function markAttendance(sessionId, button) {
                 latitude: finalPos ? finalPos.coords.latitude : null,
                 longitude: finalPos ? finalPos.coords.longitude : null,
                 accuracy: finalPos ? finalPos.coords.accuracy : null,
-                locationMeta: null,
+                timestamp: finalPos && finalPos.timestamp ? finalPos.timestamp : Date.now(),
+                locationMeta: buildStudentLocationMeta(finalPos),
                 attendanceToken: attendanceToken,
                 browserFingerprint: getBrowserFingerprint(),
                 requestReview: false,
@@ -905,9 +951,11 @@ function syncOfflineAttendance() {
     const queue = getOfflineQueue();
     if (queue.length === 0) return;
 
-    // Show syncing toast
-    const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false });
-    Toast.fire({ icon: 'info', title: `Syncing ${queue.length} pending attendance records...` });
+    // Show syncing toast if Swal is available
+    if (typeof Swal !== "undefined" && typeof Swal.mixin === "function") {
+        const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false });
+        Toast.fire({ icon: 'info', title: `Syncing ${queue.length} pending attendance records...` });
+    }
 
     const promises = queue.map(payload => {
         return fetch("/student/attendance/mark", {
@@ -933,7 +981,12 @@ function syncOfflineAttendance() {
         updateOfflineQueueUI();
 
         if (successCount > 0) {
-            Toast.fire({ icon: 'success', title: `Synced ${successCount} attendance records!`, timer: 3000 });
+            if (typeof Swal !== "undefined" && typeof Swal.mixin === "function") {
+                const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false });
+                Toast.fire({ icon: 'success', title: `Synced ${successCount} attendance records!`, timer: 3000 });
+            } else if (typeof showMessage === "function") {
+                showMessage(`Synced ${successCount} offline attendance records!`, "success");
+            }
         }
     });
 }

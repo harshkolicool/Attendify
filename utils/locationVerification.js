@@ -50,13 +50,16 @@ function isUsableAccuracy(accuracy) {
 }
 
 function isValidCoordinate(lat, lon) {
+    const nLat = Number(lat);
+    const nLon = Number(lon);
     return (
-        Number.isFinite(lat) &&
-        Number.isFinite(lon) &&
-        lat >= -90 &&
-        lat <= 90 &&
-        lon >= -180 &&
-        lon <= 180
+        Number.isFinite(nLat) &&
+        Number.isFinite(nLon) &&
+        nLat >= -90 &&
+        nLat <= 90 &&
+        nLon >= -180 &&
+        nLon <= 180 &&
+        (nLat !== 0 || nLon !== 0)
     );
 }
 
@@ -92,7 +95,7 @@ function inferAccuracyFromMeta(reportedAccuracy, locationMeta) {
         inferred = Math.max(inferred, Math.round(averageAccuracy * 0.9));
     }
 
-    if (bestAccuracy > 0 && bestAccuracy < inferred) {
+    if (bestAccuracy > inferred) {
         inferred = Math.max(inferred, bestAccuracy);
     }
 

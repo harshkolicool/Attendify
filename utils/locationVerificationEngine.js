@@ -110,8 +110,9 @@ function verifyStudentAttendanceLocation({
         session.longitude
     );
 
-    const safeAccuracy = Number.isFinite(Number(activeAcc)) ? Number(activeAcc) : 100;
-    const allowedDistanceWithPadding = allowedRadius + Math.min(safeAccuracy, 100);
+    const maxUncertaintyCap = Number(process.env.GPS_UNCERTAINTY_CAP_METERS || 25);
+    const safeAccuracy = Number.isFinite(Number(activeAcc)) ? Number(activeAcc) : maxUncertaintyCap;
+    const allowedDistanceWithPadding = allowedRadius + Math.min(safeAccuracy, maxUncertaintyCap);
 
     // Decision A: STRONG GPS PRESENT
     if (activeAcc <= 50 && distanceFromTeacher <= allowedRadius && isFreshTimestamp(activeTs, 30000)) {
