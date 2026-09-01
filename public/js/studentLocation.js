@@ -584,7 +584,7 @@ function markAttendance(sessionId, button) {
             if (window.AttendifyAcousticRadar && window.AttendifyAcousticRadar.Listener) {
                 try {
                     const listener = new window.AttendifyAcousticRadar.Listener();
-                    acousticProof = await listener.capturePresence(450);
+                    acousticProof = await listener.capturePresence(1200);
                 } catch (e) {
                     console.log("Acoustic listener skipped:", e);
                 }
@@ -612,7 +612,7 @@ function markAttendance(sessionId, button) {
             };
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4500);
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
 
             return fetch("/student/attendance/mark", {
                 method: "POST",

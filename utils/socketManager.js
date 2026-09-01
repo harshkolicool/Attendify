@@ -27,6 +27,42 @@ setInterval(function cleanLocationPersistedAt() {
     });
 }, 10 * 60 * 1000).unref();
 
+// ── Active Session Cache — Prevents MongoDB hammering during concurrent live location streams ──
+const activeSessionCache = new Map();
+const SESSION_CACHE_TTL_MS = 10000; // 10 seconds TTL
+
+async function getCachedActiveSession(sessionId) {
+    if (!sessionId) return null;
+    const key = String(sessionId);
+    const now = Date.now();
+    const cached = activeSessionCache.get(key);
+    if (cached && (now - cached.cachedAt < SESSION_CACHE_TTL_MS)) {
+        return cached.session;
+    }
+
+    const locationGraceEnd = new Date(now - 2 * 60 * 1000);
+    const session = await AttendanceSession.findOne({
+        _id: sessionId,
+        isActive: true,
+        status: "ACTIVE",
+        endTime: { $gt: locationGraceEnd }
+    }).select("_id teacher classGroup latitude longitude radius teacherGpsAccuracy endTime locationMeta").lean();
+
+    if (session) {
+        activeSessionCache.set(key, { session, cachedAt: now });
+    } else {
+        activeSessionCache.delete(key);
+    }
+
+    return session;
+}
+
+function invalidateSessionCache(sessionId) {
+    if (sessionId) {
+        activeSessionCache.delete(String(sessionId));
+    }
+}
+
 
 function getId(value) {
     if (!value) {
@@ -740,16 +776,7 @@ function initializeSocket(io) {
                     return;
                 }
 
-                // Allow a 2-minute grace window after endTime in case of clock skew
-                // or a teacher who forgot to close the session
-                const locationGraceEnd = new Date(Date.now() - 2 * 60 * 1000);
-
-                const session = await AttendanceSession.findOne({
-                    _id: sessionId,
-                    isActive: true,
-                    status: "ACTIVE",
-                    endTime: { $gt: locationGraceEnd }
-                }).select("_id teacher classGroup latitude longitude radius teacherGpsAccuracy endTime locationMeta");
+                const session = await getCachedActiveSession(sessionId);
 
                 if (!session || !session.teacher || !session.classGroup) {
                     return;
@@ -1088,7 +1115,8 @@ function emitAttendanceEnded(session) {
     const sessionId = getId(session._id);
     if (!sessionId) return;
     
-    // Clear live location store — fire-and-forget (don't block event emission)
+    // Invalidate active session cache & live location store
+    invalidateSessionCache(sessionId);
     liveLocationStore.clearSession(sessionId).catch(function () {});
 
     const classGroupId = getId(session.classGroup);
@@ -1436,6 +1464,7 @@ function emitSessionRadiusUpdated(session, newRadius) {
     if (!io || !session || !newRadius) return;
 
     const sessionId = getId(session._id);
+    invalidateSessionCache(sessionId);
     const teacherId = getId(session.teacher);
     const classGroupId = getId(session.classGroup);
     const collegeId = getId(session.college);
@@ -1464,6 +1493,7 @@ function emitAttendanceExtended(session, extendMinutes) {
     if (!io || !session) return;
 
     const sessionId = getId(session._id);
+    invalidateSessionCache(sessionId);
     const scheduleId = getId(session.schedule && session.schedule._id ? session.schedule._id : session.schedule);
     const teacherId = getId(session.teacher && session.teacher._id ? session.teacher._id : session.teacher);
     const classGroupId = getId(session.classGroup && session.classGroup._id ? session.classGroup._id : session.classGroup);

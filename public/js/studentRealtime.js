@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function init() {
             transports: ["websocket", "polling"],
             withCredentials: true,
             timeout: 20000,
-            reconnectionAttempts: 20,
+            reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000
         });

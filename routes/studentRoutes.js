@@ -2320,7 +2320,7 @@ router.post("/live-location/update", isStudent, async function (req, res) {
 
 
 
-router.post("/attendance/mark", attendanceLimiter, isStudent, async function (req, res) {
+router.post("/attendance/mark", isStudent, attendanceLimiter, async function (req, res) {
     let student = null;
     let session = null;
 
@@ -2329,7 +2329,7 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
         const requestIp = getClientIp(req);
 
         const markLimitKey = "mark:" + loggedStudentId.toString() + ":" + requestIp;
-        const markLimit = allowAttendanceRequest(markLimitKey, 10, 60 * 1000);
+        const markLimit = allowAttendanceRequest(markLimitKey, 15, 60 * 1000);
 
         if (!markLimit.allowed) {
             return res.status(429).json({
@@ -2407,7 +2407,8 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
             });
         }
 
-        student = await Student.findById(loggedStudentId);
+        student = await Student.findById(loggedStudentId)
+            .select("_id fullName enrollmentNumber email college classGroup isBlocked");
 
         if (!student) {
             return res.status(401).json({
@@ -2424,11 +2425,7 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
         }
 
         session = await AttendanceSession.findById(sessionId)
-            .populate("schedule")
-            .populate("classroom")
-            .populate("subject")
-            .populate("classGroup")
-            .populate("teacher");
+            .populate("schedule", "startTime endTime day dayOfWeek date recurrence");
 
         if (!session) {
             return res.status(404).json({
@@ -2680,8 +2677,8 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
             locationMeta
         });
 
-        // Save Attempt
-        await saveAttendanceAttempt({
+        // Save Attempt asynchronously to avoid blocking the client response under high concurrency
+        saveAttendanceAttempt({
             req,
             student,
             session,
@@ -2702,6 +2699,8 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
             confidenceScore: decisionResult.confidenceScore,
             recentLiveSnapshotUsed: decisionResult.recentLiveSnapshotUsed,
             gpsQuality: (decisionResult.finalAccuracy <= 50) ? "GOOD" : "WEAK"
+        }).catch(function (err) {
+            console.log("ASYNC ATTENDANCE ATTEMPT SAVE ERROR:", err && err.message ? err.message : err);
         });
 
         const acousticProof = req.body.acousticProof;
@@ -2865,15 +2864,20 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
             updateQuery.$push = { attendanceRecords: attendanceRecord._id };
         }
 
-        await AttendanceSession.updateOne(
+        const updatedSession = await AttendanceSession.findOneAndUpdate(
             { _id: session._id },
-            updateQuery
+            updateQuery,
+            { new: true, select: "attendanceSummary teacher classGroup schedule" }
         );
 
+        const currentSummary = updatedSession && updatedSession.attendanceSummary
+            ? updatedSession.attendanceSummary
+            : (session.attendanceSummary || { totalPresent: 1, totalAbsent: 0, totalMarked: 1 });
+
         const updatedCounts = {
-            totalPresent: (session.attendanceSummary ? session.attendanceSummary.totalPresent : 0) + 1,
-            totalAbsent: Math.max(0, (session.attendanceSummary ? session.attendanceSummary.totalAbsent : 0) - (wasAbsentOverridden ? 1 : 0)),
-            totalMarked: (session.attendanceSummary ? session.attendanceSummary.totalMarked : 0) + (wasAbsentOverridden ? 0 : 1)
+            totalPresent: Number(currentSummary.totalPresent || 0),
+            totalAbsent: Number(currentSummary.totalAbsent || 0),
+            totalMarked: Number(currentSummary.totalMarked || 0)
         };
 
         if (wasAbsentOverridden) {
