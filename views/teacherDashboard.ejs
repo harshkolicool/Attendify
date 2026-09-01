@@ -796,9 +796,15 @@
                                 <p><%= session.classGroup ? session.classGroup.name : 'Class Missing' %></p>
                             </div>
 
-                            <div class="live-badge-modern">
-                                <span class="pulse-dot"></span>
-                                LIVE
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="acoustic-radar-badge" title="Broadcasting inaudible 19.5kHz ultrasonic beacon for zero-proxy presence verification" style="font-size: 0.72rem; font-weight: 800; color: #38bdf8; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.35); padding: 4px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-tower-broadcast" style="animation: pulse 1.8s infinite;"></i>
+                                    <span>Radar: 19.5 kHz Active</span>
+                                </div>
+                                <div class="live-badge-modern">
+                                    <span class="pulse-dot"></span>
+                                    LIVE
+                                </div>
                             </div>
                         </div>
 
@@ -1164,6 +1170,7 @@ if ('serviceWorker' in navigator && 'PushManager' in window && vapidPublicKey) {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script src="/js/acousticRadar.js"></script>
 <script src="/js/teacherRealtime.js"></script>
 <script src="/js/teacherNav.js"></script>
 <script src="/js/teacherPanels.js"></script>

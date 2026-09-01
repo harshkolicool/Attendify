@@ -359,7 +359,19 @@ function markAttendance(sessionId, button) {
             finalPos = pos;
             return getBestAttendanceToken(sessionId, button);
         })
-        .then(function (attendanceToken) {
+        .then(async function (attendanceToken) {
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+            let acousticProof = { verified: false };
+            if (window.AttendifyAcousticRadar && window.AttendifyAcousticRadar.Listener) {
+                try {
+                    const listener = new window.AttendifyAcousticRadar.Listener();
+                    acousticProof = await listener.capturePresence(450);
+                } catch (e) {
+                    console.log("Acoustic listener skipped:", e);
+                }
+            }
+
             button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Marking...';
 
             const payloadObj = {
@@ -370,7 +382,8 @@ function markAttendance(sessionId, button) {
                 locationMeta: null,
                 attendanceToken: attendanceToken,
                 browserFingerprint: getBrowserFingerprint(),
-                requestReview: false
+                requestReview: false,
+                acousticProof: acousticProof
             };
 
             const controller = new AbortController();
@@ -402,7 +415,11 @@ function markAttendance(sessionId, button) {
             if (data.success) {
                 button.dataset.pending = "false";
                 
-                showMessage(data.message || "Attendance marked successfully.", "success");
+                let successMsg = data.message || "Attendance marked successfully.";
+                if (data.status === "PRESENT" && data.measuredDistance) {
+                    successMsg += ` (Seating Distance: ${data.measuredDistance}m)`;
+                }
+                showMessage(successMsg, "success");
                 setAttendancePresentUI(button);
                 return;
             }

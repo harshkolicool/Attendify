@@ -2657,8 +2657,23 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
             });
         }
 
+        const acousticProof = req.body.acousticProof;
+        let isAcousticVerified = false;
+        let acousticDistance = null;
+        let acousticRowCategory = null;
+
+        if (acousticProof && typeof acousticProof === "object" && acousticProof.verified) {
+            isAcousticVerified = true;
+            if (acousticProof.distanceMeters && Number.isFinite(Number(acousticProof.distanceMeters))) {
+                acousticDistance = Number(acousticProof.distanceMeters);
+            }
+            if (acousticProof.rowCategory) {
+                acousticRowCategory = String(acousticProof.rowCategory);
+            }
+        }
+
         const markedAt = new Date();
-        const verificationMethod = decisionResult.verificationMethod;
+        const verificationMethod = isAcousticVerified ? "PASSKEY_ACOUSTIC_GEOFENCE" : decisionResult.verificationMethod;
 
         let attendanceRecord;
         let wasAbsentOverridden = false;
@@ -2669,9 +2684,12 @@ router.post("/attendance/mark", attendanceLimiter, isStudent, async function (re
             browserFingerprint: browserFingerprint,
             gpsAccuracy: decisionResult.finalAccuracy,
             teacherGpsAccuracy: session.teacherGpsAccuracy,
-            measuredDistanceFromClassroom: decisionResult.distanceFromTeacher,
+            measuredDistanceFromClassroom: acousticDistance !== null ? acousticDistance : decisionResult.distanceFromTeacher,
             allowedRadius: decisionResult.allowedRadius,
-            locationMeta: locationMeta
+            locationMeta: locationMeta,
+            acousticVerified: isAcousticVerified,
+            acousticDistanceMeters: acousticDistance,
+            acousticRowCategory: acousticRowCategory
         };
 
         if (alreadyMarked) {

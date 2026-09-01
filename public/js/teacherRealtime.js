@@ -23,6 +23,8 @@ document.addEventListener("DOMContentLoaded", function init() {
                     }
                 }
 
+                startAcousticBeaconForLiveSessions();
+
                 data.sessionStates.forEach(function (state) {
                     const card = document.querySelector(".live-card[data-session-id='" + state.sessionId + "']");
                     if (card) {
@@ -439,6 +441,14 @@ document.addEventListener("DOMContentLoaded", function init() {
                 infoBox.appendChild(studentName);
                 infoBox.appendChild(enrollmentNumber);
 
+                if (payload.acousticDistance !== null && payload.acousticDistance !== undefined) {
+                    const distBadge = document.createElement("span");
+                    distBadge.className = "acoustic-dist-badge";
+                    distBadge.style.cssText = "font-size: 0.72rem; color: #38bdf8; background: rgba(6,182,212,0.15); padding: 2px 7px; border-radius: 6px; margin-top: 3px; font-weight: 800; border: 1px solid rgba(6,182,212,0.3); display: inline-flex; align-items: center; gap: 4px; width: fit-content;";
+                    distBadge.innerHTML = `<i class="fa-solid fa-ruler-horizontal"></i> Seating: ${payload.acousticDistance}m (${payload.acousticRowCategory || "Seated"})`;
+                    infoBox.appendChild(distBadge);
+                }
+
                 const statusIconBox = document.createElement("div");
                 statusIconBox.className = "student-status-icon";
                 
@@ -507,5 +517,22 @@ document.addEventListener("DOMContentLoaded", function init() {
 
 
 
+    function startAcousticBeaconForLiveSessions() {
+        if (!window.AttendifyAcousticRadar || !window.AttendifyAcousticRadar.Emitter) return;
+        const liveCards = document.querySelectorAll(".live-card:not(.session-ended)");
+        if (liveCards.length > 0) {
+            const firstSessionId = liveCards[0].getAttribute("data-session-id");
+            if (firstSessionId && (!window._attendifyAcousticEmitter || !window._attendifyAcousticEmitter.isBroadcasting)) {
+                if (!window._attendifyAcousticEmitter) {
+                    window._attendifyAcousticEmitter = new window.AttendifyAcousticRadar.Emitter();
+                }
+                window._attendifyAcousticEmitter.startBroadcast(firstSessionId);
+            }
+        } else if (window._attendifyAcousticEmitter && window._attendifyAcousticEmitter.isBroadcasting) {
+            window._attendifyAcousticEmitter.stopBroadcast();
+        }
+    }
+
     loadRecentSuspiciousAttempts();
+    startAcousticBeaconForLiveSessions();
 });
