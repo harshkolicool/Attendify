@@ -6486,6 +6486,173 @@ body.dark-mode .admin-student-edit summary:hover {
     color: #ffffff !important;
 }
 
+/* ───────────────────────────────────────────────────────────────────
+   LAYER 22 — NEXT-GEN ULTRA-PREMIUM DESIGN SYSTEM & MICRO-INTERACTIONS
+   Elevates Typography, Glassmorphism Depth, Glowing Badges, and Micro-Animations
+─────────────────────────────────────────────────────────────────── */
+
+:root {
+    --brand-gradient-primary: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #6366f1 100%);
+    --brand-gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --brand-gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --brand-gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --brand-gradient-dark: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.12);
+    --glass-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+/* Ultra-Smooth Global Polish */
+body, button, input, select, textarea {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Luxury Interactive Buttons */
+.btn-primary, .admin-primary-btn, .teacher-start-btn, .schedule-card-btn, .crazy-cta-btn {
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 4px 14px 0 rgba(14, 165, 233, 0.35) !important;
+}
+
+.btn-primary:hover, .admin-primary-btn:hover, .teacher-start-btn:hover, .schedule-card-btn:hover, .crazy-cta-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px 0 rgba(14, 165, 233, 0.45) !important;
+}
+
+.btn-primary:active, .admin-primary-btn:active, .teacher-start-btn:active, .schedule-card-btn:active, .crazy-cta-btn:active {
+    transform: scale(0.97) !important;
+}
+
+/* Glowing Live Attendance Cards */
+.live-card, .schedule-card[data-attendance-state="live"] {
+    border: 1.5px solid rgba(14, 165, 233, 0.4) !important;
+    box-shadow: 0 15px 35px -10px rgba(14, 165, 233, 0.2), 0 0 25px rgba(14, 165, 233, 0.1) !important;
+    animation: liveGlowPulse 3s infinite ease-in-out !important;
+}
+
+@keyframes liveGlowPulse {
+    0%, 100% {
+        border-color: rgba(14, 165, 233, 0.4);
+        box-shadow: 0 15px 35px -10px rgba(14, 165, 233, 0.2), 0 0 20px rgba(14, 165, 233, 0.08);
+    }
+    50% {
+        border-color: rgba(99, 102, 241, 0.7);
+        box-shadow: 0 20px 45px -10px rgba(99, 102, 241, 0.3), 0 0 35px rgba(99, 102, 241, 0.18);
+    }
+}
+
+/* Dynamic Live Status Ring */
+.live-pulse-dot, .radar-ping-dot {
+    position: relative;
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 12px #10b981;
+}
+
+.live-pulse-dot::after, .radar-ping-dot::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid #10b981;
+    animation: liveRingExpand 1.6s infinite cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes liveRingExpand {
+    0% { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Glassmorphism Stat & KPI Cards */
+.admin-kpi-card, .report-stat-card, .teacher-report-kpi-tile, .stat-tile {
+    background: var(--theme-bg-card, #ffffff) !important;
+    border: 1px solid var(--theme-border, #e2e8f0) !important;
+    border-radius: 20px !important;
+    padding: 24px !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: var(--glass-shadow) !important;
+}
+
+.admin-kpi-card:hover, .report-stat-card:hover, .teacher-report-kpi-tile:hover, .stat-tile:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12) !important;
+}
+
+/* Teacher Live Action Toolbar */
+.teacher-live-actions-row {
+    background: rgba(15, 23, 42, 0.04) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 16px !important;
+    padding: 12px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+
+[data-theme="dark"] .teacher-live-actions-row,
+html.dark-mode .teacher-live-actions-row {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.teacher-extend-btn {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.teacher-extend-btn:hover {
+    transform: translateY(-1.5px) !important;
+    background: rgba(99, 102, 241, 0.25) !important;
+    border-color: rgba(99, 102, 241, 0.6) !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Acoustic Ultrasonic Radar Badge */
+.acoustic-radar-badge {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15)) !important;
+    border: 1px solid rgba(6, 182, 212, 0.4) !important;
+    box-shadow: 0 0 16px rgba(6, 182, 212, 0.15) !important;
+    transition: all 0.3s ease !important;
+}
+
+.acoustic-radar-badge:hover {
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.35) !important;
+    border-color: rgba(6, 182, 212, 0.7) !important;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4);
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.7);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb,
+html.dark-mode ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
+html.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 
 
 
