@@ -15,10 +15,10 @@
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
     <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
-    <link rel="stylesheet" href="/css/teacherDashboard.css?v=20260901_kpi_theme">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8_18">
+    <link rel="stylesheet" href="/css/teacherDashboard.css?v=20260901_detailed_v2">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8_19">
     <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=20260831_18">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19_20">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19_21">
 
     <link
         rel="stylesheet"
@@ -676,12 +676,18 @@
                     </div>
 
                     <span class="teacher-count-pill">
-                        <%= attendanceRecords.length %> Records
+                        <%= attendanceRecords.length %> <%= attendanceRecords.length === 1 ? "Record" : "Records" %>
                     </span>
                 </div>
 
                 <% if (!attendanceRecords || attendanceRecords.length === 0) { %>
-                    <div class="teacher-empty">No attendance records found.</div>
+                    <div class="teacher-empty-state-box">
+                        <div class="teacher-empty-state-icon">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </div>
+                        <h4>No Attendance Records Found</h4>
+                        <p>There are no attendance records in this date window.</p>
+                    </div>
                 <% } else { %>
                     <div class="teacher-report-directory-toolbar" data-report-record-directory>
                         <div class="teacher-search-box">
@@ -694,32 +700,42 @@
                         </div>
 
                         <div class="teacher-schedule-filter-field">
-                            <label for="teacherReportRecordGroupFilter">Group</label>
-                            <select id="teacherReportRecordGroupFilter" data-teacher-record-filter="group">
-                                <option value="">All Subject Groups</option>
+                            <label for="teacherReportRecordGroupFilter">
+                                <i class="fa-solid fa-layer-group"></i> Group
+                            </label>
+                            <div class="teacher-select-wrap">
+                                <select id="teacherReportRecordGroupFilter" data-teacher-record-filter="group">
+                                    <option value="">All Subject Groups</option>
 
-                                <% detailedRecordGroups.forEach(function(group) { %>
-                                    <option value="<%= group.filterId %>">
-                                        <%= group.subjectName %> · <%= group.className %>
-                                    </option>
-                                <% }) %>
-                            </select>
+                                    <% detailedRecordGroups.forEach(function(group) { %>
+                                        <option value="<%= group.filterId %>">
+                                            <%= group.subjectName %> · <%= group.className %>
+                                        </option>
+                                    <% }) %>
+                                </select>
+                                <i class="fa-solid fa-chevron-down teacher-select-chevron"></i>
+                            </div>
                         </div>
 
                         <div class="teacher-schedule-filter-field">
-                            <label for="teacherReportRecordStatusFilter">Status</label>
-                            <select id="teacherReportRecordStatusFilter" data-teacher-record-filter="status">
-                                <option value="">All Status</option>
-                                <option value="PRESENT">Present</option>
-                                <option value="ABSENT">Absent</option>
-                            </select>
+                            <label for="teacherReportRecordStatusFilter">
+                                <i class="fa-solid fa-filter"></i> Status
+                            </label>
+                            <div class="teacher-select-wrap">
+                                <select id="teacherReportRecordStatusFilter" data-teacher-record-filter="status">
+                                    <option value="">All Status</option>
+                                    <option value="PRESENT">Present</option>
+                                    <option value="ABSENT">Absent</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down teacher-select-chevron"></i>
+                            </div>
                         </div>
 
                         <div class="teacher-schedule-filter-field teacher-schedule-filter-action">
                             <label>&nbsp;</label>
-                            <button type="button" class="teacher-secondary-btn" data-teacher-record-reset>
+                            <button type="button" class="teacher-secondary-btn teacher-toolbar-reset-btn" data-teacher-record-reset title="Clear search & filters">
                                 <i class="fa-solid fa-rotate-left"></i>
-                                Clear
+                                <span>Clear</span>
                             </button>
                         </div>
 
@@ -732,29 +748,51 @@
                                     <%= groupIndex === 0 ? "open" : "" %>
                                 >
                                     <summary class="teacher-report-group-summary">
-                                        <div>
-                                            <h4><%= group.subjectName %></h4>
-                                            <p>
-                                                <%= group.className %>
-                                                <% if (group.subjectCode) { %>
-                                                    · <%= group.subjectCode %>
-                                                <% } %>
-                                                ·
-                                                <span class="teacher-success"><%= group.present %> Present</span>
-                                                ·
-                                                <span class="teacher-danger"><%= group.absent %> Absent</span>
-                                            </p>
+                                        <div class="teacher-group-info">
+                                            <div class="teacher-group-avatar">
+                                                <i class="fa-solid fa-book-open"></i>
+                                            </div>
+                                            <div>
+                                                <div class="teacher-group-title-row">
+                                                    <h4><%= group.subjectName %></h4>
+                                                </div>
+                                                <div class="teacher-group-meta-chips">
+                                                    <span class="teacher-meta-chip class">
+                                                        <i class="fa-solid fa-users"></i>
+                                                        <%= group.className %>
+                                                    </span>
+                                                    <% if (group.subjectCode) { %>
+                                                        <span class="teacher-meta-chip code">
+                                                            <i class="fa-solid fa-hashtag"></i>
+                                                            <%= group.subjectCode %>
+                                                        </span>
+                                                    <% } %>
+                                                    <span class="teacher-meta-chip present">
+                                                        <i class="fa-solid fa-circle-check"></i>
+                                                        <%= group.present %> Present
+                                                    </span>
+                                                    <span class="teacher-meta-chip absent">
+                                                        <i class="fa-solid fa-circle-xmark"></i>
+                                                        <%= group.absent %> Absent
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <span class="teacher-count-pill" data-teacher-record-visible-count>
-                                            <%= group.records.length %> Records
-                                        </span>
+                                        <div class="teacher-group-trailing">
+                                            <span class="teacher-count-pill" data-teacher-record-visible-count>
+                                                <%= group.records.length %> <%= group.records.length === 1 ? "Record" : "Records" %>
+                                            </span>
+                                            <div class="teacher-chevron-wrap">
+                                                <i class="fa-solid fa-chevron-down teacher-group-chevron"></i>
+                                            </div>
+                                        </div>
                                     </summary>
 
                                     <div class="teacher-table-wrap">
                                         <table class="teacher-report-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Date</th>
+                                                    <th>Date &amp; Time</th>
                                                     <th>Student</th>
                                                     <th>Status</th>
                                                     <th>Method</th>
@@ -773,24 +811,74 @@
                                                         data-filter-status="<%= record.status %>"
                                                     >
                                                         <td>
-                                                            <%= new Date(sessionDate).toLocaleDateString() %>
-                                                            <br>
-                                                            <small><%= new Date(sessionDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) %></small>
+                                                            <div class="teacher-date-cell">
+                                                                <span class="teacher-date-primary">
+                                                                    <i class="fa-regular fa-calendar"></i>
+                                                                    <%= new Date(sessionDate).toLocaleDateString() %>
+                                                                </span>
+                                                                <span class="teacher-date-secondary">
+                                                                    <i class="fa-regular fa-clock"></i>
+                                                                    <%= new Date(sessionDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) %>
+                                                                </span>
+                                                            </div>
                                                         </td>
 
                                                         <td>
-                                                            <strong><%= record.student ? record.student.fullName : "Student Missing" %></strong>
-                                                            <br>
-                                                            <small><%= record.student && record.student.enrollmentNumber ? record.student.enrollmentNumber : "-" %></small>
+                                                            <div class="teacher-student-cell">
+                                                                <div class="teacher-student-avatar-mini">
+                                                                    <%= (record.student && record.student.fullName ? record.student.fullName.charAt(0) : "S").toUpperCase() %>
+                                                                </div>
+                                                                <div class="teacher-student-info">
+                                                                    <strong class="teacher-student-name"><%= record.student ? record.student.fullName : "Student Missing" %></strong>
+                                                                    <span class="teacher-dept-chip"><%= record.student && record.student.enrollmentNumber ? record.student.enrollmentNumber : "-" %></span>
+                                                                </div>
+                                                            </div>
                                                         </td>
 
                                                         <td>
-                                                            <span class="teacher-status <%= record.status === 'PRESENT' ? 'present' : 'absent' %>">
-                                                                <%= record.status %>
+                                                            <span class="teacher-status-pill <%= record.status === 'PRESENT' ? 'present' : (record.status === 'LATE' ? 'late' : (record.status === 'EXCUSED' ? 'excused' : 'absent')) %>">
+                                                                <i class="fa-solid <%= record.status === 'PRESENT' ? 'fa-circle-check' : (record.status === 'LATE' ? 'fa-clock' : (record.status === 'EXCUSED' ? 'fa-shield-halved' : 'fa-circle-xmark')) %>"></i>
+                                                                <%= record.status === 'PRESENT' ? 'Present' : (record.status === 'LATE' ? 'Late' : (record.status === 'EXCUSED' ? 'Excused' : 'Absent')) %>
                                                             </span>
                                                         </td>
 
-                                                        <td><%= record.verificationMethod || "-" %></td>
+                                                        <td>
+                                                            <%
+                                                                let rawMethod = (record.verificationMethod || "AUTO_GPS").toUpperCase();
+                                                                let methodLabel = "Auto GPS";
+                                                                let methodIcon = "fa-location-dot";
+                                                                let methodClass = "gps";
+                                                                if (rawMethod.includes("WEAK")) {
+                                                                    methodLabel = "Weak GPS";
+                                                                    methodIcon = "fa-satellite-dish";
+                                                                    methodClass = "warn";
+                                                                } else if (rawMethod.includes("MANUAL") || rawMethod.includes("TEACHER")) {
+                                                                    methodLabel = "Manual";
+                                                                    methodIcon = "fa-user-pen";
+                                                                    methodClass = "manual";
+                                                                } else if (rawMethod.includes("QR")) {
+                                                                    methodLabel = "QR Code";
+                                                                    methodIcon = "fa-qrcode";
+                                                                    methodClass = "qr";
+                                                                } else if (rawMethod.includes("ACOUSTIC") || rawMethod.includes("ULTRASONIC")) {
+                                                                    methodLabel = "Ultrasonic";
+                                                                    methodIcon = "fa-tower-broadcast";
+                                                                    methodClass = "acoustic";
+                                                                } else if (rawMethod.includes("AUTO_GPS") || rawMethod.includes("GPS")) {
+                                                                    methodLabel = "Auto GPS";
+                                                                    methodIcon = "fa-location-crosshairs";
+                                                                    methodClass = "gps";
+                                                                } else {
+                                                                    methodLabel = rawMethod.replace(/_/g, " ");
+                                                                    methodIcon = "fa-circle-dot";
+                                                                    methodClass = "default";
+                                                                }
+                                                            %>
+                                                            <span class="teacher-method-pill <%= methodClass %>">
+                                                                <i class="fa-solid <%= methodIcon %>"></i>
+                                                                <%= methodLabel %>
+                                                            </span>
+                                                        </td>
 
                                                         <td>
                                                             <%
@@ -815,18 +903,19 @@
                                                                         : null;
                                                             %>
                                                             <% if (teacherVerifiedDistance !== undefined && teacherVerifiedDistance !== null) { %>
-                                                                <span class="gps-distance-cell">
-                                                                    <span class="gps-distance-pill">
+                                                                <div class="teacher-distance-cell">
+                                                                    <span class="gps-distance-pill <%= teacherHasVerifiedDistance ? 'verified' : '' %>">
+                                                                        <i class="fa-solid fa-location-dot"></i>
                                                                         <%= teacherHasVerifiedDistance ? "Verified" : "Recorded" %>
                                                                         <%= Math.round(teacherVerifiedDistance) %>m
                                                                     </span>
 
                                                                     <% if (teacherMeasuredDistance !== null && Math.round(teacherMeasuredDistance) !== Math.round(teacherVerifiedDistance)) { %>
-                                                                        <small>GPS read <%= Math.round(teacherMeasuredDistance) %>m</small>
+                                                                        <small class="teacher-distance-raw">GPS read <%= Math.round(teacherMeasuredDistance) %>m</small>
                                                                     <% } %>
-                                                                </span>
+                                                                </div>
                                                             <% } else { %>
-                                                                -
+                                                                <span class="teacher-text-muted">-</span>
                                                             <% } %>
                                                         </td>
                                                     </tr>
@@ -838,8 +927,16 @@
                             <% }) %>
                         </div>
 
-                        <div class="teacher-empty hidden-by-filter" data-teacher-record-empty>
-                            No detailed attendance records match your current search and filters.
+                        <div class="teacher-empty-state-box hidden-by-filter" data-teacher-record-empty>
+                            <div class="teacher-empty-state-icon">
+                                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                            </div>
+                            <h4>No Matching Attendance Records</h4>
+                            <p>No records match your search or filter criteria. Try clearing filters or searching for another student or date.</p>
+                            <button type="button" class="teacher-empty-reset-btn" onclick="document.querySelector('[data-teacher-record-reset]').click()">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                Reset Filters
+                            </button>
                         </div>
                     </div>
                 <% } %>
@@ -853,12 +950,18 @@
                     </div>
 
                     <span class="teacher-count-pill danger">
-                        <%= suspiciousAttempts.length %> Attempts
+                        <%= suspiciousAttempts.length %> <%= suspiciousAttempts.length === 1 ? "Attempt" : "Attempts" %>
                     </span>
                 </div>
 
                 <% if (!suspiciousAttempts || suspiciousAttempts.length === 0) { %>
-                    <div class="teacher-empty">No suspicious attempts found.</div>
+                    <div class="teacher-empty-state-box safe">
+                        <div class="teacher-empty-state-icon safe">
+                            <i class="fa-solid fa-shield-check"></i>
+                        </div>
+                        <h4>No Suspicious Attempts</h4>
+                        <p>No geo-fence violations or suspicious attendance marks detected.</p>
+                    </div>
                 <% } else { %>
                     <div class="teacher-report-directory-toolbar compact" data-report-attempt-directory>
                         <div class="teacher-search-box">
@@ -871,23 +974,28 @@
                         </div>
 
                         <div class="teacher-schedule-filter-field">
-                            <label for="teacherReportAttemptReasonFilter">Reason</label>
-                            <select id="teacherReportAttemptReasonFilter" data-teacher-attempt-filter="reason">
-                                <option value="">All Reasons</option>
+                            <label for="teacherReportAttemptReasonFilter">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Reason
+                            </label>
+                            <div class="teacher-select-wrap">
+                                <select id="teacherReportAttemptReasonFilter" data-teacher-attempt-filter="reason">
+                                    <option value="">All Reasons</option>
 
-                                <% suspiciousAttemptGroups.forEach(function(group) { %>
-                                    <option value="<%= group.filterId %>">
-                                        <%= group.reasonCode %> (<%= group.attempts.length %>)
-                                    </option>
-                                <% }) %>
-                            </select>
+                                    <% suspiciousAttemptGroups.forEach(function(group) { %>
+                                        <option value="<%= group.filterId %>">
+                                            <%= group.reasonCode %> (<%= group.attempts.length %>)
+                                        </option>
+                                    <% }) %>
+                                </select>
+                                <i class="fa-solid fa-chevron-down teacher-select-chevron"></i>
+                            </div>
                         </div>
 
                         <div class="teacher-schedule-filter-field teacher-schedule-filter-action">
                             <label>&nbsp;</label>
-                            <button type="button" class="teacher-secondary-btn" data-teacher-attempt-reset>
+                            <button type="button" class="teacher-secondary-btn teacher-toolbar-reset-btn" data-teacher-attempt-reset title="Clear search & filters">
                                 <i class="fa-solid fa-rotate-left"></i>
-                                Clear
+                                <span>Clear</span>
                             </button>
                         </div>
 
@@ -900,20 +1008,37 @@
                                     <%= groupIndex === 0 ? "open" : "" %>
                                 >
                                     <summary class="teacher-report-group-summary">
-                                        <div>
-                                            <h4><%= group.reasonCode %></h4>
-                                            <p><%= group.reasonMessage %></p>
+                                        <div class="teacher-group-info">
+                                            <div class="teacher-group-avatar danger">
+                                                <i class="fa-solid fa-shield-halved"></i>
+                                            </div>
+                                            <div>
+                                                <div class="teacher-group-title-row">
+                                                    <h4><%= group.reasonCode %></h4>
+                                                </div>
+                                                <div class="teacher-group-meta-chips">
+                                                    <span class="teacher-meta-chip danger">
+                                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                                        <%= group.reasonMessage %>
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <span class="teacher-count-pill danger" data-teacher-attempt-visible-count>
-                                            <%= group.attempts.length %> Attempts
-                                        </span>
+                                        <div class="teacher-group-trailing">
+                                            <span class="teacher-count-pill danger" data-teacher-attempt-visible-count>
+                                                <%= group.attempts.length %> <%= group.attempts.length === 1 ? "Attempt" : "Attempts" %>
+                                            </span>
+                                            <div class="teacher-chevron-wrap">
+                                                <i class="fa-solid fa-chevron-down teacher-group-chevron"></i>
+                                            </div>
+                                        </div>
                                     </summary>
 
                                     <div class="teacher-table-wrap">
                                         <table class="teacher-report-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Date</th>
+                                                    <th>Date &amp; Time</th>
                                                     <th>Student</th>
                                                     <th>Reason Detail</th>
                                                     <th>Distance</th>
@@ -926,26 +1051,57 @@
                                                 <% group.attempts.forEach(function(attempt) { %>
                                                     <tr data-teacher-attempt-item>
                                                         <td>
-                                                            <%= new Date(attempt.createdAt).toLocaleDateString() %>
-                                                            <br>
-                                                            <small><%= new Date(attempt.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) %></small>
+                                                            <div class="teacher-date-cell">
+                                                                <span class="teacher-date-primary">
+                                                                    <i class="fa-regular fa-calendar"></i>
+                                                                    <%= new Date(attempt.createdAt).toLocaleDateString() %>
+                                                                </span>
+                                                                <span class="teacher-date-secondary">
+                                                                    <i class="fa-regular fa-clock"></i>
+                                                                    <%= new Date(attempt.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) %></small>
+                                                                </span>
+                                                            </div>
                                                         </td>
 
                                                         <td>
-                                                            <strong><%= attempt.studentName %></strong>
-                                                            <br>
-                                                            <small><%= attempt.enrollmentNumber %></small>
+                                                            <div class="teacher-student-cell">
+                                                                <div class="teacher-student-avatar-mini danger">
+                                                                    <%= (attempt.studentName ? attempt.studentName.charAt(0) : "S").toUpperCase() %>
+                                                                </div>
+                                                                <div class="teacher-student-info">
+                                                                    <strong class="teacher-student-name"><%= attempt.studentName %></strong>
+                                                                    <span class="teacher-dept-chip"><%= attempt.enrollmentNumber %></span>
+                                                                </div>
+                                                            </div>
                                                         </td>
 
                                                         <td>
-                                                            <strong><%= attempt.reasonCode %></strong>
-                                                            <br>
-                                                            <small><%= attempt.reasonMessage %></small>
+                                                            <div class="teacher-reason-cell">
+                                                                <strong class="teacher-reason-code"><%= attempt.reasonCode %></strong>
+                                                                <small class="teacher-reason-msg"><%= attempt.reasonMessage %></small>
+                                                            </div>
                                                         </td>
 
-                                                        <td><%= Math.round(attempt.distanceFromTeacher || 0) %>m</td>
-                                                        <td><%= Math.round(attempt.allowedRadius || 0) %>m</td>
-                                                        <td><%= Math.round(attempt.gpsAccuracy || 0) %>m</td>
+                                                        <td>
+                                                            <span class="gps-distance-pill danger">
+                                                                <i class="fa-solid fa-ruler-combined"></i>
+                                                                <%= Math.round(attempt.distanceFromTeacher || 0) %>m
+                                                            </span>
+                                                        </td>
+
+                                                        <td>
+                                                            <span class="teacher-geo-meta-pill">
+                                                                <i class="fa-solid fa-circle-dot"></i>
+                                                                <%= Math.round(attempt.allowedRadius || 0) %>m
+                                                            </span>
+                                                        </td>
+
+                                                        <td>
+                                                            <span class="teacher-geo-meta-pill">
+                                                                <i class="fa-solid fa-crosshairs"></i>
+                                                                &plusmn;<%= Math.round(attempt.gpsAccuracy || 0) %>m
+                                                            </span>
+                                                        </td>
                                                     </tr>
                                                 <% }) %>
                                             </tbody>
@@ -955,8 +1111,16 @@
                             <% }) %>
                         </div>
 
-                        <div class="teacher-empty hidden-by-filter" data-teacher-attempt-empty>
-                            No suspicious attempts match your current search and filters.
+                        <div class="teacher-empty-state-box hidden-by-filter" data-teacher-attempt-empty>
+                            <div class="teacher-empty-state-icon safe">
+                                <i class="fa-solid fa-shield-check"></i>
+                            </div>
+                            <h4>No Suspicious Attempts</h4>
+                            <p>No suspicious attempts match your current search and filters.</p>
+                            <button type="button" class="teacher-empty-reset-btn" onclick="document.querySelector('[data-teacher-attempt-reset]').click()">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                Reset Filters
+                            </button>
                         </div>
                     </div>
                 <% } %>

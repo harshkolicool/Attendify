@@ -22,7 +22,11 @@ body.ui-sidebar-open {
 }
 
 .hidden-by-search,
-.hidden-by-pagination {
+.hidden-by-pagination,
+.hidden-by-filter,
+.teacher-empty.hidden-by-filter,
+.teacher-empty-state-box.hidden-by-filter,
+[class*="empty-state"].hidden-by-filter {
     display: none !important;
 }
 
