@@ -10,6 +10,7 @@ const authLimiter = rateLimit({
 });
 
 const router = express.Router();
+const crypto = require("crypto");
 const passport = require("passport");
 const mongoose = require("mongoose");
 const multer = require("multer");
@@ -3470,9 +3471,19 @@ router.post("/students/approve/:id", isCollegeAdmin, async function (req, res) {
             return res.redirect("/admin/students/pending?message=invalid_id");
         }
 
+        const autoLoginToken = crypto.randomBytes(32).toString("hex");
+        const tokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
         const student = await Student.findOneAndUpdate(
             { _id: studentId, college: collegeId, isDeleted: { $ne: true } },
-            { $set: { isApproved: true, autoLoginToken: null } },
+            { 
+                $set: { 
+                    isApproved: true, 
+                    autoLoginToken: autoLoginToken,
+                    autoLoginTokenExpiresAt: tokenExpiry
+                },
+                $inc: { autoLoginTokenVersion: 1 }
+            },
             { returnDocument: 'after' }
         );
 
@@ -3480,10 +3491,11 @@ router.post("/students/approve/:id", isCollegeAdmin, async function (req, res) {
             return res.redirect("/admin/students/pending?message=invalid_student");
         }
 
-        socketManager.emitStudentApproved(studentId, collegeId);
+        const redirectUrl = `/student/auto-login/${studentId}?token=${autoLoginToken}`;
+        socketManager.emitStudentApproved(studentId, collegeId, redirectUrl);
 
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-            return res.json({ success: true, message: "Student approved successfully" });
+            return res.json({ success: true, message: "Student approved successfully", redirectUrl });
         }
         res.redirect("/admin/students/pending?message=student_approved_successfully");
 

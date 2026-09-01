@@ -1366,12 +1366,15 @@ function emitPasskeyStateChanged(studentId, payload) {
     io.to(getStudentRoom(studentId)).emit("student:passkey-state-changed", payload);
 }
 
-function emitStudentApproved(studentId, collegeId) {
+function emitStudentApproved(studentId, collegeId, redirectUrl) {
     const io = getIO();
     if (!io || !studentId) return;
-    io.to(getWaitingStudentRoom(studentId)).emit("student:approved", { studentId });
+    io.to(getWaitingStudentRoom(studentId)).emit("student:approved", { 
+        studentId: studentId.toString(),
+        redirectUrl: redirectUrl || ("/student/auto-login/" + studentId.toString())
+    });
     if (collegeId) {
-        io.to(getAdminCollegeRoom(collegeId)).emit("admin:studentApproved", { studentId });
+        io.to(getAdminCollegeRoom(collegeId)).emit("admin:studentApproved", { studentId: studentId.toString() });
     }
 }
 

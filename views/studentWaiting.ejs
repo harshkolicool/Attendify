@@ -174,14 +174,14 @@
                 statusTitle.textContent = "Registration Approved!";
             }
             if (statusText) {
-                statusText.textContent = "Redirecting to login...";
+                statusText.textContent = "Logging in automatically...";
                 statusText.style.color = "#10b981";
             }
 
-            var url = redirectUrl ? redirectUrl : "/student/login?message=approved";
+            var url = redirectUrl ? redirectUrl : ("/student/auto-login/" + studentId);
             setTimeout(function() {
                 window.location.href = url;
-            }, 600);
+            }, 500);
         }
 
         // Socket connection

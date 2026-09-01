@@ -3,6 +3,7 @@ const passport = require("passport");
 const rateLimit = require("express-rate-limit");
 
 const router = express.Router();
+const mongoose = require("mongoose");
 
 const authLimiter = rateLimit({
     windowMs: 60 * 1000,
@@ -254,26 +255,23 @@ router.post("/student/register", authLimiter, async (req, res) => {
 
 router.get("/student/waiting/:id", async (req, res) => {
     try {
-        if (req.session.pendingRegistrationId !== req.params.id) {
+        if (!req.params.id || !mongoose.isValidObjectId(req.params.id)) {
             return res.redirect("/student/login");
         }
 
         const student = await Student.findById(req.params.id);
-        if (!student) {
+        if (!student || student.isDeleted || student.isBlocked) {
             return res.redirect("/student/login");
         }
         
         if (student.isApproved) {
-            student.accountType = "student";
-            loginWithFreshSession(req, student)
-                .then(function () {
-                    return res.redirect("/student/dashboard?welcome=1");
-                })
-                .catch(function (err) {
-                    console.error("Waiting room login error:", err);
-                    return res.redirect("/student/login?message=approved");
-                });
-            return;
+            const studentObj = student.toObject();
+            studentObj.accountType = "student";
+            await loginWithFreshSession(req, studentObj);
+            if (req.session) {
+                delete req.session.pendingRegistrationId;
+            }
+            return res.redirect("/student/dashboard?welcome=1");
         }
 
         res.render("studentWaiting", { student });
@@ -283,34 +281,100 @@ router.get("/student/waiting/:id", async (req, res) => {
     }
 });
 
+// Dedicated secure auto-login endpoint called immediately after admin approves
+router.get("/student/auto-login/:id", async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        const token = req.query.token;
+
+        if (!studentId || !mongoose.isValidObjectId(studentId)) {
+            return res.redirect("/student/login?message=approved");
+        }
+
+        let student = null;
+
+        // 1. If valid token provided, find and verify
+        if (token) {
+            student = await Student.findOne({
+                _id: studentId,
+                autoLoginToken: token,
+                autoLoginTokenExpiresAt: { $gt: new Date() },
+                isApproved: true,
+                isDeleted: { $ne: true },
+                isBlocked: { $ne: true }
+            });
+        }
+
+        // 2. Fallback: if session pendingRegistrationId matches and student is approved
+        if (!student && req.session && req.session.pendingRegistrationId === studentId) {
+            student = await Student.findOne({
+                _id: studentId,
+                isApproved: true,
+                isDeleted: { $ne: true },
+                isBlocked: { $ne: true }
+            });
+        }
+
+        if (!student) {
+            return res.redirect("/student/login?message=approved");
+        }
+
+        // Clear the single-use auto-login token
+        student.autoLoginToken = null;
+        student.autoLoginTokenExpiresAt = null;
+        await student.save();
+
+        const studentObj = student.toObject();
+        studentObj.accountType = "student";
+
+        // Log the student in securely with fresh session
+        await loginWithFreshSession(req, studentObj);
+
+        // Clear pending registration marker from session
+        if (req.session) {
+            delete req.session.pendingRegistrationId;
+        }
+
+        return res.redirect("/student/dashboard?welcome=1");
+    } catch (err) {
+        console.error("Student auto-login error:", err);
+        return res.redirect("/student/login?message=approved");
+    }
+});
+
 // Lightweight JSON endpoint for the waiting page to poll
 router.get("/student/check-approval/:id", async (req, res) => {
     try {
-        if (req.session.pendingRegistrationId !== req.params.id) {
-            return res.json({ approved: false, error: "unauthorized" });
+        const studentId = req.params.id;
+
+        if (!studentId || !mongoose.isValidObjectId(studentId)) {
+            return res.json({ approved: false, error: "invalid_id" });
         }
 
-        const student = await Student.findById(req.params.id)
-            .select("isApproved")
-            .lean();
+        const student = await Student.findById(studentId);
 
-        if (!student) {
+        if (!student || student.isDeleted || student.isBlocked) {
             return res.json({ approved: false, error: "not_found" });
         }
 
         if (student.isApproved) {
-            const approvedStudent = { _id: student._id, id: student._id.toString(), accountType: "student" };
-            loginWithFreshSession(req, approvedStudent)
-                .then(function () {
-                    return res.json({
-                        approved: true,
-                        redirectUrl: "/student/dashboard?welcome=1"
-                    });
-                })
-                .catch(function () {
-                    return res.json({ approved: false, error: "server_error" });
-                });
-            return;
+            const studentObj = student.toObject();
+            studentObj.accountType = "student";
+
+            // Log the user in directly during the poll check
+            try {
+                await loginWithFreshSession(req, studentObj);
+                if (req.session) {
+                    delete req.session.pendingRegistrationId;
+                }
+            } catch (authErr) {
+                console.error("Poll login error:", authErr);
+            }
+
+            return res.json({
+                approved: true,
+                redirectUrl: "/student/dashboard?welcome=1"
+            });
         }
 
         return res.json({ approved: false });
