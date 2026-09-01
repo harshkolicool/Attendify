@@ -270,10 +270,10 @@ function resetAttendanceButton(button, oldHtml) {
 
 function getFastGpsPosition() {
     return new Promise(function(resolve, reject) {
-        // 1. Check window.AttendifyLatestPosition from active location stream (max 30s old)
+        // 1. Check window.AttendifyLatestPosition from active location stream (max 60s old)
         if (window.AttendifyLatestPosition && Number.isFinite(window.AttendifyLatestPosition.latitude)) {
             const age = Date.now() - (window.AttendifyLatestPosition.timestamp || 0);
-            if (age < 30000 && Number.isFinite(window.AttendifyLatestPosition.latitude)) {
+            if (age < 60000 && Number.isFinite(window.AttendifyLatestPosition.latitude)) {
                 return resolve({
                     coords: {
                         latitude: window.AttendifyLatestPosition.latitude,
@@ -287,7 +287,7 @@ function getFastGpsPosition() {
 
         // 2. Check window.AttendifyLiveStream buffer
         if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.getBestFreshPosition === 'function') {
-            const cached = window.AttendifyLiveStream.getBestFreshPosition(30000);
+            const cached = window.AttendifyLiveStream.getBestFreshPosition(60000);
             if (cached && Number.isFinite(cached.latitude)) {
                 return resolve({ coords: cached });
             }
@@ -297,17 +297,23 @@ function getFastGpsPosition() {
             return reject(new Error("Geolocation is not supported by your browser."));
         }
 
-        // 3. Fast high-accuracy query with 5s maximumAge to avoid cold hardware stalls
+        let isResolved = false;
+        function tryResolve(pos) {
+            if (isResolved || !pos || !pos.coords) return;
+            isResolved = true;
+            resolve(pos);
+        }
+
+        // 3. Fast high-accuracy attempt with 4s timeout
         navigator.geolocation.getCurrentPosition(
-            function(pos) { resolve(pos); },
+            function(pos) { tryResolve(pos); },
             function(err) {
-                // 4. Instant fallback query with standard accuracy
+                // If high-accuracy fails or times out, immediately query standard accuracy
                 navigator.geolocation.getCurrentPosition(
-                    function(fallbackPos) { resolve(fallbackPos); },
+                    function(fallbackPos) { tryResolve(fallbackPos); },
                     function(fallbackErr) {
-                        // Last resort: if any location was captured during session
                         if (window.AttendifyLatestPosition && Number.isFinite(window.AttendifyLatestPosition.latitude)) {
-                            return resolve({
+                            return tryResolve({
                                 coords: {
                                     latitude: window.AttendifyLatestPosition.latitude,
                                     longitude: window.AttendifyLatestPosition.longitude,
@@ -316,13 +322,27 @@ function getFastGpsPosition() {
                                 timestamp: Date.now()
                             });
                         }
-                        reject(fallbackErr || err);
+                        if (!isResolved) {
+                            isResolved = true;
+                            reject(fallbackErr || err);
+                        }
                     },
-                    { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
+                    { enableHighAccuracy: false, timeout: 6000, maximumAge: 60000 }
                 );
             },
-            { enableHighAccuracy: true, timeout: 12000, maximumAge: 5000 }
+            { enableHighAccuracy: true, timeout: 4000, maximumAge: 10000 }
         );
+
+        // Concurrent fallback timer: if 3s pass and high-accuracy hasn't returned, launch standard query in parallel!
+        setTimeout(function() {
+            if (!isResolved) {
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) { tryResolve(pos); },
+                    function() {},
+                    { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+                );
+            }
+        }, 2800);
     });
 }
 
@@ -669,7 +689,7 @@ function getStudentLocationErrorMessage(error, permissionState) {
     }
 
     if (code === 3 || name.indexOf("TIMEOUT") !== -1) {
-        return "Location request timed out. Please try again.";
+        return "Location signal took too long. Please ensure GPS/Location Services is enabled on your device and try again.";
     }
 
     if (permissionState === "granted") {

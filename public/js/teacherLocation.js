@@ -113,7 +113,7 @@
         }
 
         if (error.code === 3) {
-            return "Location request timed out. Please try again.";
+            return "Location signal took too long. Please ensure GPS/Location Services is enabled on your device and try again.";
         }
 
         return "Please allow location access to start attendance.";
