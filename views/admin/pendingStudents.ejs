@@ -94,7 +94,7 @@
                 </div>
                 <div class="adm-radar-info">
                     <span class="adm-radar-label">Live Sync</span>
-                    <span class="adm-radar-val" style="color: #10b981;">WebSockets Active</span>
+                    <span class="adm-radar-val" style="color: #10b981;">Real-Time Active</span>
                 </div>
             </div>
 
@@ -114,64 +114,55 @@
                 <h2 style="font-size: 1.25rem; font-weight: 800;"><i class="fa-solid fa-user-clock" style="color: #6366f1; margin-right: 8px;"></i> Students Awaiting Verification (<%= safePending.length %>)</h2>
             </header>
 
-            <% if (safePending.length === 0) { %>
-                <div class="empty-state pending-empty-state js-empty-state-container">
-                    <div class="empty-icon pending-empty-icon"><i class="fa-solid fa-circle-check" aria-hidden="true" style="color: #10b981;"></i></div>
-                    <h3 class="pending-empty-title">All registrations reviewed!</h3>
-                    <p class="pending-empty-copy">You're completely caught up. New student registrations will appear here in real-time.</p>
-                </div>
-                <div class="admin-grid pending-students-grid is-hidden" id="pending-grid"></div>
-            <% } else { %>
-                <div class="empty-state pending-empty-state js-empty-state-container is-hidden">
-                    <div class="empty-icon pending-empty-icon"><i class="fa-solid fa-circle-check" aria-hidden="true" style="color: #10b981;"></i></div>
-                    <h3 class="pending-empty-title">All registrations reviewed!</h3>
-                    <p class="pending-empty-copy">You're completely caught up. New student registrations will appear here in real-time.</p>
-                </div>
-                
-                <div class="admin-grid pending-students-grid" id="pending-grid">
-                    <% safePending.forEach(function(student) { %>
-                        <article class="admin-item-card admin-student-card" id="student-card-<%= student._id %>">
-                            <div class="admin-item-top pending-student-top">
-                                <div class="pending-student-profile" style="display: flex; align-items: center; gap: 14px;">
-                                    <img src="https://ui-avatars.com/api/?name=<%= encodeURIComponent(student.fullName) %>&background=6366f1&color=fff&rounded=true&bold=true" alt="<%= student.fullName %>" class="pending-student-avatar" style="width: 48px; height: 48px; border-radius: 50%; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
-                                    <div>
-                                        <h4 class="pending-student-name" style="margin: 0; font-size: 1.1rem; font-weight: 800;"><%= student.fullName %></h4>
-                                        <p class="pending-student-email" style="margin: 2px 0 0 0; font-size: 0.84rem; opacity: 0.7;"><%= student.email %></p>
-                                    </div>
+            <div class="empty-state pending-empty-state js-empty-state-container <%= safePending.length === 0 ? '' : 'is-hidden' %>" style="<%= safePending.length === 0 ? '' : 'display: none !important;' %>">
+                <div class="empty-icon pending-empty-icon"><i class="fa-solid fa-circle-check" aria-hidden="true" style="color: #10b981;"></i></div>
+                <h3 class="pending-empty-title">All registrations reviewed!</h3>
+                <p class="pending-empty-copy">You're completely caught up. New student registrations will appear here in real-time.</p>
+            </div>
+
+            <div class="admin-grid pending-students-grid <%= safePending.length === 0 ? 'is-hidden' : '' %>" id="pending-grid" style="<%= safePending.length === 0 ? 'display: none !important;' : '' %>">
+                <% safePending.forEach(function(student) { %>
+                    <article class="admin-item-card admin-student-card" id="student-card-<%= student._id %>">
+                        <div class="admin-item-top pending-student-top">
+                            <div class="pending-student-profile" style="display: flex; align-items: center; gap: 14px;">
+                                <img src="https://ui-avatars.com/api/?name=<%= encodeURIComponent(student.fullName) %>&background=6366f1&color=fff&rounded=true&bold=true" alt="<%= student.fullName %>" class="pending-student-avatar" style="width: 48px; height: 48px; border-radius: 50%; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+                                <div>
+                                    <h4 class="pending-student-name" style="margin: 0; font-size: 1.1rem; font-weight: 800;"><%= student.fullName %></h4>
+                                    <p class="pending-student-email" style="margin: 2px 0 0 0; font-size: 0.84rem; opacity: 0.7;"><%= student.email %></p>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="admin-student-body pending-student-body" style="margin-top: 14px;">
-                                <div class="admin-meta admin-student-meta pending-student-meta">
-                                    <span class="admin-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-weight: 700;">
-                                        <i class="fa-solid fa-hashtag"></i> <%= student.enrollmentNumber %>
-                                    </span>
-                                    <span class="admin-badge" style="background: rgba(6, 182, 212, 0.12); color: #0891b2; font-weight: 700;">
-                                        <i class="fa-solid fa-building-columns"></i> <%= student.department %>
-                                    </span>
-                                    <span class="admin-badge" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed; font-weight: 700;">
-                                        <i class="fa-solid fa-layer-group"></i> Sem <%= student.semester %>
-                                    </span>
-                                </div>
-
-                                <div class="pending-student-actions" style="margin-top: 14px; display: flex; gap: 10px;">
-                                    <form action="/admin/students/approve/<%= student._id %>" method="POST" class="pending-student-action-form" style="flex: 1;">
-                                        <button type="submit" class="admin-primary-btn pending-student-action-btn" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                                            <i class="fa-solid fa-check"></i> Approve
-                                        </button>
-                                    </form>
-                                    <form action="/admin/students/<%= student._id %>/delete" method="POST" class="pending-student-action-form reject-form" style="flex: 1;">
-                                        <input type="hidden" name="returnTo" value="/admin/students/pending">
-                                        <button type="button" class="admin-secondary-btn danger pending-student-action-btn js-reject-btn" style="width: 100%; justify-content: center;">
-                                            <i class="fa-solid fa-xmark"></i> Reject
-                                        </button>
-                                    </form>
-                                </div>
+                        <div class="admin-student-body pending-student-body" style="margin-top: 14px;">
+                            <div class="admin-meta admin-student-meta pending-student-meta">
+                                <span class="admin-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-weight: 700;">
+                                    <i class="fa-solid fa-hashtag"></i> <%= student.enrollmentNumber %>
+                                </span>
+                                <span class="admin-badge" style="background: rgba(6, 182, 212, 0.12); color: #0891b2; font-weight: 700;">
+                                    <i class="fa-solid fa-building-columns"></i> <%= student.department %>
+                                </span>
+                                <span class="admin-badge" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed; font-weight: 700;">
+                                    <i class="fa-solid fa-layer-group"></i> Sem <%= student.semester %>
+                                </span>
                             </div>
-                        </article>
-                    <% }); %>
-                </div>
-            <% } %>
+
+                            <div class="pending-student-actions" style="margin-top: 14px; display: flex; gap: 10px;">
+                                <form action="/admin/students/approve/<%= student._id %>" method="POST" class="pending-student-action-form" style="flex: 1;">
+                                    <button type="submit" class="admin-primary-btn pending-student-action-btn" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                        <i class="fa-solid fa-check"></i> Approve
+                                    </button>
+                                </form>
+                                <form action="/admin/students/<%= student._id %>/delete" method="POST" class="pending-student-action-form reject-form" style="flex: 1;">
+                                    <input type="hidden" name="returnTo" value="/admin/students/pending">
+                                    <button type="button" class="admin-secondary-btn danger pending-student-action-btn js-reject-btn" style="width: 100%; justify-content: center;">
+                                        <i class="fa-solid fa-xmark"></i> Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
+                <% }); %>
+            </div>
         </section>
 
     </main>

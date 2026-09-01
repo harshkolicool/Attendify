@@ -15,6 +15,7 @@ const authLimiter = rateLimit({
 const Student = require("../models/studentSchema");
 const ClassGroup = require("../models/classGroupSchema");
 const College = require("../models/collegeSchema");
+const Notification = require("../models/notificationSchema");
 const socketManager = require("../utils/socketManager");
 
 // Generate short random hex string
@@ -204,7 +205,43 @@ router.post("/student/register", authLimiter, async (req, res) => {
 
         await newStudent.save();
         
-        socketManager.emitNewRegistration(classGroup.college, newStudent);
+        const regPayload = {
+            _id: newStudent._id.toString(),
+            id: newStudent._id.toString(),
+            fullName: newStudent.fullName,
+            email: newStudent.email,
+            enrollmentNumber: newStudent.enrollmentNumber,
+            department: newStudent.department,
+            semester: newStudent.semester,
+            classGroup: classGroup.name || (classGroup.department + " Sem " + classGroup.semester),
+            createdAt: newStudent.createdAt || new Date()
+        };
+
+        socketManager.emitNewRegistration(classGroup.college, regPayload);
+
+        try {
+            const notif = await Notification.create({
+                title: "New Student Registration",
+                message: `${newStudent.fullName} (${newStudent.enrollmentNumber}) from ${newStudent.department} (Sem ${newStudent.semester}) requested portal access.`,
+                category: "STUDENT_REGISTRATION",
+                recipientRole: "ADMIN",
+                recipientUserId: null,
+                college: classGroup.college,
+                link: "/admin/students/pending"
+            });
+            socketManager.emitNotification({
+                recipientRole: "ADMIN",
+                collegeId: classGroup.college.toString(),
+                notificationId: notif._id.toString(),
+                title: notif.title,
+                message: notif.message,
+                category: notif.category,
+                link: notif.link,
+                createdAt: notif.createdAt
+            });
+        } catch (notifErr) {
+            console.error("Failed to create registration notification:", notifErr);
+        }
         
         req.session.pendingRegistrationId = newStudent._id.toString();
         res.redirect(`/student/waiting/${newStudent._id}`);

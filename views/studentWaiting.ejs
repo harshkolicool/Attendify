@@ -135,7 +135,7 @@
 
             <div class="waiting-status-pill" id="status-pill">
                 <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; animation: blipPulse 1.8s infinite;"></span>
-                <span id="status-text">Connecting to real-time server...</span>
+                <span id="status-text">Verifying real-time connection...</span>
             </div>
 
             <div class="auth-structured-footer" style="width: 100%; margin-top: 32px;">
@@ -190,7 +190,7 @@
 
             socket.on("connect", function() {
                 if (!redirecting && statusText) {
-                    statusText.textContent = "Live Socket Connected. Waiting for approval...";
+                    statusText.textContent = "Real-Time Verification Active • Awaiting confirmation...";
                 }
             });
 
@@ -200,7 +200,7 @@
 
             socket.on("disconnect", function() {
                 if (!redirecting && statusText) {
-                    statusText.textContent = "Connection lost. Checking fallback...";
+                    statusText.textContent = "Checking approval status...";
                 }
             });
         } catch (e) {

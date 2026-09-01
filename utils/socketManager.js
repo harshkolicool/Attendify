@@ -473,7 +473,7 @@ function initializeSocket(io) {
 
                 const admin = await Teacher.findOne({ _id: teacherId, isDeleted: { $ne: true }, isBlocked: { $ne: true } }).select("college role");
 
-                if (!admin || admin.role !== "ADMIN" || !admin.college) {
+                if (!admin || String(admin.role || "").toUpperCase() !== "ADMIN" || !admin.college) {
                     emitSocketError(socket, "Admin realtime profile is not eligible.");
                     return;
                 }
