@@ -15,10 +15,10 @@
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
     <link rel="stylesheet" href="/css/uiShell.css?v=20260901_fixed3">
-    <link rel="stylesheet" href="/css/teacherDashboard.css?v=20260901_detailed_v2">
-    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8_19">
+    <link rel="stylesheet" href="/css/teacherDashboard.css?v=20260901_toolbar_perfect">
+    <link rel="stylesheet" href="/css/attendifyDarkFix.css?v=8_20">
     <link rel="stylesheet" href="/css/attendifyUIOverhaul.css?v=20260831_18">
-    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19_21">
+    <link rel="stylesheet" href="/css/attendifyUIOverhaulExtra.css?v=19_22">
 
     <link
         rel="stylesheet"
@@ -700,10 +700,8 @@
                         </div>
 
                         <div class="teacher-schedule-filter-field">
-                            <label for="teacherReportRecordGroupFilter">
-                                <i class="fa-solid fa-layer-group"></i> Group
-                            </label>
                             <div class="teacher-select-wrap">
+                                <i class="fa-solid fa-layer-group teacher-select-leading-icon"></i>
                                 <select id="teacherReportRecordGroupFilter" data-teacher-record-filter="group">
                                     <option value="">All Subject Groups</option>
 
@@ -718,10 +716,8 @@
                         </div>
 
                         <div class="teacher-schedule-filter-field">
-                            <label for="teacherReportRecordStatusFilter">
-                                <i class="fa-solid fa-filter"></i> Status
-                            </label>
                             <div class="teacher-select-wrap">
+                                <i class="fa-solid fa-filter teacher-select-leading-icon"></i>
                                 <select id="teacherReportRecordStatusFilter" data-teacher-record-filter="status">
                                     <option value="">All Status</option>
                                     <option value="PRESENT">Present</option>
@@ -731,13 +727,11 @@
                             </div>
                         </div>
 
-                        <div class="teacher-schedule-filter-field teacher-schedule-filter-action">
-                            <label>&nbsp;</label>
-                            <button type="button" class="teacher-secondary-btn teacher-toolbar-reset-btn" data-teacher-record-reset title="Clear search & filters">
-                                <i class="fa-solid fa-rotate-left"></i>
-                                <span>Clear</span>
-                            </button>
-                        </div>
+                        <button type="button" class="teacher-secondary-btn teacher-toolbar-reset-btn" data-teacher-record-reset title="Clear search & filters">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>Clear</span>
+                        </button>
+                    </div>
 
                         <div class="teacher-report-groups">
                             <% detailedRecordGroups.forEach(function(group, groupIndex) { %>
@@ -974,10 +968,8 @@
                         </div>
 
                         <div class="teacher-schedule-filter-field">
-                            <label for="teacherReportAttemptReasonFilter">
-                                <i class="fa-solid fa-triangle-exclamation"></i> Reason
-                            </label>
                             <div class="teacher-select-wrap">
+                                <i class="fa-solid fa-triangle-exclamation teacher-select-leading-icon"></i>
                                 <select id="teacherReportAttemptReasonFilter" data-teacher-attempt-filter="reason">
                                     <option value="">All Reasons</option>
 
@@ -991,13 +983,10 @@
                             </div>
                         </div>
 
-                        <div class="teacher-schedule-filter-field teacher-schedule-filter-action">
-                            <label>&nbsp;</label>
-                            <button type="button" class="teacher-secondary-btn teacher-toolbar-reset-btn" data-teacher-attempt-reset title="Clear search & filters">
-                                <i class="fa-solid fa-rotate-left"></i>
-                                <span>Clear</span>
-                            </button>
-                        </div>
+                        <button type="button" class="teacher-secondary-btn teacher-toolbar-reset-btn" data-teacher-attempt-reset title="Clear search & filters">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>Clear</span>
+                        </button>
 
                         <div class="teacher-report-groups">
                             <% suspiciousAttemptGroups.forEach(function(group, groupIndex) { %>
