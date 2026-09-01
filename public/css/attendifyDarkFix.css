@@ -4525,9 +4525,189 @@ body.dark-mode .admin-edit-box {
 }
 
 /* ── 24. Admin Warning Button ── */
-.admin-warning-btn {
+/* ── 25. Modern Responsive Notification Cards & Actions ── */
+.notification-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+.notification-card {
+    border-radius: 16px !important;
+    background: rgba(15, 23, 42, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 18px 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    transition: all 0.2s ease !important;
+}
+
+.notification-card.unread {
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    background: rgba(30, 41, 59, 0.55) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+}
+
+.notification-top {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.notification-top h4 {
+    margin: 0 !important;
+    font-size: 1.05rem !important;
     font-weight: 700 !important;
-    font-size: 13px !important;
+    color: #ffffff !important;
+    text-align: left !important;
+}
+
+.notification-top span {
+    font-size: 0.8rem !important;
+    color: #94a3b8 !important;
+    white-space: nowrap !important;
+}
+
+.notification-card > p {
+    margin: 4px 0 10px 0 !important;
+    font-size: 0.9rem !important;
+    color: #cbd5e1 !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+}
+
+.notification-meta {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-top: 14px !important;
+    margin-top: 6px !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+}
+
+.notification-meta .admin-badge {
+    margin: 0 !important;
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+    padding: 5px 12px !important;
+    border-radius: 999px !important;
+    flex: 0 0 auto !important;
+}
+
+.notification-action-buttons {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    margin-left: auto !important;
+}
+
+.notification-action-buttons form {
+    margin: 0 !important;
+    display: inline-block !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
+}
+
+.notification-action-buttons a,
+.notification-action-buttons button,
+.notification-open-link,
+.notification-action-btn,
+.notification-delete-btn {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 36px !important;
+    padding: 0 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    border-radius: 9px !important;
+    flex: 0 0 auto !important;
+    box-sizing: border-box !important;
+}
+
+.notification-open-link {
+    background: rgba(99, 102, 241, 0.15) !important;
+    color: #818cf8 !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    text-decoration: none !important;
+}
+
+.notification-action-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    cursor: pointer !important;
+}
+
+.notification-delete-btn {
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.25) !important;
+    cursor: pointer !important;
+}
+
+@media (max-width: 768px) {
+    .admin-card-head {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .admin-card-head .adm-head-status-group,
+    .admin-card-head .notification-head-actions {
+        width: 100% !important;
+        margin-left: 0 !important;
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    .admin-card-head .notification-head-actions form,
+    .admin-card-head .notification-head-actions button,
+    .admin-card-head .notification-head-actions a {
+        width: auto !important;
+        flex: 0 0 auto !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .notification-top {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+    }
+
+    .notification-meta {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .notification-action-buttons {
+        width: 100% !important;
+        margin-left: 0 !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+    }
+
+    .notification-action-buttons form,
+    .notification-action-buttons a,
+    .notification-action-buttons button {
+        flex: 1 1 auto !important;
+    }
 }
 
 

@@ -112,125 +112,224 @@
         border: 1px solid rgba(99, 102, 241, 0.3) !important;
     }
 
-    /* Ultra-Sleek Compact Empty State Bar */
-    .admin-empty-compact-bar {
-        width: 100% !important;
-        padding: 12px 18px !important;
-        border-radius: 14px !important;
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
-        border: 1px solid rgba(16, 185, 129, 0.2) !important;
+    /* Notification Card & Actions Responsiveness */
+    .notification-list {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .notification-card {
+        border-radius: 16px !important;
+        background: rgba(15, 23, 42, 0.45) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 18px 20px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .notification-card.unread {
+        border-color: rgba(99, 102, 241, 0.3) !important;
+        background: rgba(30, 41, 59, 0.55) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .notification-top {
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
         justify-content: space-between !important;
-        gap: 14px !important;
-        box-sizing: border-box !important;
-        margin-top: 4px !important;
-    }
-
-    .admin-empty-compact-bar.inbox {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
-        border: 1px solid rgba(99, 102, 241, 0.2) !important;
-    }
-
-    .empty-compact-left {
-        display: flex !important;
-        align-items: center !important;
         gap: 12px !important;
+        width: 100% !important;
     }
 
-    .empty-compact-orb {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        border-radius: 10px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+    .notification-top h4 {
+        margin: 0 !important;
         font-size: 1.05rem !important;
-        flex-shrink: 0 !important;
-    }
-
-    .empty-compact-orb.emerald {
-        background: rgba(16, 185, 129, 0.15) !important;
-        color: #34d399 !important;
-        border: 1px solid rgba(16, 185, 129, 0.3) !important;
-    }
-
-    .empty-compact-orb.indigo {
-        background: rgba(99, 102, 241, 0.15) !important;
-        color: #a5b4fc !important;
-        border: 1px solid rgba(99, 102, 241, 0.3) !important;
-    }
-
-    .empty-compact-text {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 2px !important;
-    }
-
-    .empty-compact-text strong {
-        font-size: 0.94rem !important;
         font-weight: 700 !important;
         color: #ffffff !important;
+        text-align: left !important;
     }
 
-    .empty-compact-text span {
-        font-size: 0.82rem !important;
+    .notification-top span {
+        font-size: 0.8rem !important;
         color: #94a3b8 !important;
+        white-space: nowrap !important;
     }
 
-    .empty-compact-chip {
-        display: inline-flex !important;
+    .notification-card > p {
+        margin: 4px 0 10px 0 !important;
+        font-size: 0.9rem !important;
+        color: #cbd5e1 !important;
+        line-height: 1.5 !important;
+        text-align: left !important;
+    }
+
+    .notification-meta {
+        display: flex !important;
+        flex-direction: row !important;
         align-items: center !important;
-        gap: 7px !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding-top: 14px !important;
+        margin-top: 6px !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+    }
+
+    .notification-meta .admin-badge {
+        margin: 0 !important;
+        font-size: 0.74rem !important;
+        font-weight: 800 !important;
         padding: 5px 12px !important;
         border-radius: 999px !important;
-        font-size: 0.75rem !important;
+        flex: 0 0 auto !important;
+    }
+
+    .notification-action-buttons {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex-wrap: wrap !important;
+        margin-left: auto !important;
+    }
+
+    .notification-action-buttons form {
+        margin: 0 !important;
+        display: inline-block !important;
+        width: auto !important;
+        flex: 0 0 auto !important;
+    }
+
+    .notification-action-buttons a,
+    .notification-action-buttons button,
+    .notification-open-link,
+    .notification-action-btn,
+    .notification-delete-btn {
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        height: 36px !important;
+        padding: 0 14px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        font-size: 0.82rem !important;
         font-weight: 700 !important;
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        color: #cbd5e1 !important;
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
+        border-radius: 9px !important;
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
     }
 
-    .empty-compact-chip.emerald {
-        background: rgba(16, 185, 129, 0.1) !important;
-        border: 1px solid rgba(16, 185, 129, 0.25) !important;
-        color: #34d399 !important;
+    .notification-open-link {
+        background: rgba(99, 102, 241, 0.15) !important;
+        color: #818cf8 !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
+        text-decoration: none !important;
     }
 
-    .empty-compact-chip.indigo {
-        background: rgba(99, 102, 241, 0.1) !important;
-        border: 1px solid rgba(99, 102, 241, 0.25) !important;
+    .notification-open-link:hover {
+        background: rgba(99, 102, 241, 0.25) !important;
         color: #a5b4fc !important;
     }
 
-    .empty-compact-chip .pulse-dot.green {
-        width: 7px !important;
-        height: 7px !important;
-        border-radius: 50% !important;
-        background: #10b981 !important;
-        box-shadow: 0 0 6px #10b981 !important;
-        display: inline-block !important;
+    .notification-action-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        cursor: pointer !important;
     }
 
-    .empty-compact-chip .pulse-dot.indigo {
-        width: 7px !important;
-        height: 7px !important;
-        border-radius: 50% !important;
-        background: #818cf8 !important;
-        box-shadow: 0 0 6px #818cf8 !important;
-        display: inline-block !important;
+    .notification-delete-btn {
+        background: rgba(239, 68, 68, 0.12) !important;
+        color: #f87171 !important;
+        border: 1px solid rgba(239, 68, 68, 0.25) !important;
+        cursor: pointer !important;
     }
 
-    @media (max-width: 680px) {
+    .notification-delete-btn:hover {
+        background: rgba(239, 68, 68, 0.22) !important;
+        color: #fca5a5 !important;
+    }
+
+    /* Mobile Media Queries (< 768px) */
+    @media (max-width: 768px) {
+        .admin-card .admin-card-head {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+        }
+
+        .admin-card-head-title {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        .admin-card-head .adm-head-status-group,
+        .admin-card-head .notification-head-actions {
+            width: 100% !important;
+            margin-left: 0 !important;
+            justify-content: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }
+
+        .admin-card-head .notification-head-actions form,
+        .admin-card-head .notification-head-actions button,
+        .admin-card-head .notification-head-actions a {
+            width: auto !important;
+            flex: 0 0 auto !important;
+        }
+
+        .adm-radar-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+        }
+
+        .adm-radar-card {
+            padding: 12px 14px !important;
+        }
+
         .admin-empty-compact-bar {
             flex-direction: column !important;
             align-items: flex-start !important;
             gap: 12px !important;
             padding: 12px 14px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .adm-radar-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .notification-top {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 4px !important;
+        }
+
+        .notification-meta {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+        }
+
+        .notification-action-buttons {
+            width: 100% !important;
+            margin-left: 0 !important;
+            justify-content: flex-start !important;
+            gap: 8px !important;
+        }
+
+        .notification-action-buttons form,
+        .notification-action-buttons a,
+        .notification-action-buttons button {
+            flex: 1 1 auto !important;
         }
     }
     </style>
@@ -488,32 +587,34 @@
                             <div class="notification-meta">
                                 <span class="admin-badge" style="background: rgba(99, 102, 241, 0.12); color: #6366f1; font-weight: 700;"><%= notification.category || "GENERAL" %></span>
 
-                                <% if (notification.link) { %>
-                                    <a class="admin-secondary-btn notification-open-link" href="<%= notification.link %>">
-                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                        Open
-                                    </a>
-                                <% } %>
+                                <div class="notification-action-buttons">
+                                    <% if (notification.link) { %>
+                                        <a class="admin-secondary-btn notification-open-link" href="<%= notification.link %>">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                            Open
+                                        </a>
+                                    <% } %>
 
-                                <% if (!notification.isRead) { %>
-                                    <form action="/admin/notifications/<%= notification.id %>/read" method="POST">
-                                        <button class="admin-primary-btn notification-action-btn" type="submit">
-                                            <i class="fa-solid fa-check"></i>
-                                            Mark Read
+                                    <% if (!notification.isRead) { %>
+                                        <form action="/admin/notifications/<%= notification.id %>/read" method="POST">
+                                            <button class="admin-primary-btn notification-action-btn" type="submit">
+                                                <i class="fa-solid fa-check"></i>
+                                                Mark Read
+                                            </button>
+                                        </form>
+                                    <% } %>
+
+                                    <form
+                                        action="/admin/notifications/<%= notification.id %>/delete"
+                                        method="POST"
+                                        onsubmit="return uiConfirm(event, 'Delete this notification?')"
+                                    >
+                                        <button class="admin-warning-btn notification-delete-btn notification-action-btn" type="submit">
+                                            <i class="fa-solid fa-trash"></i>
+                                            Delete
                                         </button>
                                     </form>
-                                <% } %>
-
-                                <form
-                                    action="/admin/notifications/<%= notification.id %>/delete"
-                                    method="POST"
-                                    onsubmit="return uiConfirm(event, 'Delete this notification?')"
-                                >
-                                    <button class="admin-warning-btn notification-delete-btn notification-action-btn" type="submit">
-                                        <i class="fa-solid fa-trash"></i>
-                                        Delete
-                                    </button>
-                                </form>
+                                </div>
                             </div>
                         </article>
                     <% }) %>
