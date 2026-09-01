@@ -792,10 +792,7 @@ function initTeacherLiveMap() {
 
         teacherMarker.bindPopup(
             "<b>Teacher / Classroom Center</b><br>Attendance Radius: " +
-                Math.round(adminRadius) +
-                " m<br>GPS verification zone: " +
-                Math.round(verificationRadius) +
-                " m"
+                Math.round(adminRadius) + " m"
         );
 
         if (radiusCircle) {
@@ -804,38 +801,19 @@ function initTeacherLiveMap() {
         } else {
             radiusCircle = L.circle([lat, lon], {
                 radius: adminRadius,
-                color: "#f59e0b",
-                weight: 2,
-                fillColor: "#f59e0b",
-                fillOpacity: 0.06,
-                dashArray: "5, 8"
+                color: "#10b981",
+                weight: 2.5,
+                fillColor: "#10b981",
+                fillOpacity: 0.15
             }).addTo(map);
         }
 
         if (effectiveRadiusCircle) {
-            effectiveRadiusCircle.setLatLng([lat, lon]);
-            effectiveRadiusCircle.setRadius(verificationRadius);
-        } else {
-            effectiveRadiusCircle = L.circle([lat, lon], {
-                radius: verificationRadius,
-                color: "#10b981",
-                weight: 2.5,
-                fillColor: "#10b981",
-                fillOpacity: 0.14
-            }).addTo(map);
+            try { effectiveRadiusCircle.remove(); } catch(e) {}
+            effectiveRadiusCircle = null;
         }
 
-        if (verificationRadius > adminRadius) {
-            setHint(
-                "Admin radius " +
-                    Math.round(adminRadius) +
-                    " m (orange). GPS verification zone " +
-                    Math.round(verificationRadius) +
-                    " m (green) — students can be inside green when GPS is uncertain."
-            );
-        } else {
-            setHint("Showing live student devices for this session.");
-        }
+        setHint("Showing live student devices within " + Math.round(adminRadius) + "m attendance radius.");
 
         if (sessionChanged || deviceMarkers.size === 0) {
             map.setView([lat, lon], 18);
@@ -1201,10 +1179,7 @@ function initTeacherLiveMap() {
                             <span>Distance:</span> <strong>${formatDistance(distance)}</strong>
                         </div>
                         <div class="teacher-map-popup-row">
-                            <span>Base Radius:</span> <strong>${configuredRadius}m</strong>
-                        </div>
-                        <div class="teacher-map-popup-row">
-                            <span>Effective Radius:</span> <strong>${effectiveRadius}m</strong>
+                            <span>Allowed Radius:</span> <strong>${configuredRadius}m</strong>
                         </div>` : ""}
                     </div>
                         ${

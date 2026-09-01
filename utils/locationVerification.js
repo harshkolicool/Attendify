@@ -2,9 +2,9 @@ const getDistanceInMeters = require("./geoDistance");
 const { calculateAttendanceConfidence } = require("./attendanceConfidence");
 
 const MAX_GPS_ACCURACY_METERS = Number(process.env.GPS_MAX_ACCEPTABLE_ACCURACY_METERS || 1000);
-const MAX_GPS_UNCERTAINTY_ALLOWANCE = Number(process.env.GPS_UNCERTAINTY_CAP_METERS || 250);
-const MIN_PRACTICAL_RADIUS = Number(process.env.GPS_MIN_PRACTICAL_RADIUS_METERS || 50);
-const SMALL_RADIUS_GRACE = Number(process.env.GPS_SMALL_RADIUS_GRACE_METERS || 10);
+const MAX_GPS_UNCERTAINTY_ALLOWANCE = Number(process.env.GPS_UNCERTAINTY_CAP_METERS || 25);
+const MIN_PRACTICAL_RADIUS = Number(process.env.GPS_MIN_PRACTICAL_RADIUS_METERS || 0);
+const SMALL_RADIUS_GRACE = Number(process.env.GPS_SMALL_RADIUS_GRACE_METERS || 0);
 const NEAR_BOUNDARY_RATIO = Number(process.env.GPS_NEAR_BOUNDARY_RATIO || 0.85);
 
 const GPS_RETRY_EXTREME_METERS = Number(process.env.GPS_RETRY_EXTREME_METERS || 1000);
@@ -192,15 +192,14 @@ function getAdaptiveConfidenceThreshold(adminRadiusMeters, studentLocationMeta) 
 function getAdminRadiusPolicy(adminRadiusMeters) {
     const adminConfiguredRadius = Math.max(1, Number(adminRadiusMeters) || 100);
 
-    // The floor for effective indoor verification — comes from env or defaults to 80m.
     const minimumClassroomRadius = Number(
-        process.env.GPS_MINIMUM_CLASSROOM_RADIUS_METERS || 80
+        process.env.GPS_MINIMUM_CLASSROOM_RADIUS_METERS || 0
     );
     const effectiveMinimum = Math.max(MIN_PRACTICAL_RADIUS, minimumClassroomRadius);
 
     let graceMeters = 0;
 
-    if (adminConfiguredRadius < effectiveMinimum) {
+    if (effectiveMinimum > 0 && adminConfiguredRadius < effectiveMinimum) {
         graceMeters = Math.max(
             SMALL_RADIUS_GRACE,
             effectiveMinimum - adminConfiguredRadius
@@ -215,14 +214,13 @@ function getAdminRadiusPolicy(adminRadiusMeters) {
 }
 
 /**
- * GPS cannot verify positions tighter than combined device accuracy.
- * verificationRadius = max(admin grace radius, combined GPS uncertainty cap).
+ * GPS verification radius strictly follows admin-configured radius plus tight device accuracy.
  */
 function computeVerificationRadius(adminRadiusMeters, studentAccuracy, teacherAccuracy) {
     const policy = getAdminRadiusPolicy(adminRadiusMeters);
     const combinedAccuracy = clampAccuracyAllowance(studentAccuracy, teacherAccuracy);
 
-    const verificationRadius = Math.max(policy.adminRadiusWithGrace, combinedAccuracy);
+    const verificationRadius = policy.adminRadiusWithGrace;
 
     return {
         adminConfiguredRadius: policy.adminConfiguredRadius,
@@ -316,7 +314,7 @@ function evaluateLocationRange(
     const requiredConfidence = getAdaptiveConfidenceThreshold(adminConfiguredRadius, studentMeta);
     const isLowConfidenceFix = Number.isFinite(confidenceScore) && confidenceScore > 0 && confidenceScore < requiredConfidence;
     const boundarySlack = verificationRadius - minimumPossibleDistance;
-    const isBoundaryAmbiguous = boundarySlack >= 0 && boundarySlack < Math.max(15, adminConfiguredRadius * 0.15);
+    const isBoundaryAmbiguous = boundarySlack >= 0 && boundarySlack <= Math.max(15, adminConfiguredRadius * 0.15);
 
     let decision = "PASS";
     let reasonCode = "OK";
