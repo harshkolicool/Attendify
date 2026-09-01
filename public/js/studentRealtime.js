@@ -503,6 +503,13 @@ document.addEventListener("DOMContentLoaded", function init() {
         );
     });
 
+    socket.on("attendance:extended", function (payload) {
+        showRealtimeMessage(
+            payload.message || "Attendance window extended by Teacher!",
+            "info"
+        );
+    });
+
     socket.on("attendance:ended", function (payload) {
         const card = getScheduleCard(payload.scheduleId);
 

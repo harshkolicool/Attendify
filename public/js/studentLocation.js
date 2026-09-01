@@ -325,6 +325,156 @@ function getFastGpsPosition() {
     });
 }
 
+function getOrCreateRadarModal() {
+    let modal = document.getElementById("attendifyRadarScanModal");
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "attendifyRadarScanModal";
+    modal.className = "attendify-radar-backdrop";
+    modal.innerHTML = `
+        <div class="attendify-radar-card">
+            <div class="attendify-radar-sonar">
+                <div class="radar-ring ring-1"></div>
+                <div class="radar-ring ring-2"></div>
+                <div class="radar-ring ring-3"></div>
+                <div class="radar-sweep"></div>
+                <div class="radar-center-dot">
+                    <i class="fa-solid fa-satellite-dish" id="radarCenterIcon"></i>
+                </div>
+            </div>
+            <h4 class="radar-title" id="radarModalTitle">Verifying Presence</h4>
+            <p class="radar-subtitle" id="radarModalSubtitle">Scanning ultrasonic acoustic pulses & GPS satellites...</p>
+            <div class="radar-telemetry" id="radarModalTelemetry">
+                <div class="telemetry-item" id="telemetryGps"><i class="fa-solid fa-location-dot"></i> <span>Satellite Lock</span></div>
+                <div class="telemetry-item" id="telemetryAcoustic"><i class="fa-solid fa-volume-high"></i> <span>Acoustic Beacon</span></div>
+                <div class="telemetry-item" id="telemetrySecurity"><i class="fa-solid fa-shield-halved"></i> <span>Passkey Auth</span></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    if (!document.getElementById("attendifyRadarScanStyles")) {
+        const style = document.createElement("style");
+        style.id = "attendifyRadarScanStyles";
+        style.textContent = `
+            .attendify-radar-backdrop {
+                position: fixed; inset: 0; z-index: 99999;
+                background: rgba(15, 23, 42, 0.84);
+                backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+                display: flex; align-items: center; justify-content: center;
+                opacity: 0; visibility: hidden; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .attendify-radar-backdrop.active { opacity: 1; visibility: visible; }
+            .attendify-radar-card {
+                background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.98));
+                border: 1px solid rgba(56, 189, 248, 0.35);
+                border-radius: 28px; padding: 32px 28px; max-width: 360px; width: 90%;
+                text-align: center; color: #fff;
+                box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(6, 182, 212, 0.25);
+                transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .attendify-radar-backdrop.active .attendify-radar-card { transform: scale(1); }
+            .attendify-radar-sonar {
+                position: relative; width: 140px; height: 140px; margin: 0 auto 20px;
+                display: flex; align-items: center; justify-content: center;
+            }
+            .radar-ring {
+                position: absolute; border-radius: 50%;
+                border: 1.5px solid rgba(56, 189, 248, 0.4);
+                box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+            }
+            .radar-ring.ring-1 { width: 60px; height: 60px; animation: sonarPing 2.2s infinite ease-out; }
+            .radar-ring.ring-2 { width: 100px; height: 100px; animation: sonarPing 2.2s infinite ease-out 0.6s; }
+            .radar-ring.ring-3 { width: 140px; height: 140px; animation: sonarPing 2.2s infinite ease-out 1.2s; }
+            @keyframes sonarPing {
+                0% { transform: scale(0.6); opacity: 0.8; }
+                100% { transform: scale(1.3); opacity: 0; }
+            }
+            .radar-sweep {
+                position: absolute; inset: 0; border-radius: 50%;
+                background: conic-gradient(from 0deg, transparent 60%, rgba(6, 182, 212, 0.45) 100%);
+                animation: radarRotate 1.8s linear infinite;
+            }
+            @keyframes radarRotate { 100% { transform: rotate(360deg); } }
+            .radar-center-dot {
+                position: relative; z-index: 5; width: 44px; height: 44px; border-radius: 50%;
+                background: linear-gradient(135deg, #06b6d4, #3b82f6);
+                display: flex; align-items: center; justify-content: center;
+                color: #fff; font-size: 1.15rem; box-shadow: 0 0 20px rgba(6, 182, 212, 0.8);
+            }
+            .radar-title { font-size: 1.25rem; font-weight: 800; margin: 0 0 8px; color: #f8fafc; }
+            .radar-subtitle { font-size: 0.85rem; color: #94a3b8; margin: 0 0 20px; line-height: 1.4; }
+            .radar-telemetry { display: flex; justify-content: space-around; gap: 8px; font-size: 0.75rem; }
+            .telemetry-item {
+                display: flex; flex-direction: column; align-items: center; gap: 4px;
+                padding: 8px; border-radius: 12px; background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.08); color: #cbd5e1; flex: 1;
+                transition: all 0.3s;
+            }
+            .telemetry-item.success {
+                background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399; font-weight: 700;
+            }
+            .telemetry-item.active {
+                background: rgba(6, 182, 212, 0.15); border-color: rgba(6, 182, 212, 0.5); color: #38bdf8; font-weight: 700;
+                animation: pulseRadar 1s infinite alternate;
+            }
+            @keyframes pulseRadar { to { transform: scale(1.05); } }
+        `;
+        document.head.appendChild(style);
+    }
+
+    return modal;
+}
+
+function showRadarScanModal() {
+    const modal = getOrCreateRadarModal();
+    modal.classList.add("active");
+    const gpsEl = modal.querySelector("#telemetryGps");
+    const acEl = modal.querySelector("#telemetryAcoustic");
+    const secEl = modal.querySelector("#telemetrySecurity");
+    if (gpsEl) gpsEl.className = "telemetry-item active";
+    if (acEl) acEl.className = "telemetry-item";
+    if (secEl) secEl.className = "telemetry-item";
+    const title = modal.querySelector("#radarModalTitle");
+    const sub = modal.querySelector("#radarModalSubtitle");
+    if (title) title.textContent = "Locking GPS Satellites";
+    if (sub) sub.textContent = "Connecting to satellite constellation...";
+}
+
+function updateRadarScanStep(step, detail) {
+    const modal = getOrCreateRadarModal();
+    const title = modal.querySelector("#radarModalTitle");
+    const sub = modal.querySelector("#radarModalSubtitle");
+    const gpsEl = modal.querySelector("#telemetryGps");
+    const acEl = modal.querySelector("#telemetryAcoustic");
+    const secEl = modal.querySelector("#telemetrySecurity");
+
+    if (step === "GPS_OK") {
+        if (gpsEl) gpsEl.className = "telemetry-item success";
+        if (acEl) acEl.className = "telemetry-item active";
+        if (title) title.textContent = "Scanning Ultrasonic Radar";
+        if (sub) sub.textContent = detail || "Listening for inaudible classroom pulses (18.6–19.8 kHz)...";
+    } else if (step === "ACOUSTIC_OK") {
+        if (acEl) acEl.className = "telemetry-item success";
+        if (secEl) secEl.className = "telemetry-item active";
+        if (title) title.textContent = "Verifying Passkey & Tokens";
+        if (sub) sub.textContent = detail || "Seating distance captured. Submitting secure payload...";
+    } else if (step === "DONE_SUCCESS") {
+        if (secEl) secEl.className = "telemetry-item success";
+        if (title) title.innerHTML = '<span style="color:#10b981;">Present Verified!</span>';
+        if (sub) sub.textContent = detail || "Attendance marked successfully.";
+    }
+}
+
+function hideRadarScanModal(delayMs) {
+    const delay = typeof delayMs === "number" ? delayMs : 0;
+    setTimeout(() => {
+        const modal = document.getElementById("attendifyRadarScanModal");
+        if (modal) modal.classList.remove("active");
+    }, delay);
+}
+
 function markAttendance(sessionId, button) {
     if (!button || !sessionId) return;
     if (button.dataset.pending === "true") return;
@@ -344,6 +494,7 @@ function markAttendance(sessionId, button) {
     button.disabled = true;
 
     button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Checking Location...';
+    showRadarScanModal();
 
     let finalPos = null;
     const radiusHint = getActiveSessionRadiusHint();
@@ -357,6 +508,7 @@ function markAttendance(sessionId, button) {
                 throw new Error("Could not detect your location. Please move near a window and try again.");
             }
             finalPos = pos;
+            updateRadarScanStep("GPS_OK", `Satellite accuracy ±${Math.round(pos.coords.accuracy || 10)}m acquired.`);
             return getBestAttendanceToken(sessionId, button);
         })
         .then(async function (attendanceToken) {
@@ -370,6 +522,12 @@ function markAttendance(sessionId, button) {
                 } catch (e) {
                     console.log("Acoustic listener skipped:", e);
                 }
+            }
+
+            if (acousticProof.verified) {
+                updateRadarScanStep("ACOUSTIC_OK", `Seating: ${acousticProof.distanceMeters}m (${acousticProof.rowCategory || "Classroom"})`);
+            } else {
+                updateRadarScanStep("ACOUSTIC_OK", "Geofence satellite telemetry verified.");
             }
 
             button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Marking...';
@@ -417,18 +575,22 @@ function markAttendance(sessionId, button) {
                 
                 let successMsg = data.message || "Attendance marked successfully.";
                 if (data.status === "PRESENT" && data.measuredDistance) {
-                    successMsg += ` (Seating Distance: ${data.measuredDistance}m)`;
+                    successMsg += ` (Seating: ${data.measuredDistance}m)`;
                 }
+                updateRadarScanStep("DONE_SUCCESS", successMsg);
+                hideRadarScanModal(1400);
                 showMessage(successMsg, "success");
                 setAttendancePresentUI(button);
                 return;
             }
 
+            hideRadarScanModal(0);
             const failMessage = data.message || "Could not mark attendance.";
             showMessage(failMessage, "error");
             resetAttendanceButton(button, oldHtml);
         })
         .catch(function (err) {
+            hideRadarScanModal(0);
             console.log(err);
             // Distinguish between offline success vs actual failure
             if (err.message && err.message.includes("will sync automatically")) {

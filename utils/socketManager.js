@@ -1459,6 +1459,28 @@ function emitSessionRadiusUpdated(session, newRadius) {
     }
 }
 
+function emitAttendanceExtended(session, extendMinutes) {
+    const io = getIO();
+    if (!io || !session) return;
+
+    const sessionId = getId(session._id);
+    const teacherId = getId(session.teacher);
+    const classGroupId = getId(session.classGroup);
+    const collegeId = getId(session.college);
+
+    const payload = {
+        sessionId: sessionId,
+        endTime: session.endTime,
+        extendMinutes: extendMinutes,
+        message: `Attendance window extended by +${extendMinutes} minutes!`,
+        updatedAt: new Date()
+    };
+
+    if (teacherId) io.to(getTeacherRoom(teacherId)).emit("attendance:extended", payload);
+    if (classGroupId) io.to(getClassGroupRoom(classGroupId)).emit("attendance:extended", payload);
+    if (collegeId) io.to(getAdminCollegeRoom(collegeId)).emit("attendance:extended:admin", payload);
+}
+
 module.exports = {
     initializeSocket,
     getIO,
@@ -1478,5 +1500,6 @@ module.exports = {
     emitAttendancePendingReview,
     emitAttendanceReviewDecision,
     emitRetryRequested,
-    emitSessionRadiusUpdated
+    emitSessionRadiusUpdated,
+    emitAttendanceExtended
 };

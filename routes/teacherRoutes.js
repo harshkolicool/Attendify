@@ -1008,6 +1008,53 @@ router.post("/attendance/session/:id/radius", isTeacher, async (req, res) => {
     }
 });
 
+router.post("/attendance/session/:id/extend", isTeacher, async (req, res) => {
+    try {
+        const sessionId = req.params.id;
+        let extendMinutes = Number(req.body.extendMinutes);
+        if (!Number.isFinite(extendMinutes) || extendMinutes <= 0) extendMinutes = 5;
+        if (extendMinutes > 60) extendMinutes = 60;
+
+        if (!isValidObjectId(sessionId)) {
+            return res.status(400).json({ success: false, message: "Invalid session ID." });
+        }
+
+        const session = await AttendanceSession.findOne({
+            _id: sessionId,
+            teacher: req.user._id,
+            college: req.user.college,
+            isActive: true,
+            status: "ACTIVE"
+        }).populate("schedule classGroup subject");
+
+        if (!session) {
+            return res.status(404).json({ success: false, message: "Active attendance session not found." });
+        }
+
+        const currentEnd = session.endTime ? new Date(session.endTime).getTime() : Date.now();
+        const baseTime = Math.max(currentEnd, Date.now());
+        const newEndTime = new Date(baseTime + extendMinutes * 60 * 1000);
+
+        session.endTime = newEndTime;
+        if (!session.scheduledEndTime || newEndTime > session.scheduledEndTime) {
+            session.scheduledEndTime = newEndTime;
+        }
+        await session.save();
+
+        socketManager.emitAttendanceExtended(session, extendMinutes);
+
+        return res.json({
+            success: true,
+            message: `Attendance window extended by +${extendMinutes} minutes.`,
+            endTime: newEndTime,
+            extendMinutes: extendMinutes
+        });
+    } catch (err) {
+        console.error("TEACHER EXTEND SESSION ERROR:", err);
+        return res.status(500).json({ success: false, message: "Failed to extend attendance session." });
+    }
+});
+
 router.post("/attendance/start", isTeacher, async (req, res) => {
     try {
         let durationMinutes = Number(req.body.durationMinutes);
@@ -2193,6 +2240,110 @@ router.get("/reports/export-suspicious", isTeacher, async function (req, res) {
         console.log(err.stack);
 
         res.redirect("/teacher/reports");
+    }
+});
+
+router.get("/reports/export-defaulters", isTeacher, async function (req, res) {
+    try {
+        const teacherId = req.user._id || req.user.id;
+        const collegeId = req.user.college;
+        const thresholdPercent = Number(req.query.threshold) || 75;
+
+        // Fetch all attendance records for classes taught by this teacher
+        const records = await AttendanceRecord.find({
+            college: collegeId,
+            teacher: teacherId
+        })
+            .populate("student", "fullName enrollmentNumber email department semester")
+            .populate("subject", "subjectName subjectCode")
+            .populate("classGroup", "name")
+            .lean();
+
+        // Aggregate by Student + Subject
+        const studentSubjectMap = new Map();
+
+        for (const r of records) {
+            if (!r.student || !r.subject) continue;
+            const key = `${r.student._id}_${r.subject._id}`;
+            if (!studentSubjectMap.has(key)) {
+                studentSubjectMap.set(key, {
+                    enrollmentNumber: r.student.enrollmentNumber || "N/A",
+                    studentName: r.student.fullName || "Student",
+                    email: r.student.email || "",
+                    department: r.student.department || "",
+                    semester: r.student.semester || "",
+                    subjectName: r.subject.subjectName || "Subject",
+                    subjectCode: r.subject.subjectCode || "",
+                    classGroupName: r.classGroup ? r.classGroup.name : "Class",
+                    totalClasses: 0,
+                    attendedClasses: 0
+                });
+            }
+
+            const item = studentSubjectMap.get(key);
+            item.totalClasses += 1;
+            if (r.status === "PRESENT") {
+                item.attendedClasses += 1;
+            }
+        }
+
+        // Filter defaulters (< thresholdPercent)
+        const defaulters = [];
+        studentSubjectMap.forEach((item) => {
+            const pct = item.totalClasses > 0 ? (item.attendedClasses / item.totalClasses) * 100 : 0;
+            item.percentage = Math.round(pct * 10) / 10;
+            if (item.percentage < thresholdPercent) {
+                defaulters.push(item);
+            }
+        });
+
+        // Sort by lowest percentage first
+        defaulters.sort((a, b) => a.percentage - b.percentage);
+
+        // Stream CSV
+        const filename = `Teacher_Defaulters_Under_${thresholdPercent}pct_${new Date().toISOString().slice(0, 10)}.csv`;
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+        const csvHeaders = [
+            "Enrollment Number",
+            "Student Name",
+            "Email",
+            "Department",
+            "Semester",
+            "Class Group",
+            "Subject Name",
+            "Subject Code",
+            "Total Classes",
+            "Attended Classes",
+            "Attendance (%)",
+            "Defaulter Status"
+        ];
+
+        const rows = [csvHeaders.join(",")];
+
+        for (const d of defaulters) {
+            const row = [
+                `"${d.enrollmentNumber}"`,
+                `"${d.studentName}"`,
+                `"${d.email}"`,
+                `"${d.department}"`,
+                `"${d.semester}"`,
+                `"${d.classGroupName}"`,
+                `"${d.subjectName}"`,
+                `"${d.subjectCode}"`,
+                d.totalClasses,
+                d.attendedClasses,
+                `"${d.percentage}%"`,
+                `"DEFAULTER (< ${thresholdPercent}%)"`
+            ];
+            rows.push(row.join(","));
+        }
+
+        return res.send(rows.join("\n"));
+    } catch (err) {
+        console.error("TEACHER EXPORT DEFAULTERS ERROR:", err);
+        return res.redirect("/teacher/reports?error=defaulters_export_failed");
     }
 });
 

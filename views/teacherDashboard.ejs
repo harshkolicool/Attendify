@@ -857,6 +857,14 @@
                         </ul>
 
                         <div class="teacher-live-actions-row">
+                            <div class="teacher-extend-actions" style="display: inline-flex; gap: 6px; margin-right: auto;">
+                                <button type="button" class="teacher-extend-btn js-extend-session-btn" data-session-id="<%= session._id %>" data-minutes="5" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;" title="Add 5 minutes to attendance window">
+                                    <i class="fa-solid fa-clock-rotate-left"></i> +5 Min
+                                </button>
+                                <button type="button" class="teacher-extend-btn js-extend-session-btn" data-session-id="<%= session._id %>" data-minutes="10" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;" title="Add 10 minutes to attendance window">
+                                    <i class="fa-solid fa-clock-rotate-left"></i> +10 Min
+                                </button>
+                            </div>
                             <form action="/teacher/attendance/end/<%= session._id %>" method="POST" class="teacher-live-action-form">
                                 <button class="teacher-end-btn" type="submit">
                                     <i class="fa-solid fa-stop"></i>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'attendify-v10';
+const CACHE_NAME = 'attendify-v11';
 const OFFLINE_URL = '/';
 
 const ASSETS_TO_CACHE = [
@@ -11,7 +11,11 @@ const ASSETS_TO_CACHE = [
     '/css/studentSchedule.css',
     '/css/home.css',
     '/js/geoAccuracy.js',
+    '/js/kalmanFilter.js',
     '/js/locationStabilizer.js',
+    '/js/acousticRadar.js',
+    '/js/studentLocation.js',
+    '/js/studentRealtime.js',
     '/js/uiShell.js',
     '/manifest.json',
     '/icon-192.png',
@@ -44,20 +48,30 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Handle network-first explicitly in client via fetch catch block
-    // Network-First strategy for GET requests (always get latest if online)
     if (event.request.method === 'GET') {
         const url = new URL(event.request.url);
         // Exclude authentication routes from caching to prevent CSRF token issues
-        if (url.pathname.includes('/login') || url.pathname.includes('/register')) {
-            return; // Let the browser handle it normally (no SW interception)
+        if (url.pathname.includes('/login') || url.pathname.includes('/register') || url.pathname.includes('/logout')) {
+            return;
         }
 
         event.respondWith(
             fetch(event.request).then((response) => {
+                // If it is a successful schedule, CSS, or JS asset response, cache a copy for offline use
+                if (response && response.status === 200 && (
+                    url.pathname.startsWith('/css/') ||
+                    url.pathname.startsWith('/js/') ||
+                    url.pathname.includes('/student/schedule') ||
+                    url.pathname.includes('/student/dashboard')
+                )) {
+                    const cloned = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, cloned);
+                    });
+                }
                 return response;
             }).catch(() => {
-                // If offline, fallback to cache
+                // If offline, fallback to cached schedule or offline shell
                 return caches.match(event.request).then((cachedResponse) => {
                     return cachedResponse || (event.request.mode === 'navigate' ? caches.match(OFFLINE_URL) : undefined);
                 });

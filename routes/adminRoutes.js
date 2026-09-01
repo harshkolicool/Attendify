@@ -1770,6 +1770,110 @@ router.get("/change-password", isCollegeAdmin, function (req, res) {
     });
 });
 
+router.get("/reports/export-defaulters", isCollegeAdmin, async function (req, res) {
+    try {
+        const collegeId = getCollegeId(req);
+        const thresholdPercent = Number(req.query.threshold) || 75;
+
+        // Fetch all attendance records for this college
+        const records = await AttendanceRecord.find({ college: collegeId })
+            .populate("student", "fullName enrollmentNumber email department semester")
+            .populate("subject", "subjectName subjectCode")
+            .populate("classGroup", "name")
+            .populate("teacher", "fullName")
+            .lean();
+
+        // Aggregate by Student + Subject
+        const studentSubjectMap = new Map();
+
+        for (const r of records) {
+            if (!r.student || !r.subject) continue;
+            const key = `${r.student._id}_${r.subject._id}`;
+            if (!studentSubjectMap.has(key)) {
+                studentSubjectMap.set(key, {
+                    enrollmentNumber: r.student.enrollmentNumber || "N/A",
+                    studentName: r.student.fullName || "Student",
+                    email: r.student.email || "",
+                    department: r.student.department || "",
+                    semester: r.student.semester || "",
+                    subjectName: r.subject.subjectName || "Subject",
+                    subjectCode: r.subject.subjectCode || "",
+                    teacherName: r.teacher ? r.teacher.fullName : "Faculty",
+                    classGroupName: r.classGroup ? r.classGroup.name : "Class",
+                    totalClasses: 0,
+                    attendedClasses: 0
+                });
+            }
+
+            const item = studentSubjectMap.get(key);
+            item.totalClasses += 1;
+            if (r.status === "PRESENT") {
+                item.attendedClasses += 1;
+            }
+        }
+
+        // Filter defaulters (< thresholdPercent)
+        const defaulters = [];
+        studentSubjectMap.forEach((item) => {
+            const pct = item.totalClasses > 0 ? (item.attendedClasses / item.totalClasses) * 100 : 0;
+            item.percentage = Math.round(pct * 10) / 10;
+            if (item.percentage < thresholdPercent) {
+                defaulters.push(item);
+            }
+        });
+
+        // Sort by lowest percentage first
+        defaulters.sort((a, b) => a.percentage - b.percentage);
+
+        // Stream CSV
+        const filename = `College_Defaulters_Under_${thresholdPercent}pct_${new Date().toISOString().slice(0, 10)}.csv`;
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+        const csvHeaders = [
+            "Enrollment Number",
+            "Student Name",
+            "Email",
+            "Department",
+            "Semester",
+            "Class Group",
+            "Subject Name",
+            "Subject Code",
+            "Teacher",
+            "Total Classes",
+            "Attended Classes",
+            "Attendance (%)",
+            "Defaulter Status"
+        ];
+
+        const rows = [csvHeaders.join(",")];
+
+        for (const d of defaulters) {
+            const row = [
+                `"${d.enrollmentNumber}"`,
+                `"${d.studentName}"`,
+                `"${d.email}"`,
+                `"${d.department}"`,
+                `"${d.semester}"`,
+                `"${d.classGroupName}"`,
+                `"${d.subjectName}"`,
+                `"${d.subjectCode}"`,
+                `"${d.teacherName}"`,
+                d.totalClasses,
+                d.attendedClasses,
+                `"${d.percentage}%"`,
+                `"DEFAULTER (< ${thresholdPercent}%)"`
+            ];
+            rows.push(row.join(","));
+        }
+
+        return res.send(rows.join("\n"));
+    } catch (err) {
+        console.error("ADMIN EXPORT DEFAULTERS ERROR:", err);
+        return res.redirect("/admin/reports?error=defaulters_export_failed");
+    }
+});
+
 router.post("/change-password", isCollegeAdmin, async function (req, res) {
     try {
         const currentPassword = cleanText(req.body.currentPassword);

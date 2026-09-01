@@ -281,6 +281,9 @@
                     <a href="/teacher/reports/export-excel?<%= exportQuery %>" class="teacher-report-export-pill excel" title="Export as Excel">
                         <i class="fa-solid fa-file-excel"></i> Excel
                     </a>
+                    <a href="/teacher/reports/export-defaulters?threshold=75" class="teacher-report-export-pill warning" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #f59e0b;" title="Export Defaulters (< 75%) CSV">
+                        <i class="fa-solid fa-user-xmark"></i> Defaulters (< 75%)
+                    </a>
                     <a href="/teacher/reports/export-suspicious?<%= exportQuery %>" class="teacher-report-export-pill danger" title="Export Suspicious CSV">
                         <i class="fa-solid fa-triangle-exclamation"></i> Security
                     </a>
