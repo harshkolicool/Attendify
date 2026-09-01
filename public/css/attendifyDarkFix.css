@@ -1335,6 +1335,28 @@ textarea {
     line-height: 1.35;
 }
 
+/* Modern Centered Empty State Hero Card */
+.admin-empty-state-modern {
+    width: 100% !important;
+    margin-top: 8px !important;
+    padding: 44px 24px !important;
+    border-radius: 20px !important;
+    background: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.3) 80%) !important;
+    border: 1px dashed rgba(16, 185, 129, 0.22) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2) !important;
+    box-sizing: border-box !important;
+}
+
+.admin-empty-state-modern.inbox-empty {
+    background: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.05) 0%, rgba(15, 23, 42, 0.3) 80%) !important;
+    border: 1px dashed rgba(99, 102, 241, 0.22) !important;
+}
+
 /* Pending passkey header: balanced horizontal layout */
 .admin-passkey-pending-card .admin-card-head {
     display: flex;
