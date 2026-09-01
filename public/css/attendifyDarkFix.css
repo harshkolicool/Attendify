@@ -1335,18 +1335,14 @@ textarea {
     line-height: 1.35;
 }
 
-/* Pending passkey header: add space between subtitle and count pill */
+/* Pending passkey header: balanced horizontal layout */
 .admin-passkey-pending-card .admin-card-head {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-.admin-passkey-pending-card .admin-card-head > div {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .admin-passkey-pending-card .admin-card-head .admin-count-pill {

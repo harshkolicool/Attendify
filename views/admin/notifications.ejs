@@ -115,20 +115,37 @@
         <!-- PENDING PASSKEY REQUESTS -->
         <section class="admin-card admin-passkey-pending-card">
             <div class="admin-card-head">
-                <div>
-                    <h3><i class="fa-solid fa-fingerprint" style="color: #6366f1; margin-right: 8px;"></i> Pending Passkey Requests</h3>
-                    <p>Students waiting for biometric passkey authorization to take attendance securely.</p>
+                <div class="admin-card-head-title">
+                    <div class="adm-head-icon-box passkey">
+                        <i class="fa-solid fa-fingerprint"></i>
+                    </div>
+                    <div>
+                        <h3>Pending Passkey Requests</h3>
+                        <p>Students waiting for biometric passkey authorization to take attendance securely.</p>
+                    </div>
                 </div>
 
-                <span class="admin-count-pill">
-                    <%= safePasskeyRequests.length %> Pending
-                </span>
+                <div class="adm-head-status-group">
+                    <span class="admin-count-pill <%= safePasskeyRequests.length > 0 ? 'amber' : 'emerald' %>">
+                        <i class="fa-solid <%= safePasskeyRequests.length > 0 ? 'fa-clock' : 'fa-shield-check' %>"></i>
+                        <%= safePasskeyRequests.length %> Pending
+                    </span>
+                </div>
             </div>
 
             <% if (safePasskeyRequests.length === 0) { %>
-                <div class="admin-empty admin-empty-compact">
-                    <i class="fa-solid fa-circle-check" style="color: #10b981; margin-right: 6px;"></i>
-                    <span>No pending passkey requests. All student biometric credentials are synchronized.</span>
+                <div class="admin-empty-state-modern passkey-synced">
+                    <div class="empty-state-icon-orb emerald">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="empty-state-text-group">
+                        <h4>All Biometric Passkeys Synchronized</h4>
+                        <p>There are no students awaiting passkey approval. All registered device credentials are active and verified.</p>
+                    </div>
+                    <div class="empty-state-meta-chip">
+                        <span class="pulse-dot green"></span>
+                        <span>Zero Backlog</span>
+                    </div>
                 </div>
             <% } else { %>
                 <div class="admin-grid">
@@ -179,13 +196,21 @@
         <!-- NOTIFICATION INBOX -->
         <section class="admin-card">
             <div class="admin-card-head">
-                <div>
-                    <h3><i class="fa-solid fa-inbox" style="color: #6366f1; margin-right: 8px;"></i> Notification Inbox</h3>
-                    <p>Recent audit dispatches, attendance anomaly alerts, and system notices.</p>
+                <div class="admin-card-head-title">
+                    <div class="adm-head-icon-box inbox">
+                        <i class="fa-solid fa-inbox"></i>
+                    </div>
+                    <div>
+                        <h3>Notification Inbox</h3>
+                        <p>Recent audit dispatches, attendance anomaly alerts, and system notices.</p>
+                    </div>
                 </div>
 
                 <div class="notification-head-actions" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <span class="admin-count-pill"><%= safeUnreadCount %> Unread</span>
+                    <span class="admin-count-pill <%= safeUnreadCount > 0 ? 'indigo' : 'emerald' %>">
+                        <i class="fa-solid <%= safeUnreadCount > 0 ? 'fa-bell' : 'fa-check' %>"></i>
+                        <%= safeUnreadCount %> Unread
+                    </span>
 
                     <form action="/admin/notifications/mark-all-read" method="POST">
                         <button class="admin-secondary-btn" type="submit" style="font-size: 0.82rem;">
@@ -208,9 +233,18 @@
             </div>
 
             <% if (safeNotifications.length === 0) { %>
-                <div class="admin-empty admin-empty-compact">
-                    <i class="fa-solid fa-envelope-open" style="opacity: 0.5; margin-right: 6px;"></i>
-                    <span>No notifications yet. You're completely up to date.</span>
+                <div class="admin-empty-state-modern inbox-empty">
+                    <div class="empty-state-icon-orb indigo">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                    <div class="empty-state-text-group">
+                        <h4>Notification Inbox is Clear</h4>
+                        <p>You have reviewed all audit alerts, anomaly dispatches, and system notifications.</p>
+                    </div>
+                    <div class="empty-state-meta-chip">
+                        <span class="pulse-dot green"></span>
+                        <span>All Clear</span>
+                    </div>
                 </div>
             <% } else { %>
                 <div class="notification-list">

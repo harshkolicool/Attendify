@@ -1579,3 +1579,164 @@ body.dark-mode .adm-meta-chip i {
         font-size: 0.7rem !important;
     }
 }
+
+/* ==========================================================================
+   MODERN EMPTY STATE & HEADER CARD COMPONENTS
+   ========================================================================== */
+
+.admin-card-head-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.adm-head-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.adm-head-icon-box.passkey {
+    background: rgba(99, 102, 241, 0.12);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.adm-head-icon-box.inbox {
+    background: rgba(14, 165, 233, 0.12);
+    color: #38bdf8;
+    border: 1px solid rgba(14, 165, 233, 0.25);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+}
+
+.admin-count-pill.emerald {
+    background: rgba(16, 185, 129, 0.12) !important;
+    color: #10b981 !important;
+    border: 1px solid rgba(16, 185, 129, 0.25) !important;
+}
+
+.admin-count-pill.amber {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #f59e0b !important;
+    border: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+.admin-count-pill.indigo {
+    background: rgba(99, 102, 241, 0.12) !important;
+    color: #818cf8 !important;
+    border: 1px solid rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Modern Full-Width Empty State Card */
+.admin-empty-state-modern {
+    width: 100%;
+    margin-top: 14px;
+    padding: 20px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(15, 23, 42, 0.4) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-empty-state-modern.inbox-empty {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(15, 23, 42, 0.4) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.18);
+}
+
+.empty-state-icon-orb {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.empty-state-icon-orb.emerald {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.2);
+}
+
+.empty-state-icon-orb.indigo {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.2);
+}
+
+.empty-state-text-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.empty-state-text-group h4 {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+}
+
+.empty-state-text-group p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.45;
+}
+
+.empty-state-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    white-space: nowrap;
+}
+
+.empty-state-meta-chip .pulse-dot.green {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    display: inline-block;
+}
+
+@media (max-width: 680px) {
+    .admin-empty-state-modern {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px 18px;
+    }
+
+    .empty-state-meta-chip {
+        align-self: flex-start;
+    }
+}
+
