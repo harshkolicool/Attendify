@@ -186,10 +186,16 @@ function initTeacherLiveMap() {
         deviceState.forEach(function (device) {
             if (device.online !== false) {
                 onlineDevices += 1;
-                if (device.status === "INSIDE") inside++;
-                else if (device.status === "NEAR") near++;
-                else if (device.status === "OUTSIDE") outside++;
-                else if (device.status === "POOR_ACCURACY") poor++;
+                const s = device.status;
+                if (s === "INSIDE" || s === "PRESENT" || s === "PRESENT_STRONG" || s === "PRESENT_WEAK_GPS" || s === "PRESENT_AUTO") {
+                    inside++;
+                } else if (s === "NEAR") {
+                    near++;
+                } else if (s === "OUTSIDE" || s === "OUTSIDE_REJECTED" || s === "REJECTED") {
+                    outside++;
+                } else if (s === "POOR_ACCURACY" || s === "GPS_RETRY_REQUIRED") {
+                    poor++;
+                }
             }
         });
 
