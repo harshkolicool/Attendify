@@ -315,28 +315,47 @@ function initTeacherLiveMap() {
                     standbyMarker = null;
                 }
 
-                // If session center teacherMarker exists, remove it so there is only ONE teacher marker
-                if (teacherMarker) {
-                    try { teacherMarker.remove(); } catch (e) {}
-                    teacherMarker = null;
-                }
-
-                // If an active session is already rendering, do not create a disconnected rogue marker
+                // If an active session is already rendering, keep and focus the unified teacher marker
                 if (activeSessionId && sessionCenter) {
                     if (userLiveGpsMarker) { try { userLiveGpsMarker.remove(); } catch (e) {} userLiveGpsMarker = null; }
                     if (userLiveGpsCircle) { try { userLiveGpsCircle.remove(); } catch (e) {} userLiveGpsCircle = null; }
 
+                    const teacherIcon = L.divIcon({
+                        className: "custom-teacher-marker",
+                        html: '<div class="teacher-map-center-marker teacher-live-beacon"><span class="beacon-halo"></span><i class="fa-solid fa-chalkboard-user"></i></div>',
+                        iconSize: [36, 36],
+                        iconAnchor: [18, 18]
+                    });
+
                     if (teacherMarker) {
                         teacherMarker.setLatLng([sessionCenter.lat, sessionCenter.lon]);
-                        teacherMarker.bindPopup(
-                            "<b>Teacher / Session Center</b><br><small style='color: #059669; font-weight: 700;'>GPS Accuracy: ±" + Math.round(accuracy) + "m</small><br>Allowed Radius: " + Math.round(sessionCenter.radius) + "m"
-                        );
+                        teacherMarker.setIcon(teacherIcon);
+                    } else {
+                        teacherMarker = L.marker([sessionCenter.lat, sessionCenter.lon], {
+                            icon: teacherIcon,
+                            title: "Teacher Location",
+                            zIndexOffset: 1000
+                        }).addTo(map);
                     }
+
+                    teacherMarker.bindPopup(
+                        "<b>Teacher / Session Center</b><br><small style='color: #059669; font-weight: 700;'>GPS Accuracy: ±" + Math.round(accuracy) + "m</small><br>Allowed Radius: " + Math.round(sessionCenter.radius) + "m"
+                    );
+
                     if (autoCenter) {
                         map.flyTo([sessionCenter.lat, sessionCenter.lon], 17, { animate: true, duration: 1.2 });
+                        setTimeout(function() {
+                            if (teacherMarker) teacherMarker.openPopup();
+                        }, 1200);
                     }
                     setHint("Teacher Location verified (±" + Math.round(accuracy) + "m). Geofence boundary active.");
                     return;
+                }
+
+                // If in standby mode (NO active session), clean up old teacher marker
+                if (teacherMarker) {
+                    try { teacherMarker.remove(); } catch (e) {}
+                    teacherMarker = null;
                 }
 
                 // Draw / update Standby Live Teacher GPS marker when NO session is running
