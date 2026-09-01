@@ -45,6 +45,10 @@ const {
     sortSchedulesByTime
 } = require("../utils/scheduleTime");
 
+function teacherParseTimeStringToMinutes(timeStr) {
+    return timeToMinutes(timeStr);
+}
+
 function teacherGetDateInputValue(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -1033,11 +1037,36 @@ router.post("/attendance/session/:id/extend", isTeacher, async (req, res) => {
 
         const currentEnd = session.endTime ? new Date(session.endTime).getTime() : Date.now();
         const baseTime = Math.max(currentEnd, Date.now());
-        const newEndTime = new Date(baseTime + extendMinutes * 60 * 1000);
+        const proposedEndTime = new Date(baseTime + extendMinutes * 60 * 1000);
 
-        session.endTime = newEndTime;
-        if (!session.scheduledEndTime || newEndTime > session.scheduledEndTime) {
-            session.scheduledEndTime = newEndTime;
+        // Schedule Collision Guard: Verify extension does not collide with next class
+        if (session.classGroup && session.schedule && session.schedule.date) {
+            const currentSlotEndMinutes = teacherParseTimeStringToMinutes(session.schedule.endTime);
+            const proposedTotalMinutes = proposedEndTime.getHours() * 60 + proposedEndTime.getMinutes();
+
+            const nextClasses = await Schedule.find({
+                college: req.user.college,
+                classGroup: session.classGroup._id,
+                date: session.schedule.date,
+                _id: { $ne: session.schedule._id }
+            }).populate("subject");
+
+            for (const nextClass of nextClasses) {
+                const nextStartMinutes = teacherParseTimeStringToMinutes(nextClass.startTime);
+                if (nextStartMinutes > 0 && currentSlotEndMinutes > 0 && nextStartMinutes >= currentSlotEndMinutes) {
+                    if (proposedTotalMinutes > nextStartMinutes) {
+                        return res.status(400).json({
+                            success: false,
+                            message: `Cannot extend: Next class (${nextClass.subject ? nextClass.subject.subjectName : "Scheduled Lecture"}) starts at ${nextClass.startTime}.`
+                        });
+                    }
+                }
+            }
+        }
+
+        session.endTime = proposedEndTime;
+        if (!session.scheduledEndTime || proposedEndTime > session.scheduledEndTime) {
+            session.scheduledEndTime = proposedEndTime;
         }
         await session.save();
 
@@ -1046,7 +1075,7 @@ router.post("/attendance/session/:id/extend", isTeacher, async (req, res) => {
         return res.json({
             success: true,
             message: `Attendance window extended by +${extendMinutes} minutes.`,
-            endTime: newEndTime,
+            endTime: proposedEndTime,
             extendMinutes: extendMinutes
         });
     } catch (err) {

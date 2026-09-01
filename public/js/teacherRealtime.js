@@ -579,6 +579,18 @@ document.addEventListener("DOMContentLoaded", function init() {
     socket.on("attendance:extended", function (payload) {
         if (!payload || !payload.sessionId) return;
         showTeacherToast(payload.message || "Attendance window extended!", "info");
+
+        // Dynamically update the Ends text in the live card telemetry bar!
+        const liveCard = document.querySelector(`.live-card[data-session-id="${payload.sessionId}"]`);
+        if (liveCard && payload.endTime) {
+            const endsValueEl = liveCard.querySelector(".live-meta-item:nth-child(2) .meta-value");
+            if (endsValueEl) {
+                const newEndStr = new Date(payload.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                endsValueEl.textContent = newEndStr;
+                endsValueEl.style.color = "#38bdf8";
+                setTimeout(function () { endsValueEl.style.color = ""; }, 2500);
+            }
+        }
     });
 
     loadRecentSuspiciousAttempts();
