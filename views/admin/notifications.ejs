@@ -22,12 +22,15 @@
         gap: 16px !important;
         flex-wrap: wrap !important;
         margin-bottom: 16px !important;
+        width: 100% !important;
     }
 
     .admin-card-head-title {
         display: flex !important;
         align-items: center !important;
         gap: 14px !important;
+        flex: 1 1 auto !important;
+        min-width: 240px !important;
     }
 
     .adm-head-icon-box {
@@ -70,6 +73,16 @@
         color: #94a3b8 !important;
     }
 
+    .admin-card-head .adm-head-status-group,
+    .admin-card-head .notification-head-actions {
+        margin-left: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 10px !important;
+        flex: 0 0 auto !important;
+    }
+
     .admin-count-pill {
         display: inline-flex !important;
         align-items: center !important;
@@ -78,6 +91,7 @@
         border-radius: 999px !important;
         font-size: 0.8rem !important;
         font-weight: 800 !important;
+        white-space: nowrap !important;
     }
 
     .admin-count-pill.emerald {

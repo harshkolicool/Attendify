@@ -1358,16 +1358,26 @@ textarea {
 
 /* Pending passkey header: balanced horizontal layout */
 .admin-passkey-pending-card .admin-card-head {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
 }
 
+.admin-passkey-pending-card .admin-card-head-title {
+    flex: 1 1 auto !important;
+}
+
+.admin-passkey-pending-card .admin-card-head .adm-head-status-group,
 .admin-passkey-pending-card .admin-card-head .admin-count-pill {
-    margin: 0;
+    margin-left: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex: 0 0 auto !important;
 }
 
 @media (max-width: 760px) {
