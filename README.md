@@ -25,7 +25,7 @@
 
 <br/>
 
-[Overview](#-overview) · [GUI Security Architecture](#-complete-attendance-marking--multi-layer-security-architecture-gui-structure-format) · [Biometrics & Passkeys](#-fido2-biometric-passkeys) · [Acoustic Radar](#-ultrasonic-acoustic-presence-radar) · [Geospatial Engine](#-real-time-geospatial-radar) · [Architecture](#%EF%B8%8F-system-architecture) · [Tech Stack](#-technology-stack) · [Role Portals](#-role-portals) · [Deployment](#-production-deployment-on-render) · [Testing](#-automated-testing) · [Threat Matrix](#-security--threat-mitigation-matrix)
+[Overview](#-overview) · [GUI Security Architecture](#-complete-attendance-marking--multi-layer-security-architecture-gui-structure-format) · [Biometrics & Passkeys](#-fido2-biometric-passkeys) · [Acoustic Radar](#-ultrasonic-acoustic-presence-radar) · [Geospatial Engine](#-real-time-geospatial-radar) · [Architecture](#%EF%B8%8F-system-architecture) · [Directory Layout](#-repository-directory-layout) · [Data Model](#%EF%B8%8F-multi-tenant-data-model--entity-relations) · [Tech Stack](#-technology-stack) · [Role Portals](#-role-portals) · [Deployment](#-production-deployment-on-render) · [Testing](#-automated-testing) · [Threat Matrix](#-security--threat-mitigation-matrix)
 
 ---
 
@@ -335,6 +335,70 @@ Attendify is structured across a decoupled **5-tier production architecture**:
 │                           PERSISTENCE TIER                                  │
 │   MongoDB Atlas · Mongoose ODM · Compound 2dsphere Indexes · Encrypted Store│
 └─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📂 Repository Directory Layout
+
+```
+Attendify/
+├── models/                     # Mongoose Schema Definitions
+│   ├── College.js              # Multi-tenant Institution Profiles
+│   ├── Student.js              # Student Profiles & FIDO2 Public Key Credentials
+│   ├── Teacher.js              # Faculty Credentials & Subject Assignments
+│   ├── Classroom.js            # Room Definitions & GPS Geofence Anchor Points
+│   ├── AttendanceSession.js    # Active / Historical Lecture Attendance Windows
+│   └── AttendanceRecord.js     # Immutable Individual Attendance Ledgers
+├── routes/                     # Express Endpoint Controllers
+│   ├── authRoutes.js           # Authentication & FIDO2 WebAuthn Handlers
+│   ├── studentRoutes.js        # Student Portal & Attendance Marking Endpoints
+│   ├── teacherRoutes.js        # Faculty Session Controls & Tactical Radar
+│   ├── adminRoutes.js          # Institution Admin Management
+│   └── platformAdminRoutes.js  # Global Super Admin System Controls
+├── utils/                      # Core Verification & DSP Engines
+│   ├── locationVerification.js # Sub-Meter Haversine & Anti-Mock GPS Engine
+│   ├── acousticRadar.js        # Inaudible 2-FSK FFT Signal Processing
+│   ├── fido2.js                # WebAuthn Challenge Generation & Verification
+│   ├── socketManager.js        # Real-time WebSocket Event Dispatcher
+│   └── attendanceWindow.js     # Dynamic Lecture Schedule & Grace Window Math
+├── public/                     # Static Client Assets
+│   ├── js/                     # Frontend Client Scripts
+│   │   ├── acousticRadar.js    # Web Audio 2-FSK Transmitter & Listener
+│   │   ├── studentLocation.js  # Client Geolocation & Token Submission
+│   │   ├── teacherLiveMap.js   # Tactical Leaflet Radar & Student Pin Tracker
+│   │   └── home.js             # Interactive Landing Page UI Logic
+│   ├── css/                    # Modular Vanilla Design System
+│   └── service-worker.js       # PWA Offline Caching & Background Sync
+├── tests/                      # Automated Unit & Flow Test Suites
+│   ├── locationPolicy.test.js  # Geofencing, Acoustic DSP & Token Math Tests
+│   └── studentFlow.test.js     # End-to-End Attendance Assertion Flows
+├── views/                      # Server-Rendered EJS Templates
+└── server.js                   # Application Entry Point & Cluster Bootstrapper
+```
+
+---
+
+## 🗄️ Multi-Tenant Data Model & Entity Relations
+
+```
+┌──────────────┐         1:N          ┌───────────────────┐
+│   College    │ ───────────────────> │    ClassGroup     │
+│ (Tenant DB)  │                      │ (Batch / Division)│
+└──────────────┘                      └───────────────────┘
+       │ 1:N                                    │ 1:N
+       ▼                                        ▼
+┌──────────────┐         1:N          ┌───────────────────┐
+│   Teacher    │ ───────────────────> │      Student      │
+│  (Faculty)   │                      │ (Passkey Enclave) │
+└──────────────┘                      └───────────────────┘
+       │                                        │
+       │ 1:N launches                           │ 1:N marks
+       ▼                                        ▼
+┌───────────────────────────────┐     1:N    ┌─────────────────────┐
+│       AttendanceSession       │ ─────────> │  AttendanceRecord   │
+│ (Geofence + Ultrasonic Radar) │            │ (Immutable Ledger)  │
+└───────────────────────────────┘            └─────────────────────┘
 ```
 
 ---
