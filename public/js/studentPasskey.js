@@ -167,6 +167,32 @@ async function checkLocalPasskeySupport() {
     };
 }
 
+function getPasskeyCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute("content") || "" : "";
+}
+
+async function parseJsonResponse(response) {
+    const text = await response.text();
+    let data = null;
+
+    if (text && text.trim()) {
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            // Not valid JSON (e.g. HTML error page or plain text)
+        }
+    }
+
+    return {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        data: data,
+        rawText: text
+    };
+}
+
 async function registerStudentPasskey(button, statusText) {
     if (button.hasAttribute("data-registration-active")) {
         return;
@@ -189,36 +215,90 @@ async function registerStudentPasskey(button, statusText) {
         button.disabled = true;
         button.innerText = "Starting...";
 
+        const csrfToken = getPasskeyCsrfToken();
+        const getHeaders = {
+            "Accept": "application/json"
+        };
+        if (csrfToken) {
+            getHeaders["X-CSRF-Token"] = csrfToken;
+        }
+
         const optionsResponse = await fetch("/student/passkey/register/options", {
             method: "GET",
+            headers: getHeaders,
             credentials: "same-origin"
         });
 
-        const optionsJSON = await optionsResponse.json();
+        const optionsResult = await parseJsonResponse(optionsResponse);
 
-        if (!optionsResponse.ok || optionsJSON.success === false) {
-            throw new Error(optionsJSON.message || "Could not start passkey setup.");
+        if (optionsResult.status === 401) {
+            showPasskeyMessage("Session expired. Redirecting to login...", "error");
+            setTimeout(function () {
+                window.location.href = "/student/login";
+            }, 1200);
+            return;
         }
+
+        if (!optionsResult.ok || !optionsResult.data || optionsResult.data.success === false) {
+            const errorMsg = (optionsResult.data && optionsResult.data.message) ||
+                (optionsResult.status === 403
+                    ? (optionsResult.data && optionsResult.data.message) || "Passkey setup is not open. Please request a setup window."
+                    : "Could not start passkey setup (HTTP " + optionsResult.status + "). Please try again.");
+            throw new Error(errorMsg);
+        }
+
+        const optionsJSON = optionsResult.data;
 
         button.innerText = "Verify on device...";
 
-        const registrationResponse = await SimpleWebAuthnBrowser.startRegistration({
-            optionsJSON: optionsJSON
-        });
+        let registrationResponse;
+        try {
+            registrationResponse = await SimpleWebAuthnBrowser.startRegistration({
+                optionsJSON: optionsJSON
+            });
+        } catch (webauthnErr) {
+            let userMsg = webauthnErr.message || "Passkey setup cancelled or unsupported.";
+            const name = webauthnErr.name || "";
+
+            if (name === "NotAllowedError" || userMsg.toLowerCase().includes("not allowed")) {
+                userMsg = "Biometric prompt was cancelled or timed out. Please unlock your device and try again.";
+            } else if (name === "InvalidStateError" || userMsg.toLowerCase().includes("already registered")) {
+                userMsg = "This passkey or biometric authenticator is already registered on your account.";
+            } else if (name === "NotSupportedError") {
+                userMsg = "Biometrics are not supported or device lock is not set up on this device.";
+            }
+            throw new Error(userMsg);
+        }
+
+        const postHeaders = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        };
+        if (csrfToken) {
+            postHeaders["X-CSRF-Token"] = csrfToken;
+        }
 
         const verifyResponse = await fetch("/student/passkey/register/verify", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: postHeaders,
             credentials: "same-origin",
             body: JSON.stringify(registrationResponse)
         });
 
-        const verifyJSON = await verifyResponse.json();
+        const verifyResult = await parseJsonResponse(verifyResponse);
 
-        if (!verifyResponse.ok || !verifyJSON.success) {
-            throw new Error(verifyJSON.message || "Passkey setup failed.");
+        if (verifyResult.status === 401) {
+            showPasskeyMessage("Session expired. Redirecting to login...", "error");
+            setTimeout(function () {
+                window.location.href = "/student/login";
+            }, 1200);
+            return;
+        }
+
+        if (!verifyResult.ok || !verifyResult.data || !verifyResult.data.success) {
+            const errorMsg = (verifyResult.data && verifyResult.data.message) ||
+                "Passkey verification failed (HTTP " + verifyResult.status + "). Please try again.";
+            throw new Error(errorMsg);
         }
 
         if (statusText) {
@@ -238,7 +318,7 @@ async function registerStudentPasskey(button, statusText) {
         }
 
     } catch (err) {
-        console.log(err);
+        console.error("Passkey Registration Error:", err);
 
         let message = err.message || "Passkey setup cancelled or failed.";
 
@@ -248,13 +328,6 @@ async function registerStudentPasskey(button, statusText) {
                 window.location.reload();
             }, 1500);
             return;
-        }
-
-        if (
-            message.toLowerCase().includes("notallowed") ||
-            message.toLowerCase().includes("not allowed")
-        ) {
-            message = "Passkey setup was cancelled or blocked. Use normal browser profile, enable device lock/Touch ID/PIN, and avoid Guest/Incognito mode.";
         }
 
         showPasskeyMessage(message, "error");
@@ -288,11 +361,18 @@ async function registerTrustedBrowserFromSecurityPage(form) {
         button.disabled = true;
         button.innerText = "Verifying...";
 
+        const csrfToken = getPasskeyCsrfToken();
+        const headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        };
+        if (csrfToken) {
+            headers["X-CSRF-Token"] = csrfToken;
+        }
+
         const response = await fetch("/student/device/register", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: headers,
             credentials: "same-origin",
             body: JSON.stringify({
                 password: password,
@@ -300,22 +380,30 @@ async function registerTrustedBrowserFromSecurityPage(form) {
             })
         });
 
-        const data = await response.json();
+        const result = await parseJsonResponse(response);
 
-        if (!response.ok || !data.success) {
-            throw new Error(data.message || "Could not trust this browser.");
+        if (result.status === 401) {
+            showPasskeyMessage("Session expired. Redirecting to login...", "error");
+            setTimeout(function () {
+                window.location.href = "/student/login";
+            }, 1200);
+            return;
+        }
+
+        if (!result.ok || !result.data || !result.data.success) {
+            throw new Error((result.data && result.data.message) || "Could not trust this browser (HTTP " + result.status + ").");
         }
 
         passwordInput.value = "";
 
-        showPasskeyMessage(data.message, "success");
+        showPasskeyMessage(result.data.message || "Browser trusted successfully.", "success");
 
         setTimeout(function () {
             window.location.reload();
         }, 1000);
 
     } catch (err) {
-        console.log(err);
+        console.error("Trusted Browser Error:", err);
         let message = err.message || "Could not trust this browser. Please try again.";
 
         if (message.indexOf("security token") !== -1) {
@@ -344,35 +432,52 @@ async function getAttendanceTokenWithPasskey(sessionId) {
         throw new Error(browserMessage);
     }
 
+    const csrfToken = getPasskeyCsrfToken();
+    const getHeaders = {
+        "Accept": "application/json"
+    };
+    if (csrfToken) {
+        getHeaders["X-CSRF-Token"] = csrfToken;
+    }
+
     const optionsResponse = await fetch("/student/attendance/passkey/options/" + sessionId, {
         method: "GET",
+        headers: getHeaders,
         credentials: "same-origin"
     });
 
-    const optionsJSON = await optionsResponse.json();
+    const optionsResult = await parseJsonResponse(optionsResponse);
 
-    if (!optionsResponse.ok || optionsJSON.success === false) {
-        throw new Error(optionsJSON.message || "Passkey verification could not start.");
+    if (!optionsResult.ok || !optionsResult.data || optionsResult.data.success === false) {
+        throw new Error((optionsResult.data && optionsResult.data.message) || "Passkey verification could not start.");
     }
+
+    const optionsJSON = optionsResult.data;
 
     const authenticationResponse = await SimpleWebAuthnBrowser.startAuthentication({
         optionsJSON: optionsJSON
     });
 
+    const postHeaders = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    };
+    if (csrfToken) {
+        postHeaders["X-CSRF-Token"] = csrfToken;
+    }
+
     const verifyResponse = await fetch("/student/attendance/passkey/verify/" + sessionId, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: postHeaders,
         credentials: "same-origin",
         body: JSON.stringify(authenticationResponse)
     });
 
-    const verifyJSON = await verifyResponse.json();
+    const verifyResult = await parseJsonResponse(verifyResponse);
 
-    if (!verifyResponse.ok || !verifyJSON.success) {
-        throw new Error(verifyJSON.message || "Passkey verification failed.");
+    if (!verifyResult.ok || !verifyResult.data || !verifyResult.data.success) {
+        throw new Error((verifyResult.data && verifyResult.data.message) || "Passkey verification failed.");
     }
 
-    return verifyJSON.attendanceToken;
+    return verifyResult.data.attendanceToken;
 }

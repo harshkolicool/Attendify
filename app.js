@@ -282,11 +282,25 @@ app.use(function (req, res) {
 app.use(function (err, req, res, next) {
     logger.error("SERVER ERROR", { requestId: req.id, msg: err.message, stack: err.stack });
 
-
     const statusCode = err.status || 500;
     const rawMessage = isProduction
         ? "Something went wrong. Please try again later."
         : err.message;
+
+    if (
+        requestWantsJson(req) ||
+        (req.headers["content-type"] && req.headers["content-type"].includes("application/json")) ||
+        req.path.includes("/passkey/") ||
+        req.path.includes("/passkeys/") ||
+        req.path.includes("/attendance/") ||
+        req.path.includes("/device/") ||
+        req.path.includes("/live-location/")
+    ) {
+        return res.status(statusCode).json({
+            success: false,
+            message: rawMessage || "An unexpected server error occurred."
+        });
+    }
 
     // Escape HTML to prevent XSS when injecting error messages into the page
     const userMessage = String(rawMessage || "")

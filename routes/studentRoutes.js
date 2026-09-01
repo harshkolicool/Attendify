@@ -67,16 +67,48 @@ const TRUSTED_DEVICE_TOKEN_ROTATION_HOURS = Number(process.env.TRUSTED_DEVICE_TO
 
 
 function isStudent(req, res, next) {
+    const wantsJson =
+        req.xhr ||
+        (req.headers.accept && req.headers.accept.includes("application/json")) ||
+        (req.headers["content-type"] && req.headers["content-type"].includes("application/json")) ||
+        req.path.startsWith("/passkey/") ||
+        req.path.startsWith("/passkeys/") ||
+        req.path.startsWith("/attendance/") ||
+        req.path.startsWith("/device/") ||
+        req.path.startsWith("/live-location/") ||
+        req.path.startsWith("/global-location/") ||
+        req.path.startsWith("/realtime/") ||
+        req.path.startsWith("/notifications/") ||
+        req.path.startsWith("/push/");
+
     if (!req.isAuthenticated()) {
+        if (wantsJson) {
+            return res.status(401).json({
+                success: false,
+                message: "Your session has expired. Please log in again."
+            });
+        }
         return res.redirect("/student/login");
     }
 
-    if (req.user.accountType !== "student") {
+    if (!req.user || req.user.accountType !== "student") {
+        if (wantsJson) {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized account type."
+            });
+        }
         return res.redirect("/");
     }
 
     if (req.user.isBlocked) {
         req.logout(function () {
+            if (wantsJson) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Your student account has been blocked."
+                });
+            }
             return res.redirect("/student/login?error=blocked");
         });
         return;
@@ -1368,7 +1400,15 @@ router.get("/schedule", isStudent, async function (req, res) {
 
 router.get("/passkey/register/options", isStudent, async function (req, res) {
     try {
-        const student = await Student.findById(getStudentIdFromRequest(req));
+        const studentId = getStudentIdFromRequest(req);
+        if (!studentId) {
+            return res.status(401).json({
+                success: false,
+                message: "Student session invalid. Please log in again."
+            });
+        }
+
+        const student = await Student.findById(studentId);
 
         if (!student) {
             return res.status(404).json({
@@ -1410,17 +1450,21 @@ router.get("/passkey/register/options", isStudent, async function (req, res) {
             rpID: config.rpID,
 
             userID: Buffer.from(student._id.toString()),
-            userName: student.email,
-            userDisplayName: student.fullName,
+            userName: student.email || (student.enrollmentNumber ? student.enrollmentNumber + "@student.attendify" : "student_" + student._id),
+            userDisplayName: student.fullName || student.name || "Student",
 
             attestationType: "none",
 
-            excludeCredentials: (student.passkeys || []).map(function (passkey) {
-                return {
-                    id: passkey.credentialId,
-                    transports: passkey.transports || []
-                };
-            }),
+            excludeCredentials: (student.passkeys || [])
+                .filter(function (passkey) {
+                    return passkey && passkey.credentialId;
+                })
+                .map(function (passkey) {
+                    return {
+                        id: passkey.credentialId,
+                        transports: passkey.transports || []
+                    };
+                }),
 
             authenticatorSelection: {
                 residentKey: "preferred",
@@ -1437,15 +1481,20 @@ router.get("/passkey/register/options", isStudent, async function (req, res) {
             studentId: student._id.toString()
         };
 
-        res.json(options);
+        if (typeof req.session.save === "function") {
+            await new Promise(function (resolve) {
+                req.session.save(resolve);
+            });
+        }
+
+        return res.json(options);
 
     } catch (err) {
-        console.log("PASSKEY REGISTER OPTIONS ERROR:");
-        console.log(err.message);
+        console.error("PASSKEY REGISTER OPTIONS ERROR:", err.message);
 
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            message: "Could not start passkey registration: "  + " Please try again."
+            message: "Could not start passkey registration: " + (err.message || "Please try again.")
         });
     }
 });
@@ -1463,7 +1512,15 @@ router.post("/passkey/register/verify", isStudent, async function (req, res) {
             });
         }
 
-        const student = await Student.findById(getStudentIdFromRequest(req));
+        const studentId = getStudentIdFromRequest(req);
+        if (!studentId) {
+            return res.status(401).json({
+                success: false,
+                message: "Student session invalid. Please log in again."
+            });
+        }
+
+        const student = await Student.findById(studentId);
 
         if (!student) {
             return res.status(404).json({
@@ -1555,19 +1612,24 @@ router.post("/passkey/register/verify", isStudent, async function (req, res) {
 
         req.session.webauthnRegistration = null;
 
-        res.json({
+        if (typeof req.session.save === "function") {
+            await new Promise(function (resolve) {
+                req.session.save(resolve);
+            });
+        }
+
+        return res.json({
             success: true,
             verified: true,
             message: "Passkey registered successfully."
         });
 
     } catch (err) {
-        console.log("PASSKEY REGISTER VERIFY ERROR:");
-        console.log(err.message);
+        console.error("PASSKEY REGISTER VERIFY ERROR:", err.message);
 
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
-            message: "Could not verify passkey: "  + " Please try again."
+            message: "Could not verify passkey: " + (err.message || "Please try again.")
         });
     }
 });
@@ -1668,14 +1730,19 @@ router.get("/attendance/passkey/options/:sessionId", isStudent, async function (
             sessionId: session._id.toString()
         };
 
-        res.json(options);
-    } catch (err) {
-        console.log("ATTENDANCE PASSKEY OPTIONS ERROR:");
-        console.log(err.message);
+        if (typeof req.session.save === "function") {
+            await new Promise(function (resolve) {
+                req.session.save(resolve);
+            });
+        }
 
-        res.status(500).json({
+        return res.json(options);
+    } catch (err) {
+        console.error("ATTENDANCE PASSKEY OPTIONS ERROR:", err.message);
+
+        return res.status(500).json({
             success: false,
-            message: "Could not start passkey verification: "  + " Please try again."
+            message: "Could not start passkey verification: " + (err.message || "Please try again.")
         });
     }
 });

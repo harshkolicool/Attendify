@@ -153,16 +153,44 @@ function getTeacherNotificationFilter(teacher) {
 // so we don't need these standalone functions here anymore.
 
 function isTeacher(req, res, next) {
+    const wantsJson =
+        req.xhr ||
+        (req.headers.accept && req.headers.accept.includes("application/json")) ||
+        (req.headers["content-type"] && req.headers["content-type"].includes("application/json")) ||
+        req.path.startsWith("/api/") ||
+        req.path.startsWith("/attendance/") ||
+        req.path.startsWith("/realtime/") ||
+        req.path.startsWith("/notifications/") ||
+        req.path.startsWith("/push/");
+
     if (!req.isAuthenticated()) {
+        if (wantsJson) {
+            return res.status(401).json({
+                success: false,
+                message: "Your session has expired. Please log in again."
+            });
+        }
         return res.redirect("/teacher/login");
     }
 
-    if (req.user.accountType !== "teacher") {
+    if (!req.user || req.user.accountType !== "teacher") {
+        if (wantsJson) {
+            return res.status(403).json({
+                success: false,
+                message: "Unauthorized account type."
+            });
+        }
         return res.redirect("/");
     }
 
     if (req.user.isBlocked) {
         req.logout(function () {
+            if (wantsJson) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Your teacher account has been blocked."
+                });
+            }
             return res.redirect("/teacher/login?error=blocked");
         });
         return;
