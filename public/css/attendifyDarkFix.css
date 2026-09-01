@@ -4717,6 +4717,20 @@ body.dark-mode .admin-edit-box {
 /* ==========================================================================
    TEACHER REPORT DIRECTORY TOOLBAR OVERHAUL (PERFECT ALIGNMENT & ZERO CLIPPING)
    ========================================================================== */
+/* ==========================================================================
+   TEACHER REPORT DIRECTORY TOOLBAR & MOBILE RESPONSIVE FIXES
+   ========================================================================== */
+.teacher-search-box,
+.teacher-report-directory-toolbar .teacher-search-box,
+[data-theme="dark"] .teacher-search-box,
+html.dark-mode .teacher-search-box,
+body.dark-mode .teacher-search-box {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
 .teacher-report-directory-toolbar,
 div.teacher-report-directory-toolbar[data-report-record-directory],
 div.teacher-report-directory-toolbar[data-report-attempt-directory] {
@@ -4730,21 +4744,18 @@ div.teacher-report-directory-toolbar[data-report-attempt-directory] {
     border: none !important;
     box-shadow: none !important;
     width: 100% !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
 }
 
 .teacher-report-directory-toolbar .teacher-search-box {
-    flex: 1 !important;
-    min-width: 260px !important;
+    flex: 1 1 auto !important;
+    min-width: 220px !important;
     position: relative !important;
     display: flex !important;
     align-items: center !important;
     height: 44px !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
 }
 
 .teacher-report-directory-toolbar .teacher-search-box input {
@@ -4796,7 +4807,7 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-search-box input {
     align-items: center !important;
     margin: 0 !important;
     padding: 0 !important;
-    flex-shrink: 0 !important;
+    flex: 0 0 auto !important;
 }
 
 .teacher-report-directory-toolbar .teacher-select-wrap {
@@ -4832,6 +4843,7 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-search-box input {
     font-size: 13px !important;
     font-weight: 600 !important;
     min-width: 175px !important;
+    width: auto !important;
     appearance: none !important;
     -webkit-appearance: none !important;
     cursor: pointer !important;
@@ -4888,7 +4900,7 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-select-wrap select {
     margin: 0 !important;
     box-sizing: border-box !important;
     white-space: nowrap !important;
-    flex-shrink: 0 !important;
+    flex: 0 0 auto !important;
 }
 
 [data-theme="dark"] .teacher-report-directory-toolbar .teacher-toolbar-reset-btn,
@@ -4920,6 +4932,127 @@ body.dark-mode .teacher-report-directory-toolbar .teacher-toolbar-reset-btn:hove
 
 .teacher-report-directory-toolbar .teacher-toolbar-reset-btn i {
     transition: transform 0.3s ease !important;
+}
+
+/* Horizontal Tab Strip - No Overlapping / Smooth Scroll */
+.teacher-report-nav-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+    border-radius: var(--td-radius-xl) !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    margin-bottom: 24px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+}
+
+.teacher-report-nav-bar::-webkit-scrollbar {
+    display: none !important;
+}
+
+.teacher-report-nav-link {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 9px 16px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+}
+
+.teacher-tab-count-badge {
+    flex-shrink: 0 !important;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVE BREAKPOINT (< 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .teacher-report-directory-toolbar,
+    div.teacher-report-directory-toolbar[data-report-record-directory],
+    div.teacher-report-directory-toolbar[data-report-attempt-directory] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
+    .teacher-report-directory-toolbar .teacher-search-box {
+        width: 100% !important;
+        min-width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+
+    .teacher-report-directory-toolbar .teacher-schedule-filter-field {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+
+    .teacher-report-directory-toolbar .teacher-select-wrap {
+        width: 100% !important;
+    }
+
+    .teacher-report-directory-toolbar .teacher-select-wrap select {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+
+    .teacher-report-directory-toolbar .teacher-toolbar-reset-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        flex: 1 1 100% !important;
+    }
+
+    .teacher-report-group-summary {
+        padding: 14px 14px !important;
+        gap: 10px !important;
+    }
+
+    .teacher-group-info {
+        gap: 10px !important;
+    }
+
+    .teacher-group-avatar {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        font-size: 14px !important;
+    }
+
+    .teacher-group-title-row h4 {
+        font-size: 14px !important;
+    }
+
+    .teacher-meta-chip {
+        font-size: 10.5px !important;
+        padding: 2px 7px !important;
+    }
+
+    .teacher-count-pill {
+        font-size: 11px !important;
+        padding: 3px 9px !important;
+    }
+
+    .teacher-table-wrap {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .teacher-report-table {
+        min-width: 580px !important;
+    }
 }
 
 
