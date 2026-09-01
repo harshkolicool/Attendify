@@ -66,116 +66,126 @@ Traditional college attendance methods like manual paper roll-calls, sign-in she
 
 ## 🛡️ Complete Attendance Marking & Multi-Layer Security Architecture (GUI Structure Format)
 
-Attendify treats attendance not as a simple database update, but as a **Zero-Trust Cryptographic Transaction** verified across 5 distinct hardware, physical, and network layers:
+<div align="center">
+  <img src="./public/images/readme/attendance_marking_flow.jpg" alt="Zero-Proxy Smart Attendance Marking Pipeline" width="100%" style="border-radius: 16px; box-shadow: 0 16px 40px rgba(0,0,0,0.6);" />
+</div>
 
-```
-╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-║                                  ATTENDIFY ZERO-TRUST SECURITY PIPELINE (GUI)                                ║
-╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
-║                                                                                                              ║
-║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
-║  │  LAYER 1: HARDWARE ENCLAVE BIOMETRIC PASSEYS (FIDO2 / WEBAUTHN)                                       │  ║
-║  │  [ Touch ID / Face ID / Android TEE / Windows Hello ] ──> Asymmetric ES256 Signature (Private Key Safe)│  ║
-║  │  STATUS: [✓ HARDWARE BOUND] · NO PASSWORDS · ZERO PROXY BUDDY PUNCHING                                │  ║
-║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
-║                                                   │                                                          ║
-║                                                   ▼                                                          ║
-║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
-║  │  LAYER 2: HIGH-PRECISION WGS-84 GPS GEOFENCING ENGINE                                                 │  ║
-║  │  [ Sub-Meter Coordinates + Haversine Metric ] ──> Geodesic Delta <= Classroom Radius (R=30m-100m)     │  ║
-║  │  STATUS: [✓ GEOFENCE LOCKED] · HORIZONTAL ACCURACY FILTERING · ANTI-MOCK LOCATION ENGINE               │  ║
-║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
-║                                                   │                                                          ║
-║                                                   ▼                                                          ║
-║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
-║  │  LAYER 3: INAUDIBLE ULTRASONIC ACOUSTIC PRESENCE RADAR (2-FSK)                                         │  ║
-║  │  [ 18.6k–19.8 kHz Soundwaves ] ──> 18kHz High-Pass DSP ──> 2048-pt FFT ──> Log-Distance Ranging (m)  │  ║
-║  │  STATUS: [✓ AIR-GAP VERIFIED] · PHYSICAL ROOM PRESENCE CONFIRMED · FRONT/MID/BACK ROW CLASSIFIED       │  ║
-║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
-║                                                   │                                                          ║
-║                                                   ▼                                                          ║
-║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
-║  │  LAYER 4: EPHEMERAL CRYPTOGRAPHIC ATTENDANCE TOKEN & ANTI-REPLAY GUARD                                │  ║
-║  │  [ HMAC-SHA256 Token ] ──> One-Time Rotating Nonce ──> 60s Expiration Window ──> Idempotency Lock     │  ║
-║  │  STATUS: [✓ CRYPTO SEALED] · ZERO NETWORK INTERCEPTION · ZERO REPLAY ATTACKS                           │  ║
-║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
-║                                                   │                                                          ║
-║                                                   ▼                                                          ║
-║  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐  ║
-║  │  LAYER 5: REAL-TIME WEBSOCKET TELEMETRY & MULTI-TENANT LEDGER                                         │  ║
-║  │  [ Atomic Mongo Commit ] ──> Socket.IO Broadcast (<20ms) ──> Teacher Tactical Radar Map Pin Update     │  ║
-║  │  STATUS: [✓ LEDGER RECORDED] · REAL-TIME MAP STREAMING · COMPLETE INSTITUTION AUDIT TRAIL              │  ║
-║  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘  ║
-║                                                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
-```
+<br/>
+
+Attendify treats every attendance marking action as a **Zero-Trust Cryptographic Transaction** verified simultaneously across **5 distinct security layers**:
 
 ---
 
-### 🖥️ Student GUI Flow: How Attendance is Marked Step-by-Step
+### 🗺️ Visual Multi-Layer Security Architecture & Dataflow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ 📱 STUDENT ATTENDANCE TERMINAL (GUI EXPERIENCE)                                                             │
+│                                   ATTENDIFY ZERO-TRUST SECURITY DATAFLOW                                    │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                                             │
-│  [STEP 1: SESSION DISCOVERY & GEOFENCE LOCK]                                                                │
-│  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │ 📍 LECTURE FOUND: Data Structures (CS401) · Prof. Sharma · Lab 101                                    │  │
-│  │ Geofence Check: Latitude 28.5450°, Longitude 77.1926° · Accuracy: ±4.2m · Distance: 12.8m [INSIDE ✓] │  │
-│  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                   │                                                          │
-│                                                   ▼                                                          │
-│  [STEP 2: INAUDIBLE ULTRASONIC ACOUSTIC CAPTURE]                                                            │
-│  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │ 🔊 ACOUSTIC RADAR: Capturing inaudible 18.6–19.8 kHz classroom broadcast via microphone...             │  │
-│  │ Signal Power: 182/255 · Seating Range: 2.1 meters · Row Category: [FRONT ROW (1-2) ✓]                 │  │
-│  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                   │                                                          │
-│                                                   ▼                                                          │
-│  [STEP 3: HARDWARE BIOMETRIC ASSERTION]                                                                     │
-│  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │ 🔒 HARDWARE ENCLAVE PROMPT: "Verify Touch ID / Face ID to authenticate as Harsh Koli (Roll: 21CS042)" │  │
-│  │ Biometric Match: 100% · ES256 Signed Assertion Created inside Secure Enclave ✓                         │  │
-│  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                   │                                                          │
-│                                                   ▼                                                          │
-│  [STEP 4: INSTANT ATTENDANCE RECEIPT & COMMIT]                                                              │
-│  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │ 🎉 ATTENDANCE MARKED SUCCESSFULLY!                                                                     │  │
-│  │ Receipt ID: ATT-89201F · Method: FIDO2 + ACOUSTIC + GPS · Timestamp: 14:02:18 IST · Status: PRESENT ✓  │  │
-│  └───────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│   👨‍🏫 FACULTY STATION (Laptop / Desktop)                                                                     │
+│   ├─ 📡 Broadcasts 100m GPS Geofence Anchor (WGS-84 Coordinates: 28.5450° N, 77.1926° E)                    │
+│   └─ 🔊 Emits Inaudible 18.6–19.8 kHz 2-FSK Acoustic Soundwave Burst                                         │
+│                                                                                                             │
+│                                           │                                                                 │
+│                                           ▼  (Physical Classroom Air Gap)                                   │
+│                                                                                                             │
+│   📱 STUDENT SMARTPHONE (iOS / Android / Laptop)                                                            │
+│   ├─ 📍 Layer 1: GPS Sub-Meter Geolocation Lock ────────▶ [Haversine Δ <= 100m : PASS ✓]                    │
+│   ├─ 🔊 Layer 2: Ultrasonic Microphone DSP + FFT ───────▶ [18kHz High-Pass + Path Loss : PASS (2.1m) ✓]    │
+│   ├─ 🔐 Layer 3: Hardware Secure Enclave Biometrics ────▶ [Touch ID / Face ID ES256 Signature : PASS ✓]     │
+│   └─ 🛡️ Layer 4: Ephemeral HMAC-SHA256 Token ──────────▶ [One-Time Nonce (60s Lifetime) : SEALED ✓]        │
+│                                                                                                             │
+│                                           │                                                                 │
+│                                           ▼  (TLS 1.3 Encrypted REST API)                                   │
+│                                                                                                             │
+│   ☁️ ATTENDIFY CLOUD ENGINE (Node.js + Redis + MongoDB Atlas)                                               │
+│   ├─ 🔍 Verifies WebAuthn Signature against Stored Public Key                                               │
+│   ├─ ⚡ Atomic ACID Database Commit (MongoDB Attendance Collection)                                          │
+│   └─ 📡 Instant Socket.IO Broadcast (< 20ms) to Teacher Tactical Map                                         │
+│                                                                                                             │
+│                                           │                                                                 │
+│                                           ▼                                                                 │
+│                                                                                                             │
+│   🎯 RESULT: [Harsh Koli (21CS042) Marked PRESENT · Front Row (2.1m) · Anti-Proxy Verified (100%)] ✓        │
 │                                                                                                             │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 👨‍🏫 Teacher Real-Time Tactical Radar GUI Screen
+### 🔢 Step-by-Step Interactive GUI Flow: Student & Faculty Experience
+
+#### 🔹 Step 1: Session Discovery & Geofence Lock
+- 📍 **Action**: Student opens the active lecture session from their device.
+- 📡 **Security Check**: Browser requests high-accuracy GPS coordinates (`enableHighAccuracy: true`).
+- 🧮 **Formula**: The backend computes great-circle distance $d$ via the Haversine formula on a WGS-84 ellipsoid:
+  $$d = 2R \cdot \arcsin\left(\sqrt{\sin^2\left(\frac{\Delta\phi}{2}\right) + \cos(\phi_1)\cos(\phi_2)\sin^2\left(\frac{\Delta\lambda}{2}\right)}\right)$$
+- 🟢 **GUI Feedback**: Green radar beacon confirms student is **INSIDE** the $100\text{m}$ geofence perimeter.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ 🔴 LIVE FACULTY RADAR TERMINAL · ACTIVE LECTURE: CS401 (LAB 101)                                            │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│  ● LIVE BROADCASTING 18.6–19.8kHz 2-FSK   |   📡 100m GEOFENCE ACTIVE   |   ⚡ 44 / 50 PRESENT (88%)         │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                             │
-│       [CS BLOCK]                                (AK) Aarav K. (8m, Mid Row)                                 │
-│                                                            │                                                │
-│                                     (((( ⭕ Faculty Station ))))                                            │
-│                                                (Lab 101)                                                    │
-│                                                    │                                                        │
-│                    (HK) Harsh K. (2m, Front Row)   │   (AS) Ananya S. (14m, Back Row)                       │
-│                                                                                                             │
-│                                                                             [CAMPUS LIBRARY]                │
-│                                                                                                             │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 📋 LIVE VERIFIED STREAM:                                                                                    │
-│  14:02:18 · [FIDO2+ACOUSTIC] Harsh K. (21CS042) · Front Row (2.1m) · Score: 98% ────────────────── [PASS ✓]│
-│  14:02:12 · [FIDO2+ACOUSTIC] Aarav K. (21CS011) · Mid Row (5.4m)   · Score: 94% ────────────────── [PASS ✓]│
-│  14:01:58 · [FIDO2+ACOUSTIC] Ananya S.(21CS019) · Back Row (12.2m) · Score: 88% ────────────────── [PASS ✓]│
-│  14:01:40 · [GPS SPOOF BLOCKED] Unknown (IP Proxy) · Outside Radius (350m) ─────────────────── [REJECTED ✕]│
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 📍 GEOFENCE LOCK STATUS                                                                           │
+│ Coordinates: 28.5450° N, 77.1926° E · Accuracy: ±3.8m · Classroom Distance: 11.4m [LOCKED ✓]     │
+└───────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 🔹 Step 2: Inaudible Ultrasonic Acoustic Presence Capture
+- 🔊 **Action**: Student microphone activates a Web Audio API listener with an active **18 kHz Biquad High-Pass Filter**.
+- 📊 **Signal Processing**: Fast Fourier Transform ($N=2048$, $f_s=48\text{ kHz}$) extracts peak bin power at pilot carrier ($18.6\text{ kHz}$), Space ($19.2\text{ kHz}$), and Mark ($19.8\text{ kHz}$).
+- 📏 **Indoor Path Loss Model**: Calculates distance $d = 10^{\frac{P_0 - P_r}{10n}}$ and assigns the seating row category:
+  - 🥇 **Front Row (1–2)**: Distance $\le 2.5\text{m}$ (Signal Power $\ge 200/255$)
+  - 🥈 **Middle Row (3–5)**: Distance $3.6\text{m} - 5.8\text{m}$ (Signal Power $140 - 199/255$)
+  - 🥉 **Back Row (6–9)**: Distance $8.1\text{m} - 12.0\text{m}$ (Signal Power $90 - 139/255$)
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 🔊 ULTRASONIC ACOUSTIC SPECTRUM DETECTED                                                          │
+│ Frequencies: 18.6kHz Pilot (✓) · 19.2kHz Space (✓) · 19.8kHz Mark (✓)                             │
+│ Received Power: 184/255 · Distance: 2.1 meters · Row Category: [FRONT ROW (1–2) ✓]                │
+└───────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 🔹 Step 3: Hardware Enclave Biometric Assertion (FIDO2 / WebAuthn)
+- 🔒 **Action**: Device prompts native biometric dialog (Touch ID, Face ID, Windows Hello, or Android Fingerprint).
+- 🛡️ **Hardware Security**: The private key stored inside the device's **Apple Secure Enclave** or **Android Hardware TEE** signs the server's 32-byte challenge using `ES256` asymmetric ECDSA.
+- 🚫 **Proxy Defense**: Physical human presence is mandatory. Credentials cannot be shared, cloned, or screenshotted.
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 🔒 FIDO2 WEBAUTHN HARDWARE PROMPT                                                                 │
+│ Authenticator: Apple Secure Enclave (Touch ID / Face ID) · Algorithm: ECDSA P-256 (ES256)        │
+│ Assertion Signature: Verified against Public Key `pubkey_89a01bf...` [MATCH 100% ✓]               │
+└───────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 🔹 Step 4: Ephemeral Token Validation & Atomic DB Commit
+- ⚡ **Action**: Payload (`biometricAssertion` + `acousticProof` + `gpsTelemetry` + `csrfToken`) is transmitted to `/api/student/mark-attendance`.
+- 🔐 **Anti-Replay**: The backend checks single-use nonce freshness ($< 60\text{s}$ lifetime) and acquires a distributed Redis lock.
+- 💾 **Persistence**: Attendance is committed atomically to MongoDB with full metadata:
+  ```json
+  {
+    "studentId": "65b019f...",
+    "lectureId": "65b021c...",
+    "status": "present",
+    "verifiedVia": "FIDO2_PASSKEY_ACOUSTIC_RADAR",
+    "seatingDistanceMeters": 2.1,
+    "rowCategory": "Front Row",
+    "confidenceScore": 98,
+    "timestamp": "2026-09-01T14:02:18.412Z"
+  }
+  ```
+
+#### 🔹 Step 5: Real-Time Faculty Tactical Radar Synchronization
+- 📡 **Action**: Backend emits a `student:attendance-marked` event over Socket.IO.
+- 👨‍🏫 **Teacher Terminal**: The teacher's live tactical map updates in $< 20\text{ms}$ with the student's avatar pin, distance badge, and live class count increment (`44 / 50 Present · 88%`).
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 🔴 TEACHER LIVE TACTICAL RADAR HUD                                                                │
+│ [CS401 Lab 101] · Active Students: 44/50 (88%) · Latency: 18ms · WebSocket: CONNECTED ●         │
+│ Pin: Harsh Koli (HK) · Seating: Front Row (2.1m) · Auth: FIDO2 ES256 · Status: [VERIFIED ✓]       │
+└───────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
