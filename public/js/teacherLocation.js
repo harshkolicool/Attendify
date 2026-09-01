@@ -140,55 +140,44 @@
     }
 
     function getBestTeacherLocationPosition(onProgress, formRef) {
-        var radiusHint = 100;
-        var radiusInput = formRef && formRef.querySelector("input[name='classroomRadius']");
-
-        if (radiusInput && radiusInput.value) {
-            radiusHint = Number(radiusInput.value);
-        }
-
-        var geoOptions =
-            window.AttendifyGeo && typeof window.AttendifyGeo.getCollectionOptionsForRadius === "function"
-                ? window.AttendifyGeo.getCollectionOptionsForRadius(radiusHint)
-                : null;
-
-        if (window.AttendifyGeo && typeof window.AttendifyGeo.getBestPosition === "function") {
-            var finalOptions = Object.assign({}, geoOptions || {}, {
-                radiusHintMeters: radiusHint
-            });
-
-            return window.AttendifyGeo.getBestPosition(onProgress, finalOptions);
-        }
-
-        // Fallback: original simple sampler
         return new Promise(function (resolve, reject) {
-            var samples    = [];
-            var lastError  = null;
-            var finished   = false;
-            var watchId    = null;
-            var timeoutId  = null;
+            // 1. Check window.AttendifyLiveStream or cached location
+            if (window.AttendifyLiveStream && typeof window.AttendifyLiveStream.getBestFreshPosition === "function") {
+                var cached = window.AttendifyLiveStream.getBestFreshPosition(30000);
+                if (cached && Number.isFinite(cached.latitude)) {
+                    return resolve({
+                        coords: {
+                            latitude: cached.latitude,
+                            longitude: cached.longitude,
+                            accuracy: cached.accuracy || 20
+                        }
+                    });
+                }
+            }
 
-            var targetAccuracyMeters     = 10;
-            var acceptableAccuracyMeters = 15;
-            var minimumSamples           = 8;
-            var minCollectionMs          = 15000;
-            var maxWaitMs                = 25000;
-            var startTime                = Date.now();
+            if (!navigator.geolocation) {
+                return reject(new Error("Geolocation is not supported by your browser."));
+            }
+
+            var samples = [];
+            var finished = false;
+            var watchId = null;
+            var timeoutId = null;
 
             function cleanup() {
                 if (timeoutId) clearTimeout(timeoutId);
-                if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+                if (watchId !== null) {
+                    try { navigator.geolocation.clearWatch(watchId); } catch(e) {}
+                    watchId = null;
+                }
             }
 
-            function getAccuracy(position) {
-                return Number(
-                    position && position.coords &&
-                    Number.isFinite(Number(position.coords.accuracy))
-                        ? position.coords.accuracy : 999999
-                );
+            function getAccuracy(pos) {
+                return Number(pos && pos.coords && Number.isFinite(Number(pos.coords.accuracy)) ? pos.coords.accuracy : 999999);
             }
 
             function getBestSample() {
+                if (samples.length === 0) return null;
                 samples.sort(function (a, b) { return getAccuracy(a) - getAccuracy(b); });
                 return samples[0];
             }
@@ -197,15 +186,20 @@
                 if (finished) return;
                 finished = true;
                 cleanup();
-                if (samples.length === 0) {
-                    reject(error || lastError || new Error("Could not get location."));
-                    return;
-                }
-                resolve(getBestSample());
-            }
 
-            function minCollectionReached() {
-                return Date.now() - startTime >= minCollectionMs;
+                var best = getBestSample();
+                if (best) {
+                    return resolve(best);
+                }
+
+                // If high-accuracy timed out or returned no samples, fallback to single standard accuracy query
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) { resolve(pos); },
+                    function (fallbackErr) {
+                        reject(fallbackErr || error || new Error("Could not detect location."));
+                    },
+                    { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+                );
             }
 
             function addSample(position) {
@@ -215,36 +209,37 @@
                 var lon = Number(position.coords.longitude);
                 var accuracy = getAccuracy(position);
 
-                if (!Number.isFinite(lat) || !Number.isFinite(lon) || accuracy <= 0 || accuracy > 150) {
+                if (!Number.isFinite(lat) || !Number.isFinite(lon) || accuracy <= 0) {
                     return;
                 }
 
                 samples.push(position);
-                if (onProgress && typeof onProgress === "function") onProgress(accuracy, getBestSample());
-
-                if (!minCollectionReached()) {
-                    return;
+                if (onProgress && typeof onProgress === "function") {
+                    onProgress(accuracy, getBestSample(), samples.length);
                 }
 
-                if (samples.length >= minimumSamples && accuracy <= targetAccuracyMeters) {
-                    finish();
-                    return;
-                }
-
-                if (samples.length >= minimumSamples && accuracy <= acceptableAccuracyMeters) {
-                    setTimeout(function () { if (!finished) finish(); }, 1200);
+                // If we get an acceptable reading (or at least 2 samples), resolve quickly without hanging!
+                if (accuracy <= 40 || samples.length >= 3) {
+                    setTimeout(function () { finish(); }, 300);
                 }
             }
 
             function handleError(error) {
-                lastError = error;
-                if (error && Number(error.code) === 1) finish(error);
+                if (error && Number(error.code) === 1) {
+                    return finish(error); // Permission denied
+                }
+                if (samples.length > 0) {
+                    return finish();
+                }
             }
 
-            var options = { enableHighAccuracy: true, timeout: 18000, maximumAge: 0 };
+            var options = { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 };
             navigator.geolocation.getCurrentPosition(addSample, handleError, options);
-            try { watchId = navigator.geolocation.watchPosition(addSample, handleError, options); } catch (e) { lastError = e; }
-            timeoutId = setTimeout(function () { finish(); }, maxWaitMs);
+            try {
+                watchId = navigator.geolocation.watchPosition(addSample, handleError, options);
+            } catch (e) {}
+
+            timeoutId = setTimeout(function () { finish(); }, 6000);
         });
     }
 
