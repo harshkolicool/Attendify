@@ -1464,12 +1464,14 @@ function emitAttendanceExtended(session, extendMinutes) {
     if (!io || !session) return;
 
     const sessionId = getId(session._id);
-    const teacherId = getId(session.teacher);
-    const classGroupId = getId(session.classGroup);
-    const collegeId = getId(session.college);
+    const scheduleId = getId(session.schedule && session.schedule._id ? session.schedule._id : session.schedule);
+    const teacherId = getId(session.teacher && session.teacher._id ? session.teacher._id : session.teacher);
+    const classGroupId = getId(session.classGroup && session.classGroup._id ? session.classGroup._id : session.classGroup);
+    const collegeId = getId(session.college && session.college._id ? session.college._id : session.college);
 
     const payload = {
         sessionId: sessionId,
+        scheduleId: scheduleId,
         endTime: session.endTime,
         extendMinutes: extendMinutes,
         message: `Attendance window extended by +${extendMinutes} minutes!`,

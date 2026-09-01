@@ -1070,6 +1070,23 @@ router.post("/attendance/session/:id/extend", isTeacher, async (req, res) => {
         }
         await session.save();
 
+        if (session.schedule) {
+            try {
+                const formattedNewEnd = proposedEndTime.toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true
+                });
+                const scheduleId = session.schedule._id || session.schedule;
+                await Schedule.updateOne({ _id: scheduleId }, { $set: { endTime: formattedNewEnd } });
+                if (session.schedule.endTime) {
+                    session.schedule.endTime = formattedNewEnd;
+                }
+            } catch (schedErr) {
+                console.log("Could not update schedule end time:", schedErr);
+            }
+        }
+
         socketManager.emitAttendanceExtended(session, extendMinutes);
 
         return res.json({
