@@ -148,7 +148,7 @@ function isValidSemester(value) {
 
 function isValidRadius(value) {
     const radius = Number(value);
-    return !Number.isNaN(radius) && radius >= 50 && radius <= 10000;
+    return !Number.isNaN(radius) && radius >= 1 && radius <= 10000;
 }
 
 function isValidLatitude(value) {

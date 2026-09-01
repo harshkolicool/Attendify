@@ -54,7 +54,7 @@ function verifyStudentAttendanceLocation({
     gpsUnavailable,
     locationMeta
 }) {
-    const allowedRadius = Number(session.radius);
+    const allowedRadius = Number.isFinite(Number(session.radius)) && Number(session.radius) > 0 ? Number(session.radius) : 100;
     
     // Check if the current provided location is completely missing or unusable
     let hasUsableCurrentGps = !gpsUnavailable && isValidCoordinate(latitude, longitude) && !isRejectedSource(locationMeta);

@@ -188,7 +188,7 @@ const attendanceSessionSchema = new mongoose.Schema({
 
     locationSource: {
         type: String,
-        enum: ["TEACHER_GPS", "CLASSROOM_PRESET"],
+        enum: ["TEACHER_GPS", "CLASSROOM_PRESET", "CLASSROOM_PRESET_ANCHOR"],
         default: "TEACHER_GPS"
     },
 
