@@ -1634,122 +1634,125 @@ body.dark-mode .adm-meta-chip i {
     border: 1px solid rgba(99, 102, 241, 0.25) !important;
 }
 
-/* Modern Centered Empty State Hero Card */
-.admin-empty-state-modern {
+/* Ultra-Sleek Compact Empty State Bar */
+.admin-empty-compact-bar {
     width: 100% !important;
-    margin-top: 8px !important;
-    padding: 44px 24px !important;
-    border-radius: 20px !important;
-    background: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.3) 80%) !important;
-    border: 1px dashed rgba(16, 185, 129, 0.22) !important;
+    padding: 12px 18px !important;
+    border-radius: 14px !important;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
     align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2) !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
     box-sizing: border-box !important;
+    margin-top: 4px !important;
 }
 
-.admin-empty-state-modern.inbox-empty {
-    background: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.05) 0%, rgba(15, 23, 42, 0.3) 80%) !important;
-    border: 1px dashed rgba(99, 102, 241, 0.22) !important;
+.admin-empty-compact-bar.inbox {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.2) !important;
 }
 
-.empty-state-icon-orb {
-    width: 68px !important;
-    height: 68px !important;
-    min-width: 68px !important;
-    border-radius: 50% !important;
+.empty-compact-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+.empty-compact-orb {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    border-radius: 10px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 1.8rem !important;
-    margin-bottom: 6px !important;
+    font-size: 1.05rem !important;
     flex-shrink: 0 !important;
 }
 
-.empty-state-icon-orb.emerald {
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, rgba(16, 185, 129, 0.04) 70%) !important;
+.empty-compact-orb.emerald {
+    background: rgba(16, 185, 129, 0.15) !important;
     color: #34d399 !important;
-    border: 1px solid rgba(16, 185, 129, 0.35) !important;
-    box-shadow: 0 0 30px rgba(16, 185, 129, 0.2), inset 0 0 15px rgba(16, 185, 129, 0.1) !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
 }
 
-.empty-state-icon-orb.indigo {
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, rgba(99, 102, 241, 0.04) 70%) !important;
+.empty-compact-orb.indigo {
+    background: rgba(99, 102, 241, 0.15) !important;
     color: #a5b4fc !important;
-    border: 1px solid rgba(99, 102, 241, 0.35) !important;
-    box-shadow: 0 0 30px rgba(99, 102, 241, 0.2), inset 0 0 15px rgba(99, 102, 241, 0.1) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
 }
 
-.empty-state-text-group {
+.empty-compact-text {
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
-    text-align: center !important;
-    gap: 6px !important;
-    margin-top: 10px !important;
-    max-width: 540px !important;
+    gap: 2px !important;
 }
 
-.empty-state-text-group h4 {
-    margin: 0 !important;
-    font-size: 1.18rem !important;
-    font-weight: 800 !important;
+.empty-compact-text strong {
+    font-size: 0.94rem !important;
+    font-weight: 700 !important;
     color: #ffffff !important;
-    letter-spacing: -0.01em !important;
 }
 
-.empty-state-text-group p {
-    margin: 0 !important;
-    font-size: 0.88rem !important;
+.empty-compact-text span {
+    font-size: 0.82rem !important;
     color: #94a3b8 !important;
-    line-height: 1.55 !important;
 }
 
-.empty-state-status-pill {
+.empty-compact-chip {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 8px !important;
-    margin-top: 18px !important;
-    padding: 6px 16px !important;
+    gap: 7px !important;
+    padding: 5px 12px !important;
     border-radius: 999px !important;
-    font-size: 0.78rem !important;
-    font-weight: 800 !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+}
+
+.empty-compact-chip.emerald {
     background: rgba(16, 185, 129, 0.1) !important;
     border: 1px solid rgba(16, 185, 129, 0.25) !important;
     color: #34d399 !important;
-    white-space: nowrap !important;
 }
 
-.empty-state-status-pill.indigo {
+.empty-compact-chip.indigo {
     background: rgba(99, 102, 241, 0.1) !important;
     border: 1px solid rgba(99, 102, 241, 0.25) !important;
     color: #a5b4fc !important;
 }
 
-.empty-state-status-pill .pulse-dot.green {
-    width: 8px !important;
-    height: 8px !important;
+.empty-compact-chip .pulse-dot.green {
+    width: 7px !important;
+    height: 7px !important;
     border-radius: 50% !important;
     background: #10b981 !important;
-    box-shadow: 0 0 8px #10b981 !important;
+    box-shadow: 0 0 6px #10b981 !important;
     display: inline-block !important;
 }
 
-.empty-state-status-pill .pulse-dot.indigo {
-    width: 8px !important;
-    height: 8px !important;
+.empty-compact-chip .pulse-dot.indigo {
+    width: 7px !important;
+    height: 7px !important;
     border-radius: 50% !important;
     background: #818cf8 !important;
-    box-shadow: 0 0 8px #818cf8 !important;
+    box-shadow: 0 0 6px #818cf8 !important;
     display: inline-block !important;
 }
 
 @media (max-width: 680px) {
-    .admin-empty-state-modern {
-        padding: 30px 16px !important;
+    .admin-empty-compact-bar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding: 12px 14px !important;
     }
 }
 

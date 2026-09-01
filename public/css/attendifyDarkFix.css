@@ -1335,26 +1335,25 @@ textarea {
     line-height: 1.35;
 }
 
-/* Modern Centered Empty State Hero Card */
-.admin-empty-state-modern {
+/* Ultra-Sleek Compact Empty State Bar */
+.admin-empty-compact-bar {
     width: 100% !important;
-    margin-top: 8px !important;
-    padding: 44px 24px !important;
-    border-radius: 20px !important;
-    background: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.3) 80%) !important;
-    border: 1px dashed rgba(16, 185, 129, 0.22) !important;
+    padding: 12px 18px !important;
+    border-radius: 14px !important;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
     align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2) !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
     box-sizing: border-box !important;
+    margin-top: 4px !important;
 }
 
-.admin-empty-state-modern.inbox-empty {
-    background: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.05) 0%, rgba(15, 23, 42, 0.3) 80%) !important;
-    border: 1px dashed rgba(99, 102, 241, 0.22) !important;
+.admin-empty-compact-bar.inbox {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.2) !important;
 }
 
 /* Pending passkey header: balanced horizontal layout */
