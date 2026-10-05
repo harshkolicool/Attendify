@@ -79,7 +79,7 @@
             }
 
             teacherTestEmitter = new window.AttendifyAcousticRadar.Emitter(directAudioCtx);
-            const started = teacherTestEmitter.startBroadcast(data.token, 900);
+            const started = await teacherTestEmitter.startBroadcast(data.token);
 
             if (!started) {
                 throw new Error("Could not initialize audio output context.");
@@ -183,7 +183,7 @@
 
             const listener = new window.AttendifyAcousticRadar.Listener(directAudioCtx);
 
-            const proof = await listener.capturePresence(7500, function(spectrum) {
+            const proof = await listener.capturePresence(9000, function(spectrum) {
                 if (spectrumMeter) {
                     const collectedDisplay = spectrum.collected
                         ? `Decoded Notes: <strong>[ ${spectrum.collected.split("").join(" ")} ]</strong>`

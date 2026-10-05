@@ -209,15 +209,61 @@ function initTeacherLiveMap() {
     }
 
     let currentTileLayer = null;
+    let currentThemeMode = null;
 
     function applyMapTheme() {
         if (!map) return;
-        if (!currentTileLayer) {
-            currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
+
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark" ||
+                       document.documentElement.classList.contains("dark-mode") ||
+                       document.body.classList.contains("dark-theme");
+        const targetTheme = isDark ? "dark" : "light";
+
+        if (currentTileLayer && currentThemeMode === targetTheme) {
+            return;
         }
+
+        if (currentTileLayer) {
+            try {
+                map.removeLayer(currentTileLayer);
+            } catch (e) {}
+            currentTileLayer = null;
+        }
+
+        currentThemeMode = targetTheme;
+
+        // Humanitarian OpenStreetMap (HOT):
+        // - Rich, sub-meter campus building footprints, classroom blocks, walkways, and local streets
+        // - Open, reliable, zero watermarks, zero API keys required
+        // - maxNativeZoom: 19 with maxZoom: 21 ensures zooming in all the way to 21 smoothly scales
+        //   the native zoom 19 raster tiles via CSS hardware acceleration, completely
+        //   preventing any "Map data not yet available" placeholders!
+        currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
+            subdomains: "abc",
+            maxNativeZoom: 19,
+            maxZoom: 21,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, Tiles by Humanitarian OpenStreetMap Team'
+        });
+
+        // Failover fallback to Esri World Street Map (strictly capped at native zoom 17 so it never asks Esri for un-cached tiles)
+        let consecutiveErrors = 0;
+        let hasFallenBack = false;
+        currentTileLayer.on("tileerror", function () {
+            consecutiveErrors++;
+            if (consecutiveErrors < 5 || hasFallenBack || !map) return;
+            hasFallenBack = true;
+            console.warn("[TeacherMap] Primary HOT tile provider unavailable, falling back to Esri World Street Map");
+            try {
+                if (currentTileLayer) map.removeLayer(currentTileLayer);
+            } catch (e) {}
+            currentTileLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+                maxNativeZoom: 17,
+                maxZoom: 21,
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, TomTom'
+            }).addTo(map);
+        });
+
+        currentTileLayer.addTo(map);
     }
 
     function getInitialCenterCoords() {
@@ -439,7 +485,8 @@ function initTeacherLiveMap() {
         const initial = getInitialCenterCoords();
         map = L.map(mapEl, {
             zoomControl: true,
-            scrollWheelZoom: true
+            scrollWheelZoom: true,
+            maxZoom: 21
         }).setView([initial.lat, initial.lon], initial.zoom);
 
         applyMapTheme();

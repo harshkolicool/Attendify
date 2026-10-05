@@ -1165,11 +1165,11 @@ async function getStudentPageData(req) {
     };
 }
 
-router.get("/dashboard", isStudent, async function (req, res) {
+router.get("/dashboard", isStudent, async function (req, res, next) {
     try {
         const studentIdStr = getStudentIdFromRequest(req);
         if (!req.user || !studentIdStr) {
-            return res.send("User session invalid. Please login again.");
+            return res.redirect("/student/login");
         }
 
         let data = await getCachedDashboard(studentIdStr);
@@ -1181,7 +1181,7 @@ router.get("/dashboard", isStudent, async function (req, res) {
         }
 
         if (data.error) {
-            return res.send(data.error);
+            return res.redirect("/student/login?error=" + encodeURIComponent(data.error));
         }
 
         data.activePage = "dashboard";
@@ -1190,15 +1190,13 @@ router.get("/dashboard", isStudent, async function (req, res) {
         res.render("studentDashboard", data);
 
     } catch (err) {
-        console.log("STUDENT DASHBOARD ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-        res.send("Student dashboard error. Please try again.");
+        logger.error("STUDENT DASHBOARD ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
 
-router.get("/schedule", isStudent, async function (req, res) {
+router.get("/schedule", isStudent, async function (req, res, next) {
     try {
         if (!req.user || !getStudentIdFromRequest(req)) {
             return res.redirect("/student/login");
@@ -1209,7 +1207,7 @@ router.get("/schedule", isStudent, async function (req, res) {
             .populate("subjects");
 
         if (!student) {
-            return res.send("Student not found.");
+            return res.redirect("/student/login");
         }
 
         if (!student.classGroup) {
@@ -1430,11 +1428,8 @@ router.get("/schedule", isStudent, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("STUDENT SCHEDULE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Student schedule error: "  + " Please try again.");
+        logger.error("STUDENT SCHEDULE ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
@@ -3986,7 +3981,7 @@ router.get("/profile", isStudent, async function (req, res) {
         const data = await getStudentPageData(req);
 
         if (data.error) {
-            return res.send(data.error);
+            return res.redirect("/student/dashboard?error=" + encodeURIComponent(data.error));
         }
 
         const student = data.student;
@@ -4058,8 +4053,8 @@ router.post("/acoustic-test/verify", isStudent, async function (req, res) {
             });
         }
 
-        // 1. Check if there is an active test beacon for student's college
-        const testObj = acousticTestStore.getActiveTestTokenForCollege(student.college);
+        // 1. Check if there is an active test beacon (direct token match or college match)
+        const testObj = acousticTestStore.findMatchingTestToken(decodedToken, student.college);
         
         // 2. Also check if there is an active live attendance session with an acoustic token
         let sessionObj = null;
@@ -4074,7 +4069,7 @@ router.post("/acoustic-test/verify", isStudent, async function (req, res) {
         const expectedToken = testObj ? testObj.token : (sessionObj ? sessionObj.acousticBeaconToken : null);
         const targetTeacherId = testObj ? testObj.teacherId : (sessionObj && sessionObj.teacher ? sessionObj.teacher.toString() : null);
 
-        let isMatch = expectedToken && decodedToken === expectedToken;
+        let isMatch = testObj ? true : (expectedToken && decodedToken === expectedToken);
         if (!isMatch && expectedToken && decodedToken) {
             const currentWin = Math.floor(Date.now() / 20000);
             for (let w = currentWin - 1; w <= currentWin + 1; w++) {

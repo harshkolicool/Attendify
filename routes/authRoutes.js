@@ -14,6 +14,7 @@ const authLimiter = rateLimit({
 });
 
 const Student = require("../models/studentSchema");
+const Teacher = require("../models/teacherSchema");
 const ClassGroup = require("../models/classGroupSchema");
 const College = require("../models/collegeSchema");
 const Notification = require("../models/notificationSchema");
@@ -442,7 +443,13 @@ router.post("/teacher/login", authLimiter, (req, res, next) => {
     })(req, res, next);
 });
 
-router.post("/logout", (req, res, next) => {
+router.post("/logout", async (req, res, next) => {
+    try {
+        if (req.sessionID) {
+            await socketManager.disconnectSessionSockets(req.sessionID);
+        }
+    } catch (_) {}
+
     req.logout((err) => {
         if (err) {
             return next(err);
@@ -469,8 +476,19 @@ router.post("/auth/signout-all", async (req, res, next) => {
     }
 
     try {
-        const mongoose = require("mongoose");
         const userId = (req.user._id || req.user.id).toString();
+
+        if (req.sessionID) {
+            await socketManager.disconnectSessionSockets(req.sessionID);
+        }
+        await socketManager.disconnectUserSockets(userId);
+
+        const accountType = req.user.accountType;
+        if (accountType === "student") {
+            await Student.updateOne({ _id: req.user._id }, { $inc: { authVersion: 1 } });
+        } else if (accountType === "teacher") {
+            await Teacher.updateOne({ _id: req.user._id }, { $inc: { authVersion: 1 } });
+        }
 
         // Target only sessions that contain this specific user ID in the
         // passport.user field — avoids a full-collection regex scan.

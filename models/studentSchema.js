@@ -244,6 +244,11 @@ const studentSchema = new mongoose.Schema({
         default: false
     },
 
+    authVersion: {
+        type: Number,
+        default: 0
+    },
+
     lastLocation: {
         latitude: { type: Number },
         longitude: { type: Number },

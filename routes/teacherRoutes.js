@@ -10,6 +10,12 @@ const {
     logGpsDecision
 } = require("../utils/locationVerification");
 const router = express.Router();
+const mongoose = require("mongoose");
+const logger = require("../utils/logger");
+
+function isValidObjectId(id) {
+    return mongoose.Types.ObjectId.isValid(id);
+}
 
 const Schedule = require("../models/scheduleSchema");
 const Teacher = require("../models/teacherSchema");
@@ -94,7 +100,7 @@ function teacherNormalizeManualDateInput(dateInput) {
         return todayInput;
     }
 
-    const parsed = new Date(dateInput + "T00:00:00");
+    const parsed = new Date(dateInput + "T00:00:00+05:30");
 
     if (Number.isNaN(parsed.getTime())) {
         return todayInput;
@@ -110,7 +116,7 @@ function teacherNormalizeManualDateInput(dateInput) {
 }
 
 function teacherGetManualDateLabel(dateInput) {
-    const date = new Date(dateInput + "T00:00:00");
+    const date = new Date(dateInput + "T00:00:00+05:30");
 
     return date.toLocaleDateString([], {
         weekday: "short",
@@ -249,7 +255,7 @@ function getErrorMessage(errorCode) {
         return "No students found in this class group.";
     }
 
-    return null;
+    return errorCode;
 }
 
 function getSuccessMessage(messageCode) {
@@ -370,15 +376,19 @@ async function getScheduleForTeacher(req) {
     return scheduleItem;
 }
 
-function getScheduleDateTimeForToday(timeText) {
+function getScheduleDateTimeForDate(timeText, baseDate) {
     const minutes = timeToMinutes(timeText);
 
     if (minutes === null) {
         return null;
     }
 
-    const date = getTodayRange().start;
+    const date = baseDate ? new Date(baseDate) : getTodayRange().start;
     return new Date(date.getTime() + (minutes * 60000));
+}
+
+function getScheduleDateTimeForToday(timeText) {
+    return getScheduleDateTimeForDate(timeText, getTodayRange().start);
 }
 
 function isScheduleAlreadyManuallyRecorded(session) {
@@ -386,11 +396,12 @@ function isScheduleAlreadyManuallyRecorded(session) {
         return false;
     }
 
-    if (!session.attendanceRecords || session.attendanceRecords.length === 0) {
-        return false;
+    if (session.absentsMarkedAt) {
+        return true;
     }
 
-    if (session.status === "CLOSED" && session.isActive === false) {
+    const isClosed = session.status === "CLOSED" || session.status === "EXPIRED";
+    if (isClosed && session.isActive === false && session.attendanceRecords && session.attendanceRecords.length > 0) {
         return true;
     }
 
@@ -437,7 +448,7 @@ async function getLatestSessionForScheduleByDate(
     });
 }
 
-router.get("/dashboard", isTeacher, async (req, res) => {
+router.get("/dashboard", isTeacher, async (req, res, next) => {
     try {
         let targetDateObj = new Date();
         let targetDate = '';
@@ -456,7 +467,7 @@ router.get("/dashboard", isTeacher, async (req, res) => {
             .lean();
 
         if (!teacher) {
-            return res.send("Teacher not found");
+            return res.redirect("/teacher/login");
         }
 
         const teacherId = req.user._id;
@@ -632,15 +643,12 @@ router.get("/dashboard", isTeacher, async (req, res) => {
         });
 
     } catch (err) {
-        console.log("TEACHER DASHBOARD ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Something went wrong. Please try again.");
+        logger.error("TEACHER DASHBOARD ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
-router.get("/notifications", isTeacher, async function (req, res) {
+router.get("/notifications", isTeacher, async function (req, res, next) {
     try {
         const teacher = await Teacher.findById(req.user._id).select("-password");
 
@@ -662,11 +670,8 @@ router.get("/notifications", isTeacher, async function (req, res) {
             unreadCount: unreadCount
         });
     } catch (err) {
-        console.log("TEACHER NOTIFICATIONS PAGE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.status(500).send("Teacher notifications error: " + "An internal server error occurred.");
+        logger.error("TEACHER NOTIFICATIONS PAGE ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
@@ -690,10 +695,7 @@ router.post("/notifications/mark-all-read", isTeacher, async function (req, res)
 
         res.redirect("/teacher/notifications");
     } catch (err) {
-        console.log("TEACHER MARK ALL NOTIFICATIONS READ ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
+        logger.error("TEACHER MARK ALL NOTIFICATIONS READ ERROR", { msg: err.message, stack: err.stack });
         res.redirect("/teacher/notifications");
     }
 });
@@ -716,10 +718,7 @@ router.post("/notifications/clear-all", isTeacher, async function (req, res) {
 
         res.redirect("/teacher/notifications");
     } catch (err) {
-        console.log("TEACHER CLEAR ALL NOTIFICATIONS ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
+        logger.error("TEACHER CLEAR ALL NOTIFICATIONS ERROR", { msg: err.message, stack: err.stack });
         res.redirect("/teacher/notifications");
     }
 });
@@ -744,10 +743,7 @@ router.post("/notifications/:id/read", isTeacher, async function (req, res) {
 
         res.redirect("/teacher/notifications");
     } catch (err) {
-        console.log("TEACHER MARK NOTIFICATION READ ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
+        logger.error("TEACHER MARK NOTIFICATION READ ERROR", { msg: err.message, stack: err.stack });
         res.redirect("/teacher/notifications");
     }
 });
@@ -772,10 +768,7 @@ router.post("/notifications/:id/delete", isTeacher, async function (req, res) {
 
         res.redirect("/teacher/notifications");
     } catch (err) {
-        console.log("TEACHER DELETE NOTIFICATION ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
+        logger.error("TEACHER DELETE NOTIFICATION ERROR", { msg: err.message, stack: err.stack });
         res.redirect("/teacher/notifications");
     }
 });
@@ -798,10 +791,7 @@ router.get("/notifications/unread-count", isTeacher, async function (req, res) {
             unreadCount: unreadCount
         });
     } catch (err) {
-        console.log("TEACHER UNREAD NOTIFICATION COUNT ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
+        logger.error("TEACHER UNREAD NOTIFICATION COUNT ERROR", { msg: err.message, stack: err.stack });
         res.status(500).json({
             success: false,
             message: "Unable to load unread notification count."
@@ -852,9 +842,7 @@ router.get("/suspicious-attempts/recent", isTeacher, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("TEACHER RECENT SUSPICIOUS ATTEMPTS ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
+        logger.error("TEACHER RECENT SUSPICIOUS ATTEMPTS ERROR", { msg: err.message, stack: err.stack });
 
         res.status(500).json({
             success: false,
@@ -933,8 +921,7 @@ router.get("/live-map/session/:sessionId", isTeacher, async function (req, res) 
             snapshot: snapshot
         });
     } catch (err) {
-        console.log("TEACHER LIVE MAP SESSION ERROR:");
-        console.log(err.message);
+        logger.error("TEACHER LIVE MAP SESSION ERROR", { msg: err.message, stack: err.stack });
 
         res.status(500).json({
             success: false,
@@ -997,7 +984,7 @@ router.get("/live-map/global", isTeacher, async function (req, res) {
             snapshot: snapshot
         });
     } catch (err) {
-        console.error("TEACHER GLOBAL LIVE MAP ERROR:", err);
+        logger.error("TEACHER GLOBAL LIVE MAP ERROR", { msg: err.message, stack: err.stack });
         res.status(500).json({
             success: false,
             message: "Unable to load global map."
@@ -1037,7 +1024,7 @@ router.post("/attendance/session/:id/radius", isTeacher, async (req, res) => {
             radius: newRadius
         });
     } catch (err) {
-        console.error("TEACHER UPDATE RADIUS ERROR:", err);
+        logger.error("TEACHER UPDATE RADIUS ERROR", { msg: err.message, stack: err.stack });
         return res.status(500).json({ success: false, message: "Server error updating radius." });
     }
 });
@@ -1113,7 +1100,7 @@ router.post("/attendance/session/:id/extend", isTeacher, async (req, res) => {
                     session.schedule.endTime = formattedNewEnd;
                 }
             } catch (schedErr) {
-                console.log("Could not update schedule end time:", schedErr);
+                logger.warn("Could not update schedule end time", { msg: schedErr.message });
             }
         }
 
@@ -1126,7 +1113,7 @@ router.post("/attendance/session/:id/extend", isTeacher, async (req, res) => {
             extendMinutes: extendMinutes
         });
     } catch (err) {
-        console.error("TEACHER EXTEND SESSION ERROR:", err);
+        logger.error("TEACHER EXTEND SESSION ERROR", { msg: err.message, stack: err.stack });
         return res.status(500).json({ success: false, message: "Failed to extend attendance session." });
     }
 });
@@ -1146,7 +1133,7 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
             try {
                 locationMeta = typeof req.body.locationMeta === 'string' ? JSON.parse(req.body.locationMeta) : req.body.locationMeta;
             } catch (e) {
-                console.error("Failed to parse locationMeta:", e);
+                logger.warn("Failed to parse locationMeta", { msg: e.message });
             }
         }
 
@@ -1389,14 +1376,14 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
                         if (student.pushSubscriptions && student.pushSubscriptions.length > 0) {
                             student.pushSubscriptions.forEach(sub => {
                                 webpush.sendNotification(sub, payload).catch(err => {
-                                    console.log("Push error for student", student.email, err.message);
+                                    logger.warn("Push error for student", { email: student.email, msg: err.message });
                                 });
                             });
                         }
                     });
                 }
             } catch(e) {
-                console.log("Push trigger error", e);
+                logger.warn("Push trigger error", { msg: e.message });
             }
         }, 0);
 
@@ -1407,11 +1394,8 @@ router.post("/attendance/start", isTeacher, async (req, res) => {
         res.redirect("/teacher/dashboard?message=live_started");
 
     } catch (err) {
-        console.log("TEACHER START ATTENDANCE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Something went wrong. Please try again. ERROR: " + err.message + " | " + err.stack);
+        logger.error("TEACHER START ATTENDANCE ERROR", { msg: err.message, stack: err.stack });
+        return res.redirect("/teacher/dashboard?error=" + encodeURIComponent("Unable to start attendance: " + err.message));
     }
 });
 
@@ -1438,7 +1422,7 @@ router.post("/attendance/end/:id", isTeacher, async (req, res) => {
         .populate("classroom");
 
         if (!session) {
-            return res.send("Attendance session not found");
+            return res.redirect("/teacher/dashboard?error=" + encodeURIComponent("Attendance session not found."));
         }
 
         // Only auto-mark absents when the scheduled class time is truly over.
@@ -1472,11 +1456,8 @@ router.post("/attendance/end/:id", isTeacher, async (req, res) => {
         res.redirect("/teacher/dashboard");
 
     } catch (err) {
-        console.log("TEACHER END ATTENDANCE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Something went wrong. Please try again.");
+        logger.error("TEACHER END ATTENDANCE ERROR", { msg: err.message, stack: err.stack });
+        return res.redirect("/teacher/dashboard?error=" + encodeURIComponent("Error ending attendance: " + err.message));
     }
 });
 
@@ -1493,7 +1474,7 @@ router.post("/attendance/force-end/:id", isTeacher, async (req, res) => {
         .populate("classroom");
 
         if (!session) {
-            return res.send("Attendance session not found");
+            return res.redirect("/teacher/dashboard?error=" + encodeURIComponent("Attendance session not found."));
         }
 
         // Force auto-mark absents unconditionally
@@ -1515,15 +1496,12 @@ router.post("/attendance/force-end/:id", isTeacher, async (req, res) => {
         res.redirect("/teacher/dashboard");
 
     } catch (err) {
-        console.log("TEACHER FORCE END ATTENDANCE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Something went wrong. Please try again.");
+        logger.error("TEACHER FORCE END ATTENDANCE ERROR", { msg: err.message, stack: err.stack });
+        return res.redirect("/teacher/dashboard?error=" + encodeURIComponent("Error ending attendance: " + err.message));
     }
 });
 
-router.get("/reports", isTeacher, async function (req, res) {
+router.get("/reports", isTeacher, async function (req, res, next) {
     try {
         const teacherId = req.user._id || req.user.id;
         const collegeId = req.user.college;
@@ -1821,11 +1799,8 @@ router.get("/reports", isTeacher, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("TEACHER REPORTS ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.status(500).send("Teacher reports error: " + "An internal server error occurred.");
+        logger.error("TEACHER REPORTS ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
@@ -1905,9 +1880,7 @@ router.get("/attendance/export/:sessionId", isTeacher, async function (req, res)
         teacherSendCsvResponse(res, filename, rows);
 
     } catch (err) {
-        console.log("TEACHER EXPORT SINGLE SESSION ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
+        logger.error("TEACHER EXPORT SINGLE SESSION ERROR", { msg: err.message, stack: err.stack });
         res.status(500).send("Unable to export session.");
     }
 });
@@ -2057,10 +2030,7 @@ router.get("/reports/export-attendance", isTeacher, async function (req, res) {
         teacherSendCsvResponse(res, filename, rows);
 
     } catch (err) {
-        console.log("TEACHER EXPORT ATTENDANCE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
+        logger.error("TEACHER EXPORT ATTENDANCE ERROR", { msg: err.message, stack: err.stack });
         res.redirect("/teacher/reports");
     }
 });
@@ -2184,8 +2154,7 @@ router.get("/reports/export-excel", isTeacher, async function (req, res) {
         res.end();
 
     } catch (err) {
-        console.log("TEACHER EXPORT EXCEL ERROR:");
-        console.log(err.message);
+        logger.error("TEACHER EXPORT EXCEL ERROR", { msg: err.message, stack: err.stack });
         res.redirect("/teacher/reports");
     }
 });
@@ -2316,10 +2285,7 @@ router.get("/reports/export-suspicious", isTeacher, async function (req, res) {
         teacherSendCsvResponse(res, filename, rows);
 
     } catch (err) {
-        console.log("TEACHER EXPORT SUSPICIOUS ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
+        logger.error("TEACHER EXPORT SUSPICIOUS ERROR", { msg: err.message, stack: err.stack });
         res.redirect("/teacher/reports");
     }
 });
@@ -2423,12 +2389,12 @@ router.get("/reports/export-defaulters", isTeacher, async function (req, res) {
 
         return res.send(rows.join("\n"));
     } catch (err) {
-        console.error("TEACHER EXPORT DEFAULTERS ERROR:", err);
+        logger.error("TEACHER EXPORT DEFAULTERS ERROR", { msg: err.message, stack: err.stack });
         return res.redirect("/teacher/reports?error=defaulters_export_failed");
     }
 });
 
-router.get("/manual-attendance", isTeacher, async function (req, res) {
+router.get("/manual-attendance", isTeacher, async function (req, res, next) {
     try {
         const todayDate = getTodayDateString();
         const now = new Date();
@@ -2579,15 +2545,12 @@ router.get("/manual-attendance", isTeacher, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("TEACHER MANUAL ATTENDANCE PAGE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Something went wrong. Please try again.");
+        logger.error("TEACHER MANUAL ATTENDANCE PAGE ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
-router.get("/manual-attendance/:scheduleId", isTeacher, async function (req, res) {
+router.get("/manual-attendance/:scheduleId", isTeacher, async function (req, res, next) {
     try {
         const scheduleId = req.params.scheduleId;
         const selectedDateInput = teacherNormalizeManualDateInput(req.query.date);
@@ -2691,11 +2654,8 @@ router.get("/manual-attendance/:scheduleId", isTeacher, async function (req, res
         });
 
     } catch (err) {
-        console.log("TEACHER MANUAL ATTENDANCE DETAIL PAGE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Something went wrong. Please try again.");
+        logger.error("TEACHER MANUAL ATTENDANCE DETAIL PAGE ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
@@ -2782,10 +2742,10 @@ router.post("/manual-attendance/:scheduleId", isTeacher, async function (req, re
         );
 
         if (!session) {
-            const scheduleStartTime = getScheduleDateTimeForToday(scheduleItem.startTime);
-            const scheduleEndTime = getScheduleDateTimeForToday(scheduleItem.endTime);
+            const scheduleStartTime = getScheduleDateTimeForDate(scheduleItem.startTime, selectedDateStart);
+            const scheduleEndTime = getScheduleDateTimeForDate(scheduleItem.endTime, selectedDateStart);
             const manualSessionStart = teacherGetStartOfDate(selectedDateInput);
-            const manualSessionEnd = teacherGetStartOfDate(selectedDateInput);
+            const manualSessionEnd = teacherGetEndOfDate(selectedDateInput);
 
             if (scheduleStartTime) {
                 manualSessionStart.setHours(
@@ -2920,11 +2880,11 @@ router.post("/manual-attendance/:scheduleId", isTeacher, async function (req, re
         );
 
     } catch (err) {
-        console.log("TEACHER MANUAL ATTENDANCE SAVE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Something went wrong. Please try again.");
+        logger.error("TEACHER MANUAL ATTENDANCE SAVE ERROR", { msg: err.message, stack: err.stack });
+        const redirectUrl = req.params.scheduleId
+            ? "/teacher/manual-attendance/" + req.params.scheduleId + "?date=" + encodeURIComponent(req.query.date || "") + "&error=" + encodeURIComponent(err.message)
+            : "/teacher/manual-attendance";
+        return res.redirect(redirectUrl);
     }
 });
 
@@ -3044,7 +3004,7 @@ router.post("/push/subscribe", isTeacher, async function(req, res) {
         
         res.json({ success: true, message: "Push subscription saved" });
     } catch(err) {
-        console.log("TEACHER PUSH SUBSCRIBE ERROR:", err.message);
+        logger.error("TEACHER PUSH SUBSCRIBE ERROR", { msg: err.message });
         res.status(500).json({ success: false });
     }
 });
@@ -3063,8 +3023,7 @@ router.get("/reviews/pending", isTeacher, async function (req, res) {
 
         res.json({ success: true, pendingReviews: records, count: records.length });
     } catch (err) {
-        console.log("TEACHER PENDING REVIEWS ERROR:");
-        console.log(err.message);
+        logger.error("TEACHER PENDING REVIEWS ERROR", { msg: err.message, stack: err.stack });
         res.status(500).json({ success: false, message: "Could not fetch pending reviews." });
     }
 });
@@ -3089,8 +3048,7 @@ router.post("/reviews/:recordId/approve", isTeacher, async function (req, res) {
 
         return res.json(result);
     } catch (err) {
-        console.log("TEACHER APPROVE REVIEW ERROR:");
-        console.log(err.message);
+        logger.error("TEACHER APPROVE REVIEW ERROR", { msg: err.message, stack: err.stack });
         res.status(500).json({ success: false, message: "Could not approve review." });
     }
 });
@@ -3116,8 +3074,7 @@ router.post("/reviews/:recordId/reject", isTeacher, async function (req, res) {
 
         return res.json(result);
     } catch (err) {
-        console.log("TEACHER REJECT REVIEW ERROR:");
-        console.log(err.message);
+        logger.error("TEACHER REJECT REVIEW ERROR", { msg: err.message, stack: err.stack });
         res.status(500).json({ success: false, message: "Could not reject review." });
     }
 });
@@ -3168,9 +3125,7 @@ router.get("/profile", isTeacher, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("TEACHER PROFILE ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
+        logger.error("TEACHER PROFILE ERROR", { msg: err.message, stack: err.stack });
         res.redirect("/teacher/dashboard");
     }
 });

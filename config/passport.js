@@ -35,7 +35,8 @@ passport.use("student-local",
 
                 return done(null, {
                     _id: student._id.toString(),
-                    accountType: "student"
+                    accountType: "student",
+                    authVersion: student.authVersion || 0
                 });
 
             } catch (err) {
@@ -73,7 +74,8 @@ passport.use("teacher-local",
                 return done(null, {
                     _id: teacher._id.toString(),
                     accountType: "teacher",
-                    role: teacher.role
+                    role: teacher.role,
+                    authVersion: teacher.authVersion || 0
                 });
 
             } catch (err) {
@@ -88,7 +90,8 @@ passport.serializeUser((user, done) => {
     done(null, {
         _id: (user._id || user.id).toString(),
         accountType: user.accountType,
-        role: user.role
+        role: user.role,
+        authVersion: user.authVersion !== undefined ? user.authVersion : 0
     });
 });
 
@@ -99,6 +102,10 @@ passport.deserializeUser(async (user, done) => {
             const student = await Student.findById(studentId).select("-password");
 
             if (!student || student.isDeleted || student.isBlocked) {
+                return done(null, false);
+            }
+
+            if (user.authVersion !== undefined && (student.authVersion || 0) !== user.authVersion) {
                 return done(null, false);
             }
 
@@ -113,6 +120,10 @@ passport.deserializeUser(async (user, done) => {
             const teacher = await Teacher.findById(teacherId).select("-password");
 
             if (!teacher || teacher.isDeleted || teacher.isBlocked) {
+                return done(null, false);
+            }
+
+            if (user.authVersion !== undefined && (teacher.authVersion || 0) !== user.authVersion) {
                 return done(null, false);
             }
 

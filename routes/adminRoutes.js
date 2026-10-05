@@ -28,6 +28,7 @@ const AttendanceAttempt = require("../models/attendanceAttemptSchema");
 const PasskeySetupRequest = require("../models/passkeySetupRequestSchema");
 const bcrypt = require("bcrypt");
 const socketManager = require("../utils/socketManager");
+const logger = require("../utils/logger");
 const {
     createNotification,
     getUnreadCount,
@@ -2049,7 +2050,7 @@ router.post("/login", authLimiter, function (req, res, next) {
     })(req, res, next);
 });
 
-router.get("/dashboard", isCollegeAdmin, async function (req, res) {
+router.get("/dashboard", isCollegeAdmin, async function (req, res, next) {
     try {
         const collegeId = getCollegeId(req);
         const college = req.college || await College.findById(collegeId);
@@ -2137,11 +2138,8 @@ router.get("/dashboard", isCollegeAdmin, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("ADMIN DASHBOARD ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Admin dashboard error: "  + " Please try again.");
+        logger.error("ADMIN DASHBOARD ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
@@ -2306,7 +2304,7 @@ router.get("/notifications/unread-count", isCollegeAdmin, async function (req, r
 
 /* ================= CLASS GROUPS ================= */
 
-router.get("/class-groups", isCollegeAdmin, async function (req, res) {
+router.get("/class-groups", isCollegeAdmin, async function (req, res, next) {
     try {
         const collegeId = getCollegeId(req);
 
@@ -2328,9 +2326,8 @@ router.get("/class-groups", isCollegeAdmin, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("ADMIN CLASS GROUPS ERROR:");
-        console.log(err.message);
-        res.send("Class groups error: "  + " Please try again.");
+        logger.error("ADMIN CLASS GROUPS ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
@@ -2658,7 +2655,7 @@ router.post("/class-groups/delete-all", isCollegeAdmin, async function (req, res
 
 /* ================= CLASSROOMS ================= */
 
-router.get("/classrooms", isCollegeAdmin, async function (req, res) {
+router.get("/classrooms", isCollegeAdmin, async function (req, res, next) {
     try {
         const collegeId = getCollegeId(req);
 
@@ -2680,9 +2677,8 @@ router.get("/classrooms", isCollegeAdmin, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("ADMIN CLASSROOMS ERROR:");
-        console.log(err.message);
-        res.send("Classrooms error: "  + " Please try again.");
+        logger.error("ADMIN CLASSROOMS ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
@@ -2821,7 +2817,7 @@ router.post("/classrooms/delete-all", isCollegeAdmin, async function (req, res) 
 
 /* ================= SUBJECTS ================= */
 
-router.get("/subjects", isCollegeAdmin, async function (req, res) {
+router.get("/subjects", isCollegeAdmin, async function (req, res, next) {
     try {
         const collegeId = getCollegeId(req);
 
@@ -2863,9 +2859,8 @@ router.get("/subjects", isCollegeAdmin, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("ADMIN SUBJECTS ERROR:");
-        console.log(err.message);
-        res.send("Subjects error: "  + " Please try again.");
+        logger.error("ADMIN SUBJECTS ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
@@ -3636,7 +3631,7 @@ router.post("/students/approve/:id", isCollegeAdmin, async function (req, res) {
     }
 });
 
-router.get("/students", isCollegeAdmin, async function (req, res) {
+router.get("/students", isCollegeAdmin, async function (req, res, next) {
     try {
         const collegeId = getCollegeId(req);
 
@@ -3717,9 +3712,8 @@ router.get("/students", isCollegeAdmin, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("ADMIN STUDENTS ERROR:");
-        console.log(err.message);
-        res.send("Students error: "  + " Please try again.");
+        logger.error("ADMIN STUDENTS ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 
@@ -4548,7 +4542,7 @@ router.post("/students/delete-all", isCollegeAdmin, async function (req, res) {
 
 /* ================= SCHEDULES ================= */
 
-router.get("/schedules", isCollegeAdmin, async function (req, res) {
+router.get("/schedules", isCollegeAdmin, async function (req, res, next) {
     try {
         const collegeId = getCollegeId(req);
 
@@ -4615,11 +4609,8 @@ router.get("/schedules", isCollegeAdmin, async function (req, res) {
         });
 
     } catch (err) {
-        console.log("ADMIN SCHEDULES ERROR:");
-        console.log(err.message);
-        console.log(err.stack);
-
-        res.send("Schedules error: "  + " Please try again.");
+        logger.error("ADMIN SCHEDULES ERROR", { msg: err.message, stack: err.stack });
+        next(err);
     }
 });
 

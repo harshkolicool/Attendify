@@ -646,8 +646,8 @@ function markAttendance(sessionId, button) {
             if (window.AttendifyAcousticRadar && window.AttendifyAcousticRadar.Listener) {
                 try {
                     const listener = new window.AttendifyAcousticRadar.Listener();
-                    // Listen for teacher's inaudible polyphonic chord
-                    const listenTimeout = finalPos ? 1600 : 3200;
+                    // Listen for teacher's inaudible polyphonic chord (generous window for mic warmup and consensus lock)
+                    const listenTimeout = finalPos ? 3500 : 5000;
                     acousticProof = await listener.capturePresence(listenTimeout);
                 } catch (e) {
                     console.log("Acoustic listener error:", e);

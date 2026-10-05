@@ -1521,9 +1521,71 @@ function emitAttendanceExtended(session, extendMinutes) {
     if (collegeId) io.to(getAdminCollegeRoom(collegeId)).emit("attendance:extended:admin", payload);
 }
 
+async function disconnectSessionSockets(sessionId) {
+    const io = getIO();
+    if (!sessionId || !io) return;
+    const targetSessionId = String(sessionId);
+    try {
+        if (typeof io.fetchSockets === "function") {
+            const sockets = await io.fetchSockets();
+            for (const socket of sockets) {
+                const sId =
+                    (socket.request && (socket.request.sessionID || (socket.request.session && socket.request.session.id))) ||
+                    (socket.handshake && (socket.handshake.sessionID || (socket.handshake.session && socket.handshake.session.id)));
+                if (sId && String(sId) === targetSessionId) {
+                    socket.disconnect(true);
+                }
+            }
+        } else if (io.sockets && io.sockets.sockets) {
+            for (const socket of io.sockets.sockets.values()) {
+                const sId =
+                    (socket.request && (socket.request.sessionID || (socket.request.session && socket.request.session.id))) ||
+                    (socket.handshake && (socket.handshake.sessionID || (socket.handshake.session && socket.handshake.session.id)));
+                if (sId && String(sId) === targetSessionId) {
+                    socket.disconnect(true);
+                }
+            }
+        }
+    } catch (err) {
+        logger.error("Error disconnecting session sockets", { msg: err.message });
+    }
+}
+
+async function disconnectUserSockets(userId) {
+    const io = getIO();
+    if (!userId || !io) return;
+    const targetUserId = String(userId);
+    try {
+        if (typeof io.fetchSockets === "function") {
+            const sockets = await io.fetchSockets();
+            for (const socket of sockets) {
+                const sId = socket.data && (socket.data.studentId || socket.data.teacherId || socket.data.adminId);
+                const reqUser = getSessionUser(socket);
+                const rId = reqUser && (reqUser._id || reqUser.id) ? String(reqUser._id || reqUser.id) : null;
+                if ((sId && String(sId) === targetUserId) || (rId && rId === targetUserId)) {
+                    socket.disconnect(true);
+                }
+            }
+        } else if (io.sockets && io.sockets.sockets) {
+            for (const socket of io.sockets.sockets.values()) {
+                const sId = socket.data && (socket.data.studentId || socket.data.teacherId || socket.data.adminId);
+                const reqUser = getSessionUser(socket);
+                const rId = reqUser && (reqUser._id || reqUser.id) ? String(reqUser._id || reqUser.id) : null;
+                if ((sId && String(sId) === targetUserId) || (rId && rId === targetUserId)) {
+                    socket.disconnect(true);
+                }
+            }
+        }
+    } catch (err) {
+        logger.error("Error disconnecting user sockets", { msg: err.message });
+    }
+}
+
 module.exports = {
     initializeSocket,
     getIO,
+    disconnectSessionSockets,
+    disconnectUserSockets,
     emitAttendanceStarted,
     emitAttendanceEnded,
     emitAttendanceMarked,

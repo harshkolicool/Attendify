@@ -87,6 +87,11 @@ const teacherSchema = new mongoose.Schema({
         type: Date
     },
 
+    authVersion: {
+        type: Number,
+        default: 0
+    },
+
     pushSubscriptions: [
         {
             endpoint: { type: String, required: true },
